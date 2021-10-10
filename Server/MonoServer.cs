@@ -44,7 +44,13 @@ public class MonoServer : IServer
 
         public void RecevieDatapack([NotNull] IDatapack datapack)
         {
-            var json = Utils.ConvertToStringWithLengthBeginning(datapack.Bytes);
+            var jsonString = Utils.ConvertToStringWithLengthBeginning(datapack.Bytes);
+	    dynamic var json = JObject.Phrase(jsonString);
+	    var channelName=json.ChannalName.ToString();
+	    var content=json.Content.ToString();
+	    if(_allChannels.TryGetValue(channelName,out var channel)){
+
+	    }
         }
 
         public void Initialize(IServiceProvider serviceProvider)
