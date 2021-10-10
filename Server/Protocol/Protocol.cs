@@ -1,6 +1,11 @@
 ﻿namespace ChattingRoom.Server.Protocols;
 public static class Protocol
 {
+
+    public static class Connection
+    {
+        public const int Port = 5000;
+    }
     public static class StateCode
     {
         public const byte Normal =
