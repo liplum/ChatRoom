@@ -44,7 +44,7 @@ public class MonoServer : IServer
 
         public void RecevieDatapack([NotNull] IDatapack datapack)
         {
-
+            var json = Utils.ConvertToStringWithLengthBeginning(datapack.Bytes);
         }
 
         public void Initialize(IServiceProvider serviceProvider)
