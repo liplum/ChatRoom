@@ -1,8 +1,6 @@
-﻿using ChattingRoom.Core;
-using System.Diagnostics.CodeAnalysis;
-using IServiceProvider = ChattingRoom.Core.IServiceProvider;
+﻿using System.Diagnostics.CodeAnalysis;
 
-namespace ChattingRoom.Server.Services;
+namespace ChattingRoom.Core.Services;
 public class CmdServerLogger : ILogger
 {
     public void Log([NotNull] WarnningLevel level, string message)
