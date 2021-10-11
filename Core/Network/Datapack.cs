@@ -7,6 +7,7 @@ public interface IDatapack
 
     public bool IsEmpty { get; }
 
+    public void WriteInto([NotNull] Stream stream);
 }
 
 public class Datapack : IDatapack
@@ -18,12 +19,30 @@ public class Datapack : IDatapack
 
     public Datapack(byte[] data)
     {
-        Bytes = data;
+        _bytes = data;
     }
 
+    private bool Initialized
+    {
+        get; set;
+    } = false;
+
+    public readonly byte[] _bytes;
+    public byte[]? _initialized;
     public byte[] Bytes
     {
-        get; init;
+        get
+        {
+            if (!Initialized)
+            {
+                _initialized = new byte[_bytes.Length + sizeof(int)];
+                var bytes = new ReadOnlySpan<byte>(_bytes);
+                var initiliazed = new Span<byte>(_initialized, sizeof(int), _initialized.Length);
+                bytes.CopyTo(initiliazed);
+                Initialized = true;
+            }
+            return _initialized ?? Array.Empty<byte>();
+        }
     }
 
     public bool IsEmpty => Bytes.Length == 0;
@@ -50,10 +69,24 @@ public class Datapack : IDatapack
         }
     }
 
+    public void WriteInto([NotNull] Stream stream)
+    {
+        if (stream.CanWrite)
+        {
+            stream.Write(BitConverter.GetBytes(_bytes.Length));
+            stream.Write(_bytes);
+        }
+    }
+
     private class EmptyDatapack : IDatapack
     {
         public byte[] Bytes => Array.Empty<byte>();
 
         public bool IsEmpty => true;
+
+        public void WriteInto([NotNull] Stream stream)
+        {
+
+        }
     }
 }

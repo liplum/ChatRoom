@@ -1,5 +1,5 @@
 ﻿namespace ChattingRoom.Core.Networks;
 public interface IMessageChannelContainer
 {
-    public IMessageChannel New(string channelName, ChannelDirection direction);
+    public IMessageChannel New(string channelName);
 }

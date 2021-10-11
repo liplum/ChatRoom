@@ -1,26 +1,19 @@
 ﻿using ChattingRoom.Core;
 using ChattingRoom.Core.Networks;
-using ChattingRoom.Core.Services;
 using ChattingRoom.Server.Protocols;
+using Newtonsoft.Json.Linq;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 using IServiceProvider = ChattingRoom.Core.IServiceProvider;
 
 namespace ChattingRoom.Server;
-public class MonoServer : IServer
+public partial class Monoserver : IServer
 {
-    private readonly ChatingRoom _chatingRoom = new();
-    private readonly ServiceContainer _serviceContainer = new();
-
-    public void Initialize()
-    {
-        _serviceContainer.RegisterSingleton<ILogger, CmdServerLogger>();
-    }
     private class Network : INetwork
     {
         private readonly Dictionary<string, IMessageChannel> _allChannels = new();
-        private readonly Dictionary<NetworkToken, (IConnection, Thread)> _allConnections = new();
+        private readonly Dictionary<NetworkToken, (IConnection connection, Thread listning)> _allConnections = new();
         private TcpListener? _serverSocket;
         private readonly object _lock = new();
         private ILogger? Logger
@@ -28,48 +21,60 @@ public class MonoServer : IServer
             get; set;
         }
 
-        private MonoServer Outer
+        private Monoserver Outer
         {
             get; init;
         }
-        public Network(MonoServer outer)
+        public Network(Monoserver outer)
         {
             Outer = outer;
         }
 
         public void SendDatapackTo([NotNull] IDatapack datapack, [NotNull] NetworkToken token)
         {
-
+            if (_allConnections.TryGetValue(token, out var info))
+            {
+                var connection = info.connection;
+                connection.Send(datapack);
+            }
         }
 
         public void RecevieDatapack([NotNull] IDatapack datapack)
         {
-            var jsonString = Utils.ConvertToStringWithLengthBeginning(datapack.Bytes);
-	    dynamic var json = JObject.Phrase(jsonString);
-	    var channelName=json.ChannalName.ToString();
-	    var content=json.Content.ToString();
-	    if(_allChannels.TryGetValue(channelName,out var channel)){
-
-	    }
+            var jsonString = Utils.ConvertToStringWithLengthStartingUnicode(datapack.Bytes);
+            dynamic json = JObject.Parse(jsonString);
+            string? channelName = json.ChannalName;
+            int? messageID = json.MessageID;
+            string content = json.Content ?? "";
+            if (channelName is not null &&
+                messageID is not null &&
+                _allChannels.TryGetValue(channelName, out var channel))
+            {
+                channel.ReceiveMessage(messageID.Value, content);
+            }
         }
 
         public void Initialize(IServiceProvider serviceProvider)
         {
             Logger = serviceProvider.Reslove<ILogger>();
         }
+
+        private UnicodeBytesConverter _unicoder = new();
+
         public void SendMessage([NotNull] NetworkToken target, [NotNull] IMessage msg)
         {
-            var buf = new ByteBuffer();
-            msg.Serialize(buf);
+            var json = new JObject();
+            msg.Deserialize(json);
+            string jsonTxt = json.ToString();
+            var datapack = new Datapack(_unicoder.ConvertToBytes(jsonTxt));
         }
 
         public void SendMessageToAll([NotNull] IMessage msg)
         {
-            var buf = new ByteBuffer();
-            msg.Serialize(buf);
+
         }
 
-        public IMessageChannel New(string channelName, ChannelDirection direction)
+        public IMessageChannel New(string channelName)
         {
             return null;
         }
@@ -159,19 +164,13 @@ public class MonoServer : IServer
         {
             get; init;
         }
-        public MessageChannel([NotNull] Network outter, [NotNull] string channelName, [NotNull] ChannelDirection channelDirection)
+        public MessageChannel([NotNull] Network outter, [NotNull] string channelName)
         {
             Outter = outter;
             ChannelName = channelName;
-            ChannelDirection = channelDirection;
         }
 
         public string ChannelName
-        {
-            get; init;
-        }
-
-        public ChannelDirection ChannelDirection
         {
             get; init;
         }
@@ -184,6 +183,29 @@ public class MonoServer : IServer
         public void SendMessageToAll([NotNull] IMessage msg)
         {
             Outter.SendMessageToAll(msg);
+        }
+
+        private readonly Dictionary<int, (Type msg, dynamic handler)> _Id2MsgTypeAndHandler = new();
+
+        public void RegisterMessageType<MessageType, HandlerType>(int messageID)
+            where MessageType : class, IMessage, new()
+            where HandlerType : class, IMessageHandler<MessageType>, new()
+        {
+            _Id2MsgTypeAndHandler[messageID] = (typeof(MessageType), new HandlerType());
+        }
+
+        public void ReceiveMessage(int messageID, dynamic jsonContent)
+        {
+            if (_Id2MsgTypeAndHandler.TryGetValue(messageID, out var info))
+            {
+                dynamic? msg = Activator.CreateInstance(info.msg);
+                if (msg is not null)
+                {
+                    msg.Deserialize(jsonContent);
+                    var hanlder = info.handler;
+                    hanlder.Handle(msg);
+                }
+            }
         }
     }
     private class SocketConnection : IConnection
@@ -228,7 +250,7 @@ public class MonoServer : IServer
             return true;
         }
 
-        public void Send(IDatapack datapack)
+        public void Send([NotNull] IDatapack datapack)
         {
 
         }

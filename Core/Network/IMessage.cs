@@ -3,14 +3,14 @@
 namespace ChattingRoom.Core.Networks;
 public interface IMessage
 {
-    public void Serialize(IReadableBuffer buffer);
+    public void Serialize(dynamic json);
 
-    public void Deserialize(IWritableBuffer buffer);
+    public void Deserialize(dynamic json);
 }
 
-public interface IMessageHandler<T> where T : IMessage
+public interface IMessageHandler<in T> where T : IMessage
 {
 
-    public void Handler([NotNull] T msg);
+    public void Handle([NotNull] T msg);
 
 }

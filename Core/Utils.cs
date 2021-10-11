@@ -1,8 +1,28 @@
-﻿using System.Text;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 namespace ChattingRoom.Core;
 public static class Utils
 {
+    public static string ReadStringWithLengthStartingUnicode([NotNull] Stream stream)
+    {
+        if (stream.CanRead)
+        {
+            var length_b = new byte[sizeof(int)];
+            stream.Read(length_b, 0, length_b.Length);
+            int length = BitConverter.ToInt32(length_b);
+            var stringBuffer = new byte[length];
+            stream.Read(stringBuffer, 0, stringBuffer.Length);
+            return ConvertToStringUnicode(stringBuffer);
+        }
+        return string.Empty;
+    }
+
+    public static void WriteStringWithLengthStartingUnicode([NotNull] Stream stream)
+    {
+
+    }
+
     public static string ConvertToStringUnicode(byte[] b)
     {
         return Encoding.Unicode.GetString(b);
@@ -12,7 +32,7 @@ public static class Utils
         return Encoding.Unicode.GetBytes(str);
     }
 
-    public static string ConvertToStringWithLengthBeginning(byte[] b)
+    public static string ConvertToStringWithLengthStartingUnicode(byte[] b)
     {
         using var stream = new MemoryStream(b);
         var buffer = new byte[sizeof(int)];
@@ -25,7 +45,7 @@ public static class Utils
         return ConvertToStringUnicode(bufferStr);
     }
 
-    public static byte[] ConvertToBytesWithLengthBeginning(string str)
+    public static byte[] ConvertToBytesWithLengthStartingUnicode(string str)
     {
         var strLength = BitConverter.GetBytes(str.Length);
         var content = ConvertToBytesUnicode(str);
@@ -42,13 +62,33 @@ public static class Utils
 }
 public interface IBytesConverter
 {
-    public string ConvertToString(byte[] b);
+    public string ConvertToString(byte[] b, bool startWithLength = true);
 
-    public byte[] ConvertToBytes(string str);
+    public byte[] ConvertToBytes(string str, bool startWithLength = true);
 }
 public class UnicodeBytesConverter : IBytesConverter
 {
-    public string ConvertToString(byte[] b) => Utils.ConvertToStringWithLengthBeginning(b);
+    public string ConvertToString(byte[] b, bool startWithLength = true)
+    {
+        if (startWithLength)
+        {
+            return Utils.ConvertToStringWithLengthStartingUnicode(b);
+        }
+        else
+        {
+            return Utils.ConvertToStringUnicode(b);
+        }
+    }
 
-    public byte[] ConvertToBytes(string str) => Utils.ConvertToBytesWithLengthBeginning(str);
+    public byte[] ConvertToBytes(string str, bool startWithLength = true)
+    {
+        if (startWithLength)
+        {
+            return Utils.ConvertToBytesWithLengthStartingUnicode(str);
+        }
+        else
+        {
+            return Utils.ConvertToBytesUnicode(str);
+        }
+    }
 }
