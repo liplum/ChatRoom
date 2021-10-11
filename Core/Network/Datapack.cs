@@ -69,6 +69,37 @@ public class Datapack : IDatapack
         }
     }
 
+    public static IDatapack GenLazyEvaluation(WriteInto writeInto)
+    {
+
+    }
+
+    private class LazyEvaluatedDatapack : IDatapack
+    {
+        private readonly WriteInto _writeInto;
+        public LazyEvaluatedDatapack(WriteInto writeInto)
+        {
+            _writeInto = writeInto;
+        }
+
+        public byte[] Bytes
+        {
+            get
+            {
+                using var s = new MemoryStream();
+                _writeInto(s);
+                return ReadOne(s).Bytes;
+            }
+        }
+
+        public bool IsEmpty => false;
+
+        public void WriteInto([NotNull] Stream stream)
+        {
+            _writeInto(stream);
+        }
+    }
+
     public void WriteInto([NotNull] Stream stream)
     {
         if (stream.CanWrite)
@@ -90,3 +121,6 @@ public class Datapack : IDatapack
         }
     }
 }
+
+public delegate byte[] GetBytes(byte[] rawData);
+public delegate void WriteInto(Stream stream);

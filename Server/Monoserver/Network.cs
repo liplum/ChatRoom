@@ -1,6 +1,7 @@
 ﻿using ChattingRoom.Core;
 using ChattingRoom.Core.Networks;
 using ChattingRoom.Server.Protocols;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
@@ -59,24 +60,29 @@ public partial class Monoserver : IServer
             Logger = serviceProvider.Reslove<ILogger>();
         }
 
-        private UnicodeBytesConverter _unicoder = new();
+        private readonly UnicodeBytesConverter _unicoder = new();
 
         public void SendMessage([NotNull] NetworkToken target, [NotNull] IMessage msg)
         {
             var json = new JObject();
             msg.Deserialize(json);
-            string jsonTxt = json.ToString();
-            var datapack = new Datapack(_unicoder.ConvertToBytes(jsonTxt));
+            string jsonTxt = json.ToString(Formatting.None);
+            var datapack = Datapack.GenLazyEvaluation(s => Utils.WriteStringWithLengthStartingUnicode(s, jsonTxt));
+            //var datapack = new Datapack(_unicoder.ConvertToBytes(jsonTxt));
+            SendDatapackTo(datapack, target);
         }
 
         public void SendMessageToAll([NotNull] IMessage msg)
         {
-
+            foreach (var token in _allConnections.Keys)
+            {
+                SendMessage(token, msg);
+            }
         }
 
         public IMessageChannel New(string channelName)
         {
-            return null;
+            return new MessageChannel(this, channelName);
         }
 
         private Thread? _listen;
@@ -135,7 +141,7 @@ public partial class Monoserver : IServer
 
             lock (_lock)
             {
-                _allConnections[token] = (new SocketConnection(this, token), listeningThread);
+                _allConnections[token] = (new SocketConnection(this, token, client), listeningThread);
             }
 
             listeningThread.Start();
@@ -210,6 +216,20 @@ public partial class Monoserver : IServer
     }
     private class SocketConnection : IConnection
     {
+        public NetworkStream Stream
+        {
+            get; private set;
+        }
+        public TcpClient TcpClient
+        {
+            get; private set;
+        }
+
+        public Socket Socket
+        {
+            get; private set;
+        }
+
         private Network Outer
         {
             get; init;
@@ -220,10 +240,13 @@ public partial class Monoserver : IServer
             get; init;
         }
 
-        public SocketConnection(Network outer, NetworkToken token)
+        public SocketConnection(Network outer, NetworkToken token, TcpClient tcpClient)
         {
             Outer = outer;
             Token = token;
+            TcpClient = tcpClient;
+            Socket = tcpClient.Client;
+            Stream = tcpClient.GetStream();
         }
 
         public bool IsConnected
@@ -252,7 +275,10 @@ public partial class Monoserver : IServer
 
         public void Send([NotNull] IDatapack datapack)
         {
-
+            if (Stream.CanWrite)
+            {
+                datapack.WriteInto(Stream);
+            }
         }
     }
 }

@@ -18,9 +18,15 @@ public static class Utils
         return string.Empty;
     }
 
-    public static void WriteStringWithLengthStartingUnicode([NotNull] Stream stream)
+    public static void WriteStringWithLengthStartingUnicode([NotNull] Stream stream, string str)
     {
-
+        if (stream.CanWrite)
+        {
+            var bytes = ConvertToBytesUnicode(str);
+            var length = BitConverter.GetBytes(bytes.Length);
+            stream.Write(length);
+            stream.Write(bytes);
+        }
     }
 
     public static string ConvertToStringUnicode(byte[] b)
