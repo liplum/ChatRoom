@@ -67,8 +67,9 @@ public partial class Monoserver : IServer
             var json = new JObject();
             msg.Deserialize(json);
             string jsonTxt = json.ToString(Formatting.None);
-            var datapack = Datapack.GenLazyEvaluation(s => Utils.WriteStringWithLengthStartingUnicode(s, jsonTxt));
+           // var datapack = Datapack.GenLazyEvaluation(s => Utils.WriteStringWithLengthStartingUnicode(s, jsonTxt));
             //var datapack = new Datapack(_unicoder.ConvertToBytes(jsonTxt));
+	    var datapack=new Datapack(_unicoder.ConvertToBytes(jsonTxt));
             SendDatapackTo(datapack, target);
         }
 
@@ -234,6 +235,18 @@ public partial class Monoserver : IServer
         {
             get; init;
         }
+	private bool Terminaled{get;set;}
+
+    	public bool Terminal()
+	{
+	    if(Terminaled)
+	    {
+		return false;
+	    }
+	    Disconnect();
+	    Terminaled=true;
+	    Socket.Close();
+	}
 
         private NetworkToken Token
         {
@@ -260,6 +273,7 @@ public partial class Monoserver : IServer
             {
                 return false;
             }
+	    Connected=true;
             return true;
         }
 
@@ -269,12 +283,15 @@ public partial class Monoserver : IServer
             {
                 return false;
             }
-
+	    Connected=false;
             return true;
         }
 
         public void Send([NotNull] IDatapack datapack)
         {
+	    if(!Connected){
+		throw new ConnectionClosedException();
+	    }
             if (Stream.CanWrite)
             {
                 datapack.WriteInto(Stream);

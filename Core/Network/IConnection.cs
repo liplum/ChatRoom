@@ -12,5 +12,11 @@ public interface IConnection //: IInjectable
 
     public bool Disconnect();
 
+    public bool Terminal();
+
     public bool IsConnected { get; }
+}
+
+public class ConnectionClosedException:Exception{
+
 }

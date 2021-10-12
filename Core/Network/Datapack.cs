@@ -7,6 +7,8 @@ public interface IDatapack
 
     public bool IsEmpty { get; }
 
+    public int Length{get;}
+
     public void WriteInto([NotNull] Stream stream);
 }
 
@@ -19,10 +21,11 @@ public class Datapack : IDatapack
 
     public Datapack(byte[] data)
     {
-        _bytes = data;
+//        _bytes = data;
+	Bytes=data;
     }
 
-    private bool Initialized
+    /*private bool Initialized
     {
         get; set;
     } = false;
@@ -44,8 +47,13 @@ public class Datapack : IDatapack
             return _initialized ?? Array.Empty<byte>();
         }
     }
+    */
 
-    public bool IsEmpty => Bytes.Length == 0;
+    public byte[] Bytes{get;private set;}
+
+    public bool IsEmpty => Length == 0;
+
+    public int Length=>Bytes.Length;
 
     public static IDatapack ReadOne([NotNull] Stream stream)
     {
@@ -73,6 +81,7 @@ public class Datapack : IDatapack
     {
 
     }
+    /*
 
     private class LazyEvaluatedDatapack : IDatapack
     {
@@ -98,14 +107,14 @@ public class Datapack : IDatapack
         {
             _writeInto(stream);
         }
-    }
+    }*/
 
     public void WriteInto([NotNull] Stream stream)
     {
         if (stream.CanWrite)
         {
-            stream.Write(BitConverter.GetBytes(_bytes.Length));
-            stream.Write(_bytes);
+            stream.Write(BitConverter.GetBytes(Bytes.Length));
+            stream.Write(Bytes);
         }
     }
 
@@ -115,6 +124,8 @@ public class Datapack : IDatapack
 
         public bool IsEmpty => true;
 
+    	public int Length=>0;
+
         public void WriteInto([NotNull] Stream stream)
         {
 
@@ -122,5 +133,5 @@ public class Datapack : IDatapack
     }
 }
 
-public delegate byte[] GetBytes(byte[] rawData);
-public delegate void WriteInto(Stream stream);
+/*public delegate byte[] GetBytes(byte[] rawData);
+public delegate void WriteInto(Stream stream);*/
