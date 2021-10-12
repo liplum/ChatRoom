@@ -1,137 +1,107 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
 namespace ChattingRoom.Core.Networks;
-public interface IDatapack
+public class WriteableDatapack : IDatapack
 {
-    public byte[] Bytes { get; }
-
-    public bool IsEmpty { get; }
-
-    public int Length{get;}
-
-    public void WriteInto([NotNull] Stream stream);
-}
-
-public class Datapack : IDatapack
-{
-    public static IDatapack Empty
+    public WriteableDatapack()
     {
-        get;
-    } = new EmptyDatapack();
-
-    public Datapack(byte[] data)
+        Bytes = new();
+    }
+    public WriteableDatapack(IEnumerable<byte> data)
     {
-//        _bytes = data;
-	Bytes=data;
+        Bytes = new List<byte>(data);
     }
 
-    /*private bool Initialized
+    public WriteableDatapack(List<byte> data)
     {
-        get; set;
-    } = false;
-
-    public readonly byte[] _bytes;
-    public byte[]? _initialized;
-    public byte[] Bytes
-    {
-        get
-        {
-            if (!Initialized)
-            {
-                _initialized = new byte[_bytes.Length + sizeof(int)];
-                var bytes = new ReadOnlySpan<byte>(_bytes);
-                var initiliazed = new Span<byte>(_initialized, sizeof(int), _initialized.Length);
-                bytes.CopyTo(initiliazed);
-                Initialized = true;
-            }
-            return _initialized ?? Array.Empty<byte>();
-        }
+        Bytes = data;
     }
-    */
 
-    public byte[] Bytes{get;private set;}
+    private List<byte> Bytes
+    {
+        get; init;
+    }
 
     public bool IsEmpty => Length == 0;
 
-    public int Length=>Bytes.Length;
+    public int Length => Bytes.Count;
 
-    public static IDatapack ReadOne([NotNull] Stream stream)
-    {
-        if (!stream.CanRead)
-        {
-            return Empty;
-        }
-        const int IntSize = sizeof(int);
-        var dataLength_Bytes = new byte[IntSize];
-        try
-        {
-            stream.Read(dataLength_Bytes, 0, IntSize);
-            int dataLength = BitConverter.ToInt32(dataLength_Bytes);
-            var data = new byte[dataLength];
-            stream.Read(data, 0, dataLength);
-            return new Datapack(data);
-        }
-        catch (Exception)
-        {
-            return Empty;
-        }
-    }
+    public bool CanWrite => true;
 
-    public static IDatapack GenLazyEvaluation(WriteInto writeInto)
-    {
+    private bool _changed = false;
 
-    }
-    /*
-
-    private class LazyEvaluatedDatapack : IDatapack
-    {
-        private readonly WriteInto _writeInto;
-        public LazyEvaluatedDatapack(WriteInto writeInto)
-        {
-            _writeInto = writeInto;
-        }
-
-        public byte[] Bytes
-        {
-            get
-            {
-                using var s = new MemoryStream();
-                _writeInto(s);
-                return ReadOne(s).Bytes;
-            }
-        }
-
-        public bool IsEmpty => false;
-
-        public void WriteInto([NotNull] Stream stream)
-        {
-            _writeInto(stream);
-        }
-    }*/
+    private byte[] _updated = Array.Empty<byte>();
 
     public void WriteInto([NotNull] Stream stream)
     {
         if (stream.CanWrite)
         {
-            stream.Write(BitConverter.GetBytes(Bytes.Length));
-            stream.Write(Bytes);
+            stream.Write(BitConverter.GetBytes(Bytes.Count));
+            stream.Write(Bytes.ToArray());
         }
     }
 
-    private class EmptyDatapack : IDatapack
+    public byte[] ToBytes()
     {
-        public byte[] Bytes => Array.Empty<byte>();
-
-        public bool IsEmpty => true;
-
-    	public int Length=>0;
-
-        public void WriteInto([NotNull] Stream stream)
+        if (_changed)
         {
-
+            _updated = Bytes.ToArray();
         }
+        return _updated;
+    }
+
+    public void Write(byte[] bytes)
+    {
+        if (bytes.Length > 0)
+        {
+            _changed = true;
+            Bytes.AddRange(bytes);
+        }
+    }
+
+    public void Write(byte b)
+    {
+        _changed = true;
+        Bytes.Add(b);
     }
 }
 
-/*public delegate byte[] GetBytes(byte[] rawData);
-public delegate void WriteInto(Stream stream);*/
+public class ReadOnlyDatapck : IDatapack
+{
+    public ReadOnlyDatapck(byte[] data)
+    {
+        _bytes = data;
+    }
+
+    public readonly byte[] _bytes;
+
+    public bool CanWrite => false;
+
+    public bool IsEmpty => Length == 0;
+
+    public int Length => _bytes.Length;
+
+    public byte[] ToBytes()
+    {
+        return _bytes;
+    }
+
+    public void Write(byte[] bytes)
+    {
+        throw new NotSupportedException();
+    }
+
+    public void WriteInto([NotNull] Stream stream)
+    {
+        if (stream.CanWrite)
+        {
+            stream.Write(BitConverter.GetBytes(_bytes.Length));
+            stream.Write(_bytes);
+        }
+    }
+
+    public void Write(byte b)
+    {
+        throw new NotSupportedException();
+    }
+}

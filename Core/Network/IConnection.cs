@@ -3,9 +3,11 @@
 namespace ChattingRoom.Core.Networks;
 public interface IConnection //: IInjectable
 {
-    /*   public void SendMessageTo([NotNull] NetworkPositionToken target, byte[] data);
-
-       public void SendMessageToAll(byte[] date);*/
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="datapack"></param>
+    /// <exception cref="ConnectionClosedException">Raised if the connection had been already closed.</exception>
     public void Send([NotNull] IDatapack datapack);
 
     public bool Connect();
@@ -17,6 +19,13 @@ public interface IConnection //: IInjectable
     public bool IsConnected { get; }
 }
 
-public class ConnectionClosedException:Exception{
-
+[Serializable]
+public class ConnectionClosedException : Exception
+{
+    public ConnectionClosedException() { }
+    public ConnectionClosedException(string message) : base(message) { }
+    public ConnectionClosedException(string message, Exception inner) : base(message, inner) { }
+    protected ConnectionClosedException(
+      System.Runtime.Serialization.SerializationInfo info,
+      System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
 }

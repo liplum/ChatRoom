@@ -5,7 +5,7 @@ using System.Text;
 namespace ChattingRoom.Client;
 public class Program
 {
-    public static void Main(string[] args)
+    public static void OldMain(string[] args)
     {
         IPAddress ip = IPAddress.Parse("127.0.0.1");
         int port = 5000;

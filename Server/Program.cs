@@ -8,7 +8,7 @@ public class Program
     public static readonly object _lock = new();
     public static readonly Dictionary<int, TcpClient> _allClients = new();
 
-    public static void Main(string[] args)
+    public static void OldMain(string[] args)
     {
         int count = 1;
 

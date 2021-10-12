@@ -1,38 +1,13 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Text;
+﻿using System.Text;
 
 namespace ChattingRoom.Core;
 public static class Utils
 {
-    public static string ReadStringWithLengthStartingUnicode([NotNull] Stream stream)
-    {
-        if (stream.CanRead)
-        {
-            var length_b = new byte[sizeof(int)];
-            stream.Read(length_b, 0, length_b.Length);
-            int length = BitConverter.ToInt32(length_b);
-            var stringBuffer = new byte[length];
-            stream.Read(stringBuffer, 0, stringBuffer.Length);
-            return ConvertToStringUnicode(stringBuffer);
-        }
-        return string.Empty;
-    }
-
-    public static void WriteStringWithLengthStartingUnicode([NotNull] Stream stream, string str)
-    {
-        if (stream.CanWrite)
-        {
-            var bytes = ConvertToBytesUnicode(str);
-            var length = BitConverter.GetBytes(bytes.Length);
-            stream.Write(length);
-            stream.Write(bytes);
-        }
-    }
-
     public static string ConvertToStringUnicode(byte[] b)
     {
         return Encoding.Unicode.GetString(b);
     }
+
     public static byte[] ConvertToBytesUnicode(string str)
     {
         return Encoding.Unicode.GetBytes(str);
@@ -66,12 +41,14 @@ public static class Utils
         return bytes;
     }
 }
+
 public interface IBytesConverter
 {
     public string ConvertToString(byte[] b, bool startWithLength = true);
 
     public byte[] ConvertToBytes(string str, bool startWithLength = true);
 }
+
 public class UnicodeBytesConverter : IBytesConverter
 {
     public string ConvertToString(byte[] b, bool startWithLength = true)

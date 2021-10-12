@@ -1,7 +1,6 @@
 ﻿using ChattingRoom.Core;
 using ChattingRoom.Core.Networks;
 using ChattingRoom.Core.Services;
-using ChattingRoom.Server.Services;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using IServiceProvider = ChattingRoom.Core.IServiceProvider;
@@ -10,7 +9,7 @@ using IServiceProvider = ChattingRoom.Core.IServiceProvider;
 namespace ChattingRoom.Server;
 public class MultiServer : IServer
 {
-    private readonly ChatingRoomList _chatingRoomList = new();
+    private readonly ChattingRoomList _chatingRoomList = new();
     private readonly ServiceContainer _serviceContainer = new();
     private readonly Network _network;
 
@@ -18,10 +17,21 @@ public class MultiServer : IServer
     {
         _network = new(this);
     }
+
+    public ChattingRoom GetChattingRoomBy(ChattingRoomID ID)
+    {
+        throw new NotImplementedException();
+    }
+
     public void Initialize()
     {
         _serviceContainer.RegisterInstance<INetwork>(_network);
         _serviceContainer.RegisterSingleton<ILogger, CmdServerLogger>();
+    }
+
+    public void Start()
+    {
+        throw new NotImplementedException();
     }
 
     private class Network : INetwork
@@ -53,23 +63,19 @@ public class MultiServer : IServer
             get => _allChannels.TryGetValue(channelName, out var channel) ? channel : null;
         }
 
-        public IMessageChannel New(string channelName, ChannelDirection direction)
+        public IMessageChannel New(string channelName)
         {
-            var channel = new MessageChannel(this, channelName, direction);
+            var channel = new MessageChannel(this, channelName);
             _allChannels[channelName] = channel;
             return channel;
         }
 
         private void SendMessage([NotNull] NetworkToken target, [NotNull] IMessage msg)
         {
-            var buf = new ByteBuffer();
-            msg.Serialize(buf);
         }
 
         private void SendMessageToAll([NotNull] IMessage msg)
         {
-            var buf = new ByteBuffer();
-            msg.Serialize(buf);
         }
 
         public void SendDatapackTo([NotNull] IDatapack datapack, [NotNull] NetworkToken token)
@@ -98,19 +104,13 @@ public class MultiServer : IServer
             {
                 get; init;
             }
-            public MessageChannel([NotNull] Network outter, [NotNull] string channelName, [NotNull] ChannelDirection channelDirection)
+            public MessageChannel([NotNull] Network outter, [NotNull] string channelName)
             {
                 Outter = outter;
                 ChannelName = channelName;
-                ChannelDirection = channelDirection;
             }
 
             public string ChannelName
-            {
-                get; init;
-            }
-
-            public ChannelDirection ChannelDirection
             {
                 get; init;
             }
@@ -123,6 +123,16 @@ public class MultiServer : IServer
             public void SendMessageToAll([NotNull] IMessage msg)
             {
                 Outter.SendMessageToAll(msg);
+            }
+
+            public void ReceiveMessage(int messageID, dynamic jsonContent)
+            {
+                throw new NotImplementedException();
+            }
+
+            void IMessageChannel.RegisterMessageType<MessageType, HandlerType>(int messageID)
+            {
+                throw new NotImplementedException();
             }
         }
 
@@ -141,6 +151,11 @@ public class MultiServer : IServer
             }
 
             public void Send(IDatapack datapack)
+            {
+                throw new NotImplementedException();
+            }
+
+            public bool Terminal()
             {
                 throw new NotImplementedException();
             }

@@ -32,10 +32,15 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry
         void ReturnIntance([NotNull] ServiceEntry entry)
         {
             returnValue = (Interface)entry.Instance!;
+            Inject();
         }
         void ReturnTransient([NotNull] ServiceEntry entry)
         {
             returnValue = (Interface)Activator.CreateInstance(entry.Type)!;
+            Inject();
+        }
+        void Inject()
+        {
             if (returnValue is IInjectable obj)
             {
                 obj.Initialize(this);

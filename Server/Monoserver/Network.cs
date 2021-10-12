@@ -42,7 +42,7 @@ public partial class Monoserver : IServer
 
         public void RecevieDatapack([NotNull] IDatapack datapack)
         {
-            var jsonString = Utils.ConvertToStringWithLengthStartingUnicode(datapack.Bytes);
+            var jsonString = Utils.ConvertToStringWithLengthStartingUnicode(datapack.ToBytes());
             dynamic json = JObject.Parse(jsonString);
             string? channelName = json.ChannalName;
             int? messageID = json.MessageID;
@@ -67,9 +67,9 @@ public partial class Monoserver : IServer
             var json = new JObject();
             msg.Deserialize(json);
             string jsonTxt = json.ToString(Formatting.None);
-           // var datapack = Datapack.GenLazyEvaluation(s => Utils.WriteStringWithLengthStartingUnicode(s, jsonTxt));
-            //var datapack = new Datapack(_unicoder.ConvertToBytes(jsonTxt));
-	    var datapack=new Datapack(_unicoder.ConvertToBytes(jsonTxt));
+            var stringBytes = _unicoder.ConvertToBytes(jsonTxt, false);
+            var datapack = new WriteableDatapack();
+            datapack.Write(stringBytes.Length).Write(stringBytes);
             SendDatapackTo(datapack, target);
         }
 
@@ -83,7 +83,7 @@ public partial class Monoserver : IServer
 
         public IMessageChannel New(string channelName)
         {
-            return new MessageChannel(this, channelName);
+            return new MessageChannel(this, Outer, channelName);
         }
 
         private Thread? _listen;
@@ -167,13 +167,19 @@ public partial class Monoserver : IServer
 
     private class MessageChannel : IMessageChannel
     {
-        public Network Outter
+        public Network Outer
         {
             get; init;
         }
-        public MessageChannel([NotNull] Network outter, [NotNull] string channelName)
+        public Monoserver Server
         {
-            Outter = outter;
+            get; init;
+        }
+
+        public MessageChannel([NotNull] Network outer, Monoserver server, [NotNull] string channelName)
+        {
+            Outer = outer;
+            Server = server;
             ChannelName = channelName;
         }
 
@@ -184,12 +190,12 @@ public partial class Monoserver : IServer
 
         public void SendMessage([NotNull] NetworkToken target, [NotNull] IMessage msg)
         {
-            Outter.SendMessage(target, msg);
+            Outer.SendMessage(target, msg);
         }
 
         public void SendMessageToAll([NotNull] IMessage msg)
         {
-            Outter.SendMessageToAll(msg);
+            Outer.SendMessageToAll(msg);
         }
 
         private readonly Dictionary<int, (Type msg, dynamic handler)> _Id2MsgTypeAndHandler = new();
@@ -210,7 +216,7 @@ public partial class Monoserver : IServer
                 {
                     msg.Deserialize(jsonContent);
                     var hanlder = info.handler;
-                    hanlder.Handle(msg);
+                    hanlder.Handle(msg, Server);
                 }
             }
         }
@@ -235,18 +241,20 @@ public partial class Monoserver : IServer
         {
             get; init;
         }
-	private bool Terminaled{get;set;}
 
-    	public bool Terminal()
-	{
-	    if(Terminaled)
-	    {
-		return false;
-	    }
-	    Disconnect();
-	    Terminaled=true;
-	    Socket.Close();
-	}
+        private bool Terminaled { get; set; }
+
+        public bool Terminal()
+        {
+            if (Terminaled)
+            {
+                return false;
+            }
+            Disconnect();
+            Terminaled = true;
+            Socket.Close();
+            return true;
+        }
 
         private NetworkToken Token
         {
@@ -273,7 +281,7 @@ public partial class Monoserver : IServer
             {
                 return false;
             }
-	    Connected=true;
+            IsConnected = true;
             return true;
         }
 
@@ -283,15 +291,16 @@ public partial class Monoserver : IServer
             {
                 return false;
             }
-	    Connected=false;
+            IsConnected = false;
             return true;
         }
 
         public void Send([NotNull] IDatapack datapack)
         {
-	    if(!Connected){
-		throw new ConnectionClosedException();
-	    }
+            if (!IsConnected)
+            {
+                throw new ConnectionClosedException();
+            }
             if (Stream.CanWrite)
             {
                 datapack.WriteInto(Stream);
