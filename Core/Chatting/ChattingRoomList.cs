@@ -1,4 +1,4 @@
-﻿namespace ChattingRoom.Server;
+﻿namespace ChattingRoom.Core;
 public class ChattingRoomList
 {
     private readonly Dictionary<int, ChattingRoom> _allChatingRooms = new();

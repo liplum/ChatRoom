@@ -1,9 +1,11 @@
 ﻿using ChattingRoom.Core;
 using ChattingRoom.Core.Networks;
 using ChattingRoom.Core.Services;
+using ChattingRoom.Server.Networks;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using IServiceProvider = ChattingRoom.Core.IServiceProvider;
+using Room = ChattingRoom.Core.ChattingRoom;
 
 
 namespace ChattingRoom.Server;
@@ -18,7 +20,17 @@ public class MultiServer : IServer
         _network = new(this);
     }
 
-    public ChattingRoom GetChattingRoomBy(ChattingRoomID ID)
+    public UserID GenAvailableUserID()
+    {
+        throw new NotImplementedException();
+    }
+
+    public Room GetChattingRoomBy(ChattingRoomID ID)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IMessageChannel? GetMessageChannelBy(string name)
     {
         throw new NotImplementedException();
     }
@@ -27,6 +39,11 @@ public class MultiServer : IServer
     {
         _serviceContainer.RegisterInstance<INetwork>(_network);
         _serviceContainer.RegisterSingleton<ILogger, CmdServerLogger>();
+    }
+
+    public void RegisterUser(UserID userID)
+    {
+        throw new NotImplementedException();
     }
 
     public void Start()
@@ -98,6 +115,11 @@ public class MultiServer : IServer
             throw new NotImplementedException();
         }
 
+        public void RecevieDatapack([NotNull] IDatapack datapack, [AllowNull] NetworkToken token = null)
+        {
+            throw new NotImplementedException();
+        }
+
         private class MessageChannel : IMessageChannel
         {
             public Network Outter
@@ -131,6 +153,11 @@ public class MultiServer : IServer
             }
 
             void IMessageChannel.RegisterMessageType<MessageType, HandlerType>(int messageID)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void ReceiveMessage(int messageID, dynamic jsonContent, [AllowNull] NetworkToken token = null)
             {
                 throw new NotImplementedException();
             }

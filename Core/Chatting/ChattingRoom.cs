@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace ChattingRoom.Server;
+namespace ChattingRoom.Core;
 public class ChattingRoom
 {
     private Queue<Action> SchedueledTasks
