@@ -12,5 +12,4 @@ public interface IMessageHandler<in T> where T : IMessage
 {
 
     public void Handle([NotNull] T msg, dynamic context);
-
 }

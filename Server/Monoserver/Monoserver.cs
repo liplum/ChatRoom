@@ -7,6 +7,7 @@ public partial class Monoserver : IServer
 {
     private readonly ChattingRoom _chatingRoom = new();
     private readonly ServiceContainer _serviceContainer = new();
+    private 
     private Network? _network;
 
     public void Initialize()
@@ -23,5 +24,8 @@ public partial class Monoserver : IServer
     public ChattingRoom? GetChattingRoomBy(ChattingRoomID ID)
     {
         return _chatingRoom.ID == ID ? _chatingRoom : null;
+    }
+    public bool RegisterUser(int UserID){
+
     }
 }
