@@ -63,7 +63,7 @@ public partial class Monoserver : IServer
 
         private readonly UnicodeBytesConverter _unicoder = new();
 
-        public void SendMessage([NotNull] IMessageChannel channel, [NotNull] NetworkToken target, [NotNull] IMessage msg, int msgID)
+        public void SendMessage([NotNull] IMessageChannel channel, [NotNull] NetworkToken target, [NotNull] IMessage msg, string msgID)
         {
             dynamic json = new JObject();
             WriteHeader();
@@ -82,7 +82,7 @@ public partial class Monoserver : IServer
             }
         }
 
-        public void SendMessageToAll([NotNull] IMessageChannel channel, [NotNull] IMessage msg, int msgID)
+        public void SendMessageToAll([NotNull] IMessageChannel channel, [NotNull] IMessage msg, string msgID)
         {
             foreach (var token in _allConnections.Keys)
             {
@@ -123,6 +123,7 @@ public partial class Monoserver : IServer
 
         private void AddNewClient([NotNull] NetworkToken token, [NotNull] TcpClient client)
         {
+	    var connection=new SocketConnection(this,token,client);
             var listeningThread = new Thread(() =>
             {
                 using var stream = client.GetStream();
@@ -134,7 +135,7 @@ public partial class Monoserver : IServer
                     }
                     var datapack = Datapack.ReadOne(stream);
                     if (!datapack.IsEmpty)
-                    {
+                    /{
                         RecevieDatapack(datapack, token);
                     }
                 }
@@ -151,7 +152,7 @@ public partial class Monoserver : IServer
 
             lock (_lock)
             {
-                _allConnections[token] = (new SocketConnection(this, token, client), listeningThread);
+                _allConnections[token] = (connection, listeningThread);
             }
 
             listeningThread.Start();
@@ -170,6 +171,10 @@ public partial class Monoserver : IServer
         {
             Logger!.SendMessage("Network component is preparing to stop.");
             _listen?.Interrupt();
+	    foreach(var pair in _allConnections.Values){
+		var c = pair.connection;
+		c.Terminal();
+	    }
             Logger!.SendMessage("Network component stoped.");
         }
     }
@@ -202,32 +207,40 @@ public partial class Monoserver : IServer
             Network.SendMessageToAll(this, msg, _msg2Id[msg.GetType()]);
         }
 
-        private readonly Dictionary<int, (Type msg, dynamic handler)> _id2MsgTypeAndHandler = new();
-        private readonly Dictionary<Type, int> _msg2Id = new();
+        private readonly Dictionary<string, (Type msg, dynamic handler)> _id2MsgTypeAndHandler = new();
+        private readonly Dictionary<Type, string> _msg2Id = new();
 
-        public void RegisterMessageType<MessageType, HandlerType>(int messageID)
-            where MessageType : class, IMessage, new()
-            where HandlerType : class, IMessageHandler<MessageType>, new()
+        public void RegisterMessageType<Msg, Handler>(string messageID)
+            where Msg : class, IMessage, new()
+            where Handler : class, IMessageHandler<Msg>, new()
         {
-            var msg = typeof(MessageType);
+            var msg = typeof(Msg);
             _msg2Id[msg] = messageID;
-            _id2MsgTypeAndHandler[messageID] = (msg, new HandlerType());
+            _id2MsgTypeAndHandler[messageID] = (msg, new Handler());
         }
 
+    	public void RegisterMessage<Msg>(string messageID) where Msg:class,IMessage,new(){
+	    var msg = type(Msg)
+	    _msg2Id[msg]=messageID;
+	    _id2MsgTypeAndHandler[messageID]=(msg,null);
+	}
+	
         public void ReceiveMessage(int messageID, dynamic jsonContent, [AllowNull] NetworkToken token = null)
         {
-            if (_id2MsgTypeAndHandler.TryGetValue(messageID, out var info))
+            if (_id2MsgTypeAndHandler.TryGetValue(messageID ,out var info))
             {
                 dynamic? msg = Activator.CreateInstance(info.msg);
                 if (msg is not null)
                 {
                     msg.Deserialize(jsonContent);
                     var hanlder = info.handler;
-                    var context = new MessageContext(Network.Server, this)
-                    {
-                        ClientToken = token
-                    };
-                    hanlder.Handle(msg, context);
+		    if(hanlder is not null){
+                    	var context = new MessageContext(Network.Server, this)
+                    	{
+                        	ClientToken = token
+                    	};
+                    	hanlder.Handle(msg, context);
+		    }
                 }
             }
         }

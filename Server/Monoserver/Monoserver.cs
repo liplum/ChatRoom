@@ -19,7 +19,6 @@ public partial class Monoserver : IServer
         _serviceContainer.RegisterInstance<INetwork>(new Network(this));
         _network = (Network?)_serviceContainer.Reslove<INetwork>();
     }
-    private int UserChannelID = 0;
     public void Start()
     {
         _network!.StartService();
@@ -34,7 +33,8 @@ public partial class Monoserver : IServer
     private void InitUserChannel()
     {
         User = _network!.New("User");
-        User.RegisterMessageType<AuthenticationMsg, AuthenticationMsgHandler>(UserChannelID++);
+        User.RegisterMessageType<AuthenticationMsg, AuthenticationMsgHandler>("Authentication");
+        User.RegisterMessageType<RegisterResultMsg>("RegisterResult");
     }
 
     public Room? GetChattingRoomBy(ChattingRoomID ID)

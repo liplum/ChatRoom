@@ -8,8 +8,10 @@ public interface IMessageChannel
     public void SendMessageToAll([NotNull] IMessage msg);
     public void ReceiveMessage(int messageID, dynamic jsonContent, [AllowNull] NetworkToken token = null);
 
-    public void RegisterMessageType<MessageType, HandlerType>(int messageID) where MessageType : class, IMessage, new() where HandlerType : class, IMessageHandler<MessageType>, new();
+    public void RegisterMessageHandler<Msg, Handler>(string messageID) where Msg : class, IMessage, new() where Handler : class, IMessageHandler<Msg>, new();
 
+    public void RegisterMessage<Msg>(string messageID) where Msg:class,IMessage,new();
+    public bool RegisterUser(int UserID);
     public string ChannelName
     {
         get;
