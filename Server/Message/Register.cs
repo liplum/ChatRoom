@@ -73,16 +73,6 @@ public class RegisterResultMsg : IMessage
 
     public void Deserialize(dynamic json)
     {
-        var res = Result!.Value;
-        json.Result = (int)res;
-        if (Cause.HasValue)
-        {
-            json.Cause = (int)Cause.Value;
-        }
-    }
-
-    public void Serialize(dynamic json)
-    {
         int? result = json.Result;
         int? cause = json.Cause;
         if (result.HasValue)
@@ -92,6 +82,16 @@ public class RegisterResultMsg : IMessage
             {
                 Cause = (FailureCause)cause;
             }
+        }
+    }
+
+    public void Serialize(dynamic json)
+    {
+        var res = Result!.Value;
+        json.Result = (int)res;
+        if (Cause.HasValue)
+        {
+            json.Cause = (int)Cause.Value;
         }
     }
 }

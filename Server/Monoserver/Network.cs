@@ -46,13 +46,13 @@ public partial class Monoserver : IServer
             var jsonString = Utils.ConvertToStringWithLengthStartingUnicode(datapack.ToBytes());
             dynamic json = JObject.Parse(jsonString);
             string? channelName = json.ChannalName;
-            int? messageID = json.MessageID;
+            string? messageID = json.MessageID;
             string content = json.Content ?? "";
             if (channelName is not null &&
                 messageID is not null &&
                 _allChannels.TryGetValue(channelName, out var channel))
             {
-                channel.ReceiveMessage(messageID.Value, content, token);
+                channel.ReceiveMessage(messageID, content, token);
             }
         }
 
@@ -67,12 +67,13 @@ public partial class Monoserver : IServer
         {
             dynamic json = new JObject();
             WriteHeader();
-            json.Content = "";
-            msg.Deserialize(json.Content);
+            json.Content = new JObject();
+            msg.Serialize(json.Content);
             string jsonTxt = json.ToString(Formatting.None);
-            var stringBytes = _unicoder.ConvertToBytes(jsonTxt, false);
+            var stringBytes = _unicoder.ConvertToBytes(jsonTxt);
             var datapack = new WriteableDatapack();
-            datapack.Write(stringBytes.Length).Write(stringBytes);
+            datapack.Write(stringBytes.Length)
+                .Write(stringBytes);
             SendDatapackTo(datapack, target);
 
             void WriteHeader()
@@ -123,7 +124,8 @@ public partial class Monoserver : IServer
 
         private void AddNewClient([NotNull] NetworkToken token, [NotNull] TcpClient client)
         {
-	    var connection=new SocketConnection(this,token,client);
+            var connection = new SocketConnection(this, token, client);
+            connection.Connect();
             var listeningThread = new Thread(() =>
             {
                 using var stream = client.GetStream();
@@ -135,7 +137,7 @@ public partial class Monoserver : IServer
                     }
                     var datapack = Datapack.ReadOne(stream);
                     if (!datapack.IsEmpty)
-                    /{
+                    {
                         RecevieDatapack(datapack, token);
                     }
                 }
@@ -171,10 +173,11 @@ public partial class Monoserver : IServer
         {
             Logger!.SendMessage("Network component is preparing to stop.");
             _listen?.Interrupt();
-	    foreach(var pair in _allConnections.Values){
-		var c = pair.connection;
-		c.Terminal();
-	    }
+            foreach (var pair in _allConnections.Values)
+            {
+                var c = pair.connection;
+                c.Terminal();
+            }
             Logger!.SendMessage("Network component stoped.");
         }
     }
@@ -207,10 +210,10 @@ public partial class Monoserver : IServer
             Network.SendMessageToAll(this, msg, _msg2Id[msg.GetType()]);
         }
 
-        private readonly Dictionary<string, (Type msg, dynamic handler)> _id2MsgTypeAndHandler = new();
+        private readonly Dictionary<string, (Type msg, dynamic? handler)> _id2MsgTypeAndHandler = new();
         private readonly Dictionary<Type, string> _msg2Id = new();
 
-        public void RegisterMessageType<Msg, Handler>(string messageID)
+        public void RegisterMessageHandler<Msg, Handler>(string messageID)
             where Msg : class, IMessage, new()
             where Handler : class, IMessageHandler<Msg>, new()
         {
@@ -219,30 +222,37 @@ public partial class Monoserver : IServer
             _id2MsgTypeAndHandler[messageID] = (msg, new Handler());
         }
 
-    	public void RegisterMessage<Msg>(string messageID) where Msg:class,IMessage,new(){
-	    var msg = type(Msg)
-	    _msg2Id[msg]=messageID;
-	    _id2MsgTypeAndHandler[messageID]=(msg,null);
-	}
-	
-        public void ReceiveMessage(int messageID, dynamic jsonContent, [AllowNull] NetworkToken token = null)
+        public void RegisterMessage<Msg>(string messageID) where Msg : class, IMessage, new()
         {
-            if (_id2MsgTypeAndHandler.TryGetValue(messageID ,out var info))
+            var msg = typeof(Msg);
+            _msg2Id[msg] = messageID;
+            _id2MsgTypeAndHandler[messageID] = (msg, null);
+        }
+
+        public void ReceiveMessage(string messageID, dynamic jsonContent, [AllowNull] NetworkToken token = null)
+        {
+            if (_id2MsgTypeAndHandler.TryGetValue(messageID, out var info))
             {
                 dynamic? msg = Activator.CreateInstance(info.msg);
                 if (msg is not null)
                 {
                     msg.Deserialize(jsonContent);
                     var hanlder = info.handler;
-		    if(hanlder is not null){
-                    	var context = new MessageContext(Network.Server, this)
-                    	{
-                        	ClientToken = token
-                    	};
-                    	hanlder.Handle(msg, context);
-		    }
+                    if (hanlder is not null)
+                    {
+                        var context = new MessageContext(Network.Server, this)
+                        {
+                            ClientToken = token
+                        };
+                        hanlder.Handle(msg, context);
+                    }
                 }
             }
+        }
+
+        public bool RegisterUser(int UserID)
+        {
+            throw new NotImplementedException();
         }
     }
     private class SocketConnection : IConnection

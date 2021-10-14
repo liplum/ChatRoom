@@ -1,5 +1,6 @@
 ﻿using ChattingRoom.Core;
 using ChattingRoom.Core.Services;
+using ChattingRoom.Core.Users;
 using ChattingRoom.Server.Messages;
 using ChattingRoom.Server.Networks;
 using Room = ChattingRoom.Core.ChattingRoom;
@@ -11,17 +12,25 @@ public partial class Monoserver : IServer
     private readonly Room _chatingRoom = new();
     private readonly ServiceContainer _serviceContainer = new();
     private Network? _network;
+    public INetwork? NetworkService
+    {
+        get => _network;
+        private set
+        {
+            _network = (Network?)value;
+        }
+    }
     public IMessageChannel? User { get; private set; }
 
     public void Initialize()
     {
         _serviceContainer.RegisterSingleton<ILogger, CmdServerLogger>();
         _serviceContainer.RegisterInstance<INetwork>(new Network(this));
-        _network = (Network?)_serviceContainer.Reslove<INetwork>();
+        NetworkService = _serviceContainer.Reslove<INetwork>();
     }
     public void Start()
     {
-        _network!.StartService();
+        NetworkService!.StartService();
         InitChannels();
     }
 
@@ -32,9 +41,10 @@ public partial class Monoserver : IServer
 
     private void InitUserChannel()
     {
-        User = _network!.New("User");
-        User.RegisterMessageType<AuthenticationMsg, AuthenticationMsgHandler>("Authentication");
-        User.RegisterMessageType<RegisterResultMsg>("RegisterResult");
+        User = NetworkService!.New("User");
+        User.RegisterMessageHandler<AuthenticationMsg, AuthenticationMsgHandler>("Authentication");
+        User.RegisterMessage<RegisterResultMsg>("RegisterResult");
+        User.RegisterMessage<RegisterRequestMsg>("RegisterRequest");
     }
 
     public Room? GetChattingRoomBy(ChattingRoomID ID)

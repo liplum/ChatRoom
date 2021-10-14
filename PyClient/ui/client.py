@@ -1,4 +1,2 @@
-class client;
+class client:
     pass
-
-

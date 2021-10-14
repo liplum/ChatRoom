@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace ChattingRoom.Core;
+namespace ChattingRoom.Core.Users;
 public class User
 {
 

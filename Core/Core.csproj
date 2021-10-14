@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>ChattingRoom.Core</AssemblyName>
     <RootNamespace>ChattingRoom.Core</RootNamespace>
+    <AppendTargetFrameworkToOutputPath>Flase</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

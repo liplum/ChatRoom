@@ -1,6 +1,7 @@
 ﻿using ChattingRoom.Core;
 using ChattingRoom.Core.Networks;
 using ChattingRoom.Core.Services;
+using ChattingRoom.Core.Users;
 using ChattingRoom.Server.Networks;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
@@ -147,17 +148,22 @@ public class MultiServer : IServer
                 Outter.SendMessageToAll(msg);
             }
 
-            public void ReceiveMessage(int messageID, dynamic jsonContent)
+            public bool RegisterUser(int UserID)
             {
                 throw new NotImplementedException();
             }
 
-            void IMessageChannel.RegisterMessageType<MessageType, HandlerType>(int messageID)
+            public void ReceiveMessage(string messageID, dynamic jsonContent, [AllowNull] NetworkToken token = null)
             {
                 throw new NotImplementedException();
             }
 
-            public void ReceiveMessage(int messageID, dynamic jsonContent, [AllowNull] NetworkToken token = null)
+            public void RegisterMessageHandler<Msg, Handler>(string messageID) where Msg : class, IMessage, new() where Handler : class, IMessageHandler<Msg>, new()
+            {
+                throw new NotImplementedException();
+            }
+
+            public void RegisterMessage<Msg>(string messageID) where Msg : class, IMessage, new()
             {
                 throw new NotImplementedException();
             }
@@ -177,7 +183,7 @@ public class MultiServer : IServer
                 throw new NotImplementedException();
             }
 
-            public void Send(IDatapack datapack)
+            public void Send([NotNull] IDatapack datapack)
             {
                 throw new NotImplementedException();
             }
