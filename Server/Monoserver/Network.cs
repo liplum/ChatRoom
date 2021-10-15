@@ -1,5 +1,6 @@
 ﻿using ChattingRoom.Core;
 using ChattingRoom.Core.Networks;
+using ChattingRoom.Core.Utils;
 using ChattingRoom.Server.Networks;
 using ChattingRoom.Server.Protocols;
 using Newtonsoft.Json;
@@ -7,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using IServiceProvider = ChattingRoom.Core.IServiceProvider;
 
 namespace ChattingRoom.Server;
@@ -31,6 +33,21 @@ public partial class Monoserver : IServer
         {
             Server = server;
         }
+        private int _buffSize = 1024;
+        public int BufferSize
+        {
+            get => _buffSize;
+            set
+            {
+                if (value <= 0)
+                    throw new ArgumentOutOfRangeException(nameof(BufferSize));
+                _buffSize = value;
+            }
+        }
+
+        #region Event
+        public event OnClientConnectedHandler? OnClientConnected;
+        #endregion
 
         public void SendDatapackTo([NotNull] IDatapack datapack, [NotNull] NetworkToken token)
         {
@@ -40,19 +57,25 @@ public partial class Monoserver : IServer
                 connection.Send(datapack);
             }
         }
-
+        private static readonly string EmptyJObjectStr = new JObject().ToString();
         public void RecevieDatapack([NotNull] IDatapack datapack, [AllowNull] NetworkToken token = null)
         {
-            var jsonString = Utils.ConvertToStringWithLengthStartingUnicode(datapack.ToBytes());
-            dynamic json = JObject.Parse(jsonString);
-            string? channelName = json.ChannalName;
-            string? messageID = json.MessageID;
-            string content = json.Content ?? "";
-            if (channelName is not null &&
-                messageID is not null &&
-                _allChannels.TryGetValue(channelName, out var channel))
+            var jsonString = _unicoder.ConvertToString(datapack.ToBytes());
+            try
             {
-                channel.ReceiveMessage(messageID, content, token);
+                dynamic json = JObject.Parse(jsonString);
+                string? channelName = json.ChannalName;
+                string? messageID = json.MessageID;
+                string content = json.Content ?? EmptyJObjectStr;
+                if ((channelName, messageID).NotNull() &&
+                    _allChannels.TryGetValue(channelName, out var channel))
+                {
+                    channel.ReceiveMessage(messageID, content, token);
+                }
+            }
+            catch
+            {
+                Logger!.SendError($"Cannot analyse datapack:{jsonString}");
             }
         }
 
@@ -65,6 +88,10 @@ public partial class Monoserver : IServer
 
         public void SendMessage([NotNull] IMessageChannel channel, [NotNull] NetworkToken target, [NotNull] IMessage msg, string msgID)
         {
+            if (!CheckDirection(msg))
+            {
+                throw new MessageDirectionException($"{msg.GetType().Name} cannot be sent to Client.");
+            }
             dynamic json = new JObject();
             WriteHeader();
             json.Content = new JObject();
@@ -80,6 +107,21 @@ public partial class Monoserver : IServer
             {
                 json.ChannalName = channel.ChannelName;
                 json.MessageID = msgID;
+            }
+        }
+
+        private bool CheckDirection(IMessage msg)
+        {
+            var msgType = msg.GetType();
+            var directionAttr = msgType.GetCustomAttributes<DirectionAttribute>(true).ToArray();
+            if (directionAttr.Length > 0)
+            {
+                var attr = directionAttr[0];
+                return attr.Accept(Direction.ServerToClient);
+            }
+            else
+            {
+                return true;
             }
         }
 
@@ -135,10 +177,17 @@ public partial class Monoserver : IServer
                     {
                         break;
                     }
-                    var datapack = Datapack.ReadOne(stream);
+                    var datapack = Datapack.ReadOne(stream, BufferSize);
                     if (!datapack.IsEmpty)
                     {
-                        RecevieDatapack(datapack, token);
+                        if (connection.IsConnected)
+                        {
+                            RecevieDatapack(datapack, token);
+                        }
+                        else
+                        {
+                            Logger!.SendWarn($"A datapack from {token.IpAddress} was abandoned because of having been already disconnected.");
+                        }
                     }
                 }
 
@@ -147,8 +196,8 @@ public partial class Monoserver : IServer
                     if (client.Connected)
                     {
                         client.Client.Shutdown(SocketShutdown.Both);
-                        Logger!.SendWarn($"{token.IpAddress} disconnected.");
                     }
+                    Logger!.SendWarn($"{token.IpAddress} disconnected.");
                 });
             });
 
@@ -158,6 +207,7 @@ public partial class Monoserver : IServer
             }
 
             listeningThread.Start();
+            OnClientConnected?.Invoke(token);
         }
 
         private void RemoveClient([NotNull] NetworkToken token, Action? afterRemoved = null)
@@ -248,11 +298,6 @@ public partial class Monoserver : IServer
                     }
                 }
             }
-        }
-
-        public bool RegisterUser(int UserID)
-        {
-            throw new NotImplementedException();
         }
     }
     private class SocketConnection : IConnection

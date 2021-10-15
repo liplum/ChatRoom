@@ -6,6 +6,7 @@ using Result = ChattingRoom.Server.Messages.RegisterResultMsg.RegisterResult;
 
 namespace ChattingRoom.Server.Messages;
 
+[Direction(Direction.ClientToServer)]
 public class RegisterRequestMsg : IMessage
 {
     public void Deserialize(dynamic json)
@@ -42,6 +43,7 @@ public class RegisterRequestMsgHandler : IMessageHandler<RegisterRequestMsg>
     }
 }
 
+[Direction(Direction.ServerToClient)]
 public class RegisterResultMsg : IMessage
 {
     public enum RegisterResult
@@ -62,8 +64,8 @@ public class RegisterResultMsg : IMessage
 
     }
 
-    private RegisterResult? Result { get; set; }
-    private FailureCause? Cause { get; set; }
+    public RegisterResult? Result { get; set; }
+    public FailureCause? Cause { get; set; }
 
     public RegisterResultMsg(RegisterResult result, [AllowNull] FailureCause? failureCause = null)
     {

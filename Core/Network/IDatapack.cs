@@ -24,7 +24,7 @@ public static class Datapack
         get;
     } = new EmptyDatapack();
 
-    public static IDatapack ReadOne([NotNull] Stream stream)
+    public static IDatapack ReadOne([NotNull] Stream stream, int bufferSize = 1024)
     {
         if (!stream.CanRead)
         {
@@ -36,9 +36,34 @@ public static class Datapack
         {
             stream.Read(dataLength_Bytes, 0, IntSize);
             int dataLength = BitConverter.ToInt32(dataLength_Bytes);
-            var data = new byte[dataLength];
-            stream.Read(data, 0, dataLength);
-            return new ReadOnlyDatapck(data);
+            if (dataLength > bufferSize)
+            {
+                var data = new List<byte>(dataLength);
+                int totalReadLength = 0;
+                while (true)
+                {
+                    var buffer = new byte[bufferSize];
+                    int readLength = stream.Read(buffer, 0, buffer.Length);
+                    totalReadLength += readLength;
+                    int restLength = dataLength - totalReadLength;
+                    if (restLength > bufferSize)
+                    {
+                        data.AddRange(buffer);
+                    }
+                    else
+                    {
+                        data.AddRange(buffer[0..restLength]);
+                        break;
+                    }
+                }
+                return new ReadOnlyDatapck(data.ToArray());
+            }
+            else
+            {
+                var data = new byte[dataLength];
+                stream.Read(data, 0, dataLength);
+                return new ReadOnlyDatapck(data);
+            }
         }
         catch (Exception)
         {

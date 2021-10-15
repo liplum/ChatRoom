@@ -7,11 +7,11 @@ public class UserInfo
     public Password Password;
     public string UserName;
 
-    public UserInfo(UserID id, Password password, string userName)
+    public UserInfo(UserID id, Password password)
     {
         ID = id;
         Password = password;
-        UserName = userName;
+        UserName = id.Name;
     }
 }
 

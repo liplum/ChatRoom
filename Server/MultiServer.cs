@@ -52,6 +52,11 @@ public class MultiServer : IServer
         throw new NotImplementedException();
     }
 
+    public bool Verify(UserID id, string password)
+    {
+        throw new NotImplementedException();
+    }
+
     private class Network : INetwork
     {
         private MultiServer Outer
@@ -66,6 +71,9 @@ public class MultiServer : IServer
         private readonly Dictionary<string, IMessageChannel> _allChannels = new();
         private readonly Dictionary<NetworkToken, IConnection> _allConnections = new();
         private MultiServer? _bang;
+
+        public event OnClientConnectedHandler? OnClientConnected;
+
         private Socket? ServerSocket
         {
             get; set;

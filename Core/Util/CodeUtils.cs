@@ -1,7 +1,7 @@
 ﻿using System.Text;
 
-namespace ChattingRoom.Core;
-public static class Utils
+namespace ChattingRoom.Core.Utils;
+public static class CodeUtils
 {
     public static string ConvertToStringUnicode(byte[] b)
     {
@@ -55,11 +55,11 @@ public class UnicodeBytesConverter : IBytesConverter
     {
         if (startWithLength)
         {
-            return Utils.ConvertToStringWithLengthStartingUnicode(b);
+            return CodeUtils.ConvertToStringWithLengthStartingUnicode(b);
         }
         else
         {
-            return Utils.ConvertToStringUnicode(b);
+            return CodeUtils.ConvertToStringUnicode(b);
         }
     }
 
@@ -67,11 +67,11 @@ public class UnicodeBytesConverter : IBytesConverter
     {
         if (startWithLength)
         {
-            return Utils.ConvertToBytesWithLengthStartingUnicode(str);
+            return CodeUtils.ConvertToBytesWithLengthStartingUnicode(str);
         }
         else
         {
-            return Utils.ConvertToBytesUnicode(str);
+            return CodeUtils.ConvertToBytesUnicode(str);
         }
     }
 }

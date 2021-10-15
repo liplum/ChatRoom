@@ -16,4 +16,6 @@ public interface IServer
     public void RegisterUser(UserID userID);
 
     public IMessageChannel? GetMessageChannelBy(string name);
+
+    public bool Verify(UserID id, string password);
 }

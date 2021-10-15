@@ -12,4 +12,8 @@ public interface INetwork : IInjectable, IMessageChannelContainer
     public void StartService();
 
     public void StopService();
+
+    public event OnClientConnectedHandler OnClientConnected;
 }
+
+public delegate void OnClientConnectedHandler([NotNull] NetworkToken token);

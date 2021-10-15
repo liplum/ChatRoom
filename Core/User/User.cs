@@ -3,19 +3,31 @@
 namespace ChattingRoom.Core.Users;
 public class User
 {
+    public User(UserInfo info)
+    {
+        Info = info;
+    }
 
+    public UserInfo Info
+    {
+        get; set;
+    }
+    public UserID ID
+    {
+        get => Info!.ID;
+    }
 }
 
 public struct UserID
 {
-    private readonly int ID;
-    public UserID(int id)
+    public readonly string Name;
+    public UserID(string name)
     {
-        ID = id;
+        Name = name;
     }
     public override bool Equals([NotNullWhen(true)] object? obj)
     {
-        return obj is UserID o && ID == o.ID;
+        return obj is UserID o && Name == o.Name;
     }
 
     public static bool operator ==(UserID left, UserID right)
@@ -30,6 +42,6 @@ public struct UserID
 
     public override int GetHashCode()
     {
-        return ID.GetHashCode();
+        return Name.GetHashCode();
     }
 }

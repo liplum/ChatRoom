@@ -30,13 +30,30 @@ public partial class Monoserver : IServer
     }
     public void Start()
     {
-        NetworkService!.StartService();
+        if (NetworkService is null)
+        {
+            throw new NetworkServiceException();
+        }
+        NetworkService.StartService();
         InitChannels();
+        InitUserService();
     }
 
     private void InitChannels()
     {
         InitUserChannel();
+    }
+
+    private void InitUserService()
+    {
+        if (NetworkService is null)
+        {
+            throw new NetworkServiceException();
+        }
+        NetworkService.OnClientConnected += token =>
+        {
+            User!.SendMessageToAll(new RegisterResultMsg(RegisterResultMsg.RegisterResult.Succeed));
+        };
     }
 
     private void InitUserChannel()
@@ -59,11 +76,28 @@ public partial class Monoserver : IServer
 
     public UserID GenAvailableUserID()
     {
-        return new UserID(12345);
+        return new UserID("test");
     }
 
     public IMessageChannel? GetMessageChannelBy(string name)
     {
         return null;
     }
+
+    public bool Verify(UserID id, string password)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+
+[Serializable]
+public class NetworkServiceException : Exception
+{
+    public NetworkServiceException() { }
+    public NetworkServiceException(string message) : base(message) { }
+    public NetworkServiceException(string message, Exception inner) : base(message, inner) { }
+    protected NetworkServiceException(
+      System.Runtime.Serialization.SerializationInfo info,
+      System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
 }
