@@ -2,14 +2,32 @@ from core.event import event
 from ui.client import client
 from ui import output
 from socket import socket, AF_INET, SOCK_STREAM
-from core import convert
+import sys
+import threading
+from threading import Lock, Thread
+import time
+import os
+from ui.client import client
 
-sk = socket(AF_INET, SOCK_STREAM)
-sk.connect(("127.0.0.1", 5000))
 
-while True:
-    data = sk.recv(1024)
-    data_length = convert.read_int(data[0:4])
-    string = convert.read_str(data[4:4 + data_length])
-    print(string)
-    print("end")
+def main():
+    _client = client()
+
+    _client.init_connect(("127.0.0.1", 5000))
+    _client.connect()
+    _client.start()
+
+    def cmd_input():
+        while True:
+            res = input("Enter:")
+            if res == "#":
+                break
+            print(res)
+
+    _cmd_input = Thread(target=cmd_input)
+    _cmd_input.start()
+
+
+if __name__ == '__main__':
+    main()
+    print()

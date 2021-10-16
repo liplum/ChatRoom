@@ -2,7 +2,9 @@ import core.ioc as ioc
 from core.event import event
 import ui.output as output
 from select import select
-from socket import socket,AF_INET,SOCK_STREAM
+from socket import socket, AF_INET, SOCK_STREAM
+from threading import Thread
+from core import convert
 
 
 class client:
@@ -19,23 +21,23 @@ class client:
 
     def init_connect(self, config):
         self.connect_config = config
-        self.socket=socket(AF_INET,SOCK_STREAM)
+        self.socket = socket(AF_INET, SOCK_STREAM)
 
     def connect(self):
-        ip_and_port=self.connect_config
+        ip_and_port = self.connect_config
         self.socket.connect(ip_and_port)
 
     def start(self):
-        readable = [self.input,self.socket]
-        writeable = []
-        exception = []
+        self.listen_thread = Thread(target=self.__receive_datapack)
+        self.listen_thread.start()
+
+    def __receive_datapack(self):
         while True:
-            rs, ws, es = select(readable, writeable, exception)
-            for r in rs:
-                if r is self.input:
-                    pass
-                elif r is self.socket:
-                    pass
+            data_length_b = self.socket.recv(4)
+            total_length = convert.read_int(data_length_b)
+            data = self.socket.recv(total_length)
+            res = convert.read_str(data)
+            print(res)
 
     def __init_channels(self):
         pass
