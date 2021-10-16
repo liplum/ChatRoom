@@ -11,15 +11,4 @@ public class NetworkToken
     {
         get; init;
     }
-
-    public override bool Equals(object? obj)
-    {
-        return obj is NetworkToken o
-            && this.IpAddress.Equals(o.IpAddress);
-    }
-
-    public override int GetHashCode()
-    {
-        return IpAddress.GetHashCode();
-    }
 }

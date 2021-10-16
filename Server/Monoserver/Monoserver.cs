@@ -1,8 +1,9 @@
 ﻿using ChattingRoom.Core;
+using ChattingRoom.Core.Messages;
+using ChattingRoom.Core.Networks;
 using ChattingRoom.Core.Services;
 using ChattingRoom.Core.Users;
 using ChattingRoom.Server.Messages;
-using ChattingRoom.Server.Networks;
 using Room = ChattingRoom.Core.ChattingRoom;
 
 
@@ -12,6 +13,9 @@ public partial class Monoserver : IServer
     private readonly Room _chatingRoom = new();
     private readonly ServiceContainer _serviceContainer = new();
     private Network? _network;
+
+    public event OnRegisterServiceHandler? OnRegisterService;
+
     public INetwork? NetworkService
     {
         get => _network;
@@ -24,8 +28,10 @@ public partial class Monoserver : IServer
 
     public void Initialize()
     {
+        _network = new Network(this);
         _serviceContainer.RegisterSingleton<ILogger, CmdServerLogger>();
-        _serviceContainer.RegisterInstance<INetwork>(new Network(this));
+        _serviceContainer.RegisterInstance<INetwork, Network>(_network);
+        OnRegisterService?.Invoke(_serviceContainer);
         NetworkService = _serviceContainer.Reslove<INetwork>();
     }
     public void Start()
@@ -52,16 +58,16 @@ public partial class Monoserver : IServer
         }
         NetworkService.OnClientConnected += token =>
         {
-            User!.SendMessageToAll(new RegisterResultMsg(RegisterResultMsg.RegisterResult.Succeed));
+            User!.SendMessage(token, new RegisterResultMsg(RegisterResultMsg.RegisterResult.Succeed));
         };
     }
 
     private void InitUserChannel()
     {
         User = NetworkService!.New("User");
-        User.RegisterMessageHandler<AuthenticationMsg, AuthenticationMsgHandler>("Authentication");
-        User.RegisterMessage<RegisterResultMsg>("RegisterResult");
-        User.RegisterMessage<RegisterRequestMsg>("RegisterRequest");
+        User.RegisterMessageHandler<AuthenticationMsg, AuthenticationMsgHandler>();
+        User.RegisterMessage<RegisterResultMsg>();
+        User.RegisterMessage<RegisterRequestMsg>();
     }
 
     public Room? GetChattingRoomBy(ChattingRoomID ID)

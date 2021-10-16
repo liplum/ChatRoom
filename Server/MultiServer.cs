@@ -2,7 +2,6 @@
 using ChattingRoom.Core.Networks;
 using ChattingRoom.Core.Services;
 using ChattingRoom.Core.Users;
-using ChattingRoom.Server.Networks;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using IServiceProvider = ChattingRoom.Core.IServiceProvider;
@@ -21,6 +20,8 @@ public class MultiServer : IServer
         _network = new(this);
     }
 
+    public event OnRegisterServiceHandler OnRegisterService;
+
     public UserID GenAvailableUserID()
     {
         throw new NotImplementedException();
@@ -38,7 +39,7 @@ public class MultiServer : IServer
 
     public void Initialize()
     {
-        _serviceContainer.RegisterInstance<INetwork>(_network);
+        _serviceContainer.RegisterInstance<INetwork, Network>(_network);
         _serviceContainer.RegisterSingleton<ILogger, CmdServerLogger>();
     }
 
@@ -172,6 +173,16 @@ public class MultiServer : IServer
             }
 
             public void RegisterMessage<Msg>(string messageID) where Msg : class, IMessage, new()
+            {
+                throw new NotImplementedException();
+            }
+
+            void IMessageChannel.RegisterMessageHandler<Msg, Handler>()
+            {
+                throw new NotImplementedException();
+            }
+
+            void IMessageChannel.RegisterMessage<Msg>()
             {
                 throw new NotImplementedException();
             }

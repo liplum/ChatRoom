@@ -10,6 +10,8 @@
         <AppendTargetFrameworkToOutputPath>Flase</AppendTargetFrameworkToOutputPath>
 
     <StartupObject>ChattingRoom.CmdClient.Bootstrap</StartupObject>
+
+    <Configurations>Debug;Release;Co</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

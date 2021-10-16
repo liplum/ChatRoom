@@ -5,16 +5,30 @@ public class WriteableDatapack : IDatapack
 {
     public WriteableDatapack()
     {
-        Bytes = new();
+        Bytes = new(LengthPlaceholder);
     }
-    public WriteableDatapack(IEnumerable<byte> data)
+    public WriteableDatapack(IEnumerable<byte> data, bool insertByteArrayLengthAhead = true)
     {
-        Bytes = new List<byte>(data);
+        if (insertByteArrayLengthAhead)
+        {
+            Bytes = new List<byte>(LengthPlaceholder);
+            Bytes.AddRange(data);
+        }
+        else
+        {
+            Bytes = new List<byte>(data);
+        }
     }
 
-    public WriteableDatapack(List<byte> data)
+    private static readonly byte[] LengthPlaceholder = new byte[] { 0, 0, 0, 0 };
+
+    public WriteableDatapack(List<byte> data, bool insertByteArrayLengthAhead = true)
     {
         Bytes = data;
+        if (insertByteArrayLengthAhead)
+        {
+            Bytes.InsertRange(0, LengthPlaceholder);
+        }
     }
 
     private List<byte> Bytes
@@ -26,9 +40,17 @@ public class WriteableDatapack : IDatapack
 
     public int Length => Bytes.Count;
 
-    public bool CanWrite => true;
+    public bool CanWrite
+    {
+        get; private set;
+    } = true;
 
     private bool _changed = false;
+
+    public void Close()
+    {
+        CanWrite = false;
+    }
 
     private byte[] _updated = Array.Empty<byte>();
 
@@ -36,8 +58,7 @@ public class WriteableDatapack : IDatapack
     {
         if (stream.CanWrite)
         {
-            stream.Write(BitConverter.GetBytes(Bytes.Count));
-            stream.Write(Bytes.ToArray());
+            stream.Write(ToBytes());
         }
     }
 
@@ -45,13 +66,30 @@ public class WriteableDatapack : IDatapack
     {
         if (_changed)
         {
-            _updated = Bytes.ToArray();
+            Update();
         }
         return _updated;
     }
 
+    private void Update()
+    {
+        var bytesLength = Bytes.Count - sizeof(int);
+        var bytesLength_b = BitConverter.GetBytes(bytesLength);
+        for (int i = 0; i < sizeof(int) && i < bytesLength_b.Length; i++)
+        {
+            Bytes[i] = bytesLength_b[i];
+        }
+        _updated = Bytes.ToArray();
+    }
+
+    private const string WhenDatapackClosed = "This datapack has been already closed.";
+
     public void Write(byte[] bytes)
     {
+        if (!CanWrite)
+        {
+            throw new DatapackCantBeWrittenInException(WhenDatapackClosed);
+        }
         if (bytes.Length > 0)
         {
             _changed = true;
@@ -61,6 +99,10 @@ public class WriteableDatapack : IDatapack
 
     public void Write(byte b)
     {
+        if (!CanWrite)
+        {
+            throw new DatapackCantBeWrittenInException(WhenDatapackClosed);
+        }
         _changed = true;
         Bytes.Add(b);
     }
@@ -86,9 +128,11 @@ public class ReadOnlyDatapck : IDatapack
         return _bytes;
     }
 
+    private const string WhenBeWrittenInExceptionMessage = "Read-only datapack can't be written in.";
+
     public void Write(byte[] bytes)
     {
-        throw new NotSupportedException();
+        throw new DatapackCantBeWrittenInException(WhenBeWrittenInExceptionMessage);
     }
 
     public void WriteInto([NotNull] Stream stream)
@@ -102,6 +146,18 @@ public class ReadOnlyDatapck : IDatapack
 
     public void Write(byte b)
     {
-        throw new NotSupportedException();
+        throw new DatapackCantBeWrittenInException(WhenBeWrittenInExceptionMessage);
     }
+}
+
+
+[Serializable]
+public class DatapackCantBeWrittenInException : Exception
+{
+    public DatapackCantBeWrittenInException() { }
+    public DatapackCantBeWrittenInException(string message) : base(message) { }
+    public DatapackCantBeWrittenInException(string message, Exception inner) : base(message, inner) { }
+    protected DatapackCantBeWrittenInException(
+      System.Runtime.Serialization.SerializationInfo info,
+      System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
 }

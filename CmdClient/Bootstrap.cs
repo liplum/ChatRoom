@@ -1,6 +1,6 @@
-﻿using System.Net;
+﻿using ChattingRoom.Core.Utils;
+using System.Net;
 using System.Net.Sockets;
-using System.Text;
 
 namespace ChattingRoom.CmdClient;
 public class Bootstrap
@@ -16,13 +16,52 @@ public class Bootstrap
         NetworkStream ns = client.GetStream();
         var thread = new Thread(() =>
         {
-            NetworkStream ns = client.GetStream();
-            byte[] receivedBytes = new byte[1024];
-            int byte_count;
-
-            while ((byte_count = ns.Read(receivedBytes, 0, receivedBytes.Length)) > 0)
+            NetworkStream stream = client.GetStream();
+            byte[] dataLength_Bytes = new byte[sizeof(int)];
+            var IntSize = sizeof(int);
+            var bufferSize = 1024;
+            string res = "";
+            while (true)
             {
-                Console.Write(Encoding.Unicode.GetString(receivedBytes, 0, byte_count));
+                try
+                {
+                    stream.Read(dataLength_Bytes, 0, IntSize);
+                    int dataLength = BitConverter.ToInt32(dataLength_Bytes);
+                    if (dataLength > bufferSize)
+                    {
+                        var data = new List<byte>(dataLength);
+                        int totalReadLength = 0;
+                        while (true)
+                        {
+                            var buffer = new byte[bufferSize];
+                            int readLength = stream.Read(buffer, 0, buffer.Length);
+                            totalReadLength += readLength;
+                            int restLength = dataLength - totalReadLength;
+                            if (restLength > bufferSize)
+                            {
+                                data.AddRange(buffer);
+                            }
+                            else
+                            {
+                                data.AddRange(buffer[0..restLength]);
+                                break;
+                            }
+                        }
+                        var dataArray = data.ToArray();
+                        res = CodeUtils.ConvertToStringWithLengthStartingUnicode(dataArray);
+                    }
+                    else
+                    {
+                        var data = new byte[dataLength];
+                        stream.Read(data, 0, dataLength);
+                        res = CodeUtils.ConvertToStringWithLengthStartingUnicode(data);
+                    }
+                    Console.WriteLine(res);
+                }
+                catch
+                {
+                    break;
+                }
             }
         });
         thread.Start();

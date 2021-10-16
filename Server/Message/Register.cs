@@ -1,25 +1,8 @@
-﻿using ChattingRoom.Core.Networks;
-using ChattingRoom.Server.Networks;
+﻿using ChattingRoom.Core.Messages;
+using ChattingRoom.Core.Networks;
 using System.Diagnostics.CodeAnalysis;
-using Cause = ChattingRoom.Server.Messages.RegisterResultMsg.FailureCause;
-using Result = ChattingRoom.Server.Messages.RegisterResultMsg.RegisterResult;
 
 namespace ChattingRoom.Server.Messages;
-
-[Direction(Direction.ClientToServer)]
-public class RegisterRequestMsg : IMessage
-{
-    public void Deserialize(dynamic json)
-    {
-
-    }
-
-    public void Serialize(dynamic json)
-    {
-
-    }
-}
-
 public class RegisterRequestMsgHandler : IMessageHandler<RegisterRequestMsg>
 {
     public void Handle([NotNull] RegisterRequestMsg msg, MessageContext context)
@@ -32,68 +15,13 @@ public class RegisterRequestMsgHandler : IMessageHandler<RegisterRequestMsg>
             try
             {
                 server.RegisterUser(id);
-                context.Channel.SendMessage(token, new RegisterResultMsg(Result.Succeed));
+                context.Channel.SendMessage(token, new RegisterResultMsg(RegisterResultMsg.RegisterResult.Succeed));
             }
             catch (Exception)
             {
-                context.Channel.SendMessage(token, new RegisterResultMsg(Result.Failed, Cause.Forbidden));
+                context.Channel.SendMessage(token, new RegisterResultMsg(RegisterResultMsg.RegisterResult.Failed, RegisterResultMsg.FailureCause.Forbidden));
             }
         }
 
-    }
-}
-
-[Direction(Direction.ServerToClient)]
-public class RegisterResultMsg : IMessage
-{
-    public enum RegisterResult
-    {
-        Succeed = 0,
-        Failed = 1,
-    }
-
-    public enum FailureCause
-    {
-        AlreadyRegistered = 0,
-        ReachedMaxUserNumber = 1,
-        Forbidden = 2,
-    }
-
-    public RegisterResultMsg()
-    {
-
-    }
-
-    public RegisterResult? Result { get; set; }
-    public FailureCause? Cause { get; set; }
-
-    public RegisterResultMsg(RegisterResult result, [AllowNull] FailureCause? failureCause = null)
-    {
-        Result = result;
-        Cause = failureCause;
-    }
-
-    public void Deserialize(dynamic json)
-    {
-        int? result = json.Result;
-        int? cause = json.Cause;
-        if (result.HasValue)
-        {
-            Result = (RegisterResult)result.Value;
-            if (Result == RegisterResult.Failed && cause.HasValue)
-            {
-                Cause = (FailureCause)cause;
-            }
-        }
-    }
-
-    public void Serialize(dynamic json)
-    {
-        var res = Result!.Value;
-        json.Result = (int)res;
-        if (Cause.HasValue)
-        {
-            json.Cause = (int)Cause.Value;
-        }
     }
 }

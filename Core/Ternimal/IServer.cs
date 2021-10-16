@@ -1,8 +1,8 @@
-﻿using ChattingRoom.Core;
+﻿using ChattingRoom.Core.Networks;
 using ChattingRoom.Core.Users;
-using ChattingRoom.Server.Networks;
+using System.Diagnostics.CodeAnalysis;
 using Room = ChattingRoom.Core.ChattingRoom;
-namespace ChattingRoom.Server;
+namespace ChattingRoom.Core;
 public interface IServer
 {
     public void Initialize();
@@ -18,4 +18,8 @@ public interface IServer
     public IMessageChannel? GetMessageChannelBy(string name);
 
     public bool Verify(UserID id, string password);
+
+    public event OnRegisterServiceHandler OnRegisterService;
 }
+
+public delegate void OnRegisterServiceHandler([NotNull] IServiceRegistry registry);

@@ -1,7 +1,6 @@
-﻿using ChattingRoom.Core.Networks;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 
-namespace ChattingRoom.Server.Networks;
+namespace ChattingRoom.Core.Networks;
 public interface IMessageHandler<in T> where T : IMessage
 {
     public void Handle([NotNull] T msg, MessageContext context);

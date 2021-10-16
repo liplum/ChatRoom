@@ -12,20 +12,25 @@ public enum Direction
 }
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-public sealed class DirectionAttribute : Attribute
+public sealed class MsgAttribute : Attribute
 {
+    public string? Name
+    {
+        get; init;
+    }
     public Direction[] Direction
     {
         get; init;
     }
-
-    public DirectionAttribute(params Direction[] directions)
+    public MsgAttribute(string name, params Direction[] direction)
     {
-        if (directions.Length == 0)
-        {
-            throw new ArgumentException("Direction given is none.");
-        }
-        Direction = directions;
+        Name = name;
+        Direction = direction;
+    }
+
+    public MsgAttribute(params Direction[] direction)
+    {
+        Direction = direction;
     }
 
     public bool Accept(Direction direction)

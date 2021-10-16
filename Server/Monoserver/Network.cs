@@ -1,7 +1,6 @@
 ﻿using ChattingRoom.Core;
 using ChattingRoom.Core.Networks;
 using ChattingRoom.Core.Utils;
-using ChattingRoom.Server.Networks;
 using ChattingRoom.Server.Protocols;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -19,7 +18,8 @@ public partial class Monoserver : IServer
         private readonly Dictionary<string, IMessageChannel> _allChannels = new();
         private readonly Dictionary<NetworkToken, (IConnection connection, Thread listning)> _allConnections = new();
         private TcpListener? _serverSocket;
-        private readonly object _lock = new();
+        private readonly object _clientLock = new();
+        private readonly object _channelLock = new();
         private ILogger? Logger
         {
             get; set;
@@ -51,10 +51,13 @@ public partial class Monoserver : IServer
 
         public void SendDatapackTo([NotNull] IDatapack datapack, [NotNull] NetworkToken token)
         {
-            if (_allConnections.TryGetValue(token, out var info))
+            lock (_clientLock)
             {
-                var connection = info.connection;
-                connection.Send(datapack);
+                if (_allConnections.TryGetValue(token, out var info))
+                {
+                    var connection = info.connection;
+                    connection.Send(datapack);
+                }
             }
         }
         private static readonly string EmptyJObjectStr = new JObject().ToString();
@@ -67,10 +70,13 @@ public partial class Monoserver : IServer
                 string? channelName = json.ChannalName;
                 string? messageID = json.MessageID;
                 string content = json.Content ?? EmptyJObjectStr;
-                if ((channelName, messageID).NotNull() &&
-                    _allChannels.TryGetValue(channelName, out var channel))
+                lock (_channelLock)
                 {
-                    channel.ReceiveMessage(messageID, content, token);
+                    if ((channelName, messageID).NotNull() &&
+                        _allChannels.TryGetValue(channelName, out var channel))
+                    {
+                        channel.ReceiveMessage(messageID, content, token);
+                    }
                 }
             }
             catch
@@ -86,9 +92,9 @@ public partial class Monoserver : IServer
 
         private readonly UnicodeBytesConverter _unicoder = new();
 
-        public void SendMessage([NotNull] IMessageChannel channel, [NotNull] NetworkToken target, [NotNull] IMessage msg, string msgID)
+        public void SendMessage([NotNull] MessageChannel channel, [NotNull] NetworkToken target, [NotNull] IMessage msg, string msgID)
         {
-            if (!CheckDirection(msg))
+            if (!CheckDirection())
             {
                 throw new MessageDirectionException($"{msg.GetType().Name} cannot be sent to Client.");
             }
@@ -97,10 +103,11 @@ public partial class Monoserver : IServer
             json.Content = new JObject();
             msg.Serialize(json.Content);
             string jsonTxt = json.ToString(Formatting.None);
-            var stringBytes = _unicoder.ConvertToBytes(jsonTxt);
+            var stringBytes = _unicoder.ConvertToBytes(jsonTxt, startWithLength: false);
             var datapack = new WriteableDatapack();
             datapack.Write(stringBytes.Length)
                 .Write(stringBytes);
+            datapack.Close();
             SendDatapackTo(datapack, target);
 
             void WriteHeader()
@@ -108,24 +115,26 @@ public partial class Monoserver : IServer
                 json.ChannalName = channel.ChannelName;
                 json.MessageID = msgID;
             }
-        }
 
-        private bool CheckDirection(IMessage msg)
-        {
-            var msgType = msg.GetType();
-            var directionAttr = msgType.GetCustomAttributes<DirectionAttribute>(true).ToArray();
-            if (directionAttr.Length > 0)
+            bool CheckDirection()
             {
-                var attr = directionAttr[0];
-                return attr.Accept(Direction.ServerToClient);
-            }
-            else
-            {
+                if (channel.Id2MsgTypeAndHandler.TryGetValue(msgID, out var info))
+                {
+                    var meta = info.meta;
+                    if (meta is not null)
+                    {
+                        return meta.Accept(Direction.ServerToClient);
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
                 return true;
             }
         }
 
-        public void SendMessageToAll([NotNull] IMessageChannel channel, [NotNull] IMessage msg, string msgID)
+        public void SendMessageToAll([NotNull] MessageChannel channel, [NotNull] IMessage msg, string msgID)
         {
             foreach (var token in _allConnections.Keys)
             {
@@ -135,7 +144,12 @@ public partial class Monoserver : IServer
 
         public IMessageChannel New(string channelName)
         {
-            return new MessageChannel(this, channelName);
+            var channel = new MessageChannel(this, channelName);
+            lock (_channelLock)
+            {
+                _allChannels[channelName] = channel;
+            }
+            return channel;
         }
 
         private Thread? _listen;
@@ -201,7 +215,7 @@ public partial class Monoserver : IServer
                 });
             });
 
-            lock (_lock)
+            lock (_clientLock)
             {
                 _allConnections[token] = (connection, listeningThread);
             }
@@ -212,7 +226,7 @@ public partial class Monoserver : IServer
 
         private void RemoveClient([NotNull] NetworkToken token, Action? afterRemoved = null)
         {
-            lock (_lock)
+            lock (_clientLock)
             {
                 _allConnections.Remove(token);
             }
@@ -223,9 +237,9 @@ public partial class Monoserver : IServer
         {
             Logger!.SendMessage("Network component is preparing to stop.");
             _listen?.Interrupt();
-            foreach (var pair in _allConnections.Values)
+            foreach (var (connection, _) in _allConnections.Values)
             {
-                var c = pair.connection;
+                var c = connection;
                 c.Terminal();
             }
             Logger!.SendMessage("Network component stoped.");
@@ -252,36 +266,102 @@ public partial class Monoserver : IServer
 
         public void SendMessage([NotNull] NetworkToken target, [NotNull] IMessage msg)
         {
-            Network.SendMessage(this, target, msg, _msg2Id[msg.GetType()]);
+            Network.SendMessage(this, target, msg, Msg2Id[msg.GetType()]);
         }
 
         public void SendMessageToAll([NotNull] IMessage msg)
         {
-            Network.SendMessageToAll(this, msg, _msg2Id[msg.GetType()]);
+            Network.SendMessageToAll(this, msg, Msg2Id[msg.GetType()]);
         }
 
-        private readonly Dictionary<string, (Type msg, dynamic? handler)> _id2MsgTypeAndHandler = new();
-        private readonly Dictionary<Type, string> _msg2Id = new();
+        public Dictionary<string, (Type msg, dynamic? handler, MsgAttribute? meta)> Id2MsgTypeAndHandler
+        {
+            get;
+        } = new();
+        public Dictionary<Type, string> Msg2Id
+        {
+            get;
+        } = new();
+        private readonly object _msgLock = new();
 
         public void RegisterMessageHandler<Msg, Handler>(string messageID)
             where Msg : class, IMessage, new()
             where Handler : class, IMessageHandler<Msg>, new()
         {
             var msg = typeof(Msg);
-            _msg2Id[msg] = messageID;
-            _id2MsgTypeAndHandler[messageID] = (msg, new Handler());
+            var attrs = msg.GetCustomAttributes<MsgAttribute>().ToArray();
+            var meta = attrs.Length > 0 ? attrs[0] : null;
+            lock (_msgLock)
+            {
+                Msg2Id[msg] = messageID;
+                Id2MsgTypeAndHandler[messageID] = (msg, new Handler(), meta);
+            }
         }
 
         public void RegisterMessage<Msg>(string messageID) where Msg : class, IMessage, new()
         {
             var msg = typeof(Msg);
-            _msg2Id[msg] = messageID;
-            _id2MsgTypeAndHandler[messageID] = (msg, null);
+            var attrs = msg.GetCustomAttributes<MsgAttribute>().ToArray();
+            var meta = attrs.Length > 0 ? attrs[0] : null;
+            lock (_msgLock)
+            {
+                Msg2Id[msg] = messageID;
+                Id2MsgTypeAndHandler[messageID] = (msg, null, meta);
+            }
+        }
+        public void RegisterMessageHandler<Msg, Handler>()
+            where Msg : class, IMessage, new()
+            where Handler : class, IMessageHandler<Msg>, new()
+        {
+            var msg = typeof(Msg);
+            var attrs = msg.GetCustomAttributes<MsgAttribute>().ToArray();
+            if (attrs.Length > 0)
+            {
+                var nameAttr = attrs[0];
+                var name = nameAttr.Name;
+                if (string.IsNullOrEmpty(name))
+                {
+                    throw new MessageTypeHasNoNameException(msg.FullName ?? msg.Name);
+                }
+                lock (_msgLock)
+                {
+                    Msg2Id[msg] = name;
+                    Id2MsgTypeAndHandler[name] = (msg, new Handler(), nameAttr);
+                }
+            }
+            else
+            {
+                throw new MessageTypeHasNoNameException(msg.FullName ?? msg.Name);
+            }
+        }
+
+        public void RegisterMessage<Msg>() where Msg : class, IMessage, new()
+        {
+            var msg = typeof(Msg);
+            var attrs = msg.GetCustomAttributes<MsgAttribute>().ToArray();
+            if (attrs.Length > 0)
+            {
+                var nameAttr = attrs[0];
+                var name = nameAttr.Name;
+                if (string.IsNullOrEmpty(name))
+                {
+                    throw new MessageTypeHasNoNameException(msg.FullName ?? msg.Name);
+                }
+                lock (_msgLock)
+                {
+                    Msg2Id[msg] = name;
+                    Id2MsgTypeAndHandler[name] = (msg, null, nameAttr);
+                }
+            }
+            else
+            {
+                throw new MessageTypeHasNoNameException(msg.FullName ?? msg.Name);
+            }
         }
 
         public void ReceiveMessage(string messageID, dynamic jsonContent, [AllowNull] NetworkToken token = null)
         {
-            if (_id2MsgTypeAndHandler.TryGetValue(messageID, out var info))
+            if (Id2MsgTypeAndHandler.TryGetValue(messageID, out var info))
             {
                 dynamic? msg = Activator.CreateInstance(info.msg);
                 if (msg is not null)
@@ -299,6 +379,7 @@ public partial class Monoserver : IServer
                 }
             }
         }
+
     }
     private class SocketConnection : IConnection
     {

@@ -1,8 +1,6 @@
-﻿using ChattingRoom.Core;
-using ChattingRoom.Core.Networks;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 
-namespace ChattingRoom.Server.Networks;
+namespace ChattingRoom.Core.Networks;
 public interface INetwork : IInjectable, IMessageChannelContainer
 {
     public void SendDatapackTo([NotNull] IDatapack datapack, [NotNull] NetworkToken token);

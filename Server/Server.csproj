@@ -9,6 +9,7 @@
     <RootNamespace>ChattingRoom.Server</RootNamespace>
     <StartupObject>ChattingRoom.Server.Bootstrap</StartupObject>
     <AppendTargetFrameworkToOutputPath>Flase</AppendTargetFrameworkToOutputPath>
+    <Configurations>Debug;Release;Co</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +18,10 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Network\" />
   </ItemGroup>
 
 </Project>

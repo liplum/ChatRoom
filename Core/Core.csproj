@@ -7,6 +7,7 @@
     <AssemblyName>ChattingRoom.Core</AssemblyName>
     <RootNamespace>ChattingRoom.Core</RootNamespace>
     <AppendTargetFrameworkToOutputPath>Flase</AppendTargetFrameworkToOutputPath>
+    <Configurations>Debug;Release;Co</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

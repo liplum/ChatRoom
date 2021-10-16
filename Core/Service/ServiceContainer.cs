@@ -5,10 +5,10 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry
 {
     private readonly Dictionary<Type, ServiceEntry> _allServices = new();
 
-    public Interface Reslove<Interface>()
+    public In Reslove<In>()
     {
-        var key = typeof(Interface);
-        Interface? returnValue = default;
+        var key = typeof(In);
+        In? returnValue = default;
         if (_allServices.TryGetValue(key, out var entry))
         {
             switch (entry.RegisterType)
@@ -31,13 +31,22 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry
         throw new ServiceNotRegisteredException(key.Name);
         void ReturnIntance([NotNull] ServiceEntry entry)
         {
-            returnValue = (Interface)entry.Instance!;
+            returnValue = (In)entry.Instance!;
             Inject();
         }
         void ReturnTransient([NotNull] ServiceEntry entry)
         {
-            returnValue = (Interface)Activator.CreateInstance(entry.Type)!;
-            Inject();
+            var outType = entry.OutType;
+            var inType = entry.InType;
+            if (outType is not null)
+            {
+                returnValue = (In)Activator.CreateInstance(outType)!;
+                Inject();
+            }
+            else
+            {
+                throw new ServiceResolveException($"Cannot reslove transient object {inType.FullName ?? inType.Name} because there is no corresponding out type.");
+            }
         }
         void Inject()
         {
@@ -48,16 +57,15 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry
         }
     }
 
-    public void RegisterSingleton<Interface, Clz>() where Interface : IInjectable where Clz : Interface, new()
+    public void RegisterSingleton<In, Out>() where In : IInjectable where Out : In, new()
     {
-        var type = typeof(Interface);
-        var entry = this[type];
-        /*  if (entry.RegisterType != RegisterType.None)
-          {
-              throw new ServiceBeAlreadyRegisteredException(type.ToString());
-          }*/
-        entry.Instance = new Clz();
+        var inType = typeof(In);
+        var entry = this[inType];
+
+        var outType = typeof(Out);
+        entry.Instance = new Out();
         entry.RegisterType = RegisterType.Singleton;
+        entry.OutType = outType;
     }
 
     public void HandleReference()
@@ -80,27 +88,29 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry
         }
     }
 
-    public void RegisterTransient<Interface, Clz>() where Interface : IInjectable where Clz : Interface, new()
+    public void RegisterTransient<In, Out>() where In : IInjectable where Out : In, new()
     {
-        var type = typeof(Interface);
-        var entry = this[type];
-        /* if (entry.RegisterType != RegisterType.None)
-         {
-             throw new ServiceBeAlreadyRegisteredException(type.ToString());
-         }*/
+        var inType = typeof(In);
+        var entry = this[inType];
+
+        var outType = typeof(Out);
         entry.RegisterType = RegisterType.Transient;
+        entry.OutType = outType;
     }
 
-    public void RegisterInstance<Clz>(Clz obj)
+    public void RegisterInstance<In, Out>([NotNull] Out obj) where Out : In
     {
-        var type = typeof(Clz);
-        var entry = this[type];
-        /* if (entry.RegisterType != RegisterType.None)
-         {
-             throw new ServiceBeAlreadyRegisteredException(type.ToString());
-         }*/
+        if (obj is null)
+        {
+            throw new ArgumentNullException(nameof(obj));
+        }
+        var inType = typeof(In);
+        var entry = this[inType];
+
+        var outType = typeof(Out);
         entry.Instance = obj;
         entry.RegisterType = RegisterType.Instance;
+        entry.OutType = outType;
     }
 
     private ServiceEntry GetEntry([NotNull] Type type)
@@ -118,27 +128,31 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry
         get => GetEntry(type);
     }
 
-    internal class ServiceEntry
+    private class ServiceEntry
     {
-        public ServiceEntry(Type type)
+        public ServiceEntry(Type inType)
         {
-            Type = type;
+            InType = inType;
         }
-        internal Type Type
+        public Type InType
         {
             get; init;
         }
-        internal object? Instance
+        public Type? OutType
         {
             get; set;
         }
-        internal RegisterType RegisterType
+        public object? Instance
+        {
+            get; set;
+        }
+        public RegisterType RegisterType
         {
             get; set;
         } = RegisterType.None;
     }
 
-    internal enum RegisterType
+    private enum RegisterType
     {
         None, Singleton, Instance, Transient
     }
@@ -159,14 +173,12 @@ public class ServiceNotRegisteredException : Exception
 
 
 [Serializable]
-public class ServiceBeAlreadyRegisteredException : Exception
+public class ServiceResolveException : Exception
 {
-    public ServiceBeAlreadyRegisteredException()
-    {
-    }
-    public ServiceBeAlreadyRegisteredException(string message) : base(message) { }
-    public ServiceBeAlreadyRegisteredException(string message, Exception inner) : base(message, inner) { }
-    protected ServiceBeAlreadyRegisteredException(
+    public ServiceResolveException() { }
+    public ServiceResolveException(string message) : base(message) { }
+    public ServiceResolveException(string message, Exception inner) : base(message, inner) { }
+    protected ServiceResolveException(
       System.Runtime.Serialization.SerializationInfo info,
       System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
 }
