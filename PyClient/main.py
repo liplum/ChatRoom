@@ -1,4 +1,5 @@
 from core.event import event
+from core.ioc import container
 from ui.client import client
 from ui import output
 from socket import socket, AF_INET, SOCK_STREAM
@@ -9,25 +10,16 @@ import time
 import os
 from ui.client import client
 
+_client = client()
 
 def main():
-    _client = client()
-
-    _client.init_connect(("127.0.0.1", 5000))
-    _client.connect()
+    _client.on_service_register.add(init_plugin)
     _client.start()
 
-    def cmd_input():
-        while True:
-            res = input("Enter:")
-            if res == "#":
-                break
-            print(res)
 
-    _cmd_input = Thread(target=cmd_input)
-    _cmd_input.start()
+def init_plugin(registry: container):
+    pass
 
 
 if __name__ == '__main__':
     main()
-    print()

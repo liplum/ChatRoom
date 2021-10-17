@@ -22,6 +22,6 @@ j = '{ \
 
 jobj = json.loads(j)
 
-print("test02" in jobj)
+print(type(jobj))
 
 print()

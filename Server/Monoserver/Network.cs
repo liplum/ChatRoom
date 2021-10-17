@@ -20,7 +20,7 @@ public partial class Monoserver : IServer
         private TcpListener? _serverSocket;
         private readonly object _clientLock = new();
         private readonly object _channelLock = new();
-        private ILogger? Logger
+        internal ILogger? Logger
         {
             get; set;
         }
@@ -67,15 +67,25 @@ public partial class Monoserver : IServer
             try
             {
                 dynamic json = JObject.Parse(jsonString);
-                string? channelName = json.ChannalName;
+                string? channelName = json.ChannelName;
                 string? messageID = json.MessageID;
                 string content = json.Content ?? EmptyJObjectStr;
                 lock (_channelLock)
                 {
-                    if ((channelName, messageID).NotNull() &&
-                        _allChannels.TryGetValue(channelName, out var channel))
+                    if ((channelName, messageID).NotNull())
                     {
-                        channel.ReceiveMessage(messageID, content, token);
+                        if (_allChannels.TryGetValue(channelName, out var channel))
+                        {
+                            channel.ReceiveMessage(messageID, content, token);
+                        }
+                        else
+                        {
+                            Logger!.SendError($"Cannot find channel called {channelName}");
+                        }
+                    }
+                    else
+                    {
+                        Logger!.SendError($"Cannot analyse datapack: \"{ jsonString}\" because of no header.");
                     }
                 }
             }
@@ -112,7 +122,7 @@ public partial class Monoserver : IServer
 
             void WriteHeader()
             {
-                json.ChannalName = channel.ChannelName;
+                json.ChannelName = channel.ChannelName;
                 json.MessageID = msgID;
             }
 
@@ -377,6 +387,10 @@ public partial class Monoserver : IServer
                         hanlder.Handle(msg, context);
                     }
                 }
+            }
+            else
+            {
+                Network.Logger!.SendError($"Cannot find message type called {messageID}");
             }
         }
 
