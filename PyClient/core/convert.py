@@ -14,3 +14,10 @@ def read_str(barray: bytes, starting_with_length: bool = True) -> str:
 
 def read_int(barray: bytes) -> int:
     return struct.unpack('i', barray)[0]
+
+
+def write_int(i: int) -> bytes:
+    return struct.pack('!i', i)
+
+def write_str(string:str)->bytes:
+    return string.encode()

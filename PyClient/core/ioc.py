@@ -37,7 +37,7 @@ class container:
         _item = self.__get_or_gen_item(base_type)
         _item.register_type = RegisterType.Instance
         _item.instance = instance
-        _item.out_type = type(out_type)
+        _item.out_type = type(instance)
 
     def register_transient(self, in_type, out_type):
         _item = self.__get_or_gen_item(in_type)

@@ -36,26 +36,35 @@ class AlertColor(IntEnum):
     Error = CmdColor.Red
 
 
+def tinted_print(text: str, color: CmdColor, end=None):
+    if end is None:
+        print(f"\033[0;{int(color)}m{text}\033[0m")
+    else:
+        print(f"\033[0;{int(color)}m{text}\033[0m", end=end)
+
+
 class cmd_logger(i_logger):
     def msg(self, text: str) -> None:
-        cmd_logger.print(text, AlertColor.Msg, "Message")
+        cmd_logger.alert_print(text, AlertColor.Msg, "Message")
 
     def tip(self, text: str) -> None:
-        cmd_logger.print(text, AlertColor.Tip, "Tip")
+        cmd_logger.alert_print(text, AlertColor.Tip, "Tip")
 
     def warn(self, text: str) -> None:
-        cmd_logger.print(text, AlertColor.Warn, "Warn")
+        cmd_logger.alert_print(text, AlertColor.Warn, "Warn")
 
     def error(self, text: str) -> None:
-        cmd_logger.print(text, AlertColor.Error, "Error")
+        cmd_logger.alert_print(text, AlertColor.Error, "Error")
 
-    def print(self, text: str, color: AlertColor, alertLevel: str) -> None:
+    @staticmethod
+    def alert_print(text: str, color, alertLevel: str) -> None:
         time_stamp = datetime.now().strftime("%Y%m%d-%H:%M:%S")
-        print(f"\033[0;{int(color)}m{time_stamp}[{alertLevel}]{text}\033[0m")
+        t = f"{time_stamp}[{alertLevel}]{text}"
+        tinted_print(t, color)
 
 
 class i_display:
-    def display_text(self, text: str):
+    def display_text(self, text: str, end: str = "", color: CmdColor = None):
         pass
 
     def display_image(self, file_path: str):
@@ -64,8 +73,11 @@ class i_display:
 
 class cmd_display(i_display):
 
-    def display_text(self, text: str):
-        print(text, end="")
+    def display_text(self, text: str, end: str = "", color: CmdColor = None):
+        if color is not None:
+            tinted_print(text, color, end)
+        else:
+            print(text, end=end)
 
     def display_image(self, file_path: str):
         pass

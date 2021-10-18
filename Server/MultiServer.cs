@@ -22,6 +22,11 @@ public class MultiServer : IServer
 
     public event OnRegisterServiceHandler OnRegisterService;
 
+    public void AddScheduledTask([NotNull] Action action)
+    {
+        throw new NotImplementedException();
+    }
+
     public UserID GenAvailableUserID()
     {
         throw new NotImplementedException();

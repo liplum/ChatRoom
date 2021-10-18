@@ -1,27 +1,10 @@
-from network.network import channel
+import win32console
 
-c = channel("test name")
+d = {"#05": "05", "#08": "08", "#01": "01"}
 
+for k in sorted(d):
+    print(k, d[k])
 
-def handle(msg, context):
-    pass
-
-
-class msg:
-    MessageID = "MSG"
-    pass
-
-
-c.register(msg_type=msg, msg_id="Abc")
-
-import json
-
-j = '{ \
-    "test":"01"\
-  }'
-
-jobj = json.loads(j)
-
-print(type(jobj))
-
-print()
+d = ("abc", 123)
+s, n = d
+print(s + str(n))

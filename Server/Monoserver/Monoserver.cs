@@ -4,6 +4,7 @@ using ChattingRoom.Core.Networks;
 using ChattingRoom.Core.Services;
 using ChattingRoom.Core.Users;
 using ChattingRoom.Server.Messages;
+using System.Diagnostics.CodeAnalysis;
 using Room = ChattingRoom.Core.ChattingRoom;
 
 
@@ -13,6 +14,10 @@ public partial class Monoserver : IServer
     private readonly Room _chatingRoom = new();
     private readonly ServiceContainer _serviceContainer = new();
     private Network? _network;
+    private Thread? MainThread
+    {
+        get; set;
+    }
 
     public event OnRegisterServiceHandler? OnRegisterService;
 
@@ -43,7 +48,42 @@ public partial class Monoserver : IServer
         NetworkService.StartService();
         InitChannels();
         InitUserService();
+        StartMainThread();
     }
+
+    private void StartMainThread()
+    {
+        MainThread = new Thread(() =>
+        {
+            while (true)
+            {
+                lock (_mainThreadLock)
+                {
+                    while (ScheduledTask.TryDequeue(out var task))
+                    {
+                        task();
+                    }
+                }
+            }
+        });
+        MainThread.Start();
+    }
+
+    private Queue<Action> ScheduledTask
+    {
+        get; init;
+    } = new();
+
+    private readonly object _mainThreadLock = new();
+
+    public void AddScheduledTask([NotNull] Action action)
+    {
+        lock (_mainThreadLock)
+        {
+            ScheduledTask.Enqueue(action);
+        }
+    }
+
 
     private void InitChannels()
     {

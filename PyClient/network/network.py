@@ -5,6 +5,8 @@ from socket import socket, AF_INET, SOCK_STREAM
 from threading import Thread
 import json
 from ui import output
+from utils import get, not_none
+from core import convert
 
 
 class server_token:
@@ -16,6 +18,9 @@ class server_token:
         else:
             self.target = ("127.0.0.1", 8080)
 
+    def __str__(self):
+        return self.target.__str__()
+
 
 class msg(ABC):
     @abstractmethod
@@ -25,24 +30,6 @@ class msg(ABC):
     @abstractmethod
     def write(self, json):
         pass
-
-
-def get(dic: Dict, key):
-    if key in dic:
-        return dic[key]
-    else:
-        return None
-
-
-def _get_not_none_one(*args):
-    """
-    :param args:all selections
-    :return: the first not none one otherwise None
-    """
-    for arg in args:
-        if arg is not None:
-            return arg
-    return None
 
 
 class i_channel:
@@ -81,12 +68,25 @@ class channel(i_channel):
         pair = get(self.id2msg_and_handler, msg_id)
         if pair is not None:
             _msg = pair[0]
+            msg = _msg()
+            msg.read(_json)
             handler = pair[0]
             if handler is not None:
                 context = (self.network.client, server_token)
                 handler(_msg, context)
         else:
             self.logger.error(f"Cannot find message type called {msg_id}")
+
+    def send(self, to: server_token, msg):
+        msg_id = get(self.msg2id, type(msg))
+        if msg_id is not None:
+            jobj = {
+                "ChannelName": self.name,
+                "MessageID": msg_id
+            }
+            self.network.send(to, msg, jobj)
+        else:
+            self.logger.error(f"Cannot find message type {msg_id}")
 
 
 class i_network:
@@ -96,26 +96,31 @@ class i_network:
     def connect(self, server: server_token):
         pass
 
-    def send(self, server: server_token, _msg: msg):
-        pass
-
-    def receive(self):
+    def send(self, server: server_token, _msg: msg, jobj: Dict):
         pass
 
     def new_channel(self, channel_name: str) -> channel:
+        pass
+
+    def get_channel(self, name: str):
         pass
 
 
 class network(i_network):
     def __init__(self, client):
         super().__init__(client)
-        self.socket: socket = socket(AF_INET, SOCK_STREAM)
+        self.sockets: Dict[server_token, Tuple[socket, Thread]] = {}
         self.channels: Dict[str, channel] = {}
 
+    def get_channel(self, name: str):
+        return get(self.channels, name)
+
     def connect(self, server: server_token):
-        self.socket.connect(server.target)
-        self.listen_thread: Thread = Thread(target=self.__receive_datapack, args=(self.socket,))
-        self.listen_thread.start()
+        skt = socket(AF_INET, SOCK_STREAM)
+        skt.connect(server.target)
+        listen = Thread(target=self.__receive_datapack, args=(self.socket,))
+        self.sockets[server] = (skt, listen)
+        listen.start()
 
     def init(self, container):
         self.logger = container.resolve(output.i_logger)
@@ -139,11 +144,18 @@ class network(i_network):
         else:
             self.logger.error("Cannot analyse datapack")
 
-    def send(self, server: server_token, _msg: msg):
-        pass
-
-    def receive(self):
-        pass
+    def send(self, server: server_token, _msg: msg, jobj: Dict):
+        _msg.write(jobj)
+        info = get(self.sockets, server)
+        if info is not None:
+            skt, _ = info
+            skt: socket
+            jobj_str = json.dumps(jobj)
+            jobj_str_b = convert.write_str(jobj_str)
+            dp = datapack(jobj_str_b)
+            skt.send(to_bytes_starting_with_len(dp))
+        else:
+            self.logger.error(f"Cannot find server {server}")
 
     def new_channel(self, channel_name: str) -> channel:
         c = channel(self, channel_name)
@@ -151,11 +163,12 @@ class network(i_network):
         return c
 
 
-def not_none(*args) -> bool:
-    for arg in args:
-        if arg is None:
-            return False
-    return True
+def to_bytes_starting_with_len(dp: "datapack") -> bytes:
+    length = len(dp.get_bytes())
+    length_b = convert.write_int(length)
+    res = bytearray(length_b)
+    res.extend(dp.get_bytes())
+    return bytes(bytearray)
 
 
 class datapack:

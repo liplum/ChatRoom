@@ -14,10 +14,15 @@ _client = client()
 
 def main():
     _client.on_service_register.add(init_plugin)
+    _client.on_command_register.add(add_commands)
+    _client.init()
     _client.start()
 
 
 def init_plugin(registry: container):
+    pass
+
+def add_commands(cmd_list):
     pass
 
 

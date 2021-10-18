@@ -20,6 +20,8 @@ public interface IServer
     public bool Verify(UserID id, string password);
 
     public event OnRegisterServiceHandler OnRegisterService;
+
+    public void AddScheduledTask([NotNull] Action action);
 }
 
 public delegate void OnRegisterServiceHandler([NotNull] IServiceRegistry registry);
