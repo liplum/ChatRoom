@@ -1,13 +1,24 @@
 class i_input:
-    def get_input(self, tip: str = None) -> str:
+    def __init__(self):
+        self._input_list = []
+
+    def get_input(self, tip: str = None):
         pass
+
+    def get_input_list(self) -> list:
+        return self._input_list[:]
+
+    def flush(self):
+        self._input_list = []
 
 
 class cmd_input(i_input):
+    def __init__(self):
+        super().__init__()
 
-    def get_input(self, tip: str = None) -> str:
+    def get_input(self, tip: str = None):
         if tip is None:
             res = input()
         else:
             res = input(str)
-        return res
+        self._input_list.append(res)

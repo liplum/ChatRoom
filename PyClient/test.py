@@ -1,10 +1,11 @@
-import win32console
+import msvcrt
+import sys
+from ui.nonblock import is_key
 
-d = {"#05": "05", "#08": "08", "#01": "01"}
-
-for k in sorted(d):
-    print(k, d[k])
-
-d = ("abc", 123)
-s, n = d
-print(s + str(n))
+while True:
+    if msvcrt.kbhit():
+        c: str = msvcrt.getwch()
+        if is_key(c[0], b'\x1b'):
+            sys.exit()
+        else:
+            print(c)
