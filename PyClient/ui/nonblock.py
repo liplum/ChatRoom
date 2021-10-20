@@ -1,19 +1,26 @@
-from ui.input import i_input
+from ui.input import i_nbinput
 from ui.output import i_display, CmdColor
 import msvcrt
 from threading import Thread, RLock
 from utils import lock
+from typing import Union, Optional
 
-def is_key(str_or_bytes, key: bytes):
-    if isinstance(str_or_bytes, str):
-        b = str_or_bytes.encode()
-    elif isinstance(str_or_bytes, bytes):
-        b = str_or_bytes
-    elif isinstance(str_or_bytes, bytearray):
+
+def is_key(char: Union[str, bytes, bytearray], key: Union[str, bytes]):
+    if isinstance(char, str):
+        b = char.encode()
+    elif isinstance(char, bytes):
+        b = char
+    elif isinstance(char, bytearray):
         b = bytes(bytearray)
     else:
         return False
-    return b == key
+
+    if isinstance(key, bytes):
+        k = key
+    elif isinstance(key, str):
+        k = key.encode()
+    return b == k
 
 
 class nbdispaly(i_display):

@@ -9,6 +9,8 @@ from network import network
 import ui.input as _input
 from utils import get, clear_screen, lock, clock
 from io import StringIO
+from typing import Optional, Union
+from io import StringIO
 
 
 class command:
@@ -26,38 +28,77 @@ def get_command_id_tip(cmd: command) -> str:
     res = s.getvalue()
     s.close()
     return res
+
+
 def do_noting():
     pass
 
+
 class state:
-    def __init__(self,_on_en=do_noting,_on_ex:do_noting):
-        self._on_en=_on_en
-        self._Zon_ex=_on_ex
     def on_en(self):
-        self._on_en()
+        pass
+
     def on_ex(self):
-        self._on_ex()
+        pass
+
+    def update(self):
+        pass
+
 
 class smachine:
     def __init__(self):
-        self.cur:state=None
-        self.pre:state=None
-    def enter(self,s:state
+        self.cur: Optional[state] = None
+        self.pre: Optional[state] = None
+
+    def enter(self, s: state):
         if self.pre is not None:
             self.pre.on_ex()
-        self.pre =self.cur
-        self.cur=s
+        self.pre = self.cur
+        self.cur = s
         if self.cur is not None:
             self.cur.on_en()
+
     def back(self):
         self.enter(self.pre)
 
-class cmd_state(state):
+    def update(self):
+        if self.cur is not None:
+            self.cur.update()
+
+
+class client_state(state):
+    def __init__(self, client):
+        super().__init__()
+        self.client = client
+
     def on_en(self):
         pass
 
     def on_ex(self):
         pass
+
+    def update_input_list(self, input_list):
+        self.input_list: list = input_list
+
+    def update(self):
+        super().update()
+
+class cmd_state(client_state):
+
+    def update(self):
+        client = self.client
+        client.display_lock(client.win.display)
+        client.display_lock(client.display.display_text, client.command_list_tip)
+        client.display_lock(client.display.display_text, "Enter a command:")
+        client.input_.get_input()
+        inputs = client.input_.get_input_list()
+        client.input_.flush()
+        cmd_str = "".join(inputs)
+        cmd: command = get(client.cmds.cmds, cmd_str)
+        if cmd is not None:
+            cmd.handler()
+        else:
+            client.logger.error(f"Cannot identify command {cmd_str}")
 
 
 class cmd_list:
@@ -91,7 +132,7 @@ class client:
         self.win = windows(self.display)
         self.win.fill_until_max = True
         self.gen_cmds()
-        self.sm=smachine()
+        self.sm = smachine()
 
     def gen_cmds(self):
         def send_text():
@@ -122,6 +163,7 @@ class client:
         self.running = True
         while self.running:
             self.tps.delay()
+            self.sm.update()
             self.display_lock(self.win.display)
             self.display_lock(self.display.display_text, self.command_list_tip)
             self.display_lock(self.display.display_text, "Enter a command:")
@@ -139,33 +181,62 @@ class client:
         lock(self._display_lock, func, *args, **kwargs)
 
     def add_text(self, text: str):
-        self.win.add_text(text)?
+        self.win.add_text(text)
 
     def __init_channels(self):
         pass
 
+
 class textbox:
-    def __init__(self):
-        self.cursor:int=0
-        self.list_len=0
-        self.input_list=[]
+    def __init__(self, cursor_icon: str = "^"):
+        self.cursor: int = 0
+        self.list_len = 0
+        self.input_list = []
+        self.cursor_icon = cursor_icon
+
+    def home(self):
+        self.cursor = 0
+        self.truncate()
 
     def left(self):
-        pass
+        self.cursor -= 1
+        self.truncate()
 
     def right(self):
-        pass
-
-    def update(self,input_list):
-        self.input_list=input_list[:]
-        self.list_len=len(self.input_list)
+        self.cursor += 1
         self.truncate()
-    
-    def truncate(self):
-        self.cursor=self.cursor%self.list_len
 
-    def get(self)->:
-        pass
+    def end(self):
+        self.cursor = -1
+        self.truncate()
+
+    def update(self, input_list):
+        self.input_list = input_list[:]
+        self.list_len = len(self.input_list)
+        self.truncate()
+
+    def truncate(self):
+        self.cursor = self.cursor % (self.list_len + 1)
+
+    def get(self) -> str:
+        self.truncate()
+        is_forwards = self.cursor >= 0
+        if is_forwards:
+            cursor_position = self.cursor
+        else:
+            cursor_position = self.list_len + self.cursor + 1
+        with StringIO() as s:
+            cur = 0
+            for input_char in self.input_list:
+                if cur == cursor_position:
+                    s.write(self.cursor_icon)
+                s.write(input_char)
+                cur += 1
+            if cur == cursor_position:
+                s.write(self.cursor_icon)
+
+            return s.getvalue()
+
 
 class windows:
     def __init__(self, displayer: output.i_display):
