@@ -11,6 +11,8 @@ class i_input:
     def flush(self):
         self._input_list = []
 
+class i_nbinput(i_input):
+    pass
 
 class cmd_input(i_input):
     def __init__(self):

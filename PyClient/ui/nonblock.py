@@ -4,7 +4,6 @@ import msvcrt
 from threading import Thread, RLock
 from utils import lock
 
-
 def is_key(str_or_bytes, key: bytes):
     if isinstance(str_or_bytes, str):
         b = str_or_bytes.encode()
@@ -23,7 +22,7 @@ class nbdispaly(i_display):
         msvcrt.putwch(text + end)
 
 
-class nbinput(i_input):
+class nbinput(i_nbinput):
     """
     non-blocking input
     """

@@ -6,7 +6,7 @@ import ui.output as output
 from threading import RLock
 from network.network import i_network, server_token
 from network import network
-import ui.input as _input, nonblock
+import ui.input as _input
 from utils import get, clear_screen, lock, clock
 from io import StringIO
 
@@ -26,6 +26,38 @@ def get_command_id_tip(cmd: command) -> str:
     res = s.getvalue()
     s.close()
     return res
+def do_noting():
+    pass
+
+class state:
+    def __init__(self,_on_en=do_noting,_on_ex:do_noting):
+        self._on_en=_on_en
+        self._Zon_ex=_on_ex
+    def on_en(self):
+        self._on_en()
+    def on_ex(self):
+        self._on_ex()
+
+class smachine:
+    def __init__(self):
+        self.cur:state=None
+        self.pre:state=None
+    def enter(self,s:state
+        if self.pre is not None:
+            self.pre.on_ex()
+        self.pre =self.cur
+        self.cur=s
+        if self.cur is not None:
+            self.cur.on_en()
+    def back(self):
+        self.enter(self.pre)
+
+class cmd_state(state):
+    def on_en(self):
+        pass
+
+    def on_ex(self):
+        pass
 
 
 class cmd_list:
@@ -48,18 +80,18 @@ class client:
 
     def init(self) -> None:
         self.container.register_singleton(output.i_logger, output.cmd_logger)
-        self.container.register_singleton(nonblock.nbinput, nonblock.nbinput)
         self.container.register_singleton(output.i_display, output.cmd_display)
         self.network: network.network = network.network(self)
         self.container.register_instance(i_network, self.network)
         self.on_service_register(self.container)
 
-        self.input_: nonblock.nbinput = self.container.resolve(nonblock.nbinput)
+        self.input_: _input.i_nbinput = self.container.resolve(_input.i_nbinput)
         self.logger: output.i_logger = self.container.resolve(output.i_logger)
         self.display: output.i_display = self.container.resolve(output.i_display)
         self.win = windows(self.display)
         self.win.fill_until_max = True
         self.gen_cmds()
+        self.sm=smachine()
 
     def gen_cmds(self):
         def send_text():
@@ -107,11 +139,33 @@ class client:
         lock(self._display_lock, func, *args, **kwargs)
 
     def add_text(self, text: str):
-        self.win.add_text(text)
+        self.win.add_text(text)?
 
     def __init_channels(self):
         pass
 
+class textbox:
+    def __init__(self):
+        self.cursor:int=0
+        self.list_len=0
+        self.input_list=[]
+
+    def left(self):
+        pass
+
+    def right(self):
+        pass
+
+    def update(self,input_list):
+        self.input_list=input_list[:]
+        self.list_len=len(self.input_list)
+        self.truncate()
+    
+    def truncate(self):
+        self.cursor=self.cursor%self.list_len
+
+    def get(self)->:
+        pass
 
 class windows:
     def __init__(self, displayer: output.i_display):
