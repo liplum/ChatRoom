@@ -4,6 +4,7 @@ import utils
 
 from ui.nonblock import is_key
 from ui.client import textbox
+from chars import *
 
 tb = textbox()
 tb.update("apple")
@@ -15,7 +16,7 @@ def test_textbox():
         print(tb.get())
 
 
-#test_textbox()
+# test_textbox()
 
 
 def cmd_input():
@@ -23,24 +24,42 @@ def cmd_input():
         utils.clear_screen()
         print(tb.get())
         if msvcrt.kbhit():
-            number = ord(msvcrt.getwch())
-            if number == 27:
+            ch = msvcrt.getwch()
+            ch_number = ord(ch)
+            if char_esc == ch:
                 sys.exit()
-            elif number == 224:
-                key2 = ord(msvcrt.getwch())
-                if key2 == 80:
+            elif ch_number == control_keycode_1:
+                ch_full = control(ord(msvcrt.getwch()))
+                if ch_full == char_down:
                     print("Down")
-                elif key2 == 72:
+                elif ch_full == char_up:
                     print("Up")
-                elif key2 == 75:
+                elif ch_full == char_left:
                     tb.left()
                     # print("Left")
-                elif key2 == 77:
+                elif ch_full == char_right:
                     tb.right()
                     # print("Right")
+            elif ch_number == f_keycode_1:
+                ch_full = f(ord(msvcrt.getwch()))
+                print(ch_full.keycode_2)
 
-#cmd_input()
 
+cmd_input()
+
+
+def test_char():
+    c_2 = printable('2')
+    print(f"c_2 equals char_2 ? :{c_2 == char_2}")
+    print(f'c_2 equals string "2" ? :{c_2 == "2"}')
+    print(f'c_2 equals int 50 ? :{c_2 == 50}')
+    print(f"c_2 equals char_c ? :{c_2 == char_c}")
+    print(f"c_2 equals string '<space>' ? :{c_2 == char_space}")
+    print(f"c_2 equals string '我' ? :{c_2 == '我'}")
+    print(f'c_2 equals int 49 ? :{c_2 == 49}')
+
+
+# test_char()
 """
 while True:
     c = ""
