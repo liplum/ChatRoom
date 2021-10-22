@@ -1,6 +1,6 @@
 from core.event import event
 from core.ioc import container
-from ui.client import| client
+from ui.client import client
 from ui import output
 from socket import socket, AF_INET, SOCK_STREAM
 import sys

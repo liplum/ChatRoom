@@ -124,6 +124,7 @@ public partial class Monoserver : IServer
             {
                 json.ChannelName = channel.ChannelName;
                 json.MessageID = msgID;
+                json.TimeStamp = (long)Math.Floor((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds);
             }
 
             bool CheckDirection()

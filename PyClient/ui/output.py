@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum, IntEnum, auto, unique
 from datetime import datetime
-from typing import Union, Optional, NoReturn
+from typing import Union, Optional, NoReturn, Tuple, List
 
 
 class i_logger:
@@ -44,6 +44,10 @@ def tinted_print(text: str, color: CmdColor, end=None) -> NoReturn:
         print(f"\033[0;{int(color)}m{text}\033[0m", end=end)
 
 
+def gen_tinted_text(text: str, color: CmdColor) -> str:
+    return f"\033[0;{int(color)}m{text}\033[0m"
+
+
 class cmd_logger(i_logger):
 
     def __init__(self, output_to_cmd: bool = True, logfile: Optional[str] = None):
@@ -80,11 +84,28 @@ class i_display:
     def display_image(self, file_path: str):
         pass
 
+    def render(self):
+        pass
+
 
 class cmd_display(i_display):
+    """
+    It uses buffer to store all items used be rendered soon until call render(self)
+    """
+
+    def __init__(self):
+        self.render_list: List[Tuple[str, str]] = []
 
     def display_text(self, text: str = "", end: str = "", color: Optional[CmdColor] = None) -> NoReturn:
         if color is not None:
-            tinted_print(text, color, end)
+            self.render_list.append((gen_tinted_text(text, color), end))
         else:
-            print(text, end=end)
+            self.render_list.append((text, end))
+
+    def clear_render_list(self):
+        self.render_list = []
+
+    def render(self):
+        for item in self.render_list:
+            print(item[0], end=item[1])
+        self.clear_render_list()

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Tuple
 
 import core.ioc as ioc
 from core.event import event
@@ -9,9 +9,9 @@ from network import network
 import ui.input as _input
 from utils import get, clear_screen, lock, clock
 from io import StringIO
-from typing import Optional, Union
+from typing import Optional, Union, Any, Tuple, List, Dict
 from io import StringIO
-
+from datetime import datetime
 
 class command:
     def __init__(self, _id: str, tip: str, handler):
@@ -83,6 +83,7 @@ class client_state(state):
     def update(self):
         super().update()
 
+
 class cmd_state(client_state):
 
     def update(self):
@@ -129,7 +130,7 @@ class client:
         self.input_: _input.i_nbinput = self.container.resolve(_input.i_nbinput)
         self.logger: output.i_logger = self.container.resolve(output.i_logger)
         self.display: output.i_display = self.container.resolve(output.i_display)
-        self.win = windows(self.display)
+        self.win = window(self.display)
         self.win.fill_until_max = True
         self.gen_cmds()
         self.sm = smachine()
@@ -176,6 +177,7 @@ class client:
                 cmd.handler()
             else:
                 self.logger.error(f"Cannot identify command {cmd_str}")
+            self.display_lock(self.display.render())
 
     def display_lock(self, func, *args, **kwargs):
         lock(self._display_lock, func, *args, **kwargs)
@@ -238,12 +240,98 @@ class textbox:
             return s.getvalue()
 
 
-class windows:
+class serializer:
+    def get_data(self) -> List[str]:
+        pass
+
+    def set_data(self, data: List[str]):
+        pass
+
+
+StorageUnit = Tuple[(datetime, str)]
+
+
+class msgstorage:
+    def __init__(self, serializer: serializer = None):
+        self.serializer = serializer
+        self.storage: List[StorageUnit] = []
+
+    def store(self, msg: str):
+        pass
+
+    def __iter__(self):
+        class iteror:
+            pass
+
+    def serialize(self):
+        pass
+
+    def deserialize(self):
+        pass
+
+
+class tab:
+    def __init__(self):
+        self.history: List[str] = []
+
+    def add_msg(self, msg):
+        self.history.append(msg)
+
+
+class chat_tab(tab):
+    pass
+
+
+class setting_tab(tab):
+    pass
+
+
+class main_menu_tab(tab):
+    pass
+
+
+class tablist:
+    def __init__(self, win: "window"):
+        self.tabs: List[tab] = []
+        self.cur: Optional[tab] = None
+        self.win = win
+        self.view_history = []
+        self.max_view_history = 5
+
+    def add(self, tab: tab):
+        self.tabs.append(tab)
+
+    def remove(self, item: Union[int, tab]):
+        if isinstance(item, int):
+            del self.tabs[item]
+        elif isinstance(item, tab):
+            self.tabs.remove(item)
+
+    def switch(self):
+        if len(self.view_history) >= 2:
+            self.goto(self.view_history[-1])
+
+    def goto(self, number: int):
+        if 0 <= number < len(self.tabs):
+            self.cur = self.tabs[number]
+            self.add_view_history(number)
+
+    def add_view_history(self, number: int):
+        self.view_history.append(number)
+        if len(self.view_history) > self.max_view_history:
+            self.view_history = self.view_history[-self.max_view_history:]
+
+
+class window:
     def __init__(self, displayer: output.i_display):
         self.history: List[str] = []
         self.max_display_line = 10
         self.displayer: output.i_display = displayer
         self.fill_until_max: bool = False
+        self.tabli = tablist(self)
+
+    def newtab(self):
+        pass
 
     def display(self):
         clear_screen()

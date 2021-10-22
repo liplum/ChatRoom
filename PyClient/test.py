@@ -6,6 +6,10 @@ from ui.nonblock import is_key
 from ui.client import textbox
 from chars import *
 
+import time
+import calendar
+from datetime import datetime, timezone
+
 tb = textbox()
 tb.update("apple")
 
@@ -45,7 +49,7 @@ def cmd_input():
                 print(ch_full.keycode_2)
 
 
-cmd_input()
+# cmd_input()
 
 
 def test_char():
@@ -60,6 +64,35 @@ def test_char():
 
 
 # test_char()
+
+def local_to_utc(t):
+    secs = time.mktime(t)
+    return time.gmtime(secs)
+
+
+def utc_to_local(t):
+    secs = calendar.timegm(t)
+    return time.localtime(secs)
+
+
+def utc():
+    now = datetime.now().utctimetuple()
+    now_secs = calendar.timegm(now)
+    utc_now_converted = local_to_utc(now)
+    utc_now_converted_secs = calendar.timegm(utc_now_converted)
+    print(f"local:{now}")
+    print(f"local sec:{now_secs}")
+    print(f"utc:{utc_now_converted}")
+    print(f"utc sec:{utc_now_converted_secs}")
+    print()
+    back_utc = datetime.fromtimestamp(utc_now_converted_secs, tz=timezone.utc)
+    back_local = datetime.fromtimestamp(utc_now_converted_secs)
+    print(f"back to local:{back_local}")
+    print(f"back to utc:{back_utc}")
+
+
+utc()
+
 """
 while True:
     c = ""
