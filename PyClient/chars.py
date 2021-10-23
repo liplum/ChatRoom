@@ -185,7 +185,7 @@ char_semicolon = printable(';')
 char_less_than = printable('<')
 
 char_esc = char(27)
-char_delete = char(127)
+char_delete = char(8)
 char_line_end = char(10)
 
 char_up = control(0x48)

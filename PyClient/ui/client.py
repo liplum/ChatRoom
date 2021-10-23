@@ -4,14 +4,15 @@ import core.ioc as ioc
 from core.event import event
 import ui.output as output
 from threading import RLock
-from network.network import i_network, server_token
+from network.network import i_network, server_token, userid
 from network import network
 import ui.input as _input
-from utils import get, clear_screen, lock, clock
-from io import StringIO
+from utils import get, clear_screen, lock, clock, separate, compose
+import utils
 from typing import Optional, Union, Any, Tuple, List, Dict
 from io import StringIO
 from datetime import datetime
+
 
 class command:
     def __init__(self, _id: str, tip: str, handler):
@@ -118,7 +119,12 @@ class client:
         self.cmds: cmd_list = cmd_list()
         self.running: bool = False
         self._display_lock: RLock = RLock()
-        self.tps = clock(4)
+        # self.tps = clock(4)
+        self.log_file: Optional[str] = None
+        self.changed = False
+
+    def set_changed(self):
+        self.changed = True
 
     def init(self) -> None:
         self.container.register_singleton(output.i_logger, output.cmd_logger)
@@ -129,11 +135,13 @@ class client:
 
         self.input_: _input.i_nbinput = self.container.resolve(_input.i_nbinput)
         self.logger: output.i_logger = self.container.resolve(output.i_logger)
+        self.logger.logfile = self.log_file
         self.display: output.i_display = self.container.resolve(output.i_display)
         self.win = window(self.display)
         self.win.fill_until_max = True
         self.gen_cmds()
         self.sm = smachine()
+        self.textbox = textbox()
 
     def gen_cmds(self):
         def send_text():
@@ -163,7 +171,7 @@ class client:
     def start(self):
         self.running = True
         while self.running:
-            self.tps.delay()
+            # self.tps.delay()
             self.sm.update()
             self.display_lock(self.win.display)
             self.display_lock(self.display.display_text, self.command_list_tip)
@@ -191,83 +199,143 @@ class client:
 
 class textbox:
     def __init__(self, cursor_icon: str = "^"):
-        self.cursor: int = 0
-        self.list_len = 0
-        self.input_list = []
+        self._input_list = []
         self.cursor_icon = cursor_icon
+        self.cursor: int = 0
+
+    @property
+    def input_list(self):
+        return self._input_list[:]
+
+    @input_list.setter
+    def input_list(self, value):
+        if isinstance(value, list):
+            self._input_list = value[:]
+        else:
+            self._input_list = list(value)
+
+    @property
+    def cursor(self):
+        return self._cursor
+
+    @cursor.setter
+    def cursor(self, value):
+        list_len = len(self._input_list)
+        self._cursor = value % (list_len + 1)
+        self.is_forwards = self._cursor >= 0
+        if self.is_forwards:
+            self.cursor_pos = self._cursor
+        else:
+            self.cursor_pos = list_len + self._cursor + 1
 
     def home(self):
         self.cursor = 0
-        self.truncate()
 
     def left(self):
         self.cursor -= 1
-        self.truncate()
 
     def right(self):
         self.cursor += 1
-        self.truncate()
 
     def end(self):
         self.cursor = -1
-        self.truncate()
 
-    def update(self, input_list):
-        self.input_list = input_list[:]
-        self.list_len = len(self.input_list)
-        self.truncate()
-
-    def truncate(self):
-        self.cursor = self.cursor % (self.list_len + 1)
-
-    def get(self) -> str:
-        self.truncate()
-        is_forwards = self.cursor >= 0
-        if is_forwards:
-            cursor_position = self.cursor
-        else:
-            cursor_position = self.list_len + self.cursor + 1
+    @property
+    def distext(self) -> str:
+        cursor_pos = self.cursor_pos
         with StringIO() as s:
             cur = 0
-            for input_char in self.input_list:
-                if cur == cursor_position:
+            for char in self._input_list:
+                if cur == cursor_pos:
                     s.write(self.cursor_icon)
-                s.write(input_char)
+                s.write(char)
                 cur += 1
-            if cur == cursor_position:
+            if cur == cursor_pos:
                 s.write(self.cursor_icon)
 
             return s.getvalue()
 
+    def append(self, char):
+        self._input_list.insert(self.cursor_pos, char)
+        self.cursor += 1
 
-class serializer:
-    def get_data(self) -> List[str]:
-        pass
-
-    def set_data(self, data: List[str]):
-        pass
+    def delete(self):
+        if self.cursor_pos > 0:
+            del self._input_list[self.cursor_pos - 1]
+            self.cursor -= 1
 
 
-StorageUnit = Tuple[(datetime, str)]
+StorageUnit = Tuple[datetime, userid, str]
 
 
 class msgstorage:
-    def __init__(self, serializer: serializer = None):
-        self.serializer = serializer
-        self.storage: List[StorageUnit] = []
+    def __init__(self, save_file: str):
+        self.save_file = save_file
+        self.__storage: List[StorageUnit] = []
+        self.changed = False
 
-    def store(self, msg: str):
-        pass
+    def store(self, timestamp: datetime, userid_: Union[userid, Any], msg: str):
+        if not isinstance(userid_, userid):
+            userid_ = userid(userid_)
+        self.__storage.append((timestamp, userid_, msg))
+        self.changed = True
+
+    def sort(self):
+        self.__storage.sort(key=lambda i: i[0])
+        self.changed = False
 
     def __iter__(self):
-        class iteror:
-            pass
+        return self.__storage[:].__iter__()
 
     def serialize(self):
-        pass
+        with open(self.save_file, "w") as save:
+            for unit in self.__storage:
+                unit_str = (str(unit[0]), str(unit[1]), unit[2])
+                saved_line = compose(unit_str, '|', end='\n')
+                save.write(saved_line)
 
     def deserialize(self):
-        pass
+        self.__storage = []
+        with open(self.save_file, "r") as save:
+            lines = save.readlines()
+            for line in lines:
+                line = line.rstrip()
+                items = separate(line, '|', 2, False)
+                if len(items) == 3:
+                    time, uid, content = items
+                    time = datetime.fromisoformat(time)
+                    uid = userid(uid)
+                    self.__storage.append((time, uid, content))
+                else:
+                    continue
+
+    def retrieve(self, start: datetime, end: datetime, number_limit: int = None,
+                 reverse: bool = False) -> List[StorageUnit]:
+        """
+
+        :param start:the beginning time of message retrieval.
+        :param end:the ending time of message retrieval.
+        :param number_limit:the max number of message retrieval.If None,retrieves all.
+        :param reverse:If true,retrieves msg starting from end datetime.Otherwise starting from start datetime.
+        :return:
+        """
+        start = min(start, end)
+        end = max(start, end)
+
+        if self.changed:
+            self.sort()
+        snapshot = self.__storage[:]
+        dt_snapshot = [unit[0] for unit in self.__storage]
+        _, start_pos = utils.find_range(dt_snapshot, start)
+        end_pos, _ = utils.find_range(dt_snapshot, end)
+        if reverse:
+            inrange = snapshot[start_pos:end_pos:-1]
+        else:
+            inrange = snapshot[start_pos:end_pos]
+        if number_limit is None:
+            return inrange
+        else:
+            return inrange[number_limit:]
 
 
 class tab:

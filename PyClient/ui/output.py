@@ -5,6 +5,9 @@ from typing import Union, Optional, NoReturn, Tuple, List
 
 
 class i_logger:
+    def __init__(self):
+        self.logfile: Optional[str] = None
+
     def msg(self, text) -> NoReturn:
         pass
 

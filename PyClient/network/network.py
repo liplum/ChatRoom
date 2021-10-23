@@ -9,6 +9,22 @@ from utils import get, not_none
 from core import convert
 
 
+class userid:
+    def __init__(self, userid: str):
+        self.id = userid
+
+    def __eq__(self, other):
+        if not isinstance(other, userid):
+            return False
+        return self.id == other.id
+
+    def __str__(self) -> str:
+        return self.id
+
+    def __repr__(self):
+        return self.id
+
+
 class server_token:
     def __init__(self, ip: str = None, port: int = None, server: Tuple[str, int] = None):
         if server is not None:
