@@ -1,4 +1,4 @@
-from ui.nonblock import nbinput
+from ui.nonblocks import nbinput
 from utils import clear_screen
 
 displayed = []

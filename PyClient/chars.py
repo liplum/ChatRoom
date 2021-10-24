@@ -25,11 +25,17 @@ class char:
             return self.keycode_1 == other
         elif isinstance(other, tuple):
             other_len = len(other)
-            if other_len == 1:
+            if other_len == 1 and self.keycode_2 is None:
                 return self.keycode_1 == other[0]
-            elif other_len > 1:
+            elif other_len > 1 and self.keycode_2 is not None:
                 return self.keycode_1 == other[0] and self.keycode_2 == other[1]
         return False
+
+    def __repr__(self):
+        return f'({self.keycode_1},{self.keycode_2})->"{to_str(self)}"'
+
+    def __str__(self):
+        return to_str(self)
 
 
 class printable(char):
@@ -51,40 +57,42 @@ class f(char):
         super().__init__(f_keycode_1, keycode_2)
 
 
-class _char:
-    def __init__(self, name: Optional[str] = None, name_b: Optional[bytes] = None, id_1: Optional[int] = None,
-                 id_2: Optional[int] = None,
-                 is_control: bool = False,
-                 is_F: bool = False):
-        if name is None and name_b is None and id_1 is None:
-            raise Exception("Completely None Char")
-        self.name: Optional[str] = name
-        if name is not None and name_b is None:
-            self.name_b: Optional[bytes] = name.encode()
-        else:
-            self.name_b = name_b
-        if id_1 is None:
-            if name is not None:
-                self.id_1: Optional[int] = ord(name)
-        else:
-            self.id_1 = id_1
-        self.id_2: Optional[int] = id_2
-        self.is_control: bool = is_control
-        self.is_F: bool = is_F
-
-    def __eq__(self, other):
-        if not isinstance(other, char):
-            return False
-        if self.name is not None and other.name is not None:
-            return self.name == other.name
-        elif self.name_b is not None and other.name_b is not None:
-            return self.name_b == other.name_b
-        elif self.id_1 is not None and other.id_1 is not None:
-            if self.id_2 is not None and other.id_2 is not None:
-                return self.id_1 == other.id_1 and self.id_2 == other.id_2
-            else:
-                return self.id_1 == other.id_1
+def is_key(char: Union[str, bytes, bytearray], key: Union[str, bytes]):
+    if isinstance(char, str):
+        b = char.encode()
+    elif isinstance(char, bytes):
+        b = char
+    elif isinstance(char, bytearray):
+        b = bytes(bytearray)
+    else:
         return False
+
+    if isinstance(key, bytes):
+        k = key
+    elif isinstance(key, str):
+        k = key.encode()
+    else:
+        return False
+    return b == k
+
+
+def is_printable(ch: char) -> bool:
+    if isinstance(ch, printable):
+        return True
+    if isinstance(ch, control) or isinstance(ch, f):
+        return False
+    if ch.keycode_2 is None and ch.keycode_1 != control_keycode_1 and ch.keycode_1 != f_keycode_1:
+        return True
+    return False
+
+
+def to_str(ch: char) -> str:
+    """
+    Transfer a char object to a character
+    :param ch:
+    :return:
+    """
+    return chr(ch.keycode_1)
 
 
 char_a = printable('a')
@@ -183,12 +191,36 @@ char_number_sign = printable('#')
 char_colon = printable(':')
 char_semicolon = printable(';')
 char_less_than = printable('<')
+char_grave_accent = printable('`')
+char_tilde = printable('~')
 
-char_esc = char(27)
-char_delete = char(8)
+char_null = char(0)
+char_table = char(7)
+char_backspace = char(8)
 char_line_end = char(10)
+char_vtable = char(11)
+char_carriage_return = char(13)
+char_esc = char(27)
 
-char_up = control(0x48)
-char_down = control(0x50)
-char_left = control(0x4B)
-char_right = control(0x4D)
+char_home = control(71)
+char_up = control(72)
+char_pgup = control(73)
+char_left = control(75)
+char_right = control(77)
+char_down = control(80)
+char_pgdown = control(81)
+char_insert = control(82)
+char_delete = control(83)
+
+char_f1 = f(59)
+char_f2 = f(60)
+char_f3 = f(61)
+char_f4 = f(62)
+char_f5 = f(63)
+char_f6 = f(64)
+char_f7 = f(65)
+char_f8 = f(66)
+char_f9 = f(67)
+char_f10 = f(68)
+char_f11 = control(133)
+char_f12 = control(134)

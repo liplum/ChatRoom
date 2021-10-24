@@ -2,8 +2,8 @@ import msvcrt
 import sys
 import utils
 
-from ui.nonblock import is_key
-from ui.client import *
+from chars import is_key
+from ui.clients import *
 from chars import *
 
 import time
@@ -16,13 +16,21 @@ def test_input():
     while True:
         if msvcrt.kbhit():
             ch = msvcrt.getwch()
-            print(f"{ch} is {ord(ch)}")
+            ch_number = ord(ch)
+            if ch_number == f_keycode_1 or ch_number == control_keycode_1:
+                ch_2 = msvcrt.getwch()
+                ch_2_number = ord(ch_2)
+                print(f"control char is {ch_number}+{ch_2_number}")
+            else:
+                print(f"{ch} is {ch_number}")
 
 
-# test_input()
+test_input()
+
 
 def test_textbox():
     tb = textbox()
+    tb.on_cursor_move.add(cursor_changed)
     tb.input_list = "apple"
     print("\nmove left\n")
     for i in range(10):
@@ -84,7 +92,7 @@ def cmd_input():
             elif ch_number == f_keycode_1:
                 ch_full = f(ord(msvcrt.getwch()))
                 print(ch_full.keycode_2)
-            elif ch_number == char_delete:
+            elif ch_number == char_backspace:
                 tb.delete()
             else:
                 tb.append(ch)
@@ -190,7 +198,19 @@ def test_insert():
 
 # test_insert()
 
-print([].pop(0))
+def test_dataclass():
+    from dataclasses import dataclass
+
+    @dataclass
+    class d:
+        string: str = ""
+
+    a = d("abc")
+    a.string = "bcd"
+    print(a.string)
+
+
+# test_dataclass()
 """
 while True:
     c = ""

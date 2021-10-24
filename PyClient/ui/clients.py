@@ -1,17 +1,19 @@
 from typing import List, Dict, Tuple
 
 import core.ioc as ioc
-from core.event import event
-import ui.output as output
+from core.events import event
+import ui.outputs as output
 from threading import RLock
 from network.network import i_network, server_token, userid
 from network import network
-import ui.input as _input
+import ui.inputs as _input
 from utils import get, clear_screen, lock, clock, separate, compose
 import utils
 from typing import Optional, Union, Any, Tuple, List, Dict
 from io import StringIO
 from datetime import datetime
+from dataclasses import dataclass
+import chars
 
 
 class command:
@@ -121,10 +123,7 @@ class client:
         self._display_lock: RLock = RLock()
         # self.tps = clock(4)
         self.log_file: Optional[str] = None
-        self.changed = False
-
-    def set_changed(self):
-        self.changed = True
+        self._changed = False
 
     def init(self) -> None:
         self.container.register_singleton(output.i_logger, output.cmd_logger)
@@ -141,11 +140,26 @@ class client:
         self.win.fill_until_max = True
         self.gen_cmds()
         self.sm = smachine()
+
         self.textbox = textbox()
 
+        self.textbox.on_append.add(lambda b, p, c: self.set_changed())
+        self.textbox.on_delete.add(lambda b, p, c: self.set_changed())
+        self.textbox.on_cursor_move.add(lambda b, f, c: self.set_changed())
+
+        def on_input(nbinput,char):
+            ch = nbinput.consume_char()
+            if ch is char:
+                pass
+
+        self.input_.on_input()
+
     @property
-    def need_render(self):
-        pass
+    def need_update(self):
+        return self._changed
+
+    def set_changed(self):
+        self._changed = True
 
     def gen_cmds(self):
         def send_text():
@@ -174,16 +188,20 @@ class client:
 
     def start(self):
         self.running = True
+        i = self.input_
+        i.start_listen()
         while self.running:
             # self.tps.delay()
-            self.sm.update()
-            self.display_lock(self.win.display)
-            self.display_lock(self.display.display_text, self.command_list_tip)
-            self.display_lock(self.display.display_text, "Enter a command:")
-            self.input_.get_input()
-            inputs = self.input_.input_list()
-            self.input_.flush()
-            cmd_str = "".join(inputs)
+            if not self.need_update:
+                continue
+            # The following is to need update
+            # self.sm.update()
+            dlock = self.display_lock
+            dlock(self.win.display)
+            # dlock(self.display.display_text, self.command_list_tip)
+            # dlock(self.display.display_text, "Enter a command:")
+            inputs = i.input_list
+            cmd_str = utils.compose(inputs)
             cmd: command = get(self.cmds.cmds, cmd_str)
             if cmd is not None:
                 cmd.handler()
@@ -201,11 +219,77 @@ class client:
         pass
 
 
+@dataclass
+class render_content:
+    string: str
+
+
 class textbox:
     def __init__(self, cursor_icon: str = "^"):
         self._input_list = []
         self.cursor_icon = cursor_icon
-        self.cursor: int = 0
+        self._cursor: int = 0
+        self._on_cursor_move = event()
+        self._on_append = event()
+        self._on_delete = event()
+        self._on_gen_distext = event()
+
+    @property
+    def on_gen_distext(self) -> event:
+        """
+        Para 1:textbox object
+
+
+        Para 2:the final string which will be displayed soon(render_content.string)
+
+        :return: event(textbox,render_content)
+        """
+        return self._on_gen_distext
+
+    @property
+    def on_cursor_move(self) -> event:
+        """
+        Para 1:textbox object
+
+
+        Para 2:former cursor position
+
+
+        Para 3:current cursor position
+
+        :return: event(textbox,int,int)
+        """
+        return self._on_cursor_move
+
+    @property
+    def on_append(self) -> event:
+        """
+        Para 1:textbox object
+
+
+        Para 2:cursor position
+
+
+        Para 3:char appended
+
+        :return: event(textbox,int,str)
+        """
+        return self._on_append
+
+    @property
+    def on_delete(self) -> event:
+        """
+        Para 1:textbox object
+
+
+        Para 2:cursor position
+
+
+        Para 3:char deleted
+
+        :return: event(textbox,int,str)
+        """
+        return self._on_delete
 
     @property
     def input_list(self):
@@ -225,12 +309,14 @@ class textbox:
     @cursor.setter
     def cursor(self, value):
         list_len = len(self._input_list)
+        former = self._cursor
         self._cursor = value % (list_len + 1)
         self.is_forwards = self._cursor >= 0
         if self.is_forwards:
             self.cursor_pos = self._cursor
         else:
             self.cursor_pos = list_len + self._cursor + 1
+        self.on_cursor_move(self, former, self._cursor)
 
     def home(self):
         self.cursor = 0
@@ -257,15 +343,20 @@ class textbox:
             if cur == cursor_pos:
                 s.write(self.cursor_icon)
 
-            return s.getvalue()
+            res = s.getvalue()
+            dis = render_content(res)
+            self.on_gen_distext(self, dis)
+            return dis.string
 
     def append(self, char):
         self._input_list.insert(self.cursor_pos, char)
+        self.on_append(self, self.cursor, char)
         self.cursor += 1
 
     def delete(self):
         if self.cursor_pos > 0:
-            del self._input_list[self.cursor_pos - 1]
+            ch = self._input_list.pop(self.cursor_pos - 1)
+            self.on_delete(self, self.cursor, ch)
             self.cursor -= 1
 
 

@@ -1,17 +1,18 @@
-from typing import Callable, List
+from typing import List
 
 
 class event:
     def __init__(self):
-        self.subscribers: List[Callable] = []
+        self.subscribers = []
 
     def __call__(self, *args, **kwargs):
         return self.invoke(*args, **kwargs)
 
-    def add(self, subscriber: Callable) -> None:
-        self.subscribers.append(subscriber)
+    def add(self, *args) -> None:
+        for subscriber in args:
+            self.subscribers.append(subscriber)
 
-    def remove(self, subscriber: Callable) -> None:
+    def remove(self, subscriber) -> None:
         self.subscribers.remove(subscriber)
 
     def clear(self) -> None:

@@ -4,9 +4,9 @@ from typing import Dict, Tuple
 from socket import socket, AF_INET, SOCK_STREAM
 from threading import Thread
 import json
-from ui import output
+from ui import outputs
 from utils import get, not_none
-from core import convert
+from core import converts
 
 
 class userid:
@@ -63,7 +63,7 @@ class channel(i_channel):
     def __init__(self, network: "i_network", name):
         super().__init__(name)
         self.network = network
-        self.logger: output.i_logger = self.network.logger
+        self.logger: outputs.i_logger = self.network.logger
         self.id2msg_and_handler: Dict[str, Tuple[type, function]] = {}
         self.msg2id: Dict[type, str] = {}
 
@@ -139,7 +139,7 @@ class network(i_network):
         listen.start()
 
     def init(self, container):
-        self.logger = container.resolve(output.i_logger)
+        self.logger = container.resolve(outputs.i_logger)
 
     def __receive_datapack(self, server_socket):
         while True:
@@ -167,7 +167,7 @@ class network(i_network):
             skt, _ = info
             skt: socket
             jobj_str = json.dumps(jobj)
-            jobj_str_b = convert.write_str(jobj_str)
+            jobj_str_b = converts.write_str(jobj_str)
             dp = datapack(jobj_str_b)
             skt.send(to_bytes_starting_with_len(dp))
         else:
@@ -181,7 +181,7 @@ class network(i_network):
 
 def to_bytes_starting_with_len(dp: "datapack") -> bytes:
     length = len(dp.get_bytes())
-    length_b = convert.write_int(length)
+    length_b = converts.write_int(length)
     res = bytearray(length_b)
     res.extend(dp.get_bytes())
     return bytes(bytearray)
@@ -197,7 +197,7 @@ class datapack:
 
 def read_one(_socket: socket) -> datapack:
     data_length_b = _socket.recv(4)
-    total_length = convert.read_int(data_length_b)
+    total_length = converts.read_int(data_length_b)
     data = self.socket.recv(total_length)
     return datapack(data)
 
@@ -208,6 +208,6 @@ class json_msg:
 
 
 def convert_to_json_msg(_datapack: datapack) -> json_msg:
-    json_text = convert.read_str(data)
+    json_text = converts.read_str(data)
     _json = json.loads(json_text)
     return json_msg(_json)
