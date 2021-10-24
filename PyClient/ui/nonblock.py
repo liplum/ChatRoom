@@ -3,7 +3,8 @@ from ui.output import i_display, CmdColor
 import msvcrt
 from threading import Thread, RLock
 from utils import lock
-from typing import Union, Optional
+from typing import Union, Optional,List
+import chars
 
 
 def is_key(char: Union[str, bytes, bytearray], key: Union[str, bytes]):
@@ -41,9 +42,31 @@ class nbinput(i_nbinput):
     def _listen_input(self):
         while True:
             if msvcrt.kbhit():
-                c_b: bytes = msvcrt.getwch()
-                c = c_b.decode()
-                lock(self._lock, lambda: self._input_list.append(c))
+                ch = msvcrt.getwch()
+                ch_number = ord(ch)
+                if ch_number == chars.control_keycode_1:
+                    ch_full = chars.control(ord(msvcrt.getwch()))
+                    self._input_new(ch_full)
+                elif ch_number == f_keycode_1:
+                    ch_full = chars.f(ord(msvcrt.getwch()))
+                    self._input_new(ch_full)
+                else:
+                    ch_full = chars.char(ch_number)
+                    self._input_new(ch_full)
+
+    def _input_new(self, char: chars.char):
+        lock(self._lock, lambda: self._input_list.append(c))
+        self.on_input(self, char)
+        self.on_inputli_changed(self, self.on_inputli_changed)
+
+    def consume_char(self) -> Optional[chars.char]:
+        def get_first() -> Optional[chars.char]:
+            if len(self._input_list) == 0:
+                return None
+            first = self._input_list.pop(0)
+            return first
+
+        return lock(self._lock, get_first)
 
     def get_input(self, tip: str = None):
         if self.input_thread is None:
@@ -51,8 +74,9 @@ class nbinput(i_nbinput):
             self.input_thread.start()
             self._lock = RLock()
 
-    def get_input_list(self) -> list:
+    @property
+    def input_list(self) -> List[chars.char]:
         return lock(self._lock, self.__get_input_list)
 
-    def __get_input_list(self) -> list:
-        return super().get_input_list()
+    def __get_input_list(self) -> List[chars.char]:
+        return super().input_list

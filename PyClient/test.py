@@ -18,7 +18,8 @@ def test_input():
             ch = msvcrt.getwch()
             print(f"{ch} is {ord(ch)}")
 
-#test_input()
+
+# test_input()
 
 def test_textbox():
     tb = textbox()
@@ -89,7 +90,7 @@ def cmd_input():
                 tb.append(ch)
 
 
-cmd_input()
+# cmd_input()
 
 
 def test_char():
@@ -188,6 +189,8 @@ def test_insert():
 
 
 # test_insert()
+
+print([].pop(0))
 """
 while True:
     c = ""

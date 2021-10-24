@@ -19,5 +19,6 @@ def read_int(barray: bytes) -> int:
 def write_int(i: int) -> bytes:
     return struct.pack('!i', i)
 
-def write_str(string:str)->bytes:
+
+def write_str(string: str) -> bytes:
     return string.encode()

@@ -21,7 +21,7 @@ while running:
             print()
 
     nbinput.get_input()
-    input_list = nbinput.get_input_list()
+    input_list = nbinput.input_list()
     total = "".join(input_list)
     if len(input_list) > 5:
         nbinput.flush()

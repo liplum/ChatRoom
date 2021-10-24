@@ -93,7 +93,7 @@ class cmd_state(client_state):
         client.display_lock(client.display.display_text, client.command_list_tip)
         client.display_lock(client.display.display_text, "Enter a command:")
         client.input_.get_input()
-        inputs = client.input_.get_input_list()
+        inputs = client.input_.input_list()
         client.input_.flush()
         cmd_str = "".join(inputs)
         cmd: command = get(client.cmds.cmds, cmd_str)
@@ -143,6 +143,10 @@ class client:
         self.sm = smachine()
         self.textbox = textbox()
 
+    @property
+    def need_render(self):
+        pass
+
     def gen_cmds(self):
         def send_text():
             pass
@@ -177,7 +181,7 @@ class client:
             self.display_lock(self.display.display_text, self.command_list_tip)
             self.display_lock(self.display.display_text, "Enter a command:")
             self.input_.get_input()
-            inputs = self.input_.get_input_list()
+            inputs = self.input_.input_list()
             self.input_.flush()
             cmd_str = "".join(inputs)
             cmd: command = get(self.cmds.cmds, cmd_str)
