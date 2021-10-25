@@ -41,10 +41,12 @@ class i_input:
         else:
             return self._input_list.pop(0)
 
+    def initialize(self):
+        pass
+
 
 class i_nbinput(i_input):
-    def start_listen(self):
-        pass
+    pass
 
 
 class cmd_input(i_input):
@@ -57,5 +59,6 @@ class cmd_input(i_input):
         else:
             res = input(str)
         for char in res:
-            self._input_list.append(printable(char))
-            self.on_input(self)
+            ch = printable(char)
+            self._input_list.append(ch)
+            self.on_input(self,ch)

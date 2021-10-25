@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Set
 
 import core.ioc as ioc
 from core.events import event
@@ -9,7 +9,7 @@ from network import network
 import ui.inputs as _input
 from utils import get, clear_screen, lock, clock, separate, compose
 import utils
-from typing import Optional, Union, Any, Tuple, List, Dict
+from typing import Optional, Union, Any, Tuple, List, Dict, Callable
 from io import StringIO
 from datetime import datetime
 from dataclasses import dataclass
@@ -33,10 +33,6 @@ def get_command_id_tip(cmd: command) -> str:
     return res
 
 
-def do_noting():
-    pass
-
-
 class state:
     def on_en(self):
         pass
@@ -47,13 +43,26 @@ class state:
     def update(self):
         pass
 
+    def on_input(self, char: chars.char):
+        pass
+
 
 class smachine:
-    def __init__(self):
+    def __init__(self, state_pre: Callable[[state], None] = None, stype_pre: Callable[[type], state] = None):
         self.cur: Optional[state] = None
         self.pre: Optional[state] = None
+        self.state_pre = state_pre
+        self.stype_pre = stype_pre
 
-    def enter(self, s: state):
+    def enter(self, s: Union[state, type]):
+        if isinstance(s, state):
+            if self.state_pre is not None:
+                self.state_pre(s)
+        elif isinstance(s, type):
+            if self.stype_pre is not None:
+                s = self.stype_pre(s)
+            else:
+                s = s()
         if self.pre is not None:
             self.pre.on_ex()
         self.pre = self.cur
@@ -68,41 +77,82 @@ class smachine:
         if self.cur is not None:
             self.cur.update()
 
+    def on_input(self, char: chars.char):
+        if self.cur is not None:
+            self.cur.on_input(char)
+
 
 class client_state(state):
-    def __init__(self, client):
+    def __init__(self, client: "client"):
         super().__init__()
-        self.client = client
+        self.client: "client" = client
 
-    def on_en(self):
-        pass
 
-    def on_ex(self):
-        pass
+class cmdkey:
+    def __init__(self):
+        self.mappings: Set[chars.char] = set()
 
-    def update_input_list(self, input_list):
-        self.input_list: list = input_list
+    def map(self, char: chars.char) -> "cmdkey":
+        self.mappings.add(char)
+        return self
 
-    def update(self):
-        super().update()
+    def demap(self, char: chars.char, rematch: bool) -> "cmdkey":
+        if rematch:
+            for ch in self.mappings:
+                if ch == char:
+                    self.mappings.remove(ch)
+                    break
+        else:
+            self.mappings.remove(char)
+        return self
+
+    def __eq__(self, other) -> bool:
+        for ch in self.mappings:
+            if ch == other:
+                return True
+        return False
 
 
 class cmd_state(client_state):
 
+    def on_en(self):
+        self.client.set_changed()
+
     def update(self):
-        client = self.client
-        client.display_lock(client.win.display)
-        client.display_lock(client.display.display_text, client.command_list_tip)
-        client.display_lock(client.display.display_text, "Enter a command:")
-        client.input_.get_input()
-        inputs = client.input_.input_list()
-        client.input_.flush()
-        cmd_str = "".join(inputs)
-        cmd: command = get(client.cmds.cmds, cmd_str)
-        if cmd is not None:
-            cmd.handler()
-        else:
-            client.logger.error(f"Cannot identify command {cmd_str}")
+        c = self.client
+        dlock = c.display_lock
+        dlock(c.win.display)
+        c.display.display_text("Command mode:",end='\n')
+        tb = c.textbox.distext
+        c.display.display_text(tb)
+
+    def on_input(self, char: chars.char):
+        c = self.client
+        if c.key_enter_text == char:
+            c.sm.enter(text_state)
+        elif True:
+            c.textbox.append(chars.to_str(char))
+
+
+class text_state(client_state):
+
+    def on_en(self):
+        self.client.set_changed()
+
+    def update(self):
+        c = self.client
+        dlock = c.display_lock
+        dlock(c.win.display)
+        c.display.display_text("Text mode:",end='\n')
+        tb = c.textbox.distext
+        c.display.display_text(tb)
+
+    def on_input(self, char: chars.char):
+        c = self.client
+        if c.key_quit_text == char:
+            c.sm.enter(cmd_state)
+        elif True:
+            c.textbox.append(chars.to_str(char))
 
 
 class cmd_list:
@@ -132,14 +182,24 @@ class client:
         self.container.register_instance(i_network, self.network)
         self.on_service_register(self.container)
 
-        self.input_: _input.i_nbinput = self.container.resolve(_input.i_nbinput)
+        self.inpt: _input.i_input = self.container.resolve(_input.i_input)
         self.logger: output.i_logger = self.container.resolve(output.i_logger)
         self.logger.logfile = self.log_file
         self.display: output.i_display = self.container.resolve(output.i_display)
         self.win = window(self.display)
         self.win.fill_until_max = True
         self.gen_cmds()
-        self.sm = smachine()
+
+        def set_client(state: state) -> None:
+            state.client = self
+
+        def gen_state(statetype: type) -> state:
+            if issubclass(statetype, client_state):
+                return statetype(self)
+            else:
+                return statetype()
+
+        self.sm = smachine(state_pre=set_client, stype_pre=gen_state)
 
         self.textbox = textbox()
 
@@ -147,12 +207,17 @@ class client:
         self.textbox.on_delete.add(lambda b, p, c: self.set_changed())
         self.textbox.on_cursor_move.add(lambda b, f, c: self.set_changed())
 
-        def on_input(nbinput,char):
+        self.key_quit_text = cmdkey().map(chars.char_esc)
+        self.key_enter_text = cmdkey().map(chars.char_t)
+
+        def on_input(nbinput, char):
             ch = nbinput.consume_char()
             if ch is char:
-                pass
+                self.sm.on_input(ch)
+            else:
+                self.logger.error(f"Input event provides a wrong char '{ch} -> {char}'.")
 
-        self.input_.on_input()
+        self.inpt.on_input.add(on_input)
 
     @property
     def need_update(self):
@@ -188,26 +253,30 @@ class client:
 
     def start(self):
         self.running = True
-        i = self.input_
-        i.start_listen()
+        i = self.inpt
+        i.initialize()
+        dlock = self.display_lock
+        sm = self.sm
+        sm.enter(cmd_state)
         while self.running:
+            self.inpt.get_input()
             # self.tps.delay()
             if not self.need_update:
                 continue
             # The following is to need update
-            # self.sm.update()
-            dlock = self.display_lock
-            dlock(self.win.display)
+            sm.update()
             # dlock(self.display.display_text, self.command_list_tip)
             # dlock(self.display.display_text, "Enter a command:")
             inputs = i.input_list
             cmd_str = utils.compose(inputs)
-            cmd: command = get(self.cmds.cmds, cmd_str)
+            dlock(self.display.display_text, cmd_str)
+            self.display.render()
+            """ cmd: command = get(self.cmds.cmds, cmd_str)
             if cmd is not None:
                 cmd.handler()
             else:
                 self.logger.error(f"Cannot identify command {cmd_str}")
-            self.display_lock(self.display.render())
+            self.display_lock(self.display.render())"""
 
     def display_lock(self, func, *args, **kwargs):
         lock(self._display_lock, func, *args, **kwargs)
@@ -229,6 +298,7 @@ class textbox:
         self._input_list = []
         self.cursor_icon = cursor_icon
         self._cursor: int = 0
+        self.cursor_pos: int = 0
         self._on_cursor_move = event()
         self._on_append = event()
         self._on_delete = event()
@@ -301,6 +371,9 @@ class textbox:
             self._input_list = value[:]
         else:
             self._input_list = list(value)
+
+    def clear(self):
+        self._input_list = []
 
     @property
     def cursor(self):

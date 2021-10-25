@@ -8,28 +8,39 @@ import threading
 from threading import Lock, Thread
 import time
 import os
-from ui.clients import client
+from ui.clients import client,msgstorage
 import platform
-from ui.inputs import i_nbinput
+from ui.inputs import i_nbinput, i_input
+from ui import inputs
 
-system_type=platform.system()
+DEBUG = True
+
+system_type = platform.system()
 if system_type == "Linux":
     pass
-elif system_type=="Windows":
-    from ui.nbinput import nbinput
+elif system_type == "Windows":
+    from ui.nonblocks import nbinput
 
 _client = client()
+
 
 def main():
     _client.on_service_register.add(init_plugin)
     _client.on_command_register.add(add_commands)
     _client.init()
+    st = msgstorage("record.rec")
+    st.deserialize()
+    _client.win.history=[unit[2] for unit in st]
     _client.start()
 
 
 def init_plugin(registry: container):
-    if system_type=="Windows":
-        registry.register_singleton(i_nbinput,nbinput)
+    if system_type == "Windows":
+        registry.register_singleton(i_input, nbinput)
+    if DEBUG:
+        from ui.inputs import cmd_input
+        registry.register_singleton(i_input, cmd_input)
+
 
 def add_commands(cmd_list):
     pass

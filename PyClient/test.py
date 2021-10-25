@@ -25,7 +25,7 @@ def test_input():
                 print(f"{ch} is {ch_number}")
 
 
-test_input()
+# test_input()
 
 
 def test_textbox():
@@ -211,6 +211,21 @@ def test_dataclass():
 
 
 # test_dataclass()
+
+def test_set():
+    s = set()
+    s.add(2)
+    s.add(5)
+    s.add(7)
+    s.add(11)
+    print(compose(s))
+    for i in s:
+        if i == 5:
+            s.remove(5)
+            break
+    print(compose(s))
+
+test_set()
 """
 while True:
     c = ""

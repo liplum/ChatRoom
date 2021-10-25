@@ -18,7 +18,7 @@ class nbinput(i_nbinput):
     non-blocking input
     """
 
-    def start_listen(self):
+    def initialize(self):
         if self.input_thread is None:
             self.input_thread = Thread(target=self._listen_input)
             self.input_thread.start()

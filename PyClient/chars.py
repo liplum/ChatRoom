@@ -37,6 +37,9 @@ class char:
     def __str__(self):
         return to_str(self)
 
+    def __hash__(self):
+        return hash((self.keycode_1, self.keycode_2))
+
 
 class printable(char):
     def __init__(self, char_: Union[str, bytes]):
