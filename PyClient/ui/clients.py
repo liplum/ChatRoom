@@ -32,6 +32,28 @@ def get_command_id_tip(cmd: command) -> str:
     s.close()
     return res
 
+class kbinding:
+    def __init__(self):
+        self.bindings={}
+        self._on_any=None
+    def bind(self,ch:chars.char,func):
+        self.bindings[ch]=func
+    @property
+    def on_any(self):
+        return self._on_any
+    @on_any.setter
+    def on_any(self,func):
+        self._on_any=func
+
+    def trigger(self,ch:chars.char,*args,**kwargs)->bool:
+        func=get(self.bindings,ch)
+        if func is not None:
+            func(*args,**kwargs)
+            return True
+        if self.on_any is not None:
+            self.on_any(*args,**kwargs)
+            return True
+        return False
 
 class state:
     def on_en(self):
@@ -114,6 +136,11 @@ class cmdkey:
 
 
 class cmd_state(client_state):
+    def __init__(self, client: "client"):
+        super().__init__(client)
+        self.single=kbinding()
+        self.longcmd=kbinding()
+        self.islongcmd=False
 
     def on_en(self):
         self.client.set_changed()
@@ -127,7 +154,12 @@ class cmd_state(client_state):
         c.display.display_text(tb)
 
     def on_input(self, char: chars.char):
-        c = self.client
+        c=self.client
+        if self.islongcmd:
+            self.longcmd.trigger(ch)
+        else:
+            self.single.trigger(ch)
+
         if c.key_enter_text == char:
             c.sm.enter(text_state)
         elif True:
@@ -135,6 +167,10 @@ class cmd_state(client_state):
 
 
 class text_state(client_state):
+
+    def __init__(self, client: "client"):
+        super().__init__(client)
+
 
     def on_en(self):
         self.client.set_changed()
@@ -426,11 +462,35 @@ class textbox:
         self.on_append(self, self.cursor, char)
         self.cursor += 1
 
-    def delete(self):
+    def delete(self,left=True):
         if self.cursor_pos > 0:
-            ch = self._input_list.pop(self.cursor_pos - 1)
-            self.on_delete(self, self.cursor, ch)
-            self.cursor -= 1
+            n= if left self.cursor_pos-1 else self.cursor_pos
+            if n < len(self._input_list):
+                ch = self._input_list.pop(n)
+                self.on_delete(self, self.cursor, ch)
+                self.cursor -= 1
+
+class xtextbox(textbox):
+    def __init__(self,cursor_icon:str='^'):
+        super().__init__()
+        kbs=kbinding()
+        self.kbs=kbs
+        kbs.bind(chars.char_backpace,lambda c:self.delete())
+        kbs.bind(chars.char_delete,lambda c:self.delete(left=False))
+        kbs.bind(chars.char_left,lambda c:self.left())
+        kbs.bind(chars.char_right,lambda c:self.right())
+        kbs.bind(chars.char_home,lambda c:self.home())
+        kbs.bind(chars.char_end,lambda c:self.end())
+        spapp=super().append
+        kbs.on_any=lambda c: spapp(to_str(c))
+
+    def append(self,ch:Union[str,chars.char]):
+        if isinstance(ch,str):
+            super().append(ch)
+        elif isinstance(ch,chars.char):
+            consumed = self.kbs.trigger(ch)
+            if not consumed:
+                super().append(to_str(ch))
 
 
 StorageUnit = Tuple[datetime, userid, str]
