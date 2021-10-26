@@ -1,15 +1,16 @@
 from ui.inputs import i_nbinput
-from ui.outputs import i_display, CmdColor
+from ui.outputs import i_display, CmdFgColor, CmdBkColor
 import msvcrt
 from threading import Thread, RLock
 from utils import lock
-from typing import Optional, List
+from typing import Optional, List, NoReturn
 import chars
 
 
 class nbdispaly(i_display):
 
-    def display_text(self, text: str = "", end: str = "", color: CmdColor = None):
+    def display_text(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
+                     bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
         msvcrt.putwch(text + end)
 
 
@@ -21,6 +22,7 @@ class nbinput(i_nbinput):
     def initialize(self):
         if self.input_thread is None:
             self.input_thread = Thread(target=self._listen_input)
+            self.input_thread.daemon = True
             self.input_thread.start()
             self._lock = RLock()
 
@@ -36,7 +38,7 @@ class nbinput(i_nbinput):
                 if ch_number == chars.control_keycode_1:
                     ch_full = chars.control(ord(msvcrt.getwch()))
                     self._input_new(ch_full)
-                elif ch_number == f_keycode_1:
+                elif ch_number == chars.f_keycode_1:
                     ch_full = chars.f(ord(msvcrt.getwch()))
                     self._input_new(ch_full)
                 else:
@@ -44,7 +46,7 @@ class nbinput(i_nbinput):
                     self._input_new(ch_full)
 
     def _input_new(self, char: chars.char):
-        lock(self._lock, lambda: self._input_list.append(c))
+        lock(self._lock, lambda: self._input_list.append(char))
         self.on_input(self, char)
 
     def consume_char(self) -> Optional[chars.char]:
@@ -57,7 +59,7 @@ class nbinput(i_nbinput):
         return lock(self._lock, get_first)
 
     def get_input(self, tip: str = None):
-        self.start_listen()
+        self.initialize()
 
     @property
     def input_list(self) -> List[chars.char]:

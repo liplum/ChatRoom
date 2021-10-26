@@ -22,10 +22,10 @@ class i_input:
     @property
     def on_input(self) -> event:
         """
-        First para is the i_input object
+        Para 1:i_input object
 
 
-        Second para is the char object
+        Para 2:char object
 
         :return: event(i_input,char)
         """

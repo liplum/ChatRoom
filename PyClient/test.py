@@ -225,7 +225,15 @@ def test_set():
             break
     print(compose(s))
 
-test_set()
+
+# test_set()
+
+def test_color_cmd():
+    text = "_______-------------++++++++++++========="
+    print(f"\033[0;34;40m{text}\033[0m")
+
+
+test_color_cmd()
 """
 while True:
     c = ""

@@ -14,6 +14,9 @@ from io import StringIO
 from datetime import datetime
 from dataclasses import dataclass
 import chars
+import sys
+import traceback
+from enum import Enum, auto, IntEnum, IntFlag
 
 
 class command:
@@ -32,28 +35,38 @@ def get_command_id_tip(cmd: command) -> str:
     s.close()
     return res
 
+
+class cmd_analyzer:
+    def analyze(self, cmdline: str):
+        pass
+
+
 class kbinding:
     def __init__(self):
-        self.bindings={}
-        self._on_any=None
-    def bind(self,ch:chars.char,func):
-        self.bindings[ch]=func
+        self.bindings = {}
+        self._on_any = None
+
+    def bind(self, ch: chars.char, func):
+        self.bindings[ch] = func
+
     @property
     def on_any(self):
         return self._on_any
-    @on_any.setter
-    def on_any(self,func):
-        self._on_any=func
 
-    def trigger(self,ch:chars.char,*args,**kwargs)->bool:
-        func=get(self.bindings,ch)
+    @on_any.setter
+    def on_any(self, func):
+        self._on_any = func
+
+    def trigger(self, ch: chars.char, *args, **kwargs) -> bool:
+        func = get(self.bindings, ch)
         if func is not None:
-            func(*args,**kwargs)
+            func(ch, *args, **kwargs)
             return True
         if self.on_any is not None:
-            self.on_any(*args,**kwargs)
+            self.on_any(ch, *args, **kwargs)
             return True
         return False
+
 
 class state:
     def on_en(self):
@@ -113,9 +126,38 @@ class client_state(state):
 class cmdkey:
     def __init__(self):
         self.mappings: Set[chars.char] = set()
+        self._on_map = event()
+        self._on_demap = event()
+
+    @property
+    def on_map(self):
+        """
+        Para 1:cmdkey object
+
+
+        Para 2:mapped char
+
+
+        :return: event(textbox,int,str)
+        """
+        return self._on_map
+
+    @property
+    def on_demap(self):
+        """
+        Para 1:cmdkey object
+
+
+        Para 2:demapped char
+
+
+        :return: event(textbox,int,str)
+        """
+        return self._on_demap
 
     def map(self, char: chars.char) -> "cmdkey":
         self.mappings.add(char)
+        self.on_map(self, char)
         return self
 
     def demap(self, char: chars.char, rematch: bool) -> "cmdkey":
@@ -123,9 +165,14 @@ class cmdkey:
             for ch in self.mappings:
                 if ch == char:
                     self.mappings.remove(ch)
+                    self.on_demap(self, ch)
                     break
         else:
-            self.mappings.remove(char)
+            try:
+                self.mappings.remove(char)
+                self.on_demap(self, char)
+            except KeyError:
+                pass
         return self
 
     def __eq__(self, other) -> bool:
@@ -135,60 +182,89 @@ class cmdkey:
         return False
 
 
-class cmd_state(client_state):
+class cmd_mode(client_state):
     def __init__(self, client: "client"):
         super().__init__(client)
-        self.single=kbinding()
-        self.longcmd=kbinding()
-        self.islongcmd=False
+        self.islongcmd = False
+        self.longcmd = ""
 
     def on_en(self):
-        self.client.set_changed()
+        self.client.make_dirty()
+        self.client.textbox.clear()
+
+    tip: str = "Command mode:" + " " * 20
 
     def update(self):
         c = self.client
         dlock = c.display_lock
         dlock(c.win.display)
-        c.display.display_text("Command mode:",end='\n')
-        tb = c.textbox.distext
-        c.display.display_text(tb)
+        dlock(c.display.display_text, text=cmd_mode.tip, fgcolor=output.CmdBkColor.Black,
+              bkcolor=output.CmdBkColor.Blue,
+              end='\n')
+
+    def enter_long_cmd_mode(self):
+        self.islongcmd = True
+
+    def quit_long_cmd_mode(self):
+        self.islongcmd = False
 
     def on_input(self, char: chars.char):
-        c=self.client
+        c = self.client
+        tb = c.textbox
+        if tb.input_count <= 0:
+            self.quit_long_cmd_mode()
         if self.islongcmd:
-            self.longcmd.trigger(ch)
+            if chars.c_carriage_return == char:
+                input_list = tb.input_list
+                args = utils.compose(input_list, connector='')
+                tb.clear()
+                # TODO:Complete This
+                self.quit_long_cmd_mode()
+            else:
+                tb.append(char)
         else:
-            self.single.trigger(ch)
+            if c.key_enter_text == char:
+                c.sm.enter(text_mode)
+            elif chars.c_colon == char:
+                self.enter_long_cmd_mode()
+                tb.append(chars.c_colon)
+            elif chars.c_q == char:
+                c.running = False
 
-        if c.key_enter_text == char:
-            c.sm.enter(text_state)
-        elif True:
-            c.textbox.append(chars.to_str(char))
 
-
-class text_state(client_state):
+class text_mode(client_state):
 
     def __init__(self, client: "client"):
         super().__init__(client)
+        kbs = kbinding()
+        self.kbs = kbs
 
+        def send_text():
+            self.client.textbox.clear()
+
+        kbs.bind(chars.c_carriage_return, lambda c: send_text())
+        kbs.on_any = lambda c: self.client.textbox.append(c)
 
     def on_en(self):
-        self.client.set_changed()
+        self.client.make_dirty()
+        self.client.textbox.clear()
+
+    tip: str = "Text mode:" + " " * 20
 
     def update(self):
         c = self.client
         dlock = c.display_lock
         dlock(c.win.display)
-        c.display.display_text("Text mode:",end='\n')
-        tb = c.textbox.distext
-        c.display.display_text(tb)
+        dlock(c.display.display_text, text=text_mode.tip, fgcolor=output.CmdBkColor.Black,
+              bkcolor=output.CmdBkColor.Blue,
+              end='\n')
 
     def on_input(self, char: chars.char):
         c = self.client
-        if c.key_quit_text == char:
-            c.sm.enter(cmd_state)
+        if c.key_quit_text_mode == char:
+            c.sm.enter(cmd_mode)
         elif True:
-            c.textbox.append(chars.to_str(char))
+            self.kbs.trigger(char)
 
 
 class cmd_list:
@@ -207,9 +283,17 @@ class client:
         self.cmds: cmd_list = cmd_list()
         self.running: bool = False
         self._display_lock: RLock = RLock()
-        # self.tps = clock(4)
-        self.log_file: Optional[str] = None
-        self._changed = False
+        self._dirty = False
+        self.logger = None
+
+    @property
+    def log_file(self) -> Optional[str]:
+        return self.logger.logfile if self.logger is not None else None
+
+    @log_file.setter
+    def log_file(self, value):
+        if self.logger is not None:
+            self.logger.logfile = value
 
     def init(self) -> None:
         self.container.register_singleton(output.i_logger, output.cmd_logger)
@@ -220,8 +304,11 @@ class client:
 
         self.inpt: _input.i_input = self.container.resolve(_input.i_input)
         self.logger: output.i_logger = self.container.resolve(output.i_logger)
-        self.logger.logfile = self.log_file
+        self.log_file = "cmd.log"
         self.display: output.i_display = self.container.resolve(output.i_display)
+
+        self.logger.msg("Service component initialized.")
+
         self.win = window(self.display)
         self.win.fill_until_max = True
         self.gen_cmds()
@@ -237,17 +324,18 @@ class client:
 
         self.sm = smachine(state_pre=set_client, stype_pre=gen_state)
 
-        self.textbox = textbox()
+        self.textbox: xtextbox = xtextbox()
 
-        self.textbox.on_append.add(lambda b, p, c: self.set_changed())
-        self.textbox.on_delete.add(lambda b, p, c: self.set_changed())
-        self.textbox.on_cursor_move.add(lambda b, f, c: self.set_changed())
+        self.textbox.on_append.add(lambda b, p, c: self.make_dirty())
+        self.textbox.on_delete.add(lambda b, p, c: self.make_dirty())
+        self.textbox.on_cursor_move.add(lambda b, f, c: self.make_dirty())
+        self.textbox.on_list_replace.add(lambda b, f, c: self.make_dirty())
 
-        self.key_quit_text = cmdkey().map(chars.char_esc)
-        self.key_enter_text = cmdkey().map(chars.char_t)
+        self.key_quit_text_mode = cmdkey().map(chars.c_esc)
+        self.key_enter_text = cmdkey().map(chars.c_t)
 
-        def on_input(nbinput, char):
-            ch = nbinput.consume_char()
+        def on_input(inpt, char):
+            ch = inpt.consume_char()
             if ch is char:
                 self.sm.on_input(ch)
             else:
@@ -257,10 +345,13 @@ class client:
 
     @property
     def need_update(self):
-        return self._changed
+        return self._dirty
 
-    def set_changed(self):
-        self._changed = True
+    def make_dirty(self):
+        self._dirty = True
+
+    def _clear_dirty(self):
+        self._dirty = False
 
     def gen_cmds(self):
         def send_text():
@@ -293,26 +384,36 @@ class client:
         i.initialize()
         dlock = self.display_lock
         sm = self.sm
-        sm.enter(cmd_state)
+        sm.enter(cmd_mode)
         while self.running:
-            self.inpt.get_input()
-            # self.tps.delay()
-            if not self.need_update:
-                continue
-            # The following is to need update
-            sm.update()
-            # dlock(self.display.display_text, self.command_list_tip)
-            # dlock(self.display.display_text, "Enter a command:")
-            inputs = i.input_list
-            cmd_str = utils.compose(inputs)
-            dlock(self.display.display_text, cmd_str)
-            self.display.render()
-            """ cmd: command = get(self.cmds.cmds, cmd_str)
-            if cmd is not None:
-                cmd.handler()
-            else:
-                self.logger.error(f"Cannot identify command {cmd_str}")
-            self.display_lock(self.display.render())"""
+            try:
+                self.inpt.get_input()
+                # self.tps.delay()
+                if not self.need_update:
+                    continue
+                # The following is to need update
+                self._clear_dirty()
+                sm.update()
+                tb = self.textbox.distext
+                dlock(self.display.display_text, tb)
+                dlock(self.display.render)
+            except Exception as e:
+                traceback.print_exc()
+                self.running = False
+                """
+                dlock(self.display.display_text, self.command_list_tip)
+                dlock(self.display.display_text, "Enter a command:")
+                inputs = i.input_list
+                cmd_str = utils.compose(inputs)
+                dlock(self.display.display_text, cmd_str) 
+                cmd: command = get(self.cmds.cmds, cmd_str)
+                if cmd is not None:
+                    cmd.handler()
+                else:
+                    self.logger.error(f"Cannot identify command {cmd_str}")
+                self.display_lock(self.display.render())
+                """
+        sys.exit(0)
 
     def display_lock(self, func, *args, **kwargs):
         lock(self._display_lock, func, *args, **kwargs)
@@ -339,6 +440,7 @@ class textbox:
         self._on_append = event()
         self._on_delete = event()
         self._on_gen_distext = event()
+        self._on_list_replace = event()
 
     @property
     def on_gen_distext(self) -> event:
@@ -398,18 +500,40 @@ class textbox:
         return self._on_delete
 
     @property
+    def on_list_replace(self) -> event:
+        """
+        Para 1:textbox object
+
+
+        Para 2:former list
+
+
+        Para 3:current list
+
+        :return: event(textbox,list,list)
+        """
+        return self._on_list_replace
+
+    @property
     def input_list(self):
         return self._input_list[:]
 
+    @property
+    def input_count(self):
+        return len(self._input_list)
+
     @input_list.setter
     def input_list(self, value):
+        former = self._input_list
         if isinstance(value, list):
             self._input_list = value[:]
         else:
             self._input_list = list(value)
+        self.cursor = 0
+        self.on_list_replace(self, former, self._input_list)
 
     def clear(self):
-        self._input_list = []
+        self.input_list = []
 
     @property
     def cursor(self):
@@ -462,32 +586,33 @@ class textbox:
         self.on_append(self, self.cursor, char)
         self.cursor += 1
 
-    def delete(self,left=True):
+    def delete(self, left=True):
         if self.cursor_pos > 0:
-            n= if left self.cursor_pos-1 else self.cursor_pos
+            n = self.cursor_pos - 1 if left else self.cursor_pos
             if n < len(self._input_list):
                 ch = self._input_list.pop(n)
                 self.on_delete(self, self.cursor, ch)
                 self.cursor -= 1
 
-class xtextbox(textbox):
-    def __init__(self,cursor_icon:str='^'):
-        super().__init__()
-        kbs=kbinding()
-        self.kbs=kbs
-        kbs.bind(chars.char_backpace,lambda c:self.delete())
-        kbs.bind(chars.char_delete,lambda c:self.delete(left=False))
-        kbs.bind(chars.char_left,lambda c:self.left())
-        kbs.bind(chars.char_right,lambda c:self.right())
-        kbs.bind(chars.char_home,lambda c:self.home())
-        kbs.bind(chars.char_end,lambda c:self.end())
-        spapp=super().append
-        kbs.on_any=lambda c: spapp(to_str(c))
 
-    def append(self,ch:Union[str,chars.char]):
-        if isinstance(ch,str):
+class xtextbox(textbox):
+    def __init__(self, cursor_icon: str = '^'):
+        super().__init__(cursor_icon)
+        kbs = kbinding()
+        self.kbs = kbs
+        kbs.bind(chars.c_backspace, lambda c: self.delete())
+        kbs.bind(chars.c_delete, lambda c: self.delete(left=False))
+        kbs.bind(chars.c_left, lambda c: self.left())
+        kbs.bind(chars.c_right, lambda c: self.right())
+        kbs.bind(chars.c_home, lambda c: self.home())
+        kbs.bind(chars.c_end, lambda c: self.end())
+        spapp = super().append
+        kbs.on_any = lambda c: spapp(chars.to_str(c))
+
+    def append(self, ch: Union[str, chars.char]):
+        if isinstance(ch, str):
             super().append(ch)
-        elif isinstance(ch,chars.char):
+        elif isinstance(ch, chars.char):
             consumed = self.kbs.trigger(ch)
             if not consumed:
                 super().append(to_str(ch))

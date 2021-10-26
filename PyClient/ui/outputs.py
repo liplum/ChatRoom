@@ -22,7 +22,7 @@ class i_logger:
 
 
 @unique
-class CmdColor(IntEnum):
+class CmdFgColor(IntEnum):
     Black = 30
     Red = 31
     Green = 32
@@ -33,22 +33,35 @@ class CmdColor(IntEnum):
     White = 37
 
 
+class CmdBkColor(IntEnum):
+    Black = 40
+    Red = 41
+    Green = 42
+    Yellow = 43
+    Blue = 44
+    Violet = 45
+    Cyan = 46
+    White = 47
+
+
 class AlertColor(IntEnum):
-    Msg = CmdColor.White
-    Tip = CmdColor.Blue
-    Warn = CmdColor.Yellow
-    Error = CmdColor.Red
+    Msg = CmdFgColor.White
+    Tip = CmdFgColor.Blue
+    Warn = CmdFgColor.Yellow
+    Error = CmdFgColor.Red
 
 
-def tinted_print(text: str, color: CmdColor, end=None) -> NoReturn:
-    if end is None:
-        print(f"\033[0;{int(color)}m{text}\033[0m")
-    else:
-        print(f"\033[0;{int(color)}m{text}\033[0m", end=end)
+def tinted_print(text: str, fgcolor: Optional[CmdFgColor] = None, bkcolor: Optional[CmdBkColor] = None,
+                 end='\n') -> NoReturn:
+    fg = 0 if fgcolor is None else int(fgcolor)
+    bk = 0 if bkcolor is None else int(bkcolor)
+    print(f"\033[0;{fg};{bk}m{text}\033[0m", end=end)
 
 
-def gen_tinted_text(text: str, color: CmdColor) -> str:
-    return f"\033[0;{int(color)}m{text}\033[0m"
+def gen_tinted_text(text: str, fgcolor: Optional[CmdFgColor], bkcolor: Optional[CmdBkColor] = None, end='\n') -> str:
+    fg = 0 if fgcolor is None else int(fgcolor)
+    bk = 0 if bkcolor is None else int(bkcolor)
+    return f"\033[0;{fg};{bk}m{text}\033[0m{end}"
 
 
 class cmd_logger(i_logger):
@@ -59,19 +72,18 @@ class cmd_logger(i_logger):
         self.output_to_cmd = output_to_cmd
 
     def msg(self, text: str) -> NoReturn:
-        cmd_logger.alert_print(text, AlertColor.Msg, "Message")
+        self.alert_print(text, AlertColor.Msg, "Message")
 
     def tip(self, text: str) -> NoReturn:
-        cmd_logger.alert_print(text, AlertColor.Tip, "Tip")
+        self.alert_print(text, AlertColor.Tip, "Tip")
 
     def warn(self, text: str) -> NoReturn:
-        cmd_logger.alert_print(text, AlertColor.Warn, "Warn")
+        self.alert_print(text, AlertColor.Warn, "Warn")
 
     def error(self, text: str) -> NoReturn:
-        cmd_logger.alert_print(text, AlertColor.Error, "Error")
+        self.alert_print(text, AlertColor.Error, "Error")
 
-    @staticmethod
-    def alert_print(text: str, color: Union[CmdColor, AlertColor], alertLevel: str) -> None:
+    def alert_print(self, text: str, color: Union[CmdFgColor, AlertColor], alertLevel: str) -> None:
         time_stamp = datetime.now().strftime("%Y%m%d-%H:%M:%S")
         t = f"{time_stamp}[{alertLevel}]{text}"
         tinted_print(t, color)
@@ -81,7 +93,8 @@ class cmd_logger(i_logger):
 
 
 class i_display:
-    def display_text(self, text: str = "", end: str = "", color: Optional[CmdColor] = None) -> NoReturn:
+    def display_text(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
+                     bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
         pass
 
     def display_image(self, file_path: str):
@@ -97,18 +110,16 @@ class cmd_display(i_display):
     """
 
     def __init__(self):
-        self.render_list: List[Tuple[str, str]] = []
+        self.render_list: List[str] = []
 
-    def display_text(self, text: str = "", end: str = "", color: Optional[CmdColor] = None) -> NoReturn:
-        if color is not None:
-            self.render_list.append((gen_tinted_text(text, color), end))
-        else:
-            self.render_list.append((text, end))
+    def display_text(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
+                     bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
+        self.render_list.append(gen_tinted_text(text, fgcolor, bkcolor, end))
 
     def clear_render_list(self):
         self.render_list = []
 
     def render(self):
-        for item in self.render_list:
-            print(item[0], end=item[1])
+        for text in self.render_list:
+            print(text, end='')
         self.clear_render_list()

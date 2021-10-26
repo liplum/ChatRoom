@@ -13,7 +13,7 @@ import platform
 from ui.inputs import i_nbinput, i_input
 from ui import inputs
 
-DEBUG = True
+DEBUG = False
 
 system_type = platform.system()
 if system_type == "Linux":
@@ -22,7 +22,6 @@ elif system_type == "Windows":
     from ui.nonblocks import nbinput
 
 _client = client()
-
 
 def main():
     _client.on_service_register.add(init_plugin)

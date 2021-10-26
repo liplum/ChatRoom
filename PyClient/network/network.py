@@ -135,6 +135,7 @@ class network(i_network):
         skt = socket(AF_INET, SOCK_STREAM)
         skt.connect(server.target)
         listen = Thread(target=self.__receive_datapack, args=(self.socket,))
+        listen.daemon=True
         self.sockets[server] = (skt, listen)
         listen.start()
 
