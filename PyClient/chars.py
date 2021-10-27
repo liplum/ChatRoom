@@ -2,6 +2,7 @@ from typing import Union, Optional, Tuple
 
 control_keycode_1 = 0xe0
 f_keycode_1 = 0
+linux_esc = 0x1b
 
 
 class char:

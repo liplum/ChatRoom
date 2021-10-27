@@ -6,7 +6,6 @@ from utils import lock
 from typing import Optional, List, NoReturn
 import chars
 
-
 class nbdispaly(i_display):
 
     def display_text(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
@@ -16,7 +15,7 @@ class nbdispaly(i_display):
 
 class nbinput(i_nbinput):
     """
-    non-blocking input
+    non-blocking input on windows
     """
 
     def initialize(self):
@@ -25,10 +24,6 @@ class nbinput(i_nbinput):
             self.input_thread.daemon = True
             self.input_thread.start()
             self._lock = RLock()
-
-    def __init__(self):
-        super().__init__()
-        self.input_thread = None
 
     def _listen_input(self):
         while True:

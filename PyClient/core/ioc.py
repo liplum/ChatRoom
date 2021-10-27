@@ -1,4 +1,5 @@
 from enum import Enum, unique, auto
+from typing import Union, Optional, Any
 
 
 class container:
@@ -67,5 +68,5 @@ class item:
 
 
 class ServiceNotRegistered(Exception):
-    def __init__(self, arg):
-        self.args = arg
+    def __init__(self, service):
+        self.args = (str(service),)

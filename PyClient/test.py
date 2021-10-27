@@ -1,4 +1,3 @@
-import msvcrt
 import sys
 import utils
 
@@ -10,6 +9,51 @@ import time
 import calendar
 from datetime import datetime, timezone
 from io import StringIO
+import platform
+import traceback
+
+system_type = platform.system()
+
+if system_type == "Windows":
+    import msvcrt
+elif system_type == "Linux":
+    import select
+    import tty
+    import termios
+
+
+def win_test():
+    pass
+    # test_input()
+    # cmd_input()
+    # test_str()
+    # test_textbox()
+    # test_char()
+
+
+def linux_test():
+    nb_linux()
+
+
+def nb_linux():
+    def isData():
+        return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
+
+    old_settings = termios.tcgetattr(sys.stdin)
+    try:
+        tty.setcbreak(sys.stdin.fileno())
+
+        while True:
+            if isData():
+                c = sys.stdin.read(1)
+                """if c == '\x1b':  # x1b is ESC
+                    break"""
+                print(f"{c} {type(c)} {len(c)} {ord(c[0])}")
+
+    except:
+        traceback.print_exc()
+    finally:
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
 
 
 def test_input():
@@ -23,9 +67,6 @@ def test_input():
                 print(f"control char is {ch_number}+{ch_2_number}")
             else:
                 print(f"{ch} is {ch_number}")
-
-
-# test_input()
 
 
 def test_textbox():
@@ -64,9 +105,6 @@ def test_textbox():
         print(tb.distext)
 
 
-# test_textbox()
-
-
 def cmd_input():
     tb = textbox()
     tb.input_list = "apple"
@@ -98,9 +136,6 @@ def cmd_input():
                 tb.append(ch)
 
 
-# cmd_input()
-
-
 def test_char():
     c_2 = printable('2')
     print(f"c_2 equals char_2 ? :{c_2 == char_2}")
@@ -111,8 +146,6 @@ def test_char():
     print(f"c_2 equals string '我' ? :{c_2 == '我'}")
     print(f'c_2 equals int 49 ? :{c_2 == 49}')
 
-
-# test_char()
 
 def local_to_utc(t):
     secs = time.mktime(t)
@@ -154,8 +187,6 @@ def test_str():
     print(utils.separate("apple|banana|orange|peach||||", '|', number=2, allow_emptychar=False))
     print(utils.compose(["abc", {}, [], set(), '12333'], connector=","))
 
-
-# test_str()
 
 def printall(li):
     for item in li:
@@ -233,7 +264,14 @@ def test_color_cmd():
     print(f"\033[0;34;40m{text}\033[0m")
 
 
-test_color_cmd()
+# test_color_cmd()
+
+
+if system_type == "Windows":
+    win_test()
+elif system_type == "Linux":
+    linux_test()
+
 """
 while True:
     c = ""
