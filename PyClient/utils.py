@@ -223,6 +223,51 @@ def addmultidic(dic: Dict, key, item) -> Dict:
     return dic
 
 
+def fill(text: str, repeated: str, count: int, max_char_num: int = None) -> str:
+    textl = len(text)
+    if max_char_num is not None and textl >= max_char_num:
+        return text
+
+    with StringIO() as s:
+        s.write(text)
+        total = textl
+        repeatedl = len(repeated)
+        if max_char_num is not None:
+            restl = max_char_num - textl
+            restc = min(count, restl // repeatedl)
+        else:
+            restc = count
+        while restc > 0:
+            s.write(repeated)
+            total += repeatedl
+            restc -= 1
+
+        return s.getvalue()
+
+
+def fillby(text: str, repeated: str, max_char_num: int) -> str:
+    textl = len(text)
+    if textl >= max_char_num:
+        return text
+    with StringIO() as s:
+        s.write(text)
+        total = textl
+        repeatedl = len(repeated)
+        restl = max_char_num - textl
+        restc = restl // repeatedl
+        surplus = restl % repeatedl
+
+        while restc > 0:
+            s.write(repeated)
+            total += repeatedl
+            restc -= 1
+
+        if surplus > 0:
+            s.write(repeated[0:surplus])
+
+        return s.getvalue()
+
+
 if system_type == "Windows":
     clear_screen = clear_screen_win
 elif system_type == "Linux":

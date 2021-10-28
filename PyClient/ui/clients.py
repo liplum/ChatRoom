@@ -193,7 +193,7 @@ class cmd_mode(client_state):
         self.client.make_dirty()
         self.client.textbox.clear()
 
-    tip: str = "Command mode:" + " " * 20
+    tip: str = utils.fillby("Command mode:", " ", 40)
 
     def update(self):
         c = self.client
@@ -212,10 +212,14 @@ class cmd_mode(client_state):
     def on_input(self, char: chars.char):
         c = self.client
         tb = c.textbox
+        if c.key_quit_text_mode == char:
+            self.quit_long_cmd_mode()
+            tb.clear()
+
         if tb.input_count <= 0:
             self.quit_long_cmd_mode()
         if self.islongcmd:
-            if chars.c_carriage_return == char:
+            if keys.k_enter == char:
                 input_list = tb.input_list
                 args = utils.compose(input_list, connector='')
                 tb.clear()
@@ -243,14 +247,14 @@ class text_mode(client_state):
         def send_text():
             self.client.textbox.clear()
 
-        kbs.bind(chars.c_carriage_return, lambda c: send_text())
+        kbs.bind(keys.k_enter, lambda c: send_text())
         kbs.on_any = lambda c: self.client.textbox.append(c)
 
     def on_en(self):
         self.client.make_dirty()
         self.client.textbox.clear()
 
-    tip: str = "Text mode:" + " " * 20
+    tip: str = utils.fillby("Text mode:", " ", 40)
 
     def update(self):
         c = self.client
@@ -279,13 +283,54 @@ class cmd_list:
 class client:
     def __init__(self):
         self.container: ioc.container = ioc.container()
-        self.on_service_register: event = event()
-        self.on_command_register: event = event()
+        self._on_service_register = event()
+        self._on_command_register = event()
+        self._on_keymapping = event()
         self.cmds: cmd_list = cmd_list()
         self.running: bool = False
         self._display_lock: RLock = RLock()
         self._dirty = False
         self.logger = None
+        self.cmdkeys = []
+        self.key_quit_text_mode = self.key(cmdkey())
+        self.key_enter_text = self.key(cmdkey())
+
+    def key(self, ck: cmdkey) -> cmdkey:
+        self.cmdkeys.append(ck)
+        return ck
+
+    @property
+    def on_service_register(self) -> event:
+        """
+        Para 1:client object
+
+
+        Para 1:container
+
+        :return: event(client,container)
+        """
+        return self._on_service_register
+
+    @property
+    def on_command_register(self) -> event:
+        """
+        Para 1:
+
+        :return: event()
+        """
+        return self._on_command_register
+
+    @property
+    def on_keymapping(self) -> event:
+        """
+        Para 1: client object
+
+
+        Para 1: key map
+
+        :return: event(client,cmdkey)
+        """
+        return self._on_keymapping
 
     @property
     def log_file(self) -> Optional[str]:
@@ -301,7 +346,7 @@ class client:
         self.container.register_singleton(output.i_display, output.cmd_display)
         self.network: network.network = network.network(self)
         self.container.register_instance(i_network, self.network)
-        self.on_service_register(self.container)
+        self.on_service_register(self, self.container)
 
         self.inpt: _input.i_input = self.container.resolve(_input.i_input)
         self.logger: output.i_logger = self.container.resolve(output.i_logger)
@@ -332,9 +377,6 @@ class client:
         self.textbox.on_cursor_move.add(lambda b, f, c: self.make_dirty())
         self.textbox.on_list_replace.add(lambda b, f, c: self.make_dirty())
 
-        self.key_quit_text_mode = cmdkey().map(chars.c_esc)
-        self.key_enter_text = cmdkey().map(chars.c_t)
-
         def on_input(inpt, char):
             ch = inpt.consume_char()
             if ch is char:
@@ -343,6 +385,9 @@ class client:
                 self.logger.error(f"Input event provides a wrong char '{ch} -> {char}'.")
 
         self.inpt.on_input.add(on_input)
+
+        for k in self.cmdkeys:
+            self.on_keymapping(self, k)
 
     @property
     def need_update(self):
@@ -383,8 +428,8 @@ class client:
         self.running = True
         i = self.inpt
         i.initialize()
-        sm = self.sm
-        sm.enter(cmd_mode)
+        _sm = self.sm
+        _sm.enter(cmd_mode)
         while self.running:
             try:
                 self.inpt.get_input()
@@ -393,7 +438,7 @@ class client:
                     continue
                 # The following is to need update
                 self._clear_dirty()
-                sm.update()
+                _sm.update()
                 self.render()
             except Exception as e:
                 traceback.print_exc()
@@ -438,7 +483,7 @@ class textbox:
         self._input_list = []
         self.cursor_icon = cursor_icon
         self._cursor: int = 0
-        self.cursor_pos: int = 0
+        self._cursor: int = 0
         self._on_cursor_move = event()
         self._on_append = event()
         self._on_delete = event()
@@ -546,12 +591,7 @@ class textbox:
     def cursor(self, value):
         list_len = len(self._input_list)
         former = self._cursor
-        self._cursor = value % (list_len + 1)
-        self.is_forwards = self._cursor >= 0
-        if self.is_forwards:
-            self.cursor_pos = self._cursor
-        else:
-            self.cursor_pos = list_len + self._cursor + 1
+        self._cursor = min(max(0, value), list_len)
         self.on_cursor_move(self, former, self._cursor)
 
     def home(self):
@@ -564,11 +604,11 @@ class textbox:
         self.cursor += 1
 
     def end(self):
-        self.cursor = -1
+        self.cursor = self.input_count
 
     @property
     def distext(self) -> str:
-        cursor_pos = self.cursor_pos
+        cursor_pos = self._cursor
         with StringIO() as s:
             cur = 0
             for char in self._input_list:
@@ -585,13 +625,13 @@ class textbox:
             return dis.string
 
     def append(self, char):
-        self._input_list.insert(self.cursor_pos, char)
+        self._input_list.insert(self._cursor, char)
         self.on_append(self, self.cursor, char)
         self.cursor += 1
 
     def delete(self, left=True):
-        if self.cursor_pos > 0:
-            n = self.cursor_pos - 1 if left else self.cursor_pos
+        if self._cursor > 0:
+            n = self._cursor - 1 if left else self._cursor
             if n < len(self._input_list):
                 ch = self._input_list.pop(n)
                 self.on_delete(self, self.cursor, ch)
@@ -603,7 +643,7 @@ class xtextbox(textbox):
         super().__init__(cursor_icon)
         kbs = kbinding()
         self.kbs = kbs
-        kbs.bind(chars.c_backspace, lambda c: self.delete())
+        kbs.bind(keys.k_backspace, lambda c: self.delete())
         kbs.bind(keys.k_delete, lambda c: self.delete(left=False))
         kbs.bind(keys.k_left, lambda c: self.left())
         kbs.bind(keys.k_right, lambda c: self.right())

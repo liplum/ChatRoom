@@ -1,5 +1,6 @@
 import sys
 import utils
+from utils import *
 
 from chars import is_key
 from ui.clients import *
@@ -27,12 +28,27 @@ def win_test():
     # cmd_input()
     # test_str()
     # test_textbox()
-    test_char()
+    # test_char()
+    test_fill()
 
 
 def linux_test():
     nb_linux()
     # linux_nb()
+
+
+def test_fill():
+    s1 = fill("Abc", "-*-", 10, 22)
+    s2 = fill("Abc", "-*-", 10, 21)
+    s3 = fillby("Abc", "-*-", 22)
+    s4 = fillby("Abc", "-*-", 21)
+    s5 = fillby("Command mode:","-/-",50)
+
+    print(f"fill [{len(s1)}] {s1}")
+    print(f"fill [{len(s2)}] {s2}")
+    print(f"fillby [{len(s3)}] {s3}")
+    print(f"fillby [{len(s4)}] {s4}")
+    print(f"fillby [{len(s5)}] {s5}")
 
 
 def nb_linux():
@@ -44,14 +60,15 @@ def nb_linux():
         tty.setcbreak(sys.stdin.fileno())
 
         while True:
-            if is_input():
+            while is_input():
+                c = sys.stdin.read(1)
+                """if c == '\x1b':  # x1b is ESC
+                    break"""
+                print(f"{c} {type(c)} {len(c)} {ord(c[0])}")
                 readable = sys.stdin.readable()
                 print(readable)
-                while readable:
-                    c = sys.stdin.read(1)
-                    """if c == '\x1b':  # x1b is ESC
-                        break"""
-                    print(f"{c} {type(c)} {len(c)} {ord(c[0])}")
+                if not readable:
+                    break
 
     except:
         traceback.print_exc()
@@ -149,7 +166,7 @@ def cmd_input():
     while True:
         utils.clear_screen()
         print(tb.distext)
-        print(tb.cursor_pos)
+        print(tb._cursor)
         if msvcrt.kbhit():
             ch = msvcrt.getwch()
             ch_number = ord(ch)

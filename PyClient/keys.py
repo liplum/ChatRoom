@@ -46,6 +46,10 @@ k_home = None
 k_insert = None
 k_delete = None
 
+k_backspace = None
+
+k_enter = None
+
 k_f1 = None
 k_f2 = None
 k_f3 = None

@@ -1,10 +1,11 @@
 from chars import char
-from typing import Union, Optional,Tuple
+from typing import Union, Optional, Tuple
 
-linux_esc = 0x1b
-linux_csi = ord('[')
+linux_esc = 27
+linux_csi = 91
 linux_o = 79
 linux_126 = 126
+linux_eot = 4
 
 
 class linux_control(char):
@@ -32,6 +33,18 @@ class linux_control(char):
     def __hash__(self):
         return hash((self.keycode_1, self.keycode_2, self.keycode_3, self.keycode_4))
 
+    @staticmethod
+    def from_tuple(li: Union[list, tuple]) -> "linux_control":
+        l = len(li)
+        k2 = li[1]
+        k3 = li[2] if l > 2 else 0
+        k4 = li[3] if l > 3 else None
+        k5 = li[4] if l > 4 else None
+        return linux_control(k2, k3, k4, k5)
+
+
+lc = linux_control
+
 
 def csi_1(keycode_3: int) -> linux_control:
     return linux_control(linux_csi, keycode_3, None, None)
@@ -53,34 +66,38 @@ def o_1(keycode_3: int) -> linux_control:
     return linux_control(linux_o, keycode_3, None, None)
 
 
-def from_tuple(li: Union[list, tuple]) -> linux_control:
-    l = len(li)
-    k2 = li[1]
-    k3 = li[2]
-    k4 = li[3] if l > 3 else None
-    k5 = li[4] if l > 4 else None
-    return linux_control(k2, k3, k4, k5)
+lc_eot = char(4)
 
-
+# 27 91 65
+# esc [ code
 lc_up = csi_1(65)
 lc_down = csi_1(66)
 lc_right = csi_1(67)
 lc_left = csi_1(68)
 
+# 27 91 54 126
 lc_pgdown = csi_2_end126(54)
+
+# 27 91 53 126
 lc_pgup = csi_2_end126(53)
 
+# 27 91 70
 lc_end = csi_1(70)
 lc_home = csi_1(72)
 
+# 27 91 50 126
 lc_insert = csi_2_end126(50)
 lc_delete = csi_2_end126(51)
 
+lc_backspace = char(127)
+
+# 27 79 80
 lc_f1 = o_1(80)
 lc_f2 = o_1(81)
 lc_f3 = o_1(82)
 lc_f4 = o_1(83)
 
+# 27 91 49 53 126
 lc_f5 = csi_3_end126(49, 53)
 lc_f6 = csi_3_end126(49, 55)
 lc_f7 = csi_3_end126(49, 56)
@@ -90,3 +107,5 @@ lc_f9 = csi_3_end126(50, 48)
 lc_f10 = csi_3_end126(50, 49)
 
 lc_f12 = csi_3_end126(50, 52)
+
+lc_line_end = char(10)

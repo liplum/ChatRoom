@@ -7,7 +7,7 @@ from utils import lock
 from ui.inputs import i_nbinput
 from threading import Thread, RLock
 import sys
-import linuxchars
+from linuxchars import *
 
 
 class nbinput(i_nbinput):
@@ -21,18 +21,36 @@ class nbinput(i_nbinput):
         self._lock = RLock()
 
     def get_input(self, tip: str = None):
-        rs, ws, xs = select(self.rlist, self.wlist, self.xlist)
-        for r in rs:
-            if r is sys.stdin:
-                cs = []
-                if sys.stdin.readable():
-                    c: str = sys.stdin.read(1)
-                    cs.append(ord(c))
-                    l = len(cs)
-                    if l == 1:
-                        self._input_new(char(cs[0]))
-                    elif l > 1 and cs[1] == linuxchars.linux_esc:
-                        self._input_new(linuxchars.from_tuple(cs))
+        try:
+            tty.setcbreak(sys.stdin.fileno())
+            rs, ws, xs = select(self.rlist, self.wlist, self.xlist)
+            for r in rs:
+                if r is sys.stdin:
+                    cs = []
+                    if sys.stdin.readable():
+                        c1: str = sys.stdin.read(1)
+                        nc1 = ord(c1)
+                        cs.append(nc1)
+                        if nc1 == linux_esc:
+                            c2: str = sys.stdin.read(1)
+                            nc2 = ord(c2)
+                            cs.append(nc2)
+                            if nc2 == linux_csi:
+                                c3: str = sys.stdin.read(1)
+                                nc3 = ord(c3)
+                                cs.append(nc3)
+                            elif nc2 == linux_o:
+                                c3: str = sys.stdin.read(1)
+                                nc3 = ord(c3)
+                                cs.append(nc3)
+
+                        l = len(cs)
+                        if l == 1:
+                            self._input_new(char(cs[0]))
+                        elif l > 1:
+                            self._input_new(lc.from_tuple(cs))
+        finally:
+            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.old_settings)
 
     def __del__(self):
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.old_settings)
@@ -51,37 +69,6 @@ class nbinput(i_nbinput):
         self.wlist = []
         self.xlist = []
         self.old_settings = termios.tcgetattr(sys.stdin)
-        tty.setcbreak(sys.stdin.fileno())
-
-        """ if self.input_thread is not None:
-            self.listen_thread = Thread(target=self._listen_input)
-            self.listen_thread.daemon = True
-            self.listen_thread.start()
-            self._lock = RLock()"""
-
-    def _listen_input(self):
-        rlist = [sys.stdin]
-        wlist = []
-        xlist = []
-        old_settings = termios.tcgetattr(sys.stdin)
-        try:
-            tty.setcbreak(sys.stdin.fileno())
-            while True:
-                rs, ws, xs = select(rlist, wlist, xlist)
-                for r in rs:
-                    if r in sys.stdin:
-                        cs = []
-                        while sys.stdin.readable():
-                            c: str = sys.stdin.read(1)
-                            cs.append(ord(c))
-                        l = len(cs)
-                        if l == 1:
-                            self._input_new(char(cs[0]))
-                        elif l > 1 and cs[1] == linuxchars.linux_esc:
-                            self._input_new(linuxchars.from_tuple(cs))
-
-        finally:
-            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
 
     def _input_new(self, char: char):
         lock(self._lock, lambda: self._input_list.append(char))
