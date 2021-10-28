@@ -23,20 +23,20 @@ elif system_type == "Linux":
 
 
 def win_test():
-    pass
     # test_input()
     # cmd_input()
     # test_str()
     # test_textbox()
-    # test_char()
+    test_char()
 
 
 def linux_test():
     nb_linux()
+    # linux_nb()
 
 
 def nb_linux():
-    def isData():
+    def is_input():
         return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
 
     old_settings = termios.tcgetattr(sys.stdin)
@@ -44,16 +44,54 @@ def nb_linux():
         tty.setcbreak(sys.stdin.fileno())
 
         while True:
-            if isData():
-                c = sys.stdin.read(1)
-                """if c == '\x1b':  # x1b is ESC
-                    break"""
-                print(f"{c} {type(c)} {len(c)} {ord(c[0])}")
+            if is_input():
+                readable = sys.stdin.readable()
+                print(readable)
+                while readable:
+                    c = sys.stdin.read(1)
+                    """if c == '\x1b':  # x1b is ESC
+                        break"""
+                    print(f"{c} {type(c)} {len(c)} {ord(c[0])}")
 
     except:
         traceback.print_exc()
     finally:
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+
+
+def linux_nb():
+    def getchar():
+        fd = sys.stdin.fileno()
+        attr = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            return sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSANOW, attr)
+
+    EOT = '\x04'  # CTRL+D
+    ESC = '\x1b'
+    CSI = '['
+
+    line = ''
+
+    while True:
+        c = getchar()
+        if c == EOT:
+            print('exit')
+            break
+        elif c == ESC:
+            if getchar() == CSI:
+                x = getchar()
+                if x == 'A':
+                    print('UP')
+                elif x == 'B':
+                    print('DOWN')
+        elif c == '\r':
+            print([line])
+            line = ''
+        else:
+            line += c
 
 
 def test_input():

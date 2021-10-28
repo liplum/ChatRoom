@@ -14,6 +14,7 @@ from io import StringIO
 from datetime import datetime
 from dataclasses import dataclass
 import chars
+import keys
 import sys
 import traceback
 from enum import Enum, auto, IntEnum, IntFlag
@@ -382,7 +383,6 @@ class client:
         self.running = True
         i = self.inpt
         i.initialize()
-        dlock = self.display_lock
         sm = self.sm
         sm.enter(cmd_mode)
         while self.running:
@@ -394,9 +394,7 @@ class client:
                 # The following is to need update
                 self._clear_dirty()
                 sm.update()
-                tb = self.textbox.distext
-                dlock(self.display.display_text, tb)
-                dlock(self.display.render)
+                self.render()
             except Exception as e:
                 traceback.print_exc()
                 self.running = False
@@ -414,6 +412,11 @@ class client:
                 self.display_lock(self.display.render())
                 """
         sys.exit(0)
+
+    def render(self):
+        tb = self.textbox.distext
+        self.display_lock(self.display.display_text, tb)
+        self.display_lock(self.display.render)
 
     def display_lock(self, func, *args, **kwargs):
         lock(self._display_lock, func, *args, **kwargs)
@@ -601,11 +604,11 @@ class xtextbox(textbox):
         kbs = kbinding()
         self.kbs = kbs
         kbs.bind(chars.c_backspace, lambda c: self.delete())
-        kbs.bind(chars.c_delete, lambda c: self.delete(left=False))
-        kbs.bind(chars.c_left, lambda c: self.left())
-        kbs.bind(chars.c_right, lambda c: self.right())
-        kbs.bind(chars.c_home, lambda c: self.home())
-        kbs.bind(chars.c_end, lambda c: self.end())
+        kbs.bind(keys.k_delete, lambda c: self.delete(left=False))
+        kbs.bind(keys.k_left, lambda c: self.left())
+        kbs.bind(keys.k_right, lambda c: self.right())
+        kbs.bind(keys.k_home, lambda c: self.home())
+        kbs.bind(keys.k_end, lambda c: self.end())
         spapp = super().append
         kbs.on_any = lambda c: spapp(chars.to_str(c))
 

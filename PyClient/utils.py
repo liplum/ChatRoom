@@ -1,8 +1,12 @@
 import os
 from threading import RLock
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 import time
 from io import StringIO
+
+import platform
+
+system_type = platform.system()
 
 
 def get(dic: Dict, key):
@@ -10,6 +14,21 @@ def get(dic: Dict, key):
         return dic[key]
     else:
         return None
+
+
+def multiget(dic: Dict, key):
+    if key in dic:
+        li = dic[key]
+        if isinstance(li, list):
+            return li
+        else:
+            li = []
+            dic[key] = li
+            return li
+    else:
+        li = []
+        dic[key] = li
+        return li
 
 
 def get_not_none_one(*args):
@@ -30,8 +49,12 @@ def not_none(*args) -> bool:
     return True
 
 
-def clear_screen():
+def clear_screen_win():
     os.system("cls")
+
+
+def clear_screen_linux():
+    os.system("clear")
 
 
 def lock(lock: RLock, func, *args, **kwargs):
@@ -189,3 +212,18 @@ def find_range(sequential, item, offset: int = 0) -> Tuple[int, int]:
                 return midi, midi
             if lefti + 1 == righti:
                 return lefti, righti
+
+
+def addmultidic(dic: Dict, key, item) -> Dict:
+    li = get(dic, key)
+    if isinstance(li, list):
+        li.append(item)
+    else:
+        dic[key] = [item]
+    return dic
+
+
+if system_type == "Windows":
+    clear_screen = clear_screen_win
+elif system_type == "Linux":
+    clear_screen = clear_screen_linux

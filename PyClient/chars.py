@@ -2,8 +2,6 @@ from typing import Union, Optional, Tuple
 
 control_keycode_1 = 0xe0
 f_keycode_1 = 0
-linux_esc = 0x1b
-
 
 class char:
     def __init__(self, keycode_1: int, keycode_2: Optional[int] = None):
@@ -59,7 +57,6 @@ class control(char):
 class f(char):
     def __init__(self, keycode_2: int):
         super().__init__(f_keycode_1, keycode_2)
-
 
 def is_key(char: Union[str, bytes, bytearray], key: Union[str, bytes]):
     if isinstance(char, str):

@@ -18,6 +18,10 @@ class nbinput(i_nbinput):
     non-blocking input on windows
     """
 
+    def __init__(self):
+        super().__init__()
+        self.input_thread = None
+
     def initialize(self):
         if self.input_thread is None:
             self.input_thread = Thread(target=self._listen_input)
