@@ -45,13 +45,14 @@ public interface IMessageChannel
         get;
     }
 
+
     public event OnMessageHandledHandler OnMessageHandled;
 
     public event OnMessageReceivedHandler OnMessageReceived;
 
-    public delegate void OnMessageReceivedHandler([AllowNull] NetworkToken token, [NotNull] IMessage message, bool hasHandler);
+    public delegate void OnMessageReceivedHandler([AllowNull] NetworkToken token, [NotNull] IMessage message, [AllowNull] dynamic? hanlder);
 
-    public delegate void OnMessageHandledHandler([AllowNull] NetworkToken token, [NotNull] IMessage message, dynamic hanlder);
+    public delegate void OnMessageHandledHandler([AllowNull] NetworkToken token, [NotNull] IMessage message, [NotNull] dynamic hanlder);
 }
 
 

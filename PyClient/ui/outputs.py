@@ -88,8 +88,8 @@ class cmd_logger(i_logger):
         t = f"{time_stamp}[{alertLevel}]{text}"
         tinted_print(t, color)
         if self.logfile is not None:
-            with open(self.logfile, "w+") as log:
-                log.writelines(t)
+            with open(self.logfile, "a") as log:
+                log.write(t+'\n')
 
 
 class i_display:

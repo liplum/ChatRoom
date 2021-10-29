@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Callable
 from socket import socket, AF_INET, SOCK_STREAM
 from threading import Thread
 import json
 from ui import outputs
 from utils import get, not_none
 from core import converts
+from core.events import event
 
 
 class userid:
@@ -51,6 +52,22 @@ class msg(ABC):
 class i_channel:
     def __init__(self, name):
         self.name = name
+        self._on_msg_received = event(cancelable=True)
+
+    @property
+    def on_msg_received(self):
+        """
+        Para 1:network object
+
+        Para 2:msg object
+
+        Para 2:the msg's corresponding handler (if it doesn't have,provide null)
+
+        Cancelable:If yes,it will stop any more handle on this msg
+
+        :return: event(i_channel,msg,callable[msg,"context tuple"])
+        """
+        return self._on_msg_received
 
     def register(self, msg_type: type, msg_id: str = None, msg_handler=None):
         pass
@@ -64,7 +81,7 @@ class channel(i_channel):
         super().__init__(name)
         self.network = network
         self.logger: outputs.i_logger = self.network.logger
-        self.id2msg_and_handler: Dict[str, Tuple[type, function]] = {}
+        self.id2msg_and_handler: Dict[str, Tuple[type, Callable[[msg, Tuple], None]]] = {}
         self.msg2id: Dict[type, str] = {}
 
     def register(self, msg_type: type, msg_id: str = None, msg_handler=None):
@@ -87,9 +104,10 @@ class channel(i_channel):
             msg = _msg()
             msg.read(_json)
             handler = pair[0]
-            if handler is not None:
-                context = (self.network.client, server_token)
-                handler(_msg, context)
+            if not self.on_msg_received(self, msg, handler):
+                if handler is not None:
+                    context = (self.network.client, server_token)
+                    handler(_msg, context)
         else:
             self.logger.error(f"Cannot find message type called {msg_id}")
 
@@ -127,6 +145,22 @@ class network(i_network):
         super().__init__(client)
         self.sockets: Dict[server_token, Tuple[socket, Thread]] = {}
         self.channels: Dict[str, channel] = {}
+        self._on_msg_pre_analyzed = event()
+
+    @property
+    def on_msg_pre_analyzed(self):
+        """
+        Para 1:network object
+
+        Para 2:server token
+
+        Para 3:source json text
+
+        Para 4:json dictionary
+
+        :return: event(network,server_token,source,json)
+        """
+        return self._on_msg_pre_analyzed
 
     def get_channel(self, name: str):
         return get(self.channels, name)
@@ -134,7 +168,7 @@ class network(i_network):
     def connect(self, server: server_token):
         skt = socket(AF_INET, SOCK_STREAM)
         skt.connect(server.target)
-        listen = Thread(target=self.__receive_datapack, args=(skt,))
+        listen = Thread(target=self.__receive_datapack, args=(server, skt))
         listen.daemon = True
         self.sockets[server] = (skt, listen)
         listen.start()
@@ -142,15 +176,15 @@ class network(i_network):
     def init(self, container):
         self.logger: outputs.i_logger = container.resolve(outputs.i_logger)
 
-    def __receive_datapack(self, server_socket):
+    def __receive_datapack(self, token: server_token, server_socket):
         while True:
             _datapack: datapack = read_one(server_socket)
-            _json_msg: json_msg = convert_to_json_msg(_datapack)
-            self.logger.msg(str(_json_msg))
-            self.__analyse(_json_msg, server_socket)
+            json_text = converts.read_str(_datapack.data)
+            _json = json.loads(json_text)
+            self.on_msg_pre_analyzed(self, token, json_text, _json)
+            self.__analyse(_json, server_socket)
 
-    def __analyse(self, _json_msg: "json_msg", server: server_token):
-        _json = _json_msg.json
+    def __analyse(self, _json: Dict, server: server_token):
         channel_name = get(_json, "ChannelName")
         msg_id = get(_json, "MessageID")
         if not_none(channel_name, msg_id):
@@ -199,17 +233,6 @@ class datapack:
 
 def read_one(_socket: socket) -> datapack:
     data_length_b = _socket.recv(4)
-    total_length:int = converts.read_int(data_length_b)
+    total_length: int = converts.read_int(data_length_b)
     data = _socket.recv(total_length)
     return datapack(data)
-
-
-class json_msg:
-    def __init__(self, _json):
-        self.json: Dict = _json
-
-
-def convert_to_json_msg(_datapack: datapack) -> json_msg:
-    json_text = converts.read_str(_datapack.data)
-    _json = json.loads(json_text)
-    return json_msg(_json)

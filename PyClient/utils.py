@@ -175,7 +175,10 @@ def compose(seq, connector: str = ",", pretreat=str, end: str = ""):
         else:
             for item in seq:
                 c += 1
-                temp.write(pretreat(item))
+                res = pretreat(item)
+                if not isinstance(res, str):
+                    res = str(res)
+                temp.write(res)
                 if c < max_len:
                     temp.write(connector)
         temp.write(end)

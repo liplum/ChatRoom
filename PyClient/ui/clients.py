@@ -342,18 +342,26 @@ class client:
             self.logger.logfile = value
 
     def init(self) -> None:
-        self.container.register_singleton(output.i_logger, output.cmd_logger)
-        self.container.register_singleton(output.i_display, output.cmd_display)
-        self.network: networks.network = networks.network(self)
-        self.container.register_instance(i_network, self.network)
-        self.on_service_register(self, self.container)
+        ct = self.container
+        ct.register_singleton(output.i_logger, output.cmd_logger)
+        ct.register_singleton(output.i_display, output.cmd_display)
+        ct.register_instance(i_network, networks.network(self))
 
-        self.inpt: _input.i_input = self.container.resolve(_input.i_input)
-        self.logger: output.i_logger = self.container.resolve(output.i_logger)
+        # services register event
+        self.on_service_register(self, ct)
+
+        self.network: networks.network = ct.resolve(networks.i_network)
+        self.inpt: _input.i_input = ct.resolve(_input.i_input)
+        self.logger: output.i_logger = ct.resolve(output.i_logger)
         self.log_file = "cmd.log"
-        self.display: output.i_display = self.container.resolve(output.i_display)
+        self.display: output.i_display = ct.resolve(output.i_display)
 
         self.logger.msg("Service component initialized.")
+
+        def on_msg_pre_analyzed(network, server_token, source, json):
+            self.logger.msg(source)
+
+        self.network.on_msg_pre_analyzed.add(on_msg_pre_analyzed)
 
         self.win = window(self.display)
         self.win.fill_until_max = True

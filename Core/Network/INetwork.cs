@@ -17,4 +17,8 @@ public interface INetwork : IInjectable, IMessageChannelContainer
     public event OnClientConnectedHandler OnClientConnected;
 
     public delegate void OnClientConnectedHandler([NotNull] NetworkToken token);
+
+    public event OnMessagePreAnalyzeHandler OnMessagePreAnalyze;
+
+    public delegate void OnMessagePreAnalyzeHandler([AllowNull] NetworkToken token, [NotNull] string sourceText, [NotNull] dynamic json);
 }

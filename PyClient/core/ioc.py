@@ -23,7 +23,7 @@ class container:
 
     def __inject(self, obj):
         if hasattr(obj, "init"):
-            obj.initialize(self)
+            obj.init(self)
 
     def __get_or_gen_item(self, baseType):
         if baseType not in self.all:
