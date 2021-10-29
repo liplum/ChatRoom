@@ -97,6 +97,19 @@ public class WriteableDatapack : IDatapack
         }
     }
 
+    public void Write(ICollection<byte> bytes)
+    {
+        if (!CanWrite)
+        {
+            throw new DatapackCantBeWrittenInException(WhenDatapackClosed);
+        }
+        if (bytes.Count > 0)
+        {
+            _changed = true;
+            Bytes.AddRange(bytes);
+        }
+    }
+
     public void Write(byte b)
     {
         if (!CanWrite)
@@ -145,6 +158,11 @@ public class ReadOnlyDatapck : IDatapack
     }
 
     public void Write(byte b)
+    {
+        throw new DatapackCantBeWrittenInException(WhenBeWrittenInExceptionMessage);
+    }
+
+    public void Write(ICollection<byte> bytes)
     {
         throw new DatapackCantBeWrittenInException(WhenBeWrittenInExceptionMessage);
     }

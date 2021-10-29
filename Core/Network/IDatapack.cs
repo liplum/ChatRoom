@@ -7,6 +7,7 @@ public interface IDatapack
 
     public bool CanWrite { get; }
     public void Write(byte[] bytes);
+    public void Write(ICollection<byte> bytes);
 
     public void Write(byte b);
 
@@ -113,6 +114,11 @@ public static class Datapack
         }
 
         public void Write(byte b)
+        {
+
+        }
+
+        public void Write(ICollection<byte> bytes)
         {
 
         }

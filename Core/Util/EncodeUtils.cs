@@ -1,14 +1,14 @@
 ﻿using System.Text;
 
 namespace ChattingRoom.Core.Utils;
-public static class CodeUtils
+public static class EncodeUtils
 {
     public static string ConvertToStringUnicode(byte[] b)
     {
         return Encoding.Unicode.GetString(b);
     }
 
-    public static byte[] ConvertToBytesUnicode(string str)
+    public static ICollection<byte> ConvertToBytesUnicode(string str)
     {
         return Encoding.Unicode.GetBytes(str);
     }
@@ -26,11 +26,14 @@ public static class CodeUtils
         return ConvertToStringUnicode(bufferStr);
     }
 
-    public static byte[] ConvertToBytesWithLengthStartingUnicode(string str)
+    public static ICollection<byte> ConvertToBytesWithLengthStartingUnicode(string str)
     {
+        var res = new List<byte>();
         var strLength = BitConverter.GetBytes(str.Length);
+        res.AddRange(strLength);
         var content = ConvertToBytesUnicode(str);
-        return MergeBytes(strLength, content);
+        res.AddRange(content);
+        return res;
     }
 
     public static byte[] MergeBytes(byte[] a, byte[] b)
@@ -46,7 +49,7 @@ public interface IBytesConverter
 {
     public string ConvertToString(byte[] b, bool startWithLength = true);
 
-    public byte[] ConvertToBytes(string str, bool startWithLength = true);
+    public ICollection<byte> ConvertToBytes(string str, bool startWithLength = true);
 }
 
 public class UnicodeBytesConverter : IBytesConverter
@@ -55,23 +58,23 @@ public class UnicodeBytesConverter : IBytesConverter
     {
         if (startWithLength)
         {
-            return CodeUtils.ConvertToStringWithLengthStartingUnicode(b);
+            return EncodeUtils.ConvertToStringWithLengthStartingUnicode(b);
         }
         else
         {
-            return CodeUtils.ConvertToStringUnicode(b);
+            return EncodeUtils.ConvertToStringUnicode(b);
         }
     }
 
-    public byte[] ConvertToBytes(string str, bool startWithLength = true)
+    public ICollection<byte> ConvertToBytes(string str, bool startWithLength = true)
     {
         if (startWithLength)
         {
-            return CodeUtils.ConvertToBytesWithLengthStartingUnicode(str);
+            return EncodeUtils.ConvertToBytesWithLengthStartingUnicode(str);
         }
         else
         {
-            return CodeUtils.ConvertToBytesUnicode(str);
+            return EncodeUtils.ConvertToBytesUnicode(str);
         }
     }
 }

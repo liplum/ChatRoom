@@ -48,13 +48,13 @@ public class Bootstrap
                             }
                         }
                         var dataArray = data.ToArray();
-                        res = CodeUtils.ConvertToStringWithLengthStartingUnicode(dataArray);
+                        res = EncodeUtils.ConvertToStringWithLengthStartingUnicode(dataArray);
                     }
                     else
                     {
                         var data = new byte[dataLength];
                         stream.Read(data, 0, dataLength);
-                        res = CodeUtils.ConvertToStringWithLengthStartingUnicode(data);
+                        res = EncodeUtils.ConvertToStringWithLengthStartingUnicode(data);
                     }
                     Console.WriteLine(res);
                 }
