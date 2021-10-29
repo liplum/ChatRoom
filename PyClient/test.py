@@ -1,6 +1,7 @@
 import sys
 import utils
 from utils import *
+from core import converts
 
 from chars import is_key
 from ui.clients import *
@@ -29,7 +30,8 @@ def win_test():
     # test_str()
     # test_textbox()
     # test_char()
-    test_fill()
+    # test_fill()
+    test_decode_str()
 
 
 def linux_test():
@@ -37,12 +39,29 @@ def linux_test():
     # linux_nb()
 
 
+def test():
+    pass
+
+
+if system_type == "Windows":
+    test = win_test
+elif system_type == "Linux":
+    test = linux_test
+
+
+def test_decode_str():
+    bs = b'Abc'
+    res1 = converts.read_str(bs, False)
+    print(compose(bs))
+    print(res1)
+
+
 def test_fill():
     s1 = fill("Abc", "-*-", 10, 22)
     s2 = fill("Abc", "-*-", 10, 21)
     s3 = fillby("Abc", "-*-", 22)
     s4 = fillby("Abc", "-*-", 21)
-    s5 = fillby("Command mode:","-/-",50)
+    s5 = fillby("Command mode:", "-/-", 50)
 
     print(f"fill [{len(s1)}] {s1}")
     print(f"fill [{len(s2)}] {s2}")
@@ -321,12 +340,7 @@ def test_color_cmd():
 
 # test_color_cmd()
 
-
-if system_type == "Windows":
-    win_test()
-elif system_type == "Linux":
-    linux_test()
-
+test()
 """
 while True:
     c = ""

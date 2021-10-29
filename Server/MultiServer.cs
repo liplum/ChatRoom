@@ -4,6 +4,8 @@ using ChattingRoom.Core.Services;
 using ChattingRoom.Core.Users;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
+using static ChattingRoom.Core.IServer;
+using static ChattingRoom.Core.Networks.INetwork;
 using IServiceProvider = ChattingRoom.Core.IServiceProvider;
 using Room = ChattingRoom.Core.ChattingRoom;
 
@@ -22,7 +24,7 @@ public class MultiServer : IServer
 
     public event OnRegisterServiceHandler OnRegisterService;
 
-    public void AddScheduledTask([NotNull] Action action)
+    public void AddScheduledTask([NotNull] Task<Action> action)
     {
         throw new NotImplementedException();
     }
@@ -151,6 +153,9 @@ public class MultiServer : IServer
             {
                 get; init;
             }
+
+            public event IMessageChannel.OnMessageHandledHandler OnMessageHandled;
+            public event IMessageChannel.OnMessageReceivedHandler OnMessageReceived;
 
             public void SendMessage([NotNull] NetworkToken target, [NotNull] IMessage msg)
             {

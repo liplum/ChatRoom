@@ -21,7 +21,8 @@ public interface IServer
 
     public event OnRegisterServiceHandler OnRegisterService;
 
-    public void AddScheduledTask([NotNull] Action action);
+    public void AddScheduledTask([NotNull] Task<Action> action);
+
+    public delegate void OnRegisterServiceHandler([NotNull] IServiceRegistry registry);
 }
 
-public delegate void OnRegisterServiceHandler([NotNull] IServiceRegistry registry);

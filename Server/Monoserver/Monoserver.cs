@@ -5,6 +5,7 @@ using ChattingRoom.Core.Services;
 using ChattingRoom.Core.Users;
 using ChattingRoom.Server.Messages;
 using System.Diagnostics.CodeAnalysis;
+using static ChattingRoom.Core.IServer;
 using Room = ChattingRoom.Core.ChattingRoom;
 
 
@@ -31,6 +32,8 @@ public partial class Monoserver : IServer
     }
     public IMessageChannel? User { get; private set; }
 
+    public ILogger? Logger { get; private set; }
+
     public void Initialize()
     {
         _network = new Network(this);
@@ -38,6 +41,7 @@ public partial class Monoserver : IServer
         _serviceContainer.RegisterInstance<INetwork, Network>(_network);
         OnRegisterService?.Invoke(_serviceContainer);
         NetworkService = _serviceContainer.Reslove<INetwork>();
+        Logger = _serviceContainer.Reslove<ILogger>();
     }
     public void Start()
     {
@@ -61,7 +65,7 @@ public partial class Monoserver : IServer
                 {
                     while (ScheduledTask.TryDequeue(out var task))
                     {
-                        task();
+                        task.Start();
                     }
                 }
             }
@@ -69,14 +73,14 @@ public partial class Monoserver : IServer
         MainThread.Start();
     }
 
-    private Queue<Action> ScheduledTask
+    private Queue<Task<Action>> ScheduledTask
     {
         get; init;
     } = new();
 
     private readonly object _mainThreadLock = new();
 
-    public void AddScheduledTask([NotNull] Action action)
+    public void AddScheduledTask([NotNull] Task<Action> action)
     {
         lock (_mainThreadLock)
         {
@@ -96,9 +100,12 @@ public partial class Monoserver : IServer
         {
             throw new NetworkServiceException();
         }
-        NetworkService.OnClientConnected += token =>
+        NetworkService.OnClientConnected += async token =>
         {
+            Logger!.SendMessage($"{token.IpAddress} is connected and will be sent msg 3s soon.");
+            await Task.Delay(3000);//3 secs
             User!.SendMessage(token, new RegisterResultMsg(RegisterResultMsg.RegisterResult.Succeed));
+            Logger.SendMessage($"{token.IpAddress} was sent a msg.");
         };
     }
 

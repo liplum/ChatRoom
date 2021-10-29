@@ -134,18 +134,19 @@ class network(i_network):
     def connect(self, server: server_token):
         skt = socket(AF_INET, SOCK_STREAM)
         skt.connect(server.target)
-        listen = Thread(target=self.__receive_datapack, args=(self.socket,))
-        listen.daemon=True
+        listen = Thread(target=self.__receive_datapack, args=(skt,))
+        listen.daemon = True
         self.sockets[server] = (skt, listen)
         listen.start()
 
     def init(self, container):
-        self.logger = container.resolve(outputs.i_logger)
+        self.logger: outputs.i_logger = container.resolve(outputs.i_logger)
 
     def __receive_datapack(self, server_socket):
         while True:
             _datapack: datapack = read_one(server_socket)
             _json_msg: json_msg = convert_to_json_msg(_datapack)
+            self.logger.msg(str(_json_msg))
             self.__analyse(_json_msg, server_socket)
 
     def __analyse(self, _json_msg: "json_msg", server: server_token):
@@ -198,8 +199,8 @@ class datapack:
 
 def read_one(_socket: socket) -> datapack:
     data_length_b = _socket.recv(4)
-    total_length = converts.read_int(data_length_b)
-    data = self.socket.recv(total_length)
+    total_length:int = converts.read_int(data_length_b)
+    data = _socket.recv(total_length)
     return datapack(data)
 
 
@@ -209,6 +210,6 @@ class json_msg:
 
 
 def convert_to_json_msg(_datapack: datapack) -> json_msg:
-    json_text = converts.read_str(data)
+    json_text = converts.read_str(_datapack.data)
     _json = json.loads(json_text)
     return json_msg(_json)

@@ -8,6 +8,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using static ChattingRoom.Core.Networks.IMessageChannel;
+using static ChattingRoom.Core.Networks.INetwork;
 using IServiceProvider = ChattingRoom.Core.IServiceProvider;
 
 namespace ChattingRoom.Server;
@@ -104,6 +106,12 @@ public partial class Monoserver : IServer
 
         public void SendMessage([NotNull] MessageChannel channel, [NotNull] NetworkToken target, [NotNull] IMessage msg, string msgID)
         {
+            if (!_allConnections.TryGetValue(target, out var info) || !info.connection.IsConnected)
+            {
+                Logger!.SendError($"Cannot send message<{msgID}> to {target.IpAddress} who has been already disconnected.");
+                return;
+            }
+
             if (!CheckDirection())
             {
                 throw new MessageDirectionException($"{msg.GetType().Name} cannot be sent to Client.");
@@ -115,7 +123,7 @@ public partial class Monoserver : IServer
             string jsonTxt = json.ToString(Formatting.None);
             var stringBytes = _unicoder.ConvertToBytes(jsonTxt, startWithLength: false);
             var datapack = new WriteableDatapack();
-            datapack.Write(stringBytes.Length)
+            datapack.Write(stringBytes.Count)
                 .Write(stringBytes);
             datapack.Close();
             SendDatapackTo(datapack, target);
@@ -124,7 +132,7 @@ public partial class Monoserver : IServer
             {
                 json.ChannelName = channel.ChannelName;
                 json.MessageID = msgID;
-                json.TimeStamp = (long)Math.Floor((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds);
+                json.TimeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
             }
 
             bool CheckDirection()
@@ -295,6 +303,9 @@ public partial class Monoserver : IServer
         } = new();
         private readonly object _msgLock = new();
 
+        public event OnMessageHandledHandler? OnMessageHandled;
+        public event OnMessageReceivedHandler? OnMessageReceived;
+
         public void RegisterMessageHandler<Msg, Handler>(string messageID)
             where Msg : class, IMessage, new()
             where Handler : class, IMessageHandler<Msg>, new()
@@ -379,6 +390,7 @@ public partial class Monoserver : IServer
                 {
                     msg.Deserialize(jsonContent);
                     var hanlder = info.handler;
+                    OnMessageReceived?.Invoke(token, msg, hanlder is not null);
                     if (hanlder is not null)
                     {
                         var context = new MessageContext(Network.Server, this)
@@ -386,6 +398,7 @@ public partial class Monoserver : IServer
                             ClientToken = token
                         };
                         hanlder.Handle(msg, context);
+                        OnMessageHandled?.Invoke(token, msg, hanlder);
                     }
                 }
             }

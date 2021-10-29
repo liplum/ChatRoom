@@ -4,8 +4,8 @@ import core.ioc as ioc
 from core.events import event
 import ui.outputs as output
 from threading import RLock
-from network.network import i_network, server_token, userid
-from network import network
+from net.networks import i_network, server_token, userid
+from net import networks
 import ui.inputs as _input
 from utils import get, clear_screen, lock, clock, separate, compose
 import utils
@@ -344,7 +344,7 @@ class client:
     def init(self) -> None:
         self.container.register_singleton(output.i_logger, output.cmd_logger)
         self.container.register_singleton(output.i_display, output.cmd_display)
-        self.network: network.network = network.network(self)
+        self.network: networks.network = networks.network(self)
         self.container.register_instance(i_network, self.network)
         self.on_service_register(self, self.container)
 
@@ -421,8 +421,8 @@ class client:
         self.command_list_tip = all_tips.getvalue()
         all_tips.close()
 
-    def connect(self, ip_and_port):
-        self.network.connect(server_token(ip_and_port))
+    def connect(self, ip_and_port: Tuple[str, int]):
+        self.network.connect(server_token(server=ip_and_port))
 
     def start(self):
         self.running = True

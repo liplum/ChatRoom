@@ -30,6 +30,7 @@ def main():
     st = msgstorage("record.rec")
     st.deserialize()
     _client.win.history = [unit[2] for unit in st]
+    _client.connect(("127.0.0.1",5000))
     _client.start()
 
 

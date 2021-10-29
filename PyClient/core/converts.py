@@ -8,7 +8,7 @@ def read_str(barray: bytes, starting_with_length: bool = True) -> str:
         str_barry = barray[4:str_length + 4]
     else:
         str_barry = barray
-    res = str_barry.decode()
+    res = str_barry.decode(encoding="unicode")
     return res
 
 
