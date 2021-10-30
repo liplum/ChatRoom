@@ -1,6 +1,7 @@
 ﻿using ChattingRoom.Core;
 using ChattingRoom.Core.Networks;
 using ChattingRoom.Core.Services;
+using ChattingRoom.Core.User;
 using ChattingRoom.Core.Users;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
@@ -23,9 +24,11 @@ public class MultiServer : IServer
         _network = new(this);
     }
 
+    public IUserService UserService => throw new NotImplementedException();
+
     public event OnRegisterServiceHandler? OnRegisterService;
 
-    public void AddScheduledTask([NotNull] Task<Action> action)
+    public void AddScheduledTask([NotNull] Action task)
     {
         throw new NotImplementedException();
     }
@@ -89,6 +92,8 @@ public class MultiServer : IServer
             get; set;
         }
 
+        public IEnumerable<NetworkToken> AllConnectedClient => throw new NotImplementedException();
+
         public void Initialize(IServiceProvider serviceProvider)
         {
             _bang = serviceProvider.Reslove<MultiServer>();
@@ -135,6 +140,16 @@ public class MultiServer : IServer
         }
 
         public void RecevieDatapack([NotNull] IDatapack datapack, [AllowNull] NetworkToken token = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsConnected([NotNull] NetworkToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMessageChannel? GetMessageChannelBy(string name)
         {
             throw new NotImplementedException();
         }
@@ -195,6 +210,11 @@ public class MultiServer : IServer
             }
 
             void IMessageChannel.RegisterMessage<Msg>()
+            {
+                throw new NotImplementedException();
+            }
+
+            public bool CanPass(string msgID, params Direction[] directions)
             {
                 throw new NotImplementedException();
             }

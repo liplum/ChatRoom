@@ -10,22 +10,6 @@ from core import converts
 from core.events import event
 
 
-class userid:
-    def __init__(self, userid: str):
-        self.id = userid
-
-    def __eq__(self, other):
-        if not isinstance(other, userid):
-            return False
-        return self.id == other.id
-
-    def __str__(self) -> str:
-        return self.id
-
-    def __repr__(self):
-        return self.id
-
-
 class server_token:
     def __init__(self, ip: str = None, port: int = None, server: Tuple[str, int] = None):
         if server is not None:
@@ -37,6 +21,19 @@ class server_token:
 
     def __str__(self):
         return self.target.__str__()
+
+    def __repr__(self):
+        return self.target.__repr__()
+
+    def __eq__(self, other):
+        if isinstance(other, server_token):
+            return self.target == other.target
+        elif isinstance(other, tuple):
+            return self.target == other
+        return False
+
+    def __hash__(self):
+        return hash(self.target)
 
 
 class msg(ABC):
@@ -81,12 +78,12 @@ class channel(i_channel):
         super().__init__(name)
         self.network = network
         self.logger: outputs.i_logger = self.network.logger
-        self.id2msg_and_handler: Dict[str, Tuple[type, Callable[[msg, Tuple], None]]] = {}
+        self.id2msgt_and_handler: Dict[str, Tuple[type, Callable[[msg, Tuple], None]]] = {}
         self.msg2id: Dict[type, str] = {}
 
     def register(self, msg_type: type, msg_id: str = None, msg_handler=None):
         if msg_id is None:
-            msg_id = msg_type.MessageID
+            msg_id = msg_type.name
 
         if msg_handler is None:
             if hasattr(msg_type, "handle"):
@@ -94,20 +91,19 @@ class channel(i_channel):
             else:
                 msg_handler = None
 
-        self.id2msg_and_handler[msg_id] = (msg_type, msg_handler)
+        self.id2msgt_and_handler[msg_id] = (msg_type, msg_handler)
         self.msg2id[msg_type] = msg_id
 
     def receive_datapack(self, _json: Dict, msg_id: str, _from: server_token):
-        pair = get(self.id2msg_and_handler, msg_id)
-        if pair is not None:
-            _msg = pair[0]
-            msg = _msg()
+        info = get(self.id2msgt_and_handler, msg_id)
+        if info is not None:
+            msgtype,handler = info
+            msg = msgtype()
             msg.read(_json)
-            handler = pair[0]
             if not self.on_msg_received(self, msg, handler):
                 if handler is not None:
-                    context = (self.network.client, server_token)
-                    handler(_msg, context)
+                    context = (self.network.client, self, server_token)
+                    handler(msg, context)
         else:
             self.logger.error(f"Cannot find message type called {msg_id}")
 
@@ -190,14 +186,21 @@ class network(i_network):
         if not_none(channel_name, msg_id):
             _channel: channel = get(self.channels, channel_name)
             if _channel is not None:
-                _channel.receive_datapack(_json, msg_id, server)
+                if "Content" in _json:
+                    content = _json["Content"]
+                else:
+                    content = {}
+                    _json["Content"] = content
+                _channel.receive_datapack(content, msg_id, server)
             else:
                 self.logger.error(f"Cannot find channel called {channel_name}")
         else:
             self.logger.error("Cannot analyse datapack")
 
     def send(self, server: server_token, _msg: msg, jobj: Dict):
-        _msg.write(jobj)
+        content = {}
+        jobj['Content'] = content
+        _msg.write(content)
         info = get(self.sockets, server)
         if info is not None:
             skt, _ = info
@@ -220,7 +223,7 @@ def to_bytes_starting_with_len(dp: "datapack") -> bytes:
     length_b = converts.write_int(length)
     res = bytearray(length_b)
     res.extend(dp.get_bytes())
-    return bytes(bytearray)
+    return bytes(res)
 
 
 class datapack:

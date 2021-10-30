@@ -3,7 +3,9 @@ from threading import RLock
 from typing import Dict, List, Tuple, Any
 import time
 from io import StringIO
-
+import time
+import calendar
+from datetime import datetime, timezone
 import platform
 
 system_type = platform.system()
@@ -12,6 +14,13 @@ system_type = platform.system()
 def get(dic: Dict, key):
     if key in dic:
         return dic[key]
+    else:
+        return None
+
+
+def get_at(li: list, index: int):
+    if len(li) > index:
+        return li[index]
     else:
         return None
 
@@ -269,6 +278,16 @@ def fillby(text: str, repeated: str, max_char_num: int) -> str:
             s.write(repeated[0:surplus])
 
         return s.getvalue()
+
+
+def local_to_utc(dt: datetime):
+    secs = time.mktime(dt.timetuple())
+    return time.gmtime(secs)
+
+
+def to_seconds(dt: datetime):
+    secs = time.mktime(dt.timetuple())
+    return calendar.timegm(time.gmtime(secs))
 
 
 if system_type == "Windows":

@@ -1,7 +1,7 @@
 from typing import Union, Optional, List
 from chars import *
 from core.events import event
-
+from keys import k_enter
 
 class i_input:
     def __init__(self):
@@ -62,3 +62,5 @@ class cmd_input(i_input):
             ch = printable(char)
             self._input_list.append(ch)
             self.on_input(self,ch)
+        self._input_list.append(k_enter)
+        self.on_input(self,k_enter)

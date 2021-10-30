@@ -15,7 +15,7 @@ public class AuthenticationMsgHandler : IMessageHandler<AuthenticationMsg>
         string? password = msg.Password;
         if ((clientID, password).NotNull())
         {
-            server.Verify(clientID!.Value, password!);
+            server.UserService.Verify(clientID!.Value, password!);
         }
     }
 }

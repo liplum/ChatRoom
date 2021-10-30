@@ -36,6 +36,28 @@ public partial class Monoserver
             Network.SendMessageToAll(this, msg, Msg2Id[msg.GetType()]);
         }
 
+        public bool CanPass(string msgID, params Direction[] directions)
+        {
+            if (Id2MsgTypeAndHandler.TryGetValue(msgID, out var info))
+            {
+                var meta = info.meta;
+                if (meta is not null)
+                {
+                    var accepted = true;
+                    foreach (var dire in directions)
+                    {
+                        accepted &= meta.Accept(dire);
+                    }
+                    return accepted;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            return true;
+        }
+
         public Dictionary<string, (Type msg, dynamic? handler, MsgAttribute? meta)> Id2MsgTypeAndHandler
         {
             get;
@@ -128,10 +150,27 @@ public partial class Monoserver
         {
             if (Id2MsgTypeAndHandler.TryGetValue(messageID, out var info))
             {
-                dynamic? msg = Activator.CreateInstance(info.msg);
+                dynamic? msg;
+                try
+                {
+                    msg = Activator.CreateInstance(info.msg);
+                }
+                catch
+                {
+                    Network.Logger!.SendError($"Cannot create Message<{info.msg.FullName ?? info.msg.Name}> object");
+                    return;
+                }
                 if (msg is not null)
                 {
-                    msg.Deserialize(jsonContent);
+                    try
+                    {
+                        msg.Deserialize(jsonContent);
+                    }
+                    catch (Exception e)
+                    {
+                        Network.Logger!.SendError($"Cannot deserialize Message<{messageID}> from \"{jsonContent}\"\nBecause {e.Message}\n{e.StackTrace}");
+                        return;
+                    }
                     var hanlder = info.handler;
                     OnMessageReceived?.Invoke(token, msg, hanlder);
                     if (hanlder is not null)
@@ -141,7 +180,15 @@ public partial class Monoserver
                             ClientToken = token
                         };
                         hanlder.Handle(msg, context);
-                        OnMessageHandled?.Invoke(token, msg, hanlder);
+                        try
+                        {
+                            OnMessageHandled?.Invoke(token, msg, hanlder);
+                        }
+                        catch (Exception e)
+                        {
+                            Network.Logger!.SendError($"Cannot handle Message<{messageID}> from \"{jsonContent}\"\nBecause {e.Message}\n{e.StackTrace}");
+                            return;
+                        }
                     }
                 }
             }

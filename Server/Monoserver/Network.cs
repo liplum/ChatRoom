@@ -45,6 +45,23 @@ public partial class Monoserver : IServer
             }
         }
 
+        public IEnumerable<NetworkToken> AllConnectedClient
+        {
+            get
+            {
+                lock (_clientLock)
+                {
+                    foreach (var info in _allConnections)
+                    {
+                        if (info.Value.connection.IsConnected)
+                        {
+                            yield return info.Key;
+                        }
+                    }
+                }
+            }
+        }
+
         #region Event
         public event OnClientConnectedHandler? OnClientConnected;
         public event OnMessagePreAnalyzeHandler? OnMessagePreAnalyze;
@@ -64,9 +81,10 @@ public partial class Monoserver : IServer
         private static readonly string EmptyJObjectStr = new JObject().ToString();
         public void RecevieDatapack([NotNull] IDatapack datapack, [AllowNull] NetworkToken token = null)
         {
-            var jsonString = _unicoder.ConvertToString(datapack.ToBytes());
             try
             {
+                var jsonString = _unicoder.ConvertToString(datapack.ToBytes());
+                jsonString = jsonString.Trim();
                 dynamic json = JObject.Parse(jsonString);
                 OnMessagePreAnalyze?.Invoke(token, jsonString, json);
                 string? channelName = json.ChannelName;
@@ -79,7 +97,14 @@ public partial class Monoserver : IServer
                     {
                         if (_allChannels.TryGetValue(channelName, out var channel))
                         {
-                            channel.ReceiveMessage(messageID, content, token);
+                            if (channel.CanPass(messageID, Direction.ClientToServer))
+                            {
+                                channel.ReceiveMessage(messageID, content, token);
+                            }
+                            else
+                            {
+                                Logger!.SendMessage($"Message<{messageID}> cannot pass the Channel<{channelName}>.");
+                            }
                         }
                         else
                         {
@@ -92,9 +117,9 @@ public partial class Monoserver : IServer
                     }
                 }
             }
-            catch
+            catch (Exception e)
             {
-                Logger!.SendError($"Cannot analyse datapack:{jsonString}");
+                Logger!.SendError($"Cannot analyse datapack from {token?.IpAddress},because {e.Message}");
             }
         }
 
@@ -113,14 +138,22 @@ public partial class Monoserver : IServer
                 return;
             }
 
-            if (!CheckDirection())
+            if (!channel.CanPass(msgID, Direction.ServerToClient))
             {
                 throw new MessageDirectionException($"{msg.GetType().Name} cannot be sent to Client.");
             }
             dynamic json = new JObject();
             WriteHeader();
             json.Content = new JObject();
-            msg.Serialize(json.Content);
+            try
+            {
+                msg.Serialize(json.Content);
+            }
+            catch (Exception e)
+            {
+                Logger!.SendError($"Cannot serialize Message<{msgID}>\nBecause {e.Message}\n{e.StackTrace}");
+                return;
+            }
             string jsonTxt = json.ToString(Formatting.None);
             var stringBytes = _unicoder.ConvertToBytes(jsonTxt, startWithLength: false);
             var datapack = new WriteableDatapack();
@@ -134,23 +167,6 @@ public partial class Monoserver : IServer
                 json.ChannelName = channel.ChannelName;
                 json.MessageID = msgID;
                 json.TimeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            }
-
-            bool CheckDirection()
-            {
-                if (channel.Id2MsgTypeAndHandler.TryGetValue(msgID, out var info))
-                {
-                    var meta = info.meta;
-                    if (meta is not null)
-                    {
-                        return meta.Accept(Direction.ServerToClient);
-                    }
-                    else
-                    {
-                        return true;
-                    }
-                }
-                return true;
             }
         }
 
@@ -241,7 +257,11 @@ public partial class Monoserver : IServer
             }
 
             listeningThread.Start();
-            OnClientConnected?.Invoke(token);
+            //OnClientConnected?.Invoke(token);
+            Server.AddScheduledTask(() =>
+            {
+                OnClientConnected?.Invoke(token);
+            });
         }
 
         private void RemoveClient([NotNull] NetworkToken token, Action? afterRemoved = null)
@@ -263,6 +283,24 @@ public partial class Monoserver : IServer
                 c.Terminal();
             }
             Logger!.SendMessage("Network component stoped.");
+        }
+
+        public bool IsConnected([NotNull] NetworkToken token)
+        {
+            if (_allConnections.TryGetValue(token, out var info))
+            {
+                return info.connection.IsConnected;
+            }
+            return false;
+        }
+
+        public IMessageChannel? GetMessageChannelBy(string name)
+        {
+            if (_allChannels.TryGetValue(name, out var channel))
+            {
+                return channel;
+            }
+            return null;
         }
     }
 }

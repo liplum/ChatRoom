@@ -2,7 +2,6 @@
 public interface IUserList
 {
     public void Load(IEnumerable<User> users);
-    public void Persistence();
     public User? this[UserID id] { get; }
     public void Add(User user);
     public void Remove(UserID id);
@@ -22,11 +21,6 @@ public class UserList : IUserList
     public User? this[UserID id]
     {
         get => _id2User.TryGetValue(id, out var user) ? user : null;
-    }
-
-    public void Persistence()
-    {
-
     }
 
     public void Add(User user)

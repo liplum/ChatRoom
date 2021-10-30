@@ -11,10 +11,11 @@ public class RegisterRequestMsgHandler : IMessageHandler<RegisterRequestMsg>
         if (token is not null)
         {
             var server = context.Server;
-            var id = server.GenAvailableUserID();
+            var userService = server.UserService;
+            var id = userService.GenAvailableUserID();
             try
             {
-                server.RegisterUser(id);
+                userService.RegisterUser(id);
                 context.Channel.SendMessage(token, new RegisterResultMsg(RegisterResultMsg.RegisterResult.Succeed));
             }
             catch (Exception)

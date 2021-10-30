@@ -4,7 +4,8 @@ import core.ioc as ioc
 from core.events import event
 import ui.outputs as output
 from threading import RLock
-from net.networks import i_network, server_token, userid
+from net.networks import i_network, server_token
+from core.chats import *
 from net import networks
 import ui.inputs as _input
 from utils import get, clear_screen, lock, clock, separate, compose
@@ -18,6 +19,7 @@ import keys
 import sys
 import traceback
 from enum import Enum, auto, IntEnum, IntFlag
+from net import msgs
 
 
 class command:
@@ -245,6 +247,8 @@ class text_mode(client_state):
         self.kbs = kbs
 
         def send_text():
+            inputs = self.client.textbox.inputs
+            self.client.send_text(roomid(12345), inputs, server_token("127.0.0.1", 5000))
             self.client.textbox.clear()
 
         kbs.bind(keys.k_enter, lambda c: send_text())
@@ -361,7 +365,7 @@ class client:
         def on_msg_pre_analyzed(network, server_token, source, json):
             self.logger.msg(source)
 
-        self.network.on_msg_pre_analyzed.add(on_msg_pre_analyzed)
+        #self.network.on_msg_pre_analyzed.add(on_msg_pre_analyzed)
 
         self.win = window(self.display)
         self.win.fill_until_max = True
@@ -384,6 +388,11 @@ class client:
         self.textbox.on_delete.add(lambda b, p, c: self.make_dirty())
         self.textbox.on_cursor_move.add(lambda b, f, c: self.make_dirty())
         self.textbox.on_list_replace.add(lambda b, f, c: self.make_dirty())
+
+        self.channel_user = self.network.new_channel("User")
+        self.channel_chatting = self.network.new_channel("Chatting")
+
+        self.channel_chatting.register(msgs.chatting)
 
         def on_input(inpt, char):
             ch = inpt.consume_char()
@@ -431,6 +440,18 @@ class client:
 
     def connect(self, ip_and_port: Tuple[str, int]):
         self.network.connect(server_token(server=ip_and_port))
+
+    def receive_text(self, user_id: userid, room_id: roomid, text: str, time: datetime):
+        self.make_dirty()
+        self.win.add_text(f"{time.strftime('%Y%m%d-%H:%M:%S')}\n\t{user_id}:{text}")
+
+    def send_text(self, room_id: roomid, text: str, server: server_token):
+        msg = msgs.chatting()
+        msg.room_id = room_id
+        msg.send_time = datetime.utcnow()
+        msg.text = text
+        msg.user_id = userid("TestID")
+        self.channel_chatting.send(server, msg)
 
     def start(self):
         self.running = True
@@ -587,6 +608,10 @@ class textbox:
             self._input_list = list(value)
         self.cursor = 0
         self.on_list_replace(self, former, self._input_list)
+
+    @property
+    def inputs(self) -> str:
+        return utils.compose(self.input_list,connector='')
 
     def clear(self):
         self.input_list = []
@@ -811,7 +836,7 @@ class window:
             displayed = self.history
             have_rest = True
         else:
-            displayed = self.history[-self.max_display_line]
+            displayed = self.history[-self.max_display_line:]
             have_rest = False
         for d in displayed:
             self.displayer.display_text(d, end="\n")

@@ -1,5 +1,4 @@
-﻿using ChattingRoom.Core.Networks;
-using ChattingRoom.Core.Users;
+﻿using ChattingRoom.Core.User;
 using System.Diagnostics.CodeAnalysis;
 using Room = ChattingRoom.Core.ChattingRoom;
 namespace ChattingRoom.Core;
@@ -11,18 +10,13 @@ public interface IServer
 
     public Room? GetChattingRoomBy(ChattingRoomID ID);
 
-    public UserID GenAvailableUserID();
-
-    public void RegisterUser(UserID userID);
-
-    public IMessageChannel? GetMessageChannelBy(string name);
-
-    public bool Verify(UserID id, string password);
 
     public event OnRegisterServiceHandler OnRegisterService;
 
-    public void AddScheduledTask([NotNull] Task<Action> action);
+    public void AddScheduledTask([NotNull] Action task);
 
     public delegate void OnRegisterServiceHandler([NotNull] IServiceRegistry registry);
+
+    public IUserService? UserService { get; }
 }
 

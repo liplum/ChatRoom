@@ -50,6 +50,7 @@ public static class Datapack
                     if (restLength > bufferSize)
                     {
                         data.AddRange(buffer);
+                        restLength -= bufferSize;
                     }
                     else
                     {

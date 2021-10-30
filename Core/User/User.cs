@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using ChattingRoom.Core.Networks;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ChattingRoom.Core.Users;
 public class User
@@ -12,9 +13,15 @@ public class User
     {
         get; set;
     }
+
     public UserID ID
     {
         get => Info!.ID;
+    }
+
+    public NetworkToken? Token
+    {
+        get; set;
     }
 }
 
@@ -43,5 +50,14 @@ public struct UserID
     public override int GetHashCode()
     {
         return Name.GetHashCode();
+    }
+
+    public static explicit operator string(UserID userId)
+    {
+        return userId.Name;
+    }
+    public static implicit operator UserID(string userId)
+    {
+        return new UserID(userId);
     }
 }

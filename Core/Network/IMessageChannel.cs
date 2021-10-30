@@ -14,9 +14,26 @@ public interface IMessageChannel
     /// <summary>
     /// 
     /// </summary>
+    /// <param name="targets"></param>
+    /// <param name="msg"></param>
+    /// <exception cref="MessageDirectionException"></exception>
+    public void SendMessage([NotNull] IEnumerable<NetworkToken> targets, [NotNull] IMessage msg)
+    {
+        foreach (var target in targets)
+        {
+            SendMessage(target, msg);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
     /// <param name="msg"></param>
     /// <exception cref="MessageDirectionException"></exception>
     public void SendMessageToAll([NotNull] IMessage msg);
+
+    public bool CanPass(string msgID, params Direction[] directions);
+
 
     public void ReceiveMessage(string messageID, dynamic jsonContent, [AllowNull] NetworkToken token = null);
 

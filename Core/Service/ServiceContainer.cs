@@ -32,7 +32,7 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry
         void ReturnIntance([NotNull] ServiceEntry entry)
         {
             returnValue = (In)entry.Instance!;
-            Inject();
+            Inject(returnValue);
         }
         void ReturnTransient([NotNull] ServiceEntry entry)
         {
@@ -41,20 +41,14 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry
             if (outType is not null)
             {
                 returnValue = (In)Activator.CreateInstance(outType)!;
-                Inject();
+                Inject(returnValue);
             }
             else
             {
                 throw new ServiceResolveException($"Cannot reslove transient object {inType.FullName ?? inType.Name} because there is no corresponding out type.");
             }
         }
-        void Inject()
-        {
-            if (returnValue is IInjectable obj)
-            {
-                obj.Initialize(this);
-            }
-        }
+
     }
 
     public void RegisterSingleton<In, Out>() where In : IInjectable where Out : In, new()
@@ -121,6 +115,19 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry
             _allServices[type] = entry;
         }
         return entry;
+    }
+
+    public void Inject(IInjectable injectable)
+    {
+        injectable.Initialize(this);
+    }
+
+    public void Inject(object obj)
+    {
+        if (obj is IInjectable injectable)
+        {
+            Inject(injectable);
+        }
     }
 
     private ServiceEntry this[[NotNull] Type type]

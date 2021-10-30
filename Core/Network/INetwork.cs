@@ -9,10 +9,11 @@ public interface INetwork : IInjectable, IMessageChannelContainer
 
     public void StartService();
 
-    public void StopService()
-    {
+    public void StopService();
 
-    }
+    public bool IsConnected([NotNull] NetworkToken token);
+
+    public IEnumerable<NetworkToken> AllConnectedClient { get; }
 
     public event OnClientConnectedHandler OnClientConnected;
 

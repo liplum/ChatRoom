@@ -31,7 +31,9 @@ def win_test():
     # test_textbox()
     # test_char()
     # test_fill()
-    test_decode_str()
+    # test_decode_str()
+    # cls_static()
+    utc()
 
 
 def linux_test():
@@ -47,6 +49,24 @@ if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
+
+
+def cls_static():
+    class a:
+        t = 10
+
+        def __init__(self):
+            self.t = 9
+
+    class b:
+        t = 10
+
+        def __init__(self):
+            self.t = 9
+
+    _a = a()
+    print(_a.t)
+    print(type(_a).t)
 
 
 def test_decode_str():
@@ -235,12 +255,15 @@ def utc():
     now_dt = datetime.now()
     now = now_dt.utctimetuple()
     now_secs = calendar.timegm(now)
+    utc_now = datetime.utcnow()
     utc_now_converted = local_to_utc(now)
     utc_now_converted_secs = calendar.timegm(utc_now_converted)
+    print(f"local:{now_dt}")
     print(f"local:{now}")
     print(f"local sec:{now_secs}")
-    print(f"utc:{utc_now_converted}")
-    print(f"utc sec:{utc_now_converted_secs}")
+    print(f"utc:{utc_now}")
+    print(f"utc(converted):{utc_now_converted}")
+    print(f"utc sec(converted):{utc_now_converted_secs}")
     print()
     back_utc = datetime.fromtimestamp(utc_now_converted_secs, tz=timezone.utc)
     back_local = datetime.fromtimestamp(utc_now_converted_secs)

@@ -14,8 +14,13 @@ from ui.inputs import i_nbinput, i_input
 from ui import inputs
 from chars import *
 from linuxchars import *
+import sys
+import utils
 
 DEBUG = False
+args = sys.argv
+if utils.get_at(args,1) == "debug":
+    DEBUG = True
 
 system_type = platform.system()
 
@@ -30,7 +35,7 @@ def main():
     st = msgstorage("record.rec")
     st.deserialize()
     _client.win.history = [unit[2] for unit in st]
-    _client.connect(("127.0.0.1",5000))
+    _client.connect(("127.0.0.1", 5000))
     _client.start()
 
 

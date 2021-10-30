@@ -1,8 +1,9 @@
 ﻿using ChattingRoom.Core;
+using ChattingRoom.Core.Message;
 using ChattingRoom.Core.Messages;
 using ChattingRoom.Core.Networks;
 using ChattingRoom.Core.Services;
-using ChattingRoom.Core.Users;
+using ChattingRoom.Core.User;
 using ChattingRoom.Server.Messages;
 using System.Diagnostics.CodeAnalysis;
 using static ChattingRoom.Core.IServer;
@@ -12,7 +13,7 @@ using Room = ChattingRoom.Core.ChattingRoom;
 namespace ChattingRoom.Server;
 public partial class Monoserver : IServer
 {
-    private readonly Room _chatingRoom = new();
+    private readonly Room _chatingRoom = new() { ID = new(12345) };
     private readonly ServiceContainer _serviceContainer = new();
     private Network? _network;
     private Thread? MainThread
@@ -31,6 +32,7 @@ public partial class Monoserver : IServer
         }
     }
     public IMessageChannel? User { get; private set; }
+    public IMessageChannel? Chatting { get; private set; }
 
     public ILogger? Logger { get; private set; }
 
@@ -39,9 +41,14 @@ public partial class Monoserver : IServer
         _network = new Network(this);
         _serviceContainer.RegisterSingleton<ILogger, CmdServerLogger>();
         _serviceContainer.RegisterInstance<INetwork, Network>(_network);
+        _serviceContainer.RegisterInstance<IServer, Monoserver>(this);
+        _serviceContainer.RegisterSingleton<IUserService, UserService>();
+
         OnRegisterService?.Invoke(_serviceContainer);
+
         NetworkService = _serviceContainer.Reslove<INetwork>();
         Logger = _serviceContainer.Reslove<ILogger>();
+        UserService = _serviceContainer.Reslove<IUserService>();
     }
     public void Start()
     {
@@ -52,6 +59,7 @@ public partial class Monoserver : IServer
         NetworkService.StartService();
         InitChannels();
         InitUserService();
+        _serviceContainer.Inject(_chatingRoom);
         StartMainThread();
     }
 
@@ -73,21 +81,22 @@ public partial class Monoserver : IServer
         MainThread.Start();
     }
 
-    private Queue<Task<Action>> ScheduledTask
+    private Queue<Task> ScheduledTask
     {
         get; init;
     } = new();
 
+    public IUserService? UserService { get; private set; }
+
     private readonly object _mainThreadLock = new();
 
-    public void AddScheduledTask([NotNull] Task<Action> action)
+    public void AddScheduledTask([NotNull] Action task)
     {
         lock (_mainThreadLock)
         {
-            ScheduledTask.Enqueue(action);
+            ScheduledTask.Enqueue(new Task(task));
         }
     }
-
 
     private void InitChannels()
     {
@@ -102,10 +111,24 @@ public partial class Monoserver : IServer
         }
         NetworkService.OnClientConnected += async token =>
         {
-            Logger!.SendMessage($"{token.IpAddress} is connected and will be sent msg 3s soon.");
-            await Task.Delay(3000);//3 secs
+            Logger!.SendMessage($"{token.IpAddress} is connected and will be sent msg 20s soon.");
+            await Task.Delay(20000);
             User!.SendMessage(token, new RegisterResultMsg(RegisterResultMsg.RegisterResult.Succeed));
             Logger.SendMessage($"{token.IpAddress} was sent a msg.");
+        };
+
+        NetworkService.OnClientConnected += async token =>
+        {
+            Logger!.SendMessage($"{token.IpAddress} is connected and will be sent msg 10s soon.");
+            await Task.Delay(10000);
+            Chatting!.SendMessage(token, new ChattingMsg()
+            {
+                ChattingRoomID = 12345,
+                UserID = "System",
+                SendTime = DateTime.UtcNow,
+                ChattingText = "From System!!!"
+            });
+            Logger.SendMessage($"{token.IpAddress} was sent a msg from system.");
         };
     }
 
@@ -115,31 +138,14 @@ public partial class Monoserver : IServer
         User.RegisterMessageHandler<AuthenticationMsg, AuthenticationMsgHandler>();
         User.RegisterMessage<RegisterResultMsg>();
         User.RegisterMessage<RegisterRequestMsg>();
+
+        Chatting = NetworkService!.New("Chatting");
+        Chatting.RegisterMessageHandler<ChattingMsg, ChattingMsgHandler>();
     }
 
     public Room? GetChattingRoomBy(ChattingRoomID ID)
     {
         return _chatingRoom.ID == ID ? _chatingRoom : null;
-    }
-
-    public void RegisterUser(UserID userID)
-    {
-
-    }
-
-    public UserID GenAvailableUserID()
-    {
-        return new UserID("test");
-    }
-
-    public IMessageChannel? GetMessageChannelBy(string name)
-    {
-        return null;
-    }
-
-    public bool Verify(UserID id, string password)
-    {
-        throw new NotImplementedException();
     }
 }
 

@@ -5,14 +5,12 @@ public class UserInfo
 {
     public UserID ID;
     public Password Password;
-    public string UserName;
+    public string NickName;
 
-    public UserInfo(UserID id, Password password)
+    public UserInfo(UserID id, Password password, string nickName)
     {
         ID = id;
         Password = password;
-        UserName = id.Name;
+        NickName = nickName;
     }
 }
-
-
