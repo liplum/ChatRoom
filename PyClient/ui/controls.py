@@ -191,7 +191,7 @@ class xtextbox(textbox):
         kbs.bind(keys.k_home, lambda c: self.home())
         kbs.bind(keys.k_end, lambda c: self.end())
         spapp = super().append
-        kbs.on_any = lambda c: spapp(chars.to_str(c))
+        kbs.on_any = lambda c: spapp(chars.to_str(c)) if c.is_printable() else None
 
     def append(self, ch: Union[str, chars.char]):
         if isinstance(ch, str):

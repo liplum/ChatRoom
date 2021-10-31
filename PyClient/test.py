@@ -10,6 +10,7 @@ import calendar
 from datetime import datetime, timezone
 import platform
 import traceback
+import dictries
 
 system_type = platform.system()
 
@@ -30,8 +31,9 @@ def win_test():
     # test_fill()
     # test_decode_str()
     # cls_static()
-    #utc()
-    eof_test()
+    # utc()
+    # eof_test()
+    test_dictrie()
 
 
 def linux_test():
@@ -47,6 +49,36 @@ if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
+
+
+def test_dictrie():
+    tree = dictries.dictrie()
+    tree.insert_word("ap ple")
+    tree.insert_word("animal")
+    tree.insert_word("banana")
+    tree.insert_word("baby")
+    tree.insert_word("but")
+    tree.insert_word("butter")
+    print(tree)
+    print(f'Tree has "ap ple" = {tree.has("ap ple")}')
+    print(f'Tree has "baby" = {tree.has("baby")}')
+    print(f'Tree has "bar" = {tree.has("bar")}')
+    print(f'Tree has "ba" = {tree.has("ba")}')
+    print(f'Tree has start with "ap p" = {tree.has_start_with("ap p")}')
+    print(f'Tree has start with "baby" = {tree.has_start_with("baby")}')
+    print(f'Tree has start with "bar" = {tree.has_start_with("bar")}')
+    print(f'Tree has start with "ba" = {tree.has_start_with("ba")}')
+    print(f'Tree has start with "b" = {tree.has_start_with("b")}')
+
+    print(f'Delete "b" = {tree.remove_word("b")}')
+    print(f'Delete "bu" = {tree.remove_word("bu")}')
+    print(f'Delete "bananana" = {tree.remove_word("bananana")}')
+    print(f'Delete "banana" = {tree.remove_word("banana")}')
+    print(tree)
+    print(f'Delete "bu" = {tree.remove_start_with("bu")}')
+    print(tree)
+    print(f'Delete "a" = {tree.remove_start_with("a")}')
+    print(tree)
 
 
 def eof_test():

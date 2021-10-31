@@ -40,6 +40,11 @@ class char:
     def __hash__(self):
         return hash((self.keycode_1, self.keycode_2))
 
+    def is_printable(self) -> bool:
+        if self.keycode_2 is None and self.keycode_1 != control_keycode_1 and self.keycode_1 != f_keycode_1:
+            return True
+        return False
+
 
 class printable(char):
     def __init__(self, char_: Union[str, bytes]):
@@ -49,15 +54,24 @@ class printable(char):
             self.char = char_
         super().__init__(ord(self.char))
 
+    def is_printable(self) -> bool:
+        return True
+
 
 class control(char):
     def __init__(self, keycode_2: int):
         super().__init__(control_keycode_1, keycode_2)
 
+    def is_printable(self) -> bool:
+        return False
+
 
 class f(char):
     def __init__(self, keycode_2: int):
         super().__init__(f_keycode_1, keycode_2)
+
+    def is_printable(self) -> bool:
+        return False
 
 
 def is_key(char: Union[str, bytes, bytearray], key: Union[str, bytes]):
@@ -77,16 +91,6 @@ def is_key(char: Union[str, bytes, bytearray], key: Union[str, bytes]):
     else:
         return False
     return b == k
-
-
-def is_printable(ch: char) -> bool:
-    if isinstance(ch, printable):
-        return True
-    if isinstance(ch, control) or isinstance(ch, f):
-        return False
-    if ch.keycode_2 is None and ch.keycode_1 != control_keycode_1 and ch.keycode_1 != f_keycode_1:
-        return True
-    return False
 
 
 def to_str(ch: char) -> str:

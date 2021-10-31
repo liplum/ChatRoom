@@ -171,7 +171,7 @@ def separate(text: str, separator: str, number: int = None, allow_emptychar: boo
     return res
 
 
-def compose(seq, connector: str = ",", pretreat=str, end: str = ""):
+def compose(seq:[], connector: str = ",", pretreat=str, end: str = ""):
     with StringIO() as temp:
         c = 0
         max_len = len(seq)
@@ -198,7 +198,7 @@ def get_mid(a: int, b: int) -> int:
     return int((a + b) / 2)
 
 
-def find_range(sequential, item, offset: int = 0) -> Tuple[int, int]:
+def find_range(sequential:[], item, offset: int = 0) -> Tuple[int, int]:
     seql = len(sequential)
     rest = seql - offset
     if rest < 0:

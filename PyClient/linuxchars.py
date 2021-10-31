@@ -42,6 +42,9 @@ class linux_control(char):
         k5 = li[4] if l > 4 else None
         return linux_control(k2, k3, k4, k5)
 
+    def is_printable(self) -> bool:
+        return False
+
 
 lc = linux_control
 

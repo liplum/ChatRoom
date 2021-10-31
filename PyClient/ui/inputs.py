@@ -61,28 +61,14 @@ class cmd_input(i_input):
         super().__init__()
 
     def get_input(self, tip: str = None):
-        try:
-            if tip is None:
-                res = input()
-            else:
-                res = input(str)
-            for ch in res:
-                ch = printable(ch)
-                self._input_list.append(ch)
-                canceled = self.on_input(self, ch)
-                if canceled:
-                    return
-            self._input_list.append(k_enter)
-            self.on_input(self, k_enter)
-        except EOFError:
-            quit_ch = k_quit
-
-            self._input_list.append(quit_ch)
-            self.on_input(self, quit_ch)
-        """if tip is None:
+        if tip is None:
             res = input()
         else:
             res = input(str)
+        if res == "#quit":
+            self._input_list.append(k_quit)
+            self.on_input(self, k_quit)
+            return
         for ch in res:
             ch = printable(ch)
             self._input_list.append(ch)
@@ -90,5 +76,4 @@ class cmd_input(i_input):
             if canceled:
                 return
         self._input_list.append(k_enter)
-        self.on_input(self, k_enter)"""
-
+        self.on_input(self, k_enter)
