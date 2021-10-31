@@ -1,16 +1,13 @@
-import sys
-import utils
+from ui.controls import textbox
 from utils import *
 from core import converts
 
-from chars import is_key
 from ui.clients import *
 from chars import *
 
 import time
 import calendar
 from datetime import datetime, timezone
-from io import StringIO
 import platform
 import traceback
 
@@ -33,7 +30,8 @@ def win_test():
     # test_fill()
     # test_decode_str()
     # cls_static()
-    utc()
+    #utc()
+    eof_test()
 
 
 def linux_test():
@@ -49,6 +47,16 @@ if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
+
+
+def eof_test():
+    try:
+        res = input()
+        print(res)
+    except EOFError:
+        print("EOF!!!")
+    res = input()
+    print(res)
 
 
 def cls_static():

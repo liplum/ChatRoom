@@ -64,3 +64,5 @@ k_f9 = None
 k_f10 = None
 
 k_f12 = None
+
+k_quit = None

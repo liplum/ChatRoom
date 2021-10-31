@@ -8,7 +8,8 @@ import threading
 from threading import Lock, Thread
 import time
 import os
-from ui.clients import client, msgstorage
+from ui.clients import client
+from core.chats import msgstorage
 import platform
 from ui.inputs import i_nbinput, i_input
 from ui import inputs
@@ -16,10 +17,11 @@ from chars import *
 from linuxchars import *
 import sys
 import utils
+import keys
 
 DEBUG = False
 args = sys.argv
-if utils.get_at(args,1) == "debug":
+if utils.get_at(args, 1) == "debug":
     DEBUG = True
 
 system_type = platform.system()
@@ -35,7 +37,7 @@ def main():
     st = msgstorage("record.rec")
     st.deserialize()
     _client.win.history = [unit[2] for unit in st]
-    _client.connect(("127.0.0.1", 5000))
+    # _client.connect(("127.0.0.1", 5000))
     _client.start()
 
 
@@ -56,15 +58,17 @@ def mapkeys(client, keymap: cmdkey):
     if keymap is client.key_enter_text:
         keymap.map(c_t)
         return
+    elif keymap is client.key_quit_text_mode:
+        keymap.map(keys.k_quit)
 
-    if system_type == "Windows":
+    """if system_type == "Windows":
         if keymap is client.key_quit_text_mode:
             keymap.map(c_esc)
             return
     elif system_type == "Linux":
         if keymap is client.key_quit_text_mode:
             keymap.map(linux_eot)
-            return
+            return"""
 
 
 def add_commands(cmd_list):

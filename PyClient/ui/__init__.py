@@ -31,6 +31,7 @@ def init_keys():
         keys.k_f12 = chars.c_f12
         keys.k_backspace = chars.c_backspace
         keys.k_enter = chars.c_carriage_return
+        keys.k_quit = chars.c_esc
 
     elif system_type == "Linux":
         import linuxchars
@@ -58,6 +59,7 @@ def init_keys():
         keys.k_f12 = linuxchars.lc_f12
         keys.k_backspace = linuxchars.lc_backspace
         keys.k_enter = linuxchars.lc_line_end
+        keys.k_quit = linuxchars.lc_eot
 
 
 init_keys()
