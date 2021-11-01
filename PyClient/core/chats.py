@@ -77,8 +77,8 @@ class msgstorage:
         self.__storage.sort(key=lambda i: i[0])
         self.changed = False
 
-    def __iter__(self):
-        return self.__storage[:].__iter__()
+    def __iter__(self) -> [StorageUnit]:
+        return iter(self.__storage[:])
 
     @property
     def save_file(self) -> str:

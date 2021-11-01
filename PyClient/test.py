@@ -33,7 +33,8 @@ def win_test():
     # cls_static()
     # utc()
     # eof_test()
-    test_dictrie()
+    # test_dictrie()
+    test_dictrie2()
 
 
 def linux_test():
@@ -51,6 +52,40 @@ elif system_type == "Linux":
     test = linux_test
 
 
+def test_dictrie2():
+    tree = dictries.dictrie()
+    tree.insert_word("apple")
+    tree.insert_word("animal")
+    tree.insert_word("animation")
+    tree.insert_word("animadvert")
+    tree.insert_word("ant")
+    tree.insert_word("banana")
+    tree.insert_word("bar")
+    tree.insert_word("but")
+    tree.insert_word("butter")
+    tree.insert_word("ok")
+
+    node_animadvert = tree.root['a']['n']['i']['m']['a']['d']['v']['e']['r']['t']
+    print(node_animadvert)
+    last_branch_of_node_animadvert = dictries.get_last_branch_node(node_animadvert)
+    print(last_branch_of_node_animadvert)
+
+    tree.get_all_start_with("an")
+    """
+    print(f'Tree has "ant" = {tree.has("ant")}')
+    print(f'Tree has "an" = {tree.has("an")}')
+    print(f'Tree has prefix "an" = {tree.has_start_with("an")}')
+    print(f'Tree has "but" = {tree.has("but")}')
+    print(f'Tree has "butter" = {tree.has("butter")}')
+    print()
+    print(tree)
+    print(f'Delete "bu" = {tree.remove_word("bu")}')
+    print(f'Delete "but" = {tree.remove_word("but")}')
+    print(tree)
+    print(f'Delete "butter" = {tree.remove_word("butter")}')
+    print(tree)
+    """
+
 def test_dictrie():
     tree = dictries.dictrie()
     tree.insert_word("ap ple")
@@ -64,6 +99,8 @@ def test_dictrie():
     print(f'Tree has "baby" = {tree.has("baby")}')
     print(f'Tree has "bar" = {tree.has("bar")}')
     print(f'Tree has "ba" = {tree.has("ba")}')
+    print(f'Tree has "but" = {tree.has("but")}')
+    print(f'Tree has "butter" = {tree.has("butter")}')
     print(f'Tree has start with "ap p" = {tree.has_start_with("ap p")}')
     print(f'Tree has start with "baby" = {tree.has_start_with("baby")}')
     print(f'Tree has start with "bar" = {tree.has_start_with("bar")}')
@@ -75,9 +112,9 @@ def test_dictrie():
     print(f'Delete "bananana" = {tree.remove_word("bananana")}')
     print(f'Delete "banana" = {tree.remove_word("banana")}')
     print(tree)
-    print(f'Delete "bu" = {tree.remove_start_with("bu")}')
+    print(f'Delete prefix "bu" = {tree.remove_start_with("bu")}')
     print(tree)
-    print(f'Delete "a" = {tree.remove_start_with("a")}')
+    print(f'Delete prefix "a" = {tree.remove_start_with("a")}')
     print(tree)
 
 
