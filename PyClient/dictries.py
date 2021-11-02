@@ -97,10 +97,10 @@ def remove_word(nd, word: str) -> bool:
 def get_subnode_count(nd):
     count = [0]
 
-    def it(nd):
-        if nd.parent:
+    def it(n):
+        if n.parent:
             count[0] += 1
-        for n in nd.nodes:
+        for n in n.nodes:
             it(n)
 
     it(nd)
@@ -108,17 +108,33 @@ def get_subnode_count(nd):
     return count[0]
 
 
-def remove_start_with(nd, prefix: str) -> int:
+def get_wordnode_count(nd: "node"):
+    count = [0]
+
+    def it(n: "node"):
+        if n.is_word:
+            count[0] += 1
+        for n in n.nodes:
+            it(n)
+
+    it(nd)
+
+    return count[0]
+
+
+def remove_start_with(nd, prefix: str) -> Tuple[int, int]:
     if prefix is None:
         raise ValueError("prefix cannot be none.")
     if prefix == "":
         raise ValueError("prefix cannot be empty.")
     if has_prefix(nd, prefix):
-        subnode_count = nd[prefix[0]].subnode_count
+        need_removed = nd[prefix[0]]
+        subnode_count = need_removed.subnode_count
+        word_count = get_wordnode_count(subnode_count)
         del nd[prefix[0]]
-        return subnode_count
+        return subnode_count, word_count
     else:
-        return 0
+        return 0, 0
 
 
 def get_subnodes_str(nd) -> List[str]:
@@ -127,12 +143,12 @@ def get_subnodes_str(nd) -> List[str]:
     res = []
     top_parent = nd.parent
 
-    def it(nd):
-        if nd.parent is not top_parent and nd.char_pointing_this:
-            stack.append(nd.char_pointing_this)
-        if nd.is_word:
+    def it(n):
+        if n.parent is not top_parent and n.char_pointing_this:
+            stack.append(n.char_pointing_this)
+        if n.is_word:
             all_matches.append(stack[:])
-        for n in nd.nodes:
+        for n in n.nodes:
             it(n)
         if stack:
             stack.pop()
@@ -146,13 +162,53 @@ def get_subnodes_str(nd) -> List[str]:
     return res
 
 
+def get_partial_start_with(nd, prefix: str, max_count: int) -> List[str]:
+    if max_count < 0:
+        raise ValueError("max count cannot be negative")
+    if max_count == 0:
+        return []
+
+    cur = nd
+    for ch in prefix:
+        if cur.has(ch):
+            cur = cur[ch]
+        else:
+            return []
+    stack = []
+    all_matches = []
+    count = [max_count]
+    top_parent = cur.parent
+
+    def it(n):
+        if count[0] <= 0:
+            return
+        if n.parent is not top_parent and n.char_pointing_this:
+            stack.append(n.char_pointing_this)
+        if n.is_word:
+            all_matches.append(stack[:])
+            count[0] -= 1
+        for n in n.nodes:
+            it(n)
+        if stack:
+            stack.pop()
+
+    it(cur)
+    res = []
+    for match in all_matches:
+        with StringIO() as s:
+            s.write(prefix)
+            for ch in match:
+                s.write(ch)
+            res.append(s.getvalue())
+
+    return res
+
+
 def get_all_start_with(nd, prefix: str) -> List[str]:
     if prefix is None:
         raise ValueError("prefix cannot be none.")
     if prefix == "":
         raise ValueError("prefix cannot be empty.")
-    stack = []
-    all_matches = []
 
     cur = nd
     for ch in prefix:
@@ -161,14 +217,16 @@ def get_all_start_with(nd, prefix: str) -> List[str]:
         else:
             return []
 
+    stack = []
+    all_matches = []
     top_parent = cur.parent
 
-    def it(nd):
-        if nd.parent is not top_parent and nd.char_pointing_this:
-            stack.append(nd.char_pointing_this)
-        if nd.is_word:
+    def it(n):
+        if n.parent is not top_parent and n.char_pointing_this:
+            stack.append(n.char_pointing_this)
+        if n.is_word:
             all_matches.append(stack[:])
-        for n in nd.nodes:
+        for n in n.nodes:
             it(n)
         if stack:
             stack.pop()
@@ -189,10 +247,12 @@ class dictrie:
     def __init__(self):
         self.root = root_node()
         self._len = 0
+        self._word_count = 0
 
     def insert_word(self, word: str) -> "dictrie":
         added_num = insert_word(self.root, word)
         self._len += added_num
+        self._word_count += 1
         return self
 
     def has(self, word: str) -> bool:
@@ -203,16 +263,22 @@ class dictrie:
 
     def remove_word(self, word: str) -> bool:
         is_removed = remove_word(self.root, word)
-        self._len -= 1
+        if is_removed:
+            self._len -= 1
+            self._word_count -= 1
         return is_removed
 
     def remove_start_with(self, prefix: str) -> bool:
-        removed_count = remove_start_with(self.root, prefix)
-        self._len -= removed_count
-        return removed_count > 0
+        node_count, word_count = remove_start_with(self.root, prefix)
+        self._len -= node_count
+        self._word_count -= word_count
+        return node_count > 0
 
-    def get_all_start_with(self, prefix: str) -> List[str]:
-        return get_all_start_with(self.root, prefix)
+    def get_all_start_with(self, prefix: str, max_count: Optional[int] = None) -> List[str]:
+        if max_count is None or max_count < 0:
+            return get_all_start_with(self.root, prefix)
+        else:
+            return get_partial_start_with(self.root, prefix, max_count)
 
     def __repr__(self) -> str:
         return repr(self.root)
@@ -231,6 +297,10 @@ class dictrie:
 
     def __len__(self) -> int:
         return self._len
+
+    @property
+    def word_count(self) -> int:
+        return self._word_count
 
 
 def get_last_branch_node(n: "node") -> Optional["node"]:
@@ -360,9 +430,6 @@ class node:
     @property
     def subnode_count(self) -> int:
         return get_subnode_count(self)
-
-    def __len__(self) -> int:
-        return self.subnode_count
 
 
 class root_node(node):

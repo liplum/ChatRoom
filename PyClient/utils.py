@@ -1,7 +1,6 @@
 import os
 from threading import RLock
-from typing import Dict, List, Tuple, Any,Optional
-import time
+from typing import Dict, List, Tuple, Any, Optional
 from io import StringIO
 import time
 import calendar
@@ -171,7 +170,7 @@ def separate(text: str, separator: str, number: int = None, allow_emptychar: boo
     return res
 
 
-def compose(seq:[], connector: str = ",", pretreat=str, end: str = ""):
+def compose(seq: [], connector: str = ",", pretreat=str, end: str = ""):
     with StringIO() as temp:
         c = 0
         max_len = len(seq)
@@ -198,7 +197,7 @@ def get_mid(a: int, b: int) -> int:
     return int((a + b) / 2)
 
 
-def find_range(sequential:[], item, offset: int = 0) -> Tuple[int, int]:
+def find_range(sequential: [], item, offset: int = 0) -> Tuple[int, int]:
     seql = len(sequential)
     rest = seql - offset
     if rest < 0:
@@ -292,6 +291,26 @@ def local_to_utc(dt: datetime):
 def to_seconds(dt: datetime):
     secs = time.mktime(dt.timetuple())
     return calendar.timegm(time.gmtime(secs))
+
+
+def now_milisecs() -> int:
+    return int(round(time.time() * 1000))
+
+
+class timer:
+    def __init__(self):
+        pass
+
+    def set_time(self, milliseconds: int):
+        self.time = milliseconds
+
+    def start(self):
+        self.start_time = now_milisecs()
+
+    @property
+    def is_end(self) -> bool:
+        cur_time = now_milisecs()
+        return self.start_time - cur_time > self.time
 
 
 if system_type == "Windows":

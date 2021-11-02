@@ -57,11 +57,15 @@ elif system_type == "Linux":
 
 
 def test_autofill():
-    p = autofill.prompt()
+    p = autofill.autoprompt()
+    p.target_delay = 500
+    p._plan_rate = 5
     p.add("apple").add("animation").add("animadvert").add("abuse").add("authority").add("abort")
     p.add("append").add("ant").add("aunt").add("but").add("boy").add("butter").add("ok")
     p.add("onion").add("log").add("father").add("tea").add("tree").add("dictionary")
     p.add("trie")
+
+    # print(dictries.get_partial_start_with(p.tree.root, "a", 4))
 
     def get_or_zero(dic, key) -> int:
         if key in dic:
@@ -113,6 +117,7 @@ def test_dictrie2():
     tree.insert_word("trie")
     tree.insert_word("dictionary")
     print(str(tree))
+    print(str(tree.word_count))
 
     node_animadvert = tree['a']['n']['i']['m']['a']['d']['v']['e']['r']['t']
 
@@ -142,6 +147,8 @@ def test_dictrie2():
     print(f'root\'s subnodes count = {dictries.get_subnode_count(tree.root)}')
     ###############
     # print(tree.get_all_start_with("anim"))
+    print(str(tree.word_count))
+
     """
     print(node_animadvert)
     last_branch_of_node_animadvert = dictries.get_last_branch_node(node_animadvert)
