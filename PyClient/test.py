@@ -12,6 +12,7 @@ import platform
 import traceback
 import dictries
 import sys
+import autofill
 
 system_type = platform.system()
 
@@ -35,11 +36,12 @@ def win_test():
     # utc()
     # eof_test()
     # test_dictrie()
-    test_dictrie2()
+    # test_dictrie2()
+    test_autofill()
 
 
 def linux_test():
-    #nb_linux()
+    # nb_linux()
     # linux_nb()
     test_dictrie2()
 
@@ -54,23 +56,92 @@ elif system_type == "Linux":
     test = linux_test
 
 
+def test_autofill():
+    p = autofill.prompt()
+    p.add("apple").add("animation").add("animadvert").add("abuse").add("authority").add("abort")
+    p.add("append").add("ant").add("aunt").add("but").add("boy").add("butter").add("ok")
+    p.add("onion").add("log").add("father").add("tea").add("tree").add("dictionary")
+    p.add("trie")
+
+    def get_or_zero(dic, key) -> int:
+        if key in dic:
+            return dic[key]
+        else:
+            return 0
+
+    while True:
+        print("---------------------")
+        prefix = input("Enter prefix:")
+        if prefix == "#":
+            break
+        candidates = p.autofill(prefix)
+        if len(candidates) == 0:
+            print("No candidate.")
+            continue
+        for i, can in enumerate(candidates):
+            text = utils.fillto(f"[{i + 1}]:{can}", " ", 30)
+            hotlevel = f"hot:{get_or_zero(p.hotwords, can)}"
+            print(f"{text}{hotlevel}")
+        try:
+            number = int(input("Enter number:").strip())
+        except:
+            print("Input Error!")
+            continue
+        index = number - 1
+        if 0 <= index < len(candidates):
+            selected = candidates[index]
+            p.apply(selected)
+            print(f"You select {selected}.")
+        else:
+            print("Input Error!")
+
+
 def test_dictrie2():
     tree = dictries.dictrie()
     tree.insert_word("animal")
     tree.insert_word("animation")
     tree.insert_word("animadvert")
+    tree.insert_word("abuse")
     tree.insert_word("audio")
     tree.insert_word("ant")
     tree.insert_word("but")
     tree.insert_word("butter")
+    tree.insert_word("ok")
+    tree.insert_word("onion")
+    tree.insert_word("tea")
+    tree.insert_word("tree")
+    tree.insert_word("trie")
+    tree.insert_word("dictionary")
+    print(str(tree))
 
-    node_animadvert = tree.root['a']['n']['i']['m']['a']['d']['v']['e']['r']['t']
+    node_animadvert = tree['a']['n']['i']['m']['a']['d']['v']['e']['r']['t']
 
-    n5_1=tree.root['a']['n']['i']['m']
-    arg1=get_at(sys.argv,1)
+    n5_1 = tree.root['a']['n']['i']['m']
+    arg1 = get_at(sys.argv, 1)
     if arg1:
         print(tree.get_all_start_with(arg1))
-    #print(tree.get_all_start_with("anim"))
+
+    starter = "an"
+    print(f'Start with "{starter}" in tree = {tree.get_all_start_with(starter)}')
+    dictries.insert_word(tree.root, "key")
+    ###############
+    test = "key"
+    print(f'Tree has "{test}" = {tree.has(test)}')
+    ###############
+    test = "but"
+    print(f'Delete "but" = {tree.remove_word("but")}')
+    print(f'Tree has "{test}" = {tree.has(test)}')
+    ###############
+    test = "butter"
+    print(f'Tree has "{test}" = {tree.has(test)}')
+    ###############
+    print(f'"ani"\'s subnodes = {dictries.get_subnodes_str(tree["a"]["n"]["i"])}')
+    ###############
+    print(f'root\'s subnodes = {dictries.get_subnodes_str(tree.root)}')
+    ###############
+    print(f'root\'s subnodes count = {dictries.get_subnode_count(tree.root)}')
+    ###############
+    # print(tree.get_all_start_with("anim"))
     """
     print(node_animadvert)
     last_branch_of_node_animadvert = dictries.get_last_branch_node(node_animadvert)
@@ -93,6 +164,7 @@ def test_dictrie2():
     print(f'Delete "butter" = {tree.remove_word("butter")}')
     print(tree)
     """
+
 
 def test_dictrie():
     tree = dictries.dictrie()
@@ -164,9 +236,9 @@ def test_decode_str():
 def test_fill():
     s1 = fill("Abc", "-*-", 10, 22)
     s2 = fill("Abc", "-*-", 10, 21)
-    s3 = fillby("Abc", "-*-", 22)
-    s4 = fillby("Abc", "-*-", 21)
-    s5 = fillby("Command mode:", "-/-", 50)
+    s3 = fillto("Abc", "-*-", 22)
+    s4 = fillto("Abc", "-*-", 21)
+    s5 = fillto("Command mode:", "-/-", 50)
 
     print(f"fill [{len(s1)}] {s1}")
     print(f"fill [{len(s2)}] {s2}")

@@ -407,7 +407,7 @@ class cmd_mode(client_state):
         self.client.make_dirty()
         self.client.textbox.clear()
 
-    tip: str = utils.fillby("Command mode:", " ", 40)
+    tip: str = utils.fillto("Command mode:", " ", 40)
 
     def update(self):
         c = self.client
@@ -471,7 +471,7 @@ class text_mode(client_state):
         self.client.make_dirty()
         self.client.textbox.clear()
 
-    tip: str = utils.fillby("Text mode:", " ", 40)
+    tip: str = utils.fillto("Text mode:", " ", 40)
 
     def update(self):
         c = self.client

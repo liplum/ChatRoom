@@ -1,200 +1,236 @@
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, NoReturn
 from io import StringIO
+from dataclasses import dataclass
+
+
+def insert_word(nd, word: str) -> int:
+    """
+
+    :param nd:
+    :param word:
+    :return:number of added nodes
+    """
+    if word is None:
+        raise ValueError("word cannot be none.")
+    if word == "":
+        raise ValueError("word cannot be empty.")
+    added_num = 0
+    cur = nd
+    for ch in word:
+        if cur.has(ch):
+            next_node = cur[ch]
+        else:
+            next_node = node(cur, ch)
+            cur[ch] = next_node
+            added_num += 1
+        cur = next_node
+    cur.is_word = True
+    return added_num
+
+
+def has(nd, word: str) -> bool:
+    if word is None:
+        raise ValueError("word cannot be none.")
+    if word == "":
+        raise ValueError("word cannot be empty.")
+    cur = nd
+    for ch in word:
+        if cur.has(ch):
+            next_node = cur[ch]
+        else:
+            return False
+        cur = next_node
+    return cur.is_word
+
+
+def has_prefix(nd, prefix: str) -> bool:
+    if prefix is None:
+        raise ValueError("prefix cannot be none.")
+    if prefix == "":
+        raise ValueError("prefix cannot be empty.")
+    cur = nd
+    for ch in prefix:
+        if cur.has(ch):
+            next_node = cur[ch]
+        else:
+            return False
+        cur = next_node
+    return True
+
+
+def remove_word(nd, word: str) -> bool:
+    if word is None:
+        raise ValueError("word cannot be none.")
+    if word == "":
+        raise ValueError("word cannot be empty.")
+    cur = nd
+    for ch in word:
+        if cur.has(ch):
+            next_node = cur[ch]
+            cur = next_node
+        else:
+            return False
+
+    deleted = False
+    pre = cur.parent
+    if cur.is_word:
+        if cur.is_leaf:
+            del pre[cur.char_pointing_this]
+            deleted = True
+        else:
+            cur.is_word = False
+            return True
+
+    cur = pre
+    pre = cur.parent
+    while pre is not None:
+        if not cur.is_word and cur.is_leaf:
+            del pre[cur.char_pointing_this]
+            deleted = True
+            cur = pre
+            pre = cur.parent
+        else:
+            break
+    return deleted
+
+
+def get_subnode_count(nd):
+    count = [0]
+
+    def it(nd):
+        if nd.parent:
+            count[0] += 1
+        for n in nd.nodes:
+            it(n)
+
+    it(nd)
+
+    return count[0]
+
+
+def remove_start_with(nd, prefix: str) -> int:
+    if prefix is None:
+        raise ValueError("prefix cannot be none.")
+    if prefix == "":
+        raise ValueError("prefix cannot be empty.")
+    if has_prefix(nd, prefix):
+        subnode_count = nd[prefix[0]].subnode_count
+        del nd[prefix[0]]
+        return subnode_count
+    else:
+        return 0
+
+
+def get_subnodes_str(nd) -> List[str]:
+    stack = []
+    all_matches = []
+    res = []
+    top_parent = nd.parent
+
+    def it(nd):
+        if nd.parent is not top_parent and nd.char_pointing_this:
+            stack.append(nd.char_pointing_this)
+        if nd.is_word:
+            all_matches.append(stack[:])
+        for n in nd.nodes:
+            it(n)
+        if stack:
+            stack.pop()
+
+    it(nd)
+    for match in all_matches:
+        with StringIO() as s:
+            for ch in match:
+                s.write(ch)
+            res.append(s.getvalue())
+    return res
+
+
+def get_all_start_with(nd, prefix: str) -> List[str]:
+    if prefix is None:
+        raise ValueError("prefix cannot be none.")
+    if prefix == "":
+        raise ValueError("prefix cannot be empty.")
+    stack = []
+    all_matches = []
+
+    cur = nd
+    for ch in prefix:
+        if cur.has(ch):
+            cur = cur[ch]
+        else:
+            return []
+
+    top_parent = cur.parent
+
+    def it(nd):
+        if nd.parent is not top_parent and nd.char_pointing_this:
+            stack.append(nd.char_pointing_this)
+        if nd.is_word:
+            all_matches.append(stack[:])
+        for n in nd.nodes:
+            it(n)
+        if stack:
+            stack.pop()
+
+    it(cur)
+    res = []
+    for match in all_matches:
+        with StringIO() as s:
+            s.write(prefix)
+            for ch in match:
+                s.write(ch)
+            res.append(s.getvalue())
+
+    return res
 
 
 class dictrie:
     def __init__(self):
         self.root = root_node()
+        self._len = 0
 
-    def insert_word(self, word: str):
-        if word is None:
-            raise ValueError("word cannot be none.")
-        if word == "":
-            raise ValueError("word cannot be empty.")
-        cur = self.root
-        for ch in word:
-            if cur.has(ch):
-                next_node = cur[ch]
-            else:
-                next_node = node(cur, ch)
-                cur[ch] = next_node
-            cur = next_node
-        cur.is_word = True
+    def insert_word(self, word: str) -> "dictrie":
+        added_num = insert_word(self.root, word)
+        self._len += added_num
+        return self
 
-    def has(self, word: str):
-        if word is None:
-            raise ValueError("word cannot be none.")
-        if word == "":
-            raise ValueError("word cannot be empty.")
-        cur = self.root
-        for ch in word:
-            if cur.has(ch):
-                next_node = cur[ch]
-            else:
-                return False
-            cur = next_node
-        return cur.is_word
+    def has(self, word: str) -> bool:
+        return has(self.root, word)
 
-    def has_start_with(self, prefix: str):
-        if prefix is None:
-            raise ValueError("prefix cannot be none.")
-        if prefix == "":
-            raise ValueError("prefix cannot be empty.")
-        cur = self.root
-        for ch in prefix:
-            if cur.has(ch):
-                next_node = cur[ch]
-            else:
-                return False
-            cur = next_node
-        return True
+    def has_start_with(self, prefix: str) -> bool:
+        return has_prefix(self.root, prefix)
 
     def remove_word(self, word: str) -> bool:
-        if word is None:
-            raise ValueError("word cannot be none.")
-        if word == "":
-            raise ValueError("word cannot be empty.")
-        cur = self.root
-        for ch in word:
-            if cur.has(ch):
-                next_node = cur[ch]
-                cur = next_node
-            else:
-                return False
-
-        deleted = False
-        pre = cur.parent
-        if cur.is_word:
-            if cur.is_leaf:
-                del pre[cur.char_pointing_this]
-                deleted = True
-            else:
-                cur.is_word = False
-                return True
-
-        cur = pre
-        pre = cur.parent
-        while pre is not None:
-            if not cur.is_word and cur.is_leaf:
-                del pre[cur.char_pointing_this]
-                deleted = True
-                cur = pre
-                pre = cur.parent
-            else:
-                break
-        return deleted
+        is_removed = remove_word(self.root, word)
+        self._len -= 1
+        return is_removed
 
     def remove_start_with(self, prefix: str) -> bool:
-        if prefix is None:
-            raise ValueError("prefix cannot be none.")
-        if prefix == "":
-            raise ValueError("prefix cannot be empty.")
-        if self.has_start_with(prefix):
-            del self.root[prefix[0]]
-            return True
-        else:
-            return False
-    
-    def get_all_start_with(self,prefix:str)->List[str]:
-        if prefix is None:
-            raise ValueError("prefix cannot be none.")
-        if prefix == "":
-            raise ValueError("prefix cannot be empty.")
-        stack=[]
-        all_matchs=[]
-        def it(nd):
-            if nd.char_pointing_this:
-                stack.append(nd.char_pointing_this)
-            if nd.is_word:
-                all_matchs.append(stack[:])
-            for n in nd.nodes:
-                it(n)
-            stack.pop()
-        
-        cur=self.root
-        for ch in prefix:
-            if cur.has(ch):
-                cur = cur[ch]
-            else:
-                return []
+        removed_count = remove_start_with(self.root, prefix)
+        self._len -= removed_count
+        return removed_count > 0
 
-        it(cur)
-        prefix=prefix[:-1]
-        res=[]
-        for match in all_matchs:
-            with StringIO() as s:
-                s.write(prefix)
-                for ch in match:
-                    s.write(ch)
-                res.append(s.getvalue())
+    def get_all_start_with(self, prefix: str) -> List[str]:
+        return get_all_start_with(self.root, prefix)
 
-        return res
-    
-    def get_all_start_with2(self, prefix: str) -> List[str]:
-        if prefix is None:
-            raise ValueError("prefix cannot be none.")
-        if prefix == "":
-            raise ValueError("prefix cannot be empty.")
-        cur = self.root
-        for ch in prefix:
-            if cur.has(ch):
-                next_node = cur[ch]
-                cur = next_node
-            else:
-                return []
-        all_match: List[List[str]] = []
-        start_node = cur
-        stack = []
-        first_start = True
-
-        while True:
-            if len(stack) == 0 and not first_start:
-                break
-            else:
-                first_start = True
-
-            for ch, node in cur:
-                if node.is_leaf:
-                    stack.append(node.char_pointing_this)
-                    all_match.append(stack[:])
-                    last_branch = get_last_branch_node(cur)
-                    cur = node.parent
-                    pre = cur.parent
-                    while cur is not last_branch:
-                        stack.pop()
-                        if cur.is_word:
-                            all_match.append(stack[:])
-                        cur = pre
-                        pre = cur.parent
-                    cur = last_branch
-                    continue
-                else:
-                    stack.append(ch)
-                    cur = cur[ch]
-                    break
-
-    """  while True:
-          if not cur.is_leaf:
-              for ch, node in cur:
-                  if node.is_leaf:
-                      all_match.append(stack[:])
-                      cur = cur.parent
-                      break
-                  else:
-                      stack.append(ch)
-                      cur = cur[ch]
-          else:
-              all_match.append(stack[:])
-              pre = cur.parent
-              while pre is not None and cur is not start_node.parent:
-                  stack.pop()
-                  if cur.is_word:
-                      all_match.append(stack[:])
-                  if not cur.is_leaf:
-                      break"""
-
-    def __repr__(self):
+    def __repr__(self) -> str:
         return repr(self.root)
+
+    def __str__(self) -> str:
+        return str(self.root)
+
+    def __getitem__(self, item) -> "node":
+        return self.root[item]
+
+    def __iadd__(self, other) -> "dictrie":
+        if not isinstance(other, str):
+            other = str(other)
+        self.insert_word(other)
+        return self
+
+    def __len__(self) -> int:
+        return self._len
 
 
 def get_last_branch_node(n: "node") -> Optional["node"]:
@@ -241,18 +277,26 @@ def get_last_branch_nodeXn(n: "node") -> Optional["node"]:
 
 class node:
     def __init__(self, parent: Optional["node"], char_pointing_this: Optional[str]):
-        self.sub_nodes: Dict[str, "node"] = {}
+        self.subnodes: Dict[str, "node"] = {}
         self._is_word = False
-        self.parent: Optional["node"] = parent
-        self.char_pointing_this: Optional[str] = char_pointing_this
+        self._parent: Optional["node"] = parent
+        self._char_pointing_this: Optional[str] = char_pointing_this
 
     @property
-    def has_parent(self):
+    def parent(self) -> Optional["node"]:
+        return self._parent
+
+    @property
+    def char_pointing_this(self) -> Optional[str]:
+        return self._char_pointing_this
+
+    @property
+    def has_parent(self) -> bool:
         return self.parent is None and self.char_pointing_this is None
 
     @property
-    def is_leaf(self):
-        return len(self.sub_nodes) == 0
+    def is_leaf(self) -> bool:
+        return len(self.subnodes) == 0
 
     @property
     def is_word(self) -> bool:
@@ -263,37 +307,62 @@ class node:
         self._is_word = value
 
     @property
-    def is_branch(self):
-        return len(self.sub_nodes) > 1
+    def is_branch(self) -> bool:
+        return len(self.subnodes) > 1
 
     def has(self, ch: str) -> bool:
-        return ch in self.sub_nodes
+        return ch in self.subnodes
 
     def __repr__(self) -> str:
-        return repr(self.sub_nodes)
+        return str(self)
+
+    def __str__(self) -> str:
+        all_subnodes = get_subnodes_str(self)
+        l = len(all_subnodes)
+        with StringIO() as res:
+            res.write('[')
+            c = 0
+            for subnode in all_subnodes:
+                res.write(subnode)
+                c += 1
+                if c < l:
+                    res.write(',')
+            res.write(']')
+            return res.getvalue()
+
+    @property
+    def subnodes_str(self) -> List[str]:
+        return get_subnodes_str(self)
 
     def __getitem__(self, item):
-        return self.sub_nodes[item]
+        return self.subnodes[item]
 
     def __delitem__(self, key):
-        del self.sub_nodes[key]
+        del self.subnodes[key]
 
     def __setitem__(self, key, value):
-        self.sub_nodes[key] = value
+        self.subnodes[key] = value
 
     def __iter__(self):
-        return iter(self.sub_nodes.items())
+        return iter(self.subnodes.items())
 
     @property
     def nodes(self) -> ["node"]:
-        return self.sub_nodes.values()
+        return self.subnodes.values()
 
     @property
     def chars(self) -> [str]:
-        return self.sub_nodes.keys()
+        return self.subnodes.keys()
 
     def items(self) -> [Tuple[str, "node"]]:
-        return self.sub_nodes.items()
+        return self.subnodes.items()
+
+    @property
+    def subnode_count(self) -> int:
+        return get_subnode_count(self)
+
+    def __len__(self) -> int:
+        return self.subnode_count
 
 
 class root_node(node):
@@ -302,9 +371,21 @@ class root_node(node):
         super().__init__(None, None)
 
     @property
+    def parent(self) -> Optional["node"]:
+        return None
+
+    @property
+    def char_pointing_this(self) -> Optional[str]:
+        return None
+
+    @property
+    def has_parent(self) -> bool:
+        return False
+
+    @property
     def is_word(self) -> bool:
         return False
 
     @property
-    def is_leaf(self):
+    def is_leaf(self) -> bool:
         return False

@@ -1,6 +1,6 @@
 import os
 from threading import RLock
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any,Optional
 import time
 from io import StringIO
 import time
@@ -235,7 +235,10 @@ def addmultidic(dic: Dict, key, item) -> Dict:
     return dic
 
 
-def fill(text: str, repeated: str, count: int, max_char_num: int = None) -> str:
+def fill(text: str, repeated: str, count: int, max_char_num: Optional[int] = None) -> str:
+    repeatedl = len(repeated)
+    if repeatedl == 0:
+        raise ValueError("repeated cannot be an empty string.")
     textl = len(text)
     if max_char_num is not None and textl >= max_char_num:
         return text
@@ -243,7 +246,6 @@ def fill(text: str, repeated: str, count: int, max_char_num: int = None) -> str:
     with StringIO() as s:
         s.write(text)
         total = textl
-        repeatedl = len(repeated)
         if max_char_num is not None:
             restl = max_char_num - textl
             restc = min(count, restl // repeatedl)
@@ -257,14 +259,16 @@ def fill(text: str, repeated: str, count: int, max_char_num: int = None) -> str:
         return s.getvalue()
 
 
-def fillby(text: str, repeated: str, max_char_num: int) -> str:
+def fillto(text: str, repeated: str, max_char_num: int) -> str:
+    repeatedl = len(repeated)
+    if repeatedl == 0:
+        raise ValueError("repeated cannot be an empty string.")
     textl = len(text)
     if textl >= max_char_num:
         return text
     with StringIO() as s:
         s.write(text)
         total = textl
-        repeatedl = len(repeated)
         restl = max_char_num - textl
         restc = restl // repeatedl
         surplus = restl % repeatedl
