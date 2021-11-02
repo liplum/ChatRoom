@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 import platform
 import traceback
 import dictries
+import sys
 
 system_type = platform.system()
 
@@ -38,8 +39,9 @@ def win_test():
 
 
 def linux_test():
-    nb_linux()
+    #nb_linux()
     # linux_nb()
+    test_dictrie2()
 
 
 def test():
@@ -54,24 +56,30 @@ elif system_type == "Linux":
 
 def test_dictrie2():
     tree = dictries.dictrie()
-    tree.insert_word("apple")
     tree.insert_word("animal")
     tree.insert_word("animation")
     tree.insert_word("animadvert")
+    tree.insert_word("audio")
     tree.insert_word("ant")
-    tree.insert_word("banana")
-    tree.insert_word("bar")
     tree.insert_word("but")
     tree.insert_word("butter")
-    tree.insert_word("ok")
 
     node_animadvert = tree.root['a']['n']['i']['m']['a']['d']['v']['e']['r']['t']
+
+    n5_1=tree.root['a']['n']['i']['m']
+    arg1=get_at(sys.argv,1)
+    if arg1:
+        print(tree.get_all_start_with(arg1))
+    #print(tree.get_all_start_with("anim"))
+    """
     print(node_animadvert)
     last_branch_of_node_animadvert = dictries.get_last_branch_node(node_animadvert)
     print(last_branch_of_node_animadvert)
 
-    tree.get_all_start_with("an")
-    """
+    res = tree.get_all_start_with("an")
+
+    print(res)
+
     print(f'Tree has "ant" = {tree.has("ant")}')
     print(f'Tree has "an" = {tree.has("an")}')
     print(f'Tree has prefix "an" = {tree.has_start_with("an")}')

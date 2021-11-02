@@ -94,8 +94,43 @@ class dictrie:
             return True
         else:
             return False
+    
+    def get_all_start_with(self,prefix:str)->List[str]:
+        if prefix is None:
+            raise ValueError("prefix cannot be none.")
+        if prefix == "":
+            raise ValueError("prefix cannot be empty.")
+        stack=[]
+        all_matchs=[]
+        def it(nd):
+            if nd.char_pointing_this:
+                stack.append(nd.char_pointing_this)
+            if nd.is_word:
+                all_matchs.append(stack[:])
+            for n in nd.nodes:
+                it(n)
+            stack.pop()
+        
+        cur=self.root
+        for ch in prefix:
+            if cur.has(ch):
+                cur = cur[ch]
+            else:
+                return []
 
-    def get_all_start_with(self, prefix: str) -> List[str]:
+        it(cur)
+        prefix=prefix[:-1]
+        res=[]
+        for match in all_matchs:
+            with StringIO() as s:
+                s.write(prefix)
+                for ch in match:
+                    s.write(ch)
+                res.append(s.getvalue())
+
+        return res
+    
+    def get_all_start_with2(self, prefix: str) -> List[str]:
         if prefix is None:
             raise ValueError("prefix cannot be none.")
         if prefix == "":
@@ -209,7 +244,7 @@ class node:
         self.sub_nodes: Dict[str, "node"] = {}
         self._is_word = False
         self.parent: Optional["node"] = parent
-        self.char_pointing_this: str = char_pointing_this
+        self.char_pointing_this: Optional[str] = char_pointing_this
 
     @property
     def has_parent(self):
