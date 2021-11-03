@@ -1,10 +1,12 @@
-from ui.inputs import i_nbinput
-from ui.outputs import i_display, CmdFgColor, CmdBkColor
 import msvcrt
 from threading import Thread, RLock
-from utils import lock
 from typing import Optional, List, NoReturn
+
 import chars
+from ui.inputs import i_nbinput
+from ui.outputs import i_display, CmdFgColor, CmdBkColor
+from utils import lock
+
 
 class nbdispaly(i_display):
 

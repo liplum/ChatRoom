@@ -1,202 +1,20 @@
-from dataclasses import dataclass
+from abc import ABC, abstractmethod
+from datetime import datetime
 from io import StringIO
-from typing import Union, List, Optional, Callable
+from typing import Union, List, Optional
 
 import chars
 import keys
 import utils
-from core.chats import roomid
-from core.events import event
+from core.chats import roomid, userid
 from net.networks import server_token
 from ui import outputs as output
-from utils import clear_screen, get
-from io import StringIO
+from ui.k import kbinding
+from ui.outputs import CmdBkColor, CmdFgColor
 from ui.outputs import buffer
-
-
-class textbox:
-    def __init__(self, cursor_icon: str = "^"):
-        self._input_list: List[str] = []
-        self.cursor_icon = cursor_icon
-        self._cursor: int = 0
-        self._cursor: int = 0
-        self._on_cursor_move = event()
-        self._on_append = event()
-        self._on_delete = event()
-        self._on_gen_distext = event()
-        self._on_list_replace = event()
-
-    @property
-    def on_gen_distext(self) -> event:
-        """
-        Para 1:textbox object
-
-
-        Para 2:the final string which will be displayed soon(render_content.string)
-
-        :return: event(textbox,render_content)
-        """
-        return self._on_gen_distext
-
-    @property
-    def on_cursor_move(self) -> event:
-        """
-        Para 1:textbox object
-
-
-        Para 2:former cursor position
-
-
-        Para 3:current cursor position
-
-        :return: event(textbox,int,int)
-        """
-        return self._on_cursor_move
-
-    @property
-    def on_append(self) -> event:
-        """
-        Para 1:textbox object
-
-
-        Para 2:cursor position
-
-
-        Para 3:char appended
-
-        :return: event(textbox,int,str)
-        """
-        return self._on_append
-
-    @property
-    def on_delete(self) -> event:
-        """
-        Para 1:textbox object
-
-
-        Para 2:cursor position
-
-
-        Para 3:char deleted
-
-        :return: event(textbox,int,str)
-        """
-        return self._on_delete
-
-    @property
-    def on_list_replace(self) -> event:
-        """
-        Para 1:textbox object
-
-
-        Para 2:former list
-
-
-        Para 3:current list
-
-        :return: event(textbox,list,list)
-        """
-        return self._on_list_replace
-
-    @property
-    def input_list(self):
-        return self._input_list[:]
-
-    @property
-    def input_count(self):
-        return len(self._input_list)
-
-    @input_list.setter
-    def input_list(self, value):
-        former = self._input_list
-        if isinstance(value, list):
-            self._input_list = value[:]
-        else:
-            self._input_list = list(value)
-        self.cursor = 0
-        self.on_list_replace(self, former, self._input_list)
-
-    @property
-    def inputs(self) -> str:
-        return utils.compose(self.input_list, connector='')
-
-    def clear(self):
-        self.input_list = []
-
-    @property
-    def cursor(self):
-        return self._cursor
-
-    @cursor.setter
-    def cursor(self, value):
-        list_len = len(self._input_list)
-        former = self._cursor
-        current = min(max(0, value), list_len)
-        if former != current:
-            self._cursor = current
-            self.on_cursor_move(self, former, current)
-
-    def home(self):
-        self.cursor = 0
-
-    def left(self):
-        self.cursor -= 1
-
-    def right(self):
-        self.cursor += 1
-
-    def end(self):
-        self.cursor = self.input_count
-
-    @property
-    def distext(self) -> str:
-        cursor_pos = self._cursor
-        with StringIO() as s:
-            cur = 0
-            for char in self._input_list:
-                if cur == cursor_pos:
-                    s.write(self.cursor_icon)
-                s.write(char)
-                cur += 1
-            if cur == cursor_pos:
-                s.write(self.cursor_icon)
-
-            res = s.getvalue()
-            dis = render_content(res)
-            self.on_gen_distext(self, dis)
-            return dis.string
-
-    def append(self, char):
-        self._input_list.insert(self.cursor, char)
-        self.on_append(self, self.cursor, char)
-        self.cursor += 1
-
-    def addtext(self, text: str):
-        """
-        Not raise on_append event
-        :param text:
-        :return:
-        """
-        self._input_list.insert(self.cursor, text)
-        self.cursor += len(text)
-
-    def rmtext(self, count: int):
-        if count <= 0:
-            return
-        cursor_pos = self.cursor
-        while count > 0:
-            self._input_list.pop(cursor_pos)
-            cursor_pos -= 1
-            count -= 1
-        self.cursor = cursor_pos
-
-    def delete(self, left=True):
-        if self.cursor > 0:
-            n = self.cursor - 1 if left else self.cursor
-            if n < len(self._input_list):
-                ch = self._input_list.pop(n)
-                self.on_delete(self, self.cursor, ch)
-                self.cursor -= 1
+from ui.states import state, smachine
+from ui.tbox import textbox
+from utils import clear_screen
 
 
 class xtextbox(textbox):
@@ -222,11 +40,11 @@ class xtextbox(textbox):
                 super().append(to_str(ch))
 
 
-class tab:
+class tab(ABC):
 
     def __init__(self, client: "client", tablist: "tablist"):
-        super().__init__(client, tablist)
-        self.textbox = textbox()
+        self.tablist = tablist
+        self.client = client
 
     def on_input(self, char):
         pass
@@ -240,28 +58,44 @@ class tab:
     def serialize_config(self, config):
         pass
 
+    @property
+    @abstractmethod
+    def title(self) -> str:
+        pass
+
 
 class chat_tab(tab):
 
     def __init__(self, client: "client", tablist: "tablist"):
         super().__init__(client, tablist)
+        self.textbox = xtextbox()
         self.history: List[str] = []
         self.max_display_line = 10
+        self.fill_until_max = True
 
         def set_client(state: state) -> None:
             state.client = self.client
+            state.textbox = self.textbox
 
         def gen_state(statetype: type) -> state:
-            if issubclass(statetype, client_state):
-                return statetype(self.client)
+            if issubclass(statetype, inputable_state):
+                s = statetype()
+                set_client(s)
+                return s
             else:
                 return statetype()
 
         self.sm = smachine(state_pre=set_client, stype_pre=gen_state)
-        self.sm.enter(text_mode)
+        self.sm.enter(cmd_mode)
+        self.textbox.on_append.add(lambda b, p, c: client.make_dirty())
+        self.textbox.on_delete.add(lambda b, p, c: client.make_dirty())
+        self.textbox.on_cursor_move.add(lambda b, f, c: client.make_dirty())
+        self.textbox.on_list_replace.add(lambda b, f, c: client.make_dirty())
 
     def draw_on(self, buf: buffer):
         buf.addtext(self.distext)
+        self.sm.draw_on(buf)
+        buf.addtext(self.textbox.distext)
 
     @property
     def distext(self) -> str:
@@ -284,6 +118,10 @@ class chat_tab(tab):
     def on_input(self, char):
         self.sm.on_input(char)
 
+    @property
+    def title(self) -> str:
+        return "chat tab"
+
 
 class setting_tab(tab):
     pass
@@ -300,15 +138,25 @@ class tablist:
         self.win = win
         self.view_history = []
         self.max_view_history = 5
+        self.chat_tabs: List[tab] = []
 
-    def add(self, tab: tab):
+    def add(self, tab: "tab"):
         self.tabs.append(tab)
+        if isinstance(tab, chat_tab):
+            self.chat_tabs.append(tab)
+        if self.cur is None:
+            self.cur = tab
 
-    def remove(self, item: Union[int, tab]):
+    def remove(self, item: Union[int, "tab"]):
         if isinstance(item, int):
+            need_removed = self.tabs[item]
             del self.tabs[item]
+            if isinstance(tab, chat_tab):
+                self.chat_tabs.remove(need_removed)
         elif isinstance(item, tab):
             self.tabs.remove(item)
+            if isinstance(tab, chat_tab):
+                self.chat_tabs.remove(tab)
 
     def switch(self):
         if len(self.view_history) >= 2:
@@ -324,29 +172,52 @@ class tablist:
         if len(self.view_history) > self.max_view_history:
             self.view_history = self.view_history[-self.max_view_history:]
 
+    def draw_on(self, buf: buffer):
+        c = 0
+        tab_count = len(self.tabs)
+        for t in self.tabs:
+            c += 1
+            if t is self.cur:
+                buf.addtext(f" {t.title} ", bkcolor=CmdBkColor.Yellow, end='')
+            else:
+                buf.addtext(f" {t.title} ", bkcolor=CmdBkColor.Green, end='')
+            if c < tab_count:
+                buf.addtext("|", bkcolor=CmdBkColor.White)
+        buf.addtext("")
+
 
 class window:
     def __init__(self, client: "client", displayer: output.i_display):
         self.client = client
-        # self.history: List[str] = []
         self.max_display_line = 10
         self.displayer: output.i_display = displayer
-        self.fill_until_max: bool = False
         self.tablist = tablist(self)
         self.screen_buffer: Optional[buffer] = None
+        self.newtab(chat_tab)
+
+    def newtab(self, tabtype: type):
+        self.tablist.add(tabtype(self.client, self.tablist))
 
     def prepare(self):
         self.screen_buffer = self.displayer.gen_buffer()
 
-    def display(self):
+    def update_screen(self):
         clear_screen()
         self.prepare()
+        self.tablist.draw_on(self.screen_buffer)
         curtab = self.tablist.cur
         if curtab:
             curtab.draw_on(self.screen_buffer)
 
         self.displayer.render(self.screen_buffer)
 
+    def on_input(self, char):
+        curtab = self.tablist.cur
+        if curtab:
+            curtab.on_input(char)
+
+    def receive_room_text(self, user_id: userid, room_id: roomid, text: str, time: datetime):
+        add_text(f"{time.strftime('%Y%m%d-%H:%M:%S')}\n\t{user_id}:{text}")
         """
         if len(self.history) < self.max_display_line:
             displayed = self.history
@@ -371,112 +242,30 @@ class window:
     """
 
 
-@dataclass
-class render_content:
-    string: str
+class inputable_state(state):
+    textbox: textbox
+    client: "client"
 
-
-class kbinding:
     def __init__(self):
-        self.bindings = {}
-        self._on_any = None
-
-    def bind(self, ch: chars.char, func):
-        self.bindings[ch] = func
-
-    @property
-    def on_any(self):
-        return self._on_any
-
-    @on_any.setter
-    def on_any(self, func):
-        self._on_any = func
-
-    def trigger(self, ch: chars.char, *args, **kwargs) -> bool:
-        func = get(self.bindings, ch)
-        if func is not None:
-            func(ch, *args, **kwargs)
-            return True
-        if self.on_any is not None:
-            self.on_any(ch, *args, **kwargs)
-            return True
-        return False
-
-
-class state:
-    def on_en(self):
-        pass
-
-    def on_ex(self):
-        pass
-
-    def update(self):
-        pass
-
-    def on_input(self, char: chars.char):
-        pass
-
-
-class smachine:
-    def __init__(self, state_pre: Callable[[state], None] = None, stype_pre: Callable[[type], state] = None):
-        self.cur: Optional[state] = None
-        self.pre: Optional[state] = None
-        self.state_pre = state_pre
-        self.stype_pre = stype_pre
-
-    def enter(self, s: Union[state, type]):
-        if isinstance(s, state):
-            if self.state_pre is not None:
-                self.state_pre(s)
-        elif isinstance(s, type):
-            if self.stype_pre is not None:
-                s = self.stype_pre(s)
-            else:
-                s = s()
-        if self.pre is not None:
-            self.pre.on_ex()
-        self.pre = self.cur
-        self.cur = s
-        if self.cur is not None:
-            self.cur.on_en()
-
-    def back(self):
-        self.enter(self.pre)
-
-    def update(self):
-        if self.cur is not None:
-            self.cur.update()
-
-    def on_input(self, char: chars.char):
-        if self.cur is not None:
-            return self.cur.on_input(char)
-
-
-class client_state(state):
-    def __init__(self, client: "client"):
         super().__init__()
-        self.client: "client" = client
 
 
-class cmd_mode(client_state):
-    def __init__(self, client: "client"):
-        super().__init__(client)
+class cmd_mode(inputable_state):
+    def __init__(self):
+        super().__init__()
         self.islongcmd = False
         self.longcmd = ""
 
     def on_en(self):
         self.client.make_dirty()
-        self.client.textbox.clear()
+        self.textbox.clear()
 
     tip: str = utils.fillto("Command mode:", " ", 40)
 
-    def update(self):
-        c = self.client
-        dlock = c.display_lock
-        dlock(c.win.display)
-        dlock(c.display.display_text, text=cmd_mode.tip, fgcolor=output.CmdBkColor.Black,
-              bkcolor=output.CmdBkColor.Blue,
-              end='\n')
+    def draw_on(self, buf: buffer):
+        buf.addtext(text=cmd_mode.tip, fgcolor=CmdFgColor.Black,
+                    bkcolor=CmdBkColor.Blue,
+                    end='\n')
 
     def enter_long_cmd_mode(self):
         self.islongcmd = True
@@ -486,7 +275,7 @@ class cmd_mode(client_state):
 
     def on_input(self, char: chars.char):
         c = self.client
-        tb = c.textbox
+        tb = self.textbox
         if c.key_quit_text_mode == char:
             self.quit_long_cmd_mode()
             tb.clear()
@@ -504,7 +293,7 @@ class cmd_mode(client_state):
                 tb.append(char)
         else:
             if c.key_enter_text == char:
-                c.sm.enter(text_mode)
+                self.sm.enter(text_mode)
                 return True
             elif chars.c_colon == char:
                 self.enter_long_cmd_mode()
@@ -513,38 +302,35 @@ class cmd_mode(client_state):
                 c.running = False
 
 
-class text_mode(client_state):
+class text_mode(inputable_state):
 
-    def __init__(self, client: "client"):
-        super().__init__(client)
+    def __init__(self):
+        super().__init__()
         kbs = kbinding()
         self.kbs = kbs
 
         def send_text():
-            inputs = self.client.textbox.inputs
+            inputs = self.textbox.inputs
             self.client.send_text(roomid(12345), inputs, server_token("127.0.0.1", 5000))
-            self.client.textbox.clear()
+            self.textbox.clear()
 
         kbs.bind(keys.k_enter, lambda c: send_text())
-        kbs.on_any = lambda c: self.client.textbox.append(c)
+        kbs.on_any = lambda c: self.textbox.append(c)
 
     def on_en(self):
         self.client.make_dirty()
-        self.client.textbox.clear()
+        self.textbox.clear()
 
     tip: str = utils.fillto("Text mode:", " ", 40)
 
-    def update(self):
-        c = self.client
-        dlock = c.display_lock
-        dlock(c.win.display)
-        dlock(c.display.display_text, text=text_mode.tip, fgcolor=output.CmdBkColor.Black,
-              bkcolor=output.CmdBkColor.Blue,
-              end='\n')
+    def draw_on(self, buf: buffer):
+        buf.addtext(text=text_mode.tip, fgcolor=CmdFgColor.Black,
+                    bkcolor=CmdBkColor.Blue,
+                    end='\n')
 
     def on_input(self, char: chars.char):
         c = self.client
         if c.key_quit_text_mode == char:
-            c.sm.enter(cmd_mode)
+            self.sm.enter(cmd_mode)
         elif True:
             self.kbs.trigger(char)

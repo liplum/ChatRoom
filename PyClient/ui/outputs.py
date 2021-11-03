@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from enum import Enum, IntEnum, auto, unique
 from datetime import datetime
-from typing import Union, Optional, NoReturn, Tuple, List
+from enum import IntEnum, unique
+from typing import Union, Optional, NoReturn, List
 
 
 class i_logger:
@@ -138,4 +138,4 @@ class cmd_display(i_display):
             self.displayer.text(self.render_list, text, end, fgcolor, bkcolor)
 
     def gen_buffer(self) -> buffer:
-        return cmd_buffer(self)
+        return cmd_display.cmd_buffer(self)

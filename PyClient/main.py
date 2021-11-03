@@ -1,23 +1,15 @@
-from core.events import event
 from core.ioc import container
-from ui.clients import client, cmdkey
-from ui import outputs
-from socket import socket, AF_INET, SOCK_STREAM
-import sys
-import threading
-from threading import Lock, Thread
-import time
-import os
-from ui.clients import client
-from core.chats import msgstorage
 import platform
-from ui.inputs import i_nbinput, i_input
-from ui import inputs
-from chars import *
-from linuxchars import *
 import sys
-import utils
+
 import keys
+import utils
+from chars import *
+from core.chats import msgstorage
+from core.ioc import container
+from ui.clients import client
+from ui.inputs import i_input
+from ui.k import cmdkey
 
 DEBUG = False
 args = sys.argv
@@ -37,7 +29,7 @@ def main():
     st = msgstorage("record.rec")
     st.deserialize()
     _client.win.history = [unit[2] for unit in st]
-    _client.connect(("127.0.0.1", 5000))
+    # _client.connect(("127.0.0.1", 5000))
     _client.start()
 
 

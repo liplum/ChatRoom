@@ -1,13 +1,13 @@
-from typing import Optional, List
-from select import select
-import tty
-import termios
-from chars import char
-from utils import lock
-from ui.inputs import i_nbinput
-from threading import Thread, RLock
 import sys
+import termios
+import tty
+from select import select
+from threading import RLock
+from typing import List
+
 from linuxchars import *
+from ui.inputs import i_nbinput
+from utils import lock
 
 
 class nbinput(i_nbinput):

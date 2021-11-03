@@ -1,13 +1,13 @@
+import json
 from abc import ABC, abstractmethod
-
-from typing import Dict, Tuple, Callable
 from socket import socket, AF_INET, SOCK_STREAM
 from threading import Thread
-import json
-from ui import outputs
-from utils import get, not_none
+from typing import Dict, Tuple, Callable
+
 from core import converts
 from core.events import event
+from ui import outputs
+from utils import get, not_none
 
 
 class server_token:
@@ -97,7 +97,7 @@ class channel(i_channel):
     def receive_datapack(self, _json: Dict, msg_id: str, _from: server_token):
         info = get(self.id2msgt_and_handler, msg_id)
         if info is not None:
-            msgtype,handler = info
+            msgtype, handler = info
             msg = msgtype()
             msg.read(_json)
             if not self.on_msg_received(self, msg, handler):

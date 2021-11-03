@@ -1,5 +1,6 @@
-from typing import Dict, List
 from collections import defaultdict
+from typing import Dict, List
+
 import dictries as d
 
 

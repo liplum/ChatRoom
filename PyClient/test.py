@@ -1,19 +1,19 @@
-import xautofill
-from ui.controls import textbox
-from utils import *
-from core import converts
-
-from ui.clients import *
-from chars import *
-
-import time
 import calendar
-from datetime import datetime, timezone
 import platform
-import traceback
-import dictries
 import sys
+import time
+import traceback
+from datetime import datetime, timezone
+from functools import wraps
+
 import autofill
+import dictries
+import xautofill
+from chars import *
+from core import converts
+from ui.clients import *
+from ui.tbox import textbox
+from utils import *
 
 system_type = platform.system()
 
@@ -38,7 +38,8 @@ def win_test():
     # eof_test()
     # test_dictrie()
     # test_dictrie2()
-    test_autofill()
+    # test_autofill()
+    test_func_wrap()
 
 
 def linux_test():
@@ -55,6 +56,26 @@ if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
+
+
+def test_func_wrap():
+    class a:
+
+        def print_a(self, func):
+            @wraps(func)
+            def delegate(*args, **kwargs):
+                print("a start")
+                func(*args, **kwargs)
+                print("a end")
+
+            return delegate
+
+        @print_a
+        def print_b(self):
+            print("b")
+
+    o = a()
+    o.print_b()
 
 
 def test_autofill():

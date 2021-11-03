@@ -1,4 +1,5 @@
-from typing import Union, Optional, List
+from typing import List
+
 from chars import *
 from core.events import event
 from keys import k_enter, k_quit
@@ -69,11 +70,14 @@ class cmd_input(i_input):
             self._input_list.append(k_quit)
             self.on_input(self, k_quit)
             return
+        elif res == "#nl":
+            self._input_list.append(k_enter)
+            self.on_input(self, k_enter)
+            return
+
         for ch in res:
             ch = printable(ch)
             self._input_list.append(ch)
             canceled = self.on_input(self, ch)
             if canceled:
                 return
-        self._input_list.append(k_enter)
-        self.on_input(self, k_enter)

@@ -1,5 +1,6 @@
-from chars import char
 from typing import Union, Optional, Tuple
+
+from chars import char
 
 linux_esc = 27
 linux_csi = 91

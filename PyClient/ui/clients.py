@@ -1,22 +1,21 @@
-from typing import Set
-
-import core.ioc as ioc
-from core.events import event
-import ui.outputs as output
-from threading import RLock
-from net.networks import i_network, server_token
-from core.chats import *
-from net import networks
-import ui.inputs as _input
-from ui.controls import xtextbox, window, state, smachine, client_state, cmd_mode
-from utils import lock
-from typing import Optional, Tuple
-from io import StringIO
-from datetime import datetime
-import chars
 import sys
 import traceback
+from datetime import datetime
+from io import StringIO
+from threading import RLock
+from typing import Optional, Tuple
+
+import core.ioc as ioc
+import ui.inputs as _input
+import ui.outputs as output
+from core.chats import *
+from core.events import event
 from net import msgs
+from net import networks
+from net.networks import i_network, server_token
+from ui.controls import window
+from ui.k import cmdkey
+from utils import lock
 
 
 class command:
@@ -39,65 +38,6 @@ def get_command_id_tip(cmd: command) -> str:
 class cmd_analyzer:
     def analyze(self, cmdline: str):
         pass
-
-
-class cmdkey:
-    def __init__(self):
-        self.mappings: Set[chars.char] = set()
-        self._on_map = event()
-        self._on_demap = event()
-
-    @property
-    def on_map(self):
-        """
-        Para 1:cmdkey object
-
-
-        Para 2:mapped char
-
-
-        :return: event(textbox,int,str)
-        """
-        return self._on_map
-
-    @property
-    def on_demap(self):
-        """
-        Para 1:cmdkey object
-
-
-        Para 2:demapped char
-
-
-        :return: event(textbox,int,str)
-        """
-        return self._on_demap
-
-    def map(self, char: chars.char) -> "cmdkey":
-        self.mappings.add(char)
-        self.on_map(self, char)
-        return self
-
-    def demap(self, char: chars.char, rematch: bool) -> "cmdkey":
-        if rematch:
-            for ch in self.mappings:
-                if ch == char:
-                    self.mappings.remove(ch)
-                    self.on_demap(self, ch)
-                    break
-        else:
-            try:
-                self.mappings.remove(char)
-                self.on_demap(self, char)
-            except KeyError:
-                pass
-        return self
-
-    def __eq__(self, other) -> bool:
-        for ch in self.mappings:
-            if ch == other:
-                return True
-        return False
 
 
 class cmd_list:
@@ -191,37 +131,16 @@ class client:
 
         # self.network.on_msg_pre_analyzed.add(on_msg_pre_analyzed)
 
-        self.win = window(self.display)
+        self.win = window(self, self.display)
         self.win.fill_until_max = True
         self.gen_cmds()
 
-        def set_client(state: state) -> None:
-            state.client = self
-
-        def gen_state(statetype: type) -> state:
-            if issubclass(statetype, client_state):
-                return statetype(self)
-            else:
-                return statetype()
-
-        self.sm = smachine(state_pre=set_client, stype_pre=gen_state)
-
-        self.textbox: xtextbox = xtextbox()
-
-        self.textbox.on_append.add(lambda b, p, c: self.make_dirty())
-        self.textbox.on_delete.add(lambda b, p, c: self.make_dirty())
-        self.textbox.on_cursor_move.add(lambda b, f, c: self.make_dirty())
-        self.textbox.on_list_replace.add(lambda b, f, c: self.make_dirty())
-
-        self.channel_user = self.network.new_channel("User")
-        self.channel_chatting = self.network.new_channel("Chatting")
-
-        self.channel_chatting.register(msgs.chatting)
+        self._init_channels()
 
         def on_input(inpt, char):
             ch = inpt.consume_char()
             if ch is char:
-                return self.sm.on_input(ch)
+                return self.win.on_input(ch)
             else:
                 self.logger.error(f"Input event provides a wrong char '{ch} -> {char}'.")
 
@@ -229,6 +148,12 @@ class client:
 
         for k in self.cmdkeys:
             self.on_keymapping(self, k)
+
+    def _init_channels(self):
+        self.channel_user = self.network.new_channel("User")
+        self.channel_chatting = self.network.new_channel("Chatting")
+
+        self.channel_chatting.register(msgs.chatting)
 
     @property
     def need_update(self):
@@ -266,8 +191,7 @@ class client:
         self.network.connect(server_token(server=ip_and_port))
 
     def receive_text(self, user_id: userid, room_id: roomid, text: str, time: datetime):
-        self.make_dirty()
-        self.win.add_text(f"{time.strftime('%Y%m%d-%H:%M:%S')}\n\t{user_id}:{text}")
+        self.win.receive_room_text(user_id, room_id, text, time)
 
     def send_text(self, room_id: roomid, text: str, server: server_token):
         msg = msgs.chatting()
@@ -281,8 +205,6 @@ class client:
         self.running = True
         i = self.inpt
         i.initialize()
-        _sm = self.sm
-        _sm.enter(cmd_mode)
         while self.running:
             try:
                 self.inpt.get_input()
@@ -291,38 +213,17 @@ class client:
                     continue
                 # The following is to need update
                 self._clear_dirty()
-                _sm.update()
                 self.render()
             except Exception as e:
                 traceback.print_exc()
                 self.running = False
-                """
-                dlock(self.display.display_text, self.command_list_tip)
-                dlock(self.display.display_text, "Enter a command:")
-                inputs = i.input_list
-                cmd_str = utils.compose(inputs)
-                dlock(self.display.display_text, cmd_str) 
-                cmd: command = get(self.cmds.cmds, cmd_str)
-                if cmd is not None:
-                    cmd.handler()
-                else:
-                    self.logger.error(f"Cannot identify command {cmd_str}")
-                self.display_lock(self.display.render())
-                """
         sys.exit(0)
 
     def render(self):
-        tb = self.textbox.distext
-        self.display_lock(self.display.display_text, tb)
-        self.display_lock(self.display.render)
+        self.display_lock(self.win.update_screen)
 
     def display_lock(self, func, *args, **kwargs):
         lock(self._display_lock, func, *args, **kwargs)
 
     def add_text(self, text: str):
         self.win.add_text(text)
-
-    def __init_channels(self):
-        pass
-
-

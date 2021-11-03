@@ -1,6 +1,3 @@
-from typing import List
-
-
 class event:
     def __init__(self, cancelable=False):
         self.subscribers = []

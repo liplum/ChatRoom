@@ -1,9 +1,9 @@
+import os
 from datetime import datetime
 from typing import Tuple, List, Union, Any
 
 import utils
 from utils import compose, separate
-import os
 
 
 class userid:
