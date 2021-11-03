@@ -89,18 +89,22 @@ class cmd_logger(i_logger):
         tinted_print(t, color)
         if self.logfile is not None:
             with open(self.logfile, "a") as log:
-                log.write(t+'\n')
+                log.write(t + '\n')
 
 
-class i_display:
-    def display_text(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
-                     bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
+class buffer:
+    def addtext(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
+                bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
         pass
 
-    def display_image(self, file_path: str):
+
+class i_display(ABC):
+    @abstractmethod
+    def render(self, buf: buffer) -> bool:
         pass
 
-    def render(self):
+    @abstractmethod
+    def gen_buffer(self) -> buffer:
         pass
 
 
@@ -110,16 +114,28 @@ class cmd_display(i_display):
     """
 
     def __init__(self):
-        self.render_list: List[str] = []
+        pass
 
-    def display_text(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
-                     bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
-        self.render_list.append(gen_tinted_text(text, fgcolor, bkcolor, end))
+    def text(self, buffer_list, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
+             bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
+        buffer_list.append(gen_tinted_text(text, fgcolor, bkcolor, end))
 
-    def clear_render_list(self):
-        self.render_list = []
+    def render(self, buf: buffer) -> bool:
+        if isinstance(buf, cmd_display.cmd_buffer):
+            for text in buf.render_list:
+                print(text, end='')
+            return True
+        return False
 
-    def render(self):
-        for text in self.render_list:
-            print(text, end='')
-        self.clear_render_list()
+    class cmd_buffer(buffer):
+        def __init__(self, displayer: "cmd_display"):
+            super().__init__()
+            self.displayer: "cmd_display" = displayer
+            self.render_list: List[str] = []
+
+        def addtext(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
+                    bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
+            self.displayer.text(self.render_list, text, end, fgcolor, bkcolor)
+
+    def gen_buffer(self) -> buffer:
+        return cmd_buffer(self)

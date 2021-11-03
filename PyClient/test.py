@@ -1,3 +1,4 @@
+import xautofill
 from ui.controls import textbox
 from utils import *
 from core import converts
@@ -57,9 +58,8 @@ elif system_type == "Linux":
 
 
 def test_autofill():
-    p = autofill.autoprompt()
-    p.target_delay = 500
-    p._plan_rate = 5
+    p = autofill.prompt()
+    # p = xautofill.autoprompt()
     p.add("apple").add("animation").add("animadvert").add("abuse").add("authority").add("abort")
     p.add("append").add("ant").add("aunt").add("but").add("boy").add("butter").add("ok")
     p.add("onion").add("log").add("father").add("tea").add("tree").add("dictionary")
@@ -75,6 +75,8 @@ def test_autofill():
 
     while True:
         print("---------------------")
+        if isinstance(p, xautofill.autoprompt):
+            print(f'max : {p.max_candidate}')
         prefix = input("Enter prefix:")
         if prefix == "#":
             break

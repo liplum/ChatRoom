@@ -163,9 +163,7 @@ def get_subnodes_str(nd) -> List[str]:
 
 
 def get_partial_start_with(nd, prefix: str, max_count: int) -> List[str]:
-    if max_count < 0:
-        raise ValueError("max count cannot be negative")
-    if max_count == 0:
+    if max_count <= 0:
         return []
 
     cur = nd
@@ -275,7 +273,7 @@ class dictrie:
         return node_count > 0
 
     def get_all_start_with(self, prefix: str, max_count: Optional[int] = None) -> List[str]:
-        if max_count is None or max_count < 0:
+        if max_count is None:
             return get_all_start_with(self.root, prefix)
         else:
             return get_partial_start_with(self.root, prefix, max_count)

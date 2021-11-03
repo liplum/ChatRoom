@@ -11,11 +11,12 @@ from net.networks import server_token
 from ui import outputs as output
 from utils import clear_screen, get
 from io import StringIO
+from ui.outputs import buffer
 
 
 class textbox:
     def __init__(self, cursor_icon: str = "^"):
-        self._input_list = []
+        self._input_list: List[str] = []
         self.cursor_icon = cursor_icon
         self._cursor: int = 0
         self._cursor: int = 0
@@ -166,13 +167,32 @@ class textbox:
             return dis.string
 
     def append(self, char):
-        self._input_list.insert(self._cursor, char)
+        self._input_list.insert(self.cursor, char)
         self.on_append(self, self.cursor, char)
         self.cursor += 1
 
+    def addtext(self, text: str):
+        """
+        Not raise on_append event
+        :param text:
+        :return:
+        """
+        self._input_list.insert(self.cursor, text)
+        self.cursor += len(text)
+
+    def rmtext(self, count: int):
+        if count <= 0:
+            return
+        cursor_pos = self.cursor
+        while count > 0:
+            self._input_list.pop(cursor_pos)
+            cursor_pos -= 1
+            count -= 1
+        self.cursor = cursor_pos
+
     def delete(self, left=True):
-        if self._cursor > 0:
-            n = self._cursor - 1 if left else self._cursor
+        if self.cursor > 0:
+            n = self.cursor - 1 if left else self.cursor
             if n < len(self._input_list):
                 ch = self._input_list.pop(n)
                 self.on_delete(self, self.cursor, ch)
@@ -203,20 +223,45 @@ class xtextbox(textbox):
 
 
 class tab:
-    def __init__(self):
+
+    def __init__(self, client: "client", tablist: "tablist"):
+        super().__init__(client, tablist)
+        self.textbox = textbox()
+
+    def on_input(self, char):
         pass
 
-    @property
-    def distext(self) -> str:
-        return ""
+    def draw_on(self, buf: buffer):
+        pass
+
+    def deserialize_config(self, config):
+        pass
+
+    def serialize_config(self, config):
+        pass
 
 
 class chat_tab(tab):
 
-    def __init__(self, max_lines: int = 10):
-        super().__init__()
+    def __init__(self, client: "client", tablist: "tablist"):
+        super().__init__(client, tablist)
         self.history: List[str] = []
-        self.max_display_line = max_lines
+        self.max_display_line = 10
+
+        def set_client(state: state) -> None:
+            state.client = self.client
+
+        def gen_state(statetype: type) -> state:
+            if issubclass(statetype, client_state):
+                return statetype(self.client)
+            else:
+                return statetype()
+
+        self.sm = smachine(state_pre=set_client, stype_pre=gen_state)
+        self.sm.enter(text_mode)
+
+    def draw_on(self, buf: buffer):
+        buf.addtext(self.distext)
 
     @property
     def distext(self) -> str:
@@ -235,6 +280,9 @@ class chat_tab(tab):
                 return s.getvalue()
         else:
             return utils.compose(displayed, connector="\n")
+
+    def on_input(self, char):
+        self.sm.on_input(char)
 
 
 class setting_tab(tab):
@@ -278,18 +326,28 @@ class tablist:
 
 
 class window:
-    def __init__(self, displayer: output.i_display):
-        self.history: List[str] = []
+    def __init__(self, client: "client", displayer: output.i_display):
+        self.client = client
+        # self.history: List[str] = []
         self.max_display_line = 10
         self.displayer: output.i_display = displayer
         self.fill_until_max: bool = False
-        self.tabli = tablist(self)
+        self.tablist = tablist(self)
+        self.screen_buffer: Optional[buffer] = None
 
-    def newtab(self):
-        pass
+    def prepare(self):
+        self.screen_buffer = self.displayer.gen_buffer()
 
     def display(self):
         clear_screen()
+        self.prepare()
+        curtab = self.tablist.cur
+        if curtab:
+            curtab.draw_on(self.screen_buffer)
+
+        self.displayer.render(self.screen_buffer)
+
+        """
         if len(self.history) < self.max_display_line:
             displayed = self.history
             have_rest = True
@@ -302,12 +360,15 @@ class window:
             displayed_len = len(displayed)
             for i in range(self.max_display_line - displayed_len):
                 self.displayer.display_text(end="\n")
+        """
 
+    """ 
     def add_text(self, text: str):
         self.history.append(text)
 
     def clear_all(self):
         self.history = []
+    """
 
 
 @dataclass
