@@ -1,10 +1,18 @@
+from typing import Iterable
+
+
 class event:
     def __init__(self, cancelable=False):
         self.subscribers = []
         self.cancelable = cancelable
 
-    def __call__(self, *args, **kwargs):
-        self.invoke(*args, **kwargs)
+    def __call__(self, sender, *args, **kwargs):
+        """
+        Raise the event
+        :param sender: first para must be the sender
+        :return: whether the event was canceled
+        """
+        return self.invoke(sender, *args, **kwargs)
 
     def add(self, *args) -> "event":
         for subscriber in args:
@@ -19,13 +27,24 @@ class event:
         self.subscribers.clear()
         return self
 
-    def invoke(self, *args, **kwargs):
+    def invoke(self, sender, *args, **kwargs):
+        """
+        Raise the event
+        :param sender: first para must be the sender
+        :return: whether the event was canceled
+        """
         if self.cancelable:
             for subscriber in self.subscribers:
-                canceled = subscriber(*args, **kwargs)
+                canceled = subscriber(sender, *args, **kwargs)
                 if canceled:
                     return True
         else:
             for subscriber in self.subscribers:
-                subscriber(*args, **kwargs)
+                subscriber(sender, *args, **kwargs)
             return False
+
+    def __iadd__(self, other):
+        if isinstance(other, Iterable):
+            self.add(*other)
+        else:
+            self.add(other)

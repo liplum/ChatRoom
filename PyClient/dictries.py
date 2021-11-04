@@ -161,7 +161,7 @@ def get_subnodes_str(nd) -> List[str]:
     return res
 
 
-def get_partial_start_with(nd, prefix: str, max_count: int) -> List[str]:
+def get_partial_start_with(nd, prefix: str, max_count: int, add_prefix: bool = True) -> List[str]:
     if max_count <= 0:
         return []
 
@@ -193,7 +193,8 @@ def get_partial_start_with(nd, prefix: str, max_count: int) -> List[str]:
     res = []
     for match in all_matches:
         with StringIO() as s:
-            s.write(prefix)
+            if add_prefix:
+                s.write(prefix)
             for ch in match:
                 s.write(ch)
             res.append(s.getvalue())
@@ -201,7 +202,7 @@ def get_partial_start_with(nd, prefix: str, max_count: int) -> List[str]:
     return res
 
 
-def get_all_start_with(nd, prefix: str) -> List[str]:
+def get_all_start_with(nd, prefix: str, add_prefix: bool = True) -> List[str]:
     if prefix is None:
         raise ValueError("prefix cannot be none.")
     if prefix == "":
@@ -232,7 +233,8 @@ def get_all_start_with(nd, prefix: str) -> List[str]:
     res = []
     for match in all_matches:
         with StringIO() as s:
-            s.write(prefix)
+            if add_prefix:
+                s.write(prefix)
             for ch in match:
                 s.write(ch)
             res.append(s.getvalue())
@@ -271,11 +273,11 @@ class dictrie:
         self._word_count -= word_count
         return node_count > 0
 
-    def get_all_start_with(self, prefix: str, max_count: Optional[int] = None) -> List[str]:
+    def get_all_start_with(self, prefix: str, add_prefix: bool = True, max_count: Optional[int] = None) -> List[str]:
         if max_count is None:
-            return get_all_start_with(self.root, prefix)
+            return get_all_start_with(self.root, prefix, add_prefix)
         else:
-            return get_partial_start_with(self.root, prefix, max_count)
+            return get_partial_start_with(self.root, prefix, max_count, add_prefix)
 
     def __repr__(self) -> str:
         return repr(self.root)

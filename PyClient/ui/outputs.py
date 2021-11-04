@@ -118,7 +118,11 @@ class cmd_display(i_display):
 
     def text(self, buffer_list, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
              bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
-        buffer_list.append(gen_tinted_text(text, fgcolor, bkcolor, end))
+        if fgcolor is None and bkcolor is None:
+            added_text = f"{text}{end}"
+        else:
+            added_text = gen_tinted_text(text, fgcolor, bkcolor, end)
+        buffer_list.append(added_text)
 
     def render(self, buf: buffer) -> bool:
         if isinstance(buf, cmd_display.cmd_buffer):

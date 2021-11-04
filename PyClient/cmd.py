@@ -1,19 +1,19 @@
-from typing import Dict, List
+from typing import Dict, List, Callable
 
 from autofill import prompt
 
 
 class command:
-    def __init__(self, name: str, tip: str, handler):
+    def __init__(self, name: str, handler: Callable = None):
         self.name = name
-        self.tip = tip
         self.handler = handler
 
     def match(self, text) -> bool:
         return text == self.name
 
-    def execute(self, args: List[str]):
-        self.handler(args)
+    def execute(self, context, args: [str]):
+        if self.handler:
+            self.handler(context, args)
 
 
 class cmdmanager:
@@ -30,10 +30,11 @@ class cmdmanager:
     def prompts(self, inputs: str) -> List[str]:
         return self.autofill.autofill(inputs)
 
-    def execute(self, cmd_name: str, args: List[str]):
+    def execute(self, context, cmd_name: str, args: [str]):
         """
 
         :param cmd_name:
+        :param context: some background info
         :param args:
         :exception CmdError:the base exception
         :exception WrongUsageError: raise when the para user inputted is wrong
@@ -43,7 +44,7 @@ class cmdmanager:
         if cmd_name in self.map:
             cmd = self.map[cmd_name]
             if cmd.match(cmd_name):
-                cmd.execute(args)
+                cmd.execute(context, args)
             else:
                 raise CmdNotFound(cmd_name)
         else:
@@ -56,18 +57,22 @@ class cmdmanager:
 
 class CmdError(BaseException):
 
-    def __init__(self, msg: str) -> None:
+    def __init__(self, msg_key: str, args=None):
         super().__init__()
-        self.msg = msg
+        if args is None:
+            args = []
+        self.msg_key = msg_key
+        self.args = args
 
 
 class WrongUsageError(CmdError):
 
-    def __init__(self, msg: str, pos: int) -> None:
-        super().__init__(msg)
+    def __init__(self, msg_key: str, pos: int, args=None):
+        super().__init__(msg_key, args)
         self.position = pos
 
 
-class CmdNotFound(CmdError):
-    def __init__(self, cmd_name: str) -> None:
-        super().__init__(f'Not found "{cmd_name}" command.')
+class CmdNotFound(Exception):
+    def __init__(self, cmd_name: str):
+        super().__init__()
+        self.cmd_name = cmd_name

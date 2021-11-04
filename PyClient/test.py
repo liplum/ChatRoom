@@ -1,10 +1,4 @@
-import calendar
-import platform
-import sys
-import time
-import traceback
-from datetime import datetime, timezone
-from functools import wraps
+from datetime import timezone
 
 import autofill
 import dictries
@@ -38,8 +32,9 @@ def win_test():
     # eof_test()
     # test_dictrie()
     # test_dictrie2()
-    # test_autofill()
-    test_func_wrap()
+    test_autofill()
+    # test_func_wrap()
+    # test_args()
 
 
 def linux_test():
@@ -56,6 +51,18 @@ if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
+
+
+def test_args():
+    def p(a, b):
+        print(f"{a},{b}")
+
+    delegate = p
+
+    def run(args: []):
+        delegate(*args)
+
+    run([1, 2])
 
 
 def test_func_wrap():
@@ -351,8 +358,9 @@ def test_input():
 
 
 def test_textbox():
+    from ui.outputs import cmd_display
+    displayer = cmd_display()
     tb = textbox()
-    tb.on_cursor_move.add(cursor_changed)
     tb.input_list = "apple"
     print("\nmove left\n")
     for i in range(10):
@@ -385,6 +393,24 @@ def test_textbox():
         tb.delete()
         print(tb.distext)
 
+    tb.input_list = "This is a very very long text to show how width limit works."
+    tb.width = 5
+    tb.on_focused()
+
+    def switch():
+        if tb.focused:
+            tb.on_lost_focus()
+        else:
+            tb.on_focused()
+
+    for i in range(10):
+        buf = displayer.gen_buffer()
+        tb.right()
+        tb.draw_on(buf)
+        buf.addtext()
+        displayer.render(buf)
+        switch()
+
 
 def cmd_input():
     tb = textbox()
@@ -392,7 +418,7 @@ def cmd_input():
     while True:
         utils.clear_screen()
         print(tb.distext)
-        print(tb._cursor)
+        print(tb.cursor)
         if msvcrt.kbhit():
             ch = msvcrt.getwch()
             ch_number = ord(ch)

@@ -6,6 +6,7 @@ from typing import Union, List, Optional
 import chars
 import keys
 import utils
+from cmd import cmdmanager
 from core.chats import roomid, userid
 from net.networks import server_token
 from ui import outputs as output
@@ -76,6 +77,7 @@ class chat_tab(tab):
         def set_client(state: state) -> None:
             state.client = self.client
             state.textbox = self.textbox
+            state.tablist = self.tablist
 
         def gen_state(statetype: type) -> state:
             if issubclass(statetype, inputable_state):
@@ -140,6 +142,9 @@ class tablist:
         self.max_view_history = 5
         self.chat_tabs: List[tab] = []
 
+    def __len__(self) -> int:
+        return len(self.tabs)
+
     def add(self, tab: "tab"):
         self.tabs.append(tab)
         if isinstance(tab, chat_tab):
@@ -175,15 +180,28 @@ class tablist:
     def draw_on(self, buf: buffer):
         c = 0
         tab_count = len(self.tabs)
-        for t in self.tabs:
-            c += 1
-            if t is self.cur:
-                buf.addtext(f" {t.title} ", bkcolor=CmdBkColor.Yellow, end='')
-            else:
-                buf.addtext(f" {t.title} ", bkcolor=CmdBkColor.Green, end='')
-            if c < tab_count:
-                buf.addtext("|", bkcolor=CmdBkColor.White)
-        buf.addtext("")
+        cur = self.cur
+        with StringIO() as separator:
+            for i, t in enumerate(self.tabs):
+                c += 1
+                bk = CmdBkColor.Yellow if t is cur else CmdBkColor.Green
+                fg = CmdFgColor.Black if t is cur else CmdFgColor.Violet
+                title = t.title
+                displayed_title = f" {title} "
+                buf.addtext(displayed_title, fgcolor=fg, bkcolor=bk, end='')
+                repeated = " " if t is cur else "─"
+                second_line = repeated * len(displayed_title)
+                separator.write(second_line)
+                if c < tab_count:
+                    buf.addtext("│", end='')
+                    if t is cur:
+                        separator.write("└")
+                    elif i+1 < tab_count and self.tabs[i+1] is cur:
+                        separator.write("┘")
+                    else:
+                        separator.write("┴")
+            buf.addtext()
+            buf.addtext(separator.getvalue())
 
 
 class window:
@@ -242,9 +260,14 @@ class window:
     """
 
 
+class context:
+    pass
+
+
 class inputable_state(state):
     textbox: textbox
     client: "client"
+    tablist: tablist
 
     def __init__(self):
         super().__init__()
@@ -253,12 +276,17 @@ class inputable_state(state):
 class cmd_mode(inputable_state):
     def __init__(self):
         super().__init__()
-        self.islongcmd = False
+        self.long_mode = False
         self.longcmd = ""
+        self.autofilling = False
+        self.autofilling_it = None
+        self.autofilling_cur = None
+        self.autofilling_all = None
 
     def on_en(self):
         self.client.make_dirty()
         self.textbox.clear()
+        self.cmd_manager: cmdmanager = self.client.cmd_manger
 
     tip: str = utils.fillto("Command mode:", " ", 40)
 
@@ -267,39 +295,76 @@ class cmd_mode(inputable_state):
                     bkcolor=CmdBkColor.Blue,
                     end='\n')
 
-    def enter_long_cmd_mode(self):
-        self.islongcmd = True
+    def enter_long_mode(self):
+        self.long_mode = True
 
-    def quit_long_cmd_mode(self):
-        self.islongcmd = False
+    def quit_long_mode(self):
+        self.long_mode = False
+        self.textbox.clear()
 
     def on_input(self, char: chars.char):
         c = self.client
         tb = self.textbox
         if c.key_quit_text_mode == char:
-            self.quit_long_cmd_mode()
-            tb.clear()
+            self.quit_long_mode()
 
         if tb.input_count <= 0:
-            self.quit_long_cmd_mode()
-        if self.islongcmd:
+            self.quit_long_mode()
+        if self.long_mode:
             if keys.k_enter == char:
                 input_list = tb.input_list
-                args = utils.compose(input_list, connector='')
+                full_args = utils.compose(input_list, connector='')
+                args = utils.split_strip(full_args, by=' ')
+                cmd_name = args[0][1:]
+                contxt = context()
+                contxt.client = self.client
+                contxt.tablist = self.tablist
+                self.cmd_manager.execute(contxt, cmd_name, args[1:])
                 tb.clear()
                 # TODO:Complete This
-                self.quit_long_cmd_mode()
+                self.quit_long_mode()
+            elif chars.c_table == char:
+                if self.autofilling:
+                    try:
+                        cur_len = len(self.autofilling_cur)
+                        tb.rmtext(cur_len)
+
+                    except StopIteration:
+                        self.autofilling_it = iter(self.autofilling_all)
+                else:
+                    self.autofilling = True
+                    cmd_manager: cmdmanager = c.cmd_manager
+                    inputs = tb.inputs[1:]
+                    self.autofilling_all = cmd_manager.prompts(inputs)
+                    if len(all_prompts) == 0:
+                        self.autofilling = False
+                    else:
+                        self.autofilling_it = iter(autofilling_all)
+                        self.autofilling_cur = next(self.autofilling_it)
+                        tb.addtext(self.autofilling_cur)
             else:
                 tb.append(char)
-        else:
+                if self.autofilling:
+                    self.autofilling_all = cmd_manager.prompts(inputs)
+                    if len(all_prompts) == 0:
+                        self.autofilling = False
+                    else:
+                        self.autofilling_it = iter(autofilling_all)
+                        self.autofilling_cur = next(self.autofilling_it)
+                        tb.addtext(self.autofilling_cur)
+                else:
+                    pass
+        else:  # single mode
             if c.key_enter_text == char:
                 self.sm.enter(text_mode)
                 return True
             elif chars.c_colon == char:
-                self.enter_long_cmd_mode()
+                self.enter_long_mode()
                 tb.append(chars.c_colon)
             elif chars.c_q == char:
                 c.running = False
+            elif chars.c_n == char:
+                self.tablist.add(chat_tab(self.client, self.tablist))
 
 
 class text_mode(inputable_state):

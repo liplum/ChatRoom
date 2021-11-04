@@ -41,7 +41,7 @@ class autoprompt(prompt):
     def autofill(self, attempt: str) -> List[str]:
         self.lock.acquire()
         pre = _now_microsecs()
-        filler = self.tree.get_all_start_with(attempt, self.max_candidate)
+        filler = self.tree.get_all_start_with(attempt, False, self.max_candidate)
         post = _now_microsecs()
         self.lock.release()
         duration = post - pre

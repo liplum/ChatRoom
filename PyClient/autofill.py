@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import dictries as d
 
@@ -7,7 +7,7 @@ import dictries as d
 class prompt:
     def __init__(self):
         self.tree = d.dictrie()
-        self.last_filler = []
+        self.last_filler: List[Tuple[str, str]] = []
         self.hotwords: Dict[str, int] = defaultdict(int)
         self._max_candidate = -1
         self._has_max = False
@@ -45,9 +45,13 @@ class prompt:
         self._min_candidate = value
         self._max_candidate = max(value, self._min_candidate)
 
-    def autofill(self, attempt: str) -> List[str]:
-        filler = self.tree.get_all_start_with(attempt, max_count=self.max_candidate if self.has_max else None)
-        filler.sort(key=lambda word: self.hotwords[word], reverse=True)
+    def autofill(self, attempt: str) -> List[Tuple[str, str]]:
+        all_word_rests = self.tree.get_all_start_with(
+            attempt, add_prefix=False, max_count=self.max_candidate if self.has_max else None)
+        filler: List[Tuple[str, str]] = []
+        for word_rest in all_word_rests:
+            filler.append((f"{attempt}{word_rest}", word_rest))
+        filler.sort(key=lambda info: self.hotwords[info[0]], reverse=True)
         self.last_filler = filler
         return filler
 

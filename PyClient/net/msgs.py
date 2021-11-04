@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from core.chats import *
 from net.networks import msg
 from utils import get, not_none, to_seconds

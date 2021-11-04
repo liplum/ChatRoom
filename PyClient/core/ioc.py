@@ -1,4 +1,10 @@
 from enum import Enum, unique, auto
+from inspect import signature
+
+
+class injectable:
+    def init(self, container: "container"):
+        pass
 
 
 class container:
@@ -21,8 +27,13 @@ class container:
         return res
 
     def __inject(self, obj):
-        if hasattr(obj, "init"):
+        if isinstance(obj, injectable):
             obj.init(self)
+        elif hasattr(obj, "init"):
+            sig = signature(obj.init)
+            paras = sig.parameters
+            if len(paras) == 1:  # it means the object has two paras,one for self and one for container
+                obj.init(self)
 
     def __get_or_gen_item(self, baseType):
         if baseType not in self.all:

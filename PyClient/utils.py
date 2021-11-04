@@ -283,6 +283,14 @@ def fillto(text: str, repeated: str, max_char_num: int) -> str:
         return s.getvalue()
 
 
+def split_strip(s: str, by: str) -> List[str]:
+    parts = s.split(by)
+    res = []
+    for p in parts:
+        res.append(p.strip())
+    return res
+
+
 def local_to_utc(dt: datetime):
     secs = time.mktime(dt.timetuple())
     return time.gmtime(secs)

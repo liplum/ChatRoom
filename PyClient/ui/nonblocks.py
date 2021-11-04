@@ -3,6 +3,7 @@ from threading import Thread, RLock
 from typing import Optional, List, NoReturn
 
 import chars
+from ui.clients import client
 from ui.inputs import i_nbinput
 from ui.outputs import i_display, CmdFgColor, CmdBkColor
 from utils import lock
@@ -31,6 +32,9 @@ class nbinput(i_nbinput):
             self.input_thread.start()
             self._lock = RLock()
 
+    def init(self, container):
+        self.client = container.resolve(client)
+
     def _listen_input(self):
         while True:
             if msvcrt.kbhit():
@@ -38,13 +42,16 @@ class nbinput(i_nbinput):
                 ch_number = ord(ch)
                 if ch_number == chars.control_keycode_1:
                     ch_full = chars.control(ord(msvcrt.getwch()))
-                    self._input_new(ch_full)
+                    self.input_new(ch_full)
                 elif ch_number == chars.f_keycode_1:
                     ch_full = chars.f(ord(msvcrt.getwch()))
-                    self._input_new(ch_full)
+                    self.input_new(ch_full)
                 else:
                     ch_full = chars.char(ch_number)
-                    self._input_new(ch_full)
+                    self.input_new(ch_full)
+
+    def input_new(self, char: chars.char):
+        self.client.dlock(self._input_new)(char)
 
     def _input_new(self, char: chars.char):
         lock(self._lock, lambda: self._input_list.append(char))

@@ -1,13 +1,14 @@
 import sys
 import traceback
-from datetime import datetime
+from functools import wraps
 from io import StringIO
 from threading import RLock
-from typing import Optional, Tuple
+from typing import Optional
 
 import core.ioc as ioc
 import ui.inputs as _input
 import ui.outputs as output
+from cmd import cmdmanager
 from core.chats import *
 from core.events import event
 from net import msgs
@@ -52,7 +53,7 @@ class client:
     def __init__(self):
         self.container: ioc.container = ioc.container()
         self._on_service_register = event()
-        self._on_command_register = event()
+        self._on_cmd_register = event()
         self._on_keymapping = event()
         self.cmds: cmd_list = cmd_list()
         self.running: bool = False
@@ -73,20 +74,20 @@ class client:
         Para 1:client object
 
 
-        Para 1:container
+        Para 2:container
 
         :return: event(client,container)
         """
         return self._on_service_register
 
     @property
-    def on_command_register(self) -> event:
+    def on_cmd_register(self) -> event:
         """
-        Para 1:
+        Para 1:the manager of cmd
 
-        :return: event()
+        :return: event(client,cmdmanager)
         """
-        return self._on_command_register
+        return self._on_cmd_register
 
     @property
     def on_keymapping(self) -> event:
@@ -111,9 +112,11 @@ class client:
 
     def init(self) -> None:
         ct = self.container
+        ct.register_instance(client, self)
         ct.register_singleton(output.i_logger, output.cmd_logger)
         ct.register_singleton(output.i_display, output.cmd_display)
         ct.register_instance(i_network, networks.network(self))
+        ct.register_singleton(cmdmanager, cmdmanager)
 
         # services register event
         self.on_service_register(self, ct)
@@ -123,7 +126,7 @@ class client:
         self.logger: output.i_logger = ct.resolve(output.i_logger)
         self.log_file = "cmd.log"
         self.display: output.i_display = ct.resolve(output.i_display)
-
+        self.cmd_manger: cmdmanager = ct.resolve(cmdmanager)
         self.logger.msg("Service component initialized.")
 
         def on_msg_pre_analyzed(network, server_token, source, json):
@@ -132,10 +135,8 @@ class client:
         # self.network.on_msg_pre_analyzed.add(on_msg_pre_analyzed)
 
         self.win = window(self, self.display)
-        self.win.fill_until_max = True
-        self.gen_cmds()
-
         self._init_channels()
+        self.on_cmd_register(self, self.cmd_manger)
 
         def on_input(inpt, char):
             ch = inpt.consume_char()
@@ -175,7 +176,7 @@ class client:
         self.cmds.add(command("#1", "send text", send_text))
         self.cmds.add(command("#0", "refresh", refresh))
 
-        self.on_command_register(self.cmds)
+        self.on_cmd_register(self.cmds)
         all_tips = StringIO()
         all_tips.write("Command\n")
         cmds = self.cmds.cmds
@@ -220,10 +221,14 @@ class client:
         sys.exit(0)
 
     def render(self):
-        self.display_lock(self.win.update_screen)
+        self.dlock(self.win.update_screen)()
 
-    def display_lock(self, func, *args, **kwargs):
-        lock(self._display_lock, func, *args, **kwargs)
+    def dlock(self, func):
+        @wraps(func)
+        def inner(*args, **kwargs):
+            return lock(self._display_lock, func, *args, **kwargs)
+
+        return inner
 
     def add_text(self, text: str):
         self.win.add_text(text)

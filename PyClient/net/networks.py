@@ -77,7 +77,7 @@ class channel(i_channel):
     def __init__(self, network: "i_network", name):
         super().__init__(name)
         self.network = network
-        self.logger: outputs.i_logger = self.network.logger
+        self.logger: outputs.i_logger = network.logger
         self.id2msgt_and_handler: Dict[str, Tuple[type, Callable[[msg, Tuple], None]]] = {}
         self.msg2id: Dict[type, str] = {}
 

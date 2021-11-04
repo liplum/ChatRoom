@@ -1,10 +1,10 @@
-from core.ioc import container
 import platform
 import sys
 
 import keys
 import utils
 from chars import *
+from cmd import cmdmanager
 from core.chats import msgstorage
 from core.ioc import container
 from ui.clients import client
@@ -23,7 +23,7 @@ _client = client()
 
 def main():
     _client.on_service_register.add(init_plugin)
-    _client.on_command_register.add(add_commands)
+    _client.on_cmd_register.add(add_commands)
     _client.on_keymapping.add(mapkeys)
     _client.init()
     st = msgstorage("record.rec")
@@ -42,7 +42,7 @@ def init_plugin(client, registry: container):
         registry.register_singleton(i_input, linux.nbinput)
 
     if DEBUG:
-        from ui.inputs import cmd_input
+        from ui.cmdprompt import cmd_input
         registry.register_singleton(i_input, cmd_input)
 
 
@@ -63,8 +63,10 @@ def mapkeys(client, keymap: cmdkey):
             return"""
 
 
-def add_commands(cmd_list):
-    pass
+def add_commands(client, cmd_manager: cmdmanager):
+    from cmds import cmds
+    for cmd in cmds:
+        cmd_manager.add(cmd)
 
 
 if __name__ == '__main__':

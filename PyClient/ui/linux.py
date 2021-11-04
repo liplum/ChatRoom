@@ -1,9 +1,10 @@
 import sys
 import termios
 import tty
-from select import select
 from threading import RLock
 from typing import List
+
+from select import select
 
 from linuxchars import *
 from ui.inputs import i_nbinput

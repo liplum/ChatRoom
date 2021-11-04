@@ -1,13 +1,57 @@
-from dataclasses import dataclass
 from io import StringIO
 from typing import List
 
 import utils
 from core.events import event
+from ui.ctrl import control
+from ui.outputs import CmdBkColor, CmdFgColor
+from ui.outputs import buffer
 
 
-class textbox:
+class textbox(control):
+
+    @property
+    def focused(self) -> bool:
+        return self._focused
+
+    def on_focused(self):
+        self._focused = True
+
+    def on_lost_focus(self):
+        self._focused = False
+
+    @property
+    def focusable(self) -> bool:
+        return True
+
+    @property
+    def width(self) -> int:
+        return self._width + len(self.cursor_icon)
+
+    @width.setter
+    def width(self, value: int):
+        self._width = max(self._min_width, value)
+        self.width_limited = True
+
+    @property
+    def height(self) -> int:
+        return self._height
+
+    @property
+    def width_limited(self) -> bool:
+        return self._width_limited
+
+    @width_limited.setter
+    def width_limited(self, value):
+        self._width_limited = bool(value)
+
+    def draw_on(self, buf: buffer):
+        bk = CmdBkColor.White if self.focused else None
+        fg = CmdFgColor.Black if self.focused else None
+        buf.addtext(self.limited_distext, end='', fgcolor=fg, bkcolor=bk)
+
     def __init__(self, cursor_icon: str = "^"):
+        super().__init__()
         self._input_list: List[str] = []
         self.cursor_icon = cursor_icon
         self._cursor: int = 0
@@ -17,6 +61,11 @@ class textbox:
         self._on_delete = event()
         self._on_gen_distext = event()
         self._on_list_replace = event()
+        self._min_width = 6
+        self._width = self._min_width
+        self._width_limited = False
+        self._height = 1
+        self._focused = False
 
     @property
     def on_gen_distext(self) -> event:
@@ -24,9 +73,9 @@ class textbox:
         Para 1:textbox object
 
 
-        Para 2:the final string which will be displayed soon(render_content.string)
+        Para 2:the final string which will be displayed soon(list[0]=str)
 
-        :return: event(textbox,render_content)
+        :return: event(textbox,list)
         """
         return self._on_gen_distext
 
@@ -141,6 +190,29 @@ class textbox:
         self.cursor = self.input_count
 
     @property
+    def limited_distext(self):
+        if not self.width_limited:
+            return self.distext
+        w = max(self._width, 3)
+        cursor_pos = self._cursor
+        start = max(0, cursor_pos - w // 2)
+        end = min(self.input_count, cursor_pos + w // 2)
+        with StringIO() as s:
+            cur = start
+            for char in self._input_list[start:end]:
+                if cur == cursor_pos:
+                    s.write(self.cursor_icon)
+                s.write(char)
+                cur += 1
+            if cur == cursor_pos:
+                s.write(self.cursor_icon)
+
+            res = s.getvalue()
+            displayed = [res]
+            self.on_gen_distext(self, [res])
+            return displayed[0]
+
+    @property
     def distext(self) -> str:
         cursor_pos = self._cursor
         with StringIO() as s:
@@ -154,9 +226,9 @@ class textbox:
                 s.write(self.cursor_icon)
 
             res = s.getvalue()
-            dis = render_content(res)
-            self.on_gen_distext(self, dis)
-            return dis.string
+            displayed = [res]
+            self.on_gen_distext(self, [res])
+            return displayed[0]
 
     def append(self, char):
         self._input_list.insert(self.cursor, char)
@@ -183,14 +255,16 @@ class textbox:
         self.cursor = cursor_pos
 
     def delete(self, left=True):
-        if self.cursor > 0:
-            n = self.cursor - 1 if left else self.cursor
-            if n < len(self._input_list):
-                ch = self._input_list.pop(n)
-                self.on_delete(self, self.cursor, ch)
-                self.cursor -= 1
-
-
-@dataclass
-class render_content:
-    string: str
+        if left:
+            if self.cursor > 0:
+                n = self.cursor - 1
+                if n < len(self._input_list):
+                    ch = self._input_list.pop(n)
+                    self.on_delete(self, self.cursor, ch)
+                    self.cursor -= 1
+        else:
+            if self.cursor < self.input_count:
+                n = self.cursor
+                if n < len(self._input_list):
+                    ch = self._input_list.pop(n)
+                    self.on_delete(self, self.cursor, ch)
