@@ -2,8 +2,9 @@ import sys
 import traceback
 from functools import wraps
 from io import StringIO
-from threading import RLock
+from threading import RLock,Thread
 from typing import Optional
+import os
 
 import core.ioc as ioc
 import ui.inputs as _input
@@ -150,6 +151,9 @@ class client:
         for k in self.cmdkeys:
             self.on_keymapping(self, k)
 
+        self.terminal_size_monitor=Thread(target=self.monitor_terminal_size)
+        self.terminal_size_monitor.daemon=True
+
     def _init_channels(self):
         self.channel_user = self.network.new_channel("User")
         self.channel_chatting = self.network.new_channel("Chatting")
@@ -165,6 +169,12 @@ class client:
 
     def _clear_dirty(self):
         self._dirty = False
+
+    def monitor_terminal_size(self):
+        cur=os.get_terminal_size()
+        if self.terminal_size != cur:
+            self.terminal_size=cur
+            self.make_dirty()
 
     def gen_cmds(self):
         def send_text():
@@ -206,6 +216,8 @@ class client:
         self.running = True
         i = self.inpt
         i.initialize()
+        self.terminal_size_monitor.start()
+        self.render()
         while self.running:
             try:
                 self.inpt.get_input()

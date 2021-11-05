@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import IntEnum, unique
 from typing import Union, Optional, NoReturn, List
-
+import os
 
 class i_logger:
     def __init__(self):
@@ -96,7 +96,16 @@ class buffer:
     def addtext(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
                 bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
         pass
+    
+    @property
+    @abstractmethod
+    def width(self):
+        pass
 
+    @property
+    @abstractmethod
+    def height(self):
+        pass
 
 class i_display(ABC):
     @abstractmethod
@@ -132,14 +141,25 @@ class cmd_display(i_display):
         return False
 
     class cmd_buffer(buffer):
-        def __init__(self, displayer: "cmd_display"):
+        def __init__(self, displayer: "cmd_display",width:int,height:int):
             super().__init__()
             self.displayer: "cmd_display" = displayer
             self.render_list: List[str] = []
+            self._width=width
+            self._height=height
 
         def addtext(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
                     bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
             self.displayer.text(self.render_list, text, end, fgcolor, bkcolor)
 
+        @property
+        def width(self):
+            return self,_width
+
+        @property
+        def height(self):
+            return self._height
+
     def gen_buffer(self) -> buffer:
-        return cmd_display.cmd_buffer(self)
+        size = terminal.get_terminal_size()
+        return cmd_display.cmd_buffer(self,size.columns,size.lines)

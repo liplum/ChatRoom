@@ -162,7 +162,8 @@ class textbox(control):
         return utils.compose(self.input_list, connector='')
 
     def clear(self):
-        self.input_list = []
+        if len(self._input_list) != 0:
+            self.input_list = []
 
     @property
     def cursor(self):
