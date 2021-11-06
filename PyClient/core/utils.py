@@ -1,14 +1,18 @@
 import calendar
 import os
-import platform
 import time
 from datetime import datetime
 from io import StringIO
 from threading import RLock
 from typing import Dict, List, Tuple, Optional
+import sys
 
-system_type = platform.system()
-
+def get_executed_path()->Tuple[str,str]:
+    """
+    Gets the path of executed file(is always __file__)
+    :return: (dir_path,file_path)
+    """
+    return os.path.split(os.path.abspath(sys.argv[0]))
 
 def get(dic: Dict, key):
     if key in dic:
@@ -319,9 +323,3 @@ class timer:
     def is_end(self) -> bool:
         cur_time = now_milisecs()
         return self.start_time - cur_time > self.time
-
-
-if system_type == "Windows":
-    clear_screen = clear_screen_win
-elif system_type == "Linux":
-    clear_screen = clear_screen_linux

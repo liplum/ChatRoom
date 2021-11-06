@@ -2,7 +2,7 @@ from typing import Set
 
 import chars
 from core.events import event
-from utils import get
+from core.utils import get
 
 
 class kbinding:

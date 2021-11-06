@@ -1,3 +1,5 @@
+import os
+import platform
 from datetime import timezone
 
 import autofill
@@ -5,9 +7,9 @@ import dictries
 import xautofill
 from chars import *
 from core import converts
+from core.utils import *
 from ui.clients import *
 from ui.tbox import textbox
-from utils import *
 
 system_type = platform.system()
 
@@ -32,9 +34,10 @@ def win_test():
     # eof_test()
     # test_dictrie()
     # test_dictrie2()
-    test_autofill()
+    # test_autofill()
     # test_func_wrap()
     # test_args()
+    test_file_path()
 
 
 def linux_test():
@@ -51,6 +54,14 @@ if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
+
+
+def test_file_path():
+    dirname, filename = os.path.split(os.path.abspath(sys.argv[0]))
+    print(f"dirname={dirname}")
+    print(f"filename={filename}")
+    print(os.path.abspath(__file__))
+    print(os.path.dirname(__file__))
 
 
 def test_args():

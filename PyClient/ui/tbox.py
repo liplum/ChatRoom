@@ -1,7 +1,7 @@
 from io import StringIO
 from typing import List
 
-import utils
+from core import utils
 from core.events import event
 from ui.ctrl import control
 from ui.outputs import CmdBkColor, CmdFgColor

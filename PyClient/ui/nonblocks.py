@@ -6,7 +6,7 @@ import chars
 from ui.clients import client
 from ui.inputs import i_nbinput
 from ui.outputs import i_display, CmdFgColor, CmdBkColor
-from utils import lock
+from core.utils import lock
 
 
 class nbdispaly(i_display):

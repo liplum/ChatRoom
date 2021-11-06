@@ -8,7 +8,7 @@ from select import select
 
 from linuxchars import *
 from ui.inputs import i_nbinput
-from utils import lock
+from core.utils import lock
 
 
 class nbinput(i_nbinput):

@@ -1,9 +1,10 @@
 import os
 from datetime import datetime
-from typing import Tuple, List, Union, Any
+from typing import Tuple, List, Dict, Optional
 
-import utils
-from utils import compose, separate
+from core import utils
+from core.utils import compose, separate
+from ui.outputs import i_logger
 
 
 class userid:
@@ -67,10 +68,8 @@ class msgstorage:
         self.__storage: List[StorageUnit] = []
         self.changed = False
 
-    def store(self, timestamp: datetime, userid_: Union[userid, Any], msg: str):
-        if not isinstance(userid_, userid):
-            userid_ = userid(userid_)
-        self.__storage.append((timestamp, userid_, msg))
+    def store(self, msg_unit: StorageUnit):
+        self.__storage.append(msg_unit)
         self.changed = True
 
     def sort(self):
@@ -117,7 +116,7 @@ class msgstorage:
                 else:
                     continue
 
-    def retrieve(self, start: datetime, end: datetime, number_limit: int = None,
+    def retrieve(self, start: datetime, end: datetime, number_limit: Optional[int] = None,
                  reverse: bool = False) -> List[StorageUnit]:
         """
 
@@ -133,14 +132,151 @@ class msgstorage:
         if self.changed:
             self.sort()
         snapshot = self.__storage[:]
-        dt_snapshot = [unit[0] for unit in self.__storage]
+        dt_snapshot = [unit[0] for unit in snapshot]
         _, start_pos = utils.find_range(dt_snapshot, start)
         end_pos, _ = utils.find_range(dt_snapshot, end)
-        if reverse:
-            inrange = snapshot[start_pos:end_pos:-1]
+
+        order = -1 if reverse else 1
+        if number_limit:
+            if number_limit >= len(snapshot):
+                if reverse:
+                    return snapshot[::order]
+                else:
+                    return snapshot
+            return inrange[start_pos:end_pos - number_limit:order]
         else:
-            inrange = snapshot[start_pos:end_pos]
-        if number_limit is None:
-            return inrange
+            return snapshot[start_pos:end_pos:order]
+
+    def retrieve_lasted(self, number_limit: int) -> List[StorageUnit]:
+        """
+
+        :param number_limit:the max number of message retrieval.
+        :return:
+        """
+
+        if self.changed:
+            self.sort()
+        snapshot = self.__storage[:]
+        if number_limit >= len(snapshot):
+            return snapshot
+        return snapshot[-number_limit:]
+
+    def retrieve_until(self, end: datetime, number_limit: Optional[int] = None):
+        if self.changed:
+            self.sort()
+        snapshot = self.__storage[:]
+        dt_snapshot = [unit[0] for unit in snapshot]
+        end_pos, _ = utils.find_range(dt_snapshot, end)
+        if number_limit:
+            if number_limit >= len(snapshot):
+                return snapshot[:end_pos]
+            return snapshot[end_pos - number_limit:end_pos]
         else:
-            return inrange[number_limit:]
+            return snapshot[:end_pos]
+
+
+class i_msgmager:
+    def load_lasted(self, room_id: roomid, amount: int) -> List[StorageUnit]:
+        pass
+
+    def retrieve(self, room_id: roomid, amount: int, start: datetime, end: datetime) -> List[StorageUnit]:
+        pass
+
+    def receive(self, room_id: roomid, msg_unit: StorageUnit):
+        pass
+
+    def load_until_today(self, room_id: roomid, amount: int) -> List[StorageUnit]:
+        pass
+
+
+class i_msgfiler:
+    def save(self, room_id: roomid, storage: msgstorage):
+        pass
+
+    def get(self, room_id: roomid) -> Optional[str]:
+        pass
+
+
+class msgfiler(i_msgfiler):
+
+    def init(self, container):
+        self.logger: i_logger = container.resolve(i_logger)
+
+    def __init__(self, msg_storages_dir: Optional[str] = None):
+        self.msg_storages_dir = msg_storages_dir
+
+    def save(self, room_id: roomid, storage: msgstorage):
+        if self.msg_storages_dir:
+            try:
+                file = f"{self.msg_storages_dir}/{room_id}.rec"
+                if storage.save_file == file:
+                    if not os.path.exists(self.msg_storages_dir):
+                        os.makedirs(self.msg_storages_dir)
+                storage.serialize()
+            except:
+                self.logger.error(f'Cannot save msg into "{storage.save_file}"')
+
+    def get(self, room_id: roomid) -> Optional[str]:
+        if self.msg_storages_dir:
+            file = f"{self.msg_storages_dir}/{room_id}.rec"
+            if os.path.exists(file):
+                return file
+            else:
+                if not os.path.exists(self.msg_storages_dir):
+                    os.makedirs(self.msg_storages_dir)
+                with open(file, "w"):
+                    pass
+                return file
+        else:
+            return None
+
+
+class msgmager(i_msgmager):
+    def __init__(self):
+        self.cache: Dict[roomid, msgstorage] = {}
+
+    def init(self, container):
+        self.filer: i_msgfiler = container.resolve(i_msgfiler)
+        self.logger: i_logger = container.resolve(i_logger)
+
+    def get_storage(self, room_id: roomid) -> Optional[msgstorage]:
+        if room_id in self.cache:
+            return self.cache[room_id]
+        else:
+            msgs_file = self.filer.get(room_id)
+            if msgs_file:
+                storage = msgstorage(msgs_file)
+                storage.deserialize()
+                self.cache[room_id] = storage
+                return storage
+            else:
+                return None
+
+    def load_lasted(self, room_id: roomid, amount: int) -> List[StorageUnit]:
+        storage = self.get_storage(room_id)
+        if storage:
+            return storage.retrieve_lasted(amount)
+        else:
+            self.logger.error(f"Cannot load msg storage from {room_id}")
+
+    def retrieve(self, room_id: roomid, amount: int, start: datetime, end: datetime) -> List[StorageUnit]:
+        storage = self.get_storage(room_id)
+        if storage:
+            return storage.retrieve(start=start, end=end, number_limit=amount)
+        else:
+            self.logger.error(f"Cannot load msg storage from {room_id}")
+
+    def receive(self, room_id: roomid, msg_unit: StorageUnit):
+        if room_id in self.cache:
+            storage = self.cache[room_id]
+        else:
+            msgs_file = self.filer.get(room_id)
+            storage = msgstorage(msgs_file)
+        storage.store(msg_unit)
+
+    def load_until_today(self, room_id: roomid, amount: int) -> List[StorageUnit]:
+        storage = self.get_storage(room_id)
+        if storage:
+            return storage.retrieve_until(end=datetime.now(), number_limit=amount)
+        else:
+            self.logger.error(f"Cannot load msg storage from {room_id}")

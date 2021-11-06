@@ -1,12 +1,27 @@
+import os
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import IntEnum, unique
-from typing import Union, Optional, NoReturn, List
-import os
+from typing import Optional, NoReturn, List, Tuple
+
+
+def get_winsize() -> Tuple[int, int]:
+    return os.get_terminal_size()
+
+
+def get_winsize_default() -> Tuple[int, int]:
+    return 80, 20
+
+
+try:
+    os.get_terminal_size()
+except:
+    get_winsize = get_winsize_default
+
 
 class i_logger:
     def __init__(self):
-        self.logfile: Optional[str] = None
+        self._logfile: Optional[str] = None
 
     def msg(self, text) -> NoReturn:
         pass
@@ -44,11 +59,11 @@ class CmdBkColor(IntEnum):
     White = 47
 
 
-class AlertColor(IntEnum):
-    Msg = CmdFgColor.White
-    Tip = CmdFgColor.Blue
-    Warn = CmdFgColor.Yellow
-    Error = CmdFgColor.Red
+class AlertLevel:
+    Msg = (CmdFgColor.White, "Message")
+    Tip = (CmdFgColor.Blue, "Tip")
+    Warn = (CmdFgColor.Yellow, "Warn")
+    Error = (CmdFgColor.Red, "Error")
 
 
 def tinted_print(text: str, fgcolor: Optional[CmdFgColor] = None, bkcolor: Optional[CmdBkColor] = None,
@@ -66,29 +81,61 @@ def gen_tinted_text(text: str, fgcolor: Optional[CmdFgColor], bkcolor: Optional[
 
 class cmd_logger(i_logger):
 
-    def __init__(self, output_to_cmd: bool = True, logfile: Optional[str] = None):
+    def __init__(self, output_to_cmd: bool = True, logfile: Optional[str] = None, logfile_dir: Optional[str] = None):
         super().__init__()
-        self.logfile: Optional[str] = logfile
+        self._logfile: Optional[str] = logfile
+        self._logfile_dir: Optional[str] = logfile_dir
+        self._logfile_fullpath: Optional[str] = None
+        self._logfile_path_changed = False
         self.output_to_cmd = output_to_cmd
 
+    @property
+    def logfile(self):
+        return self._logfile
+
+    @property
+    def logfile_dir(self):
+        return self._logfile_dir
+
+    @logfile.setter
+    def logfile(self, value):
+        if self._logfile != value:
+            self._logfile_path_changed = True
+        self._logfile = value
+
+    @logfile_dir.setter
+    def logfile_dir(self, value):
+        if self._logfile_dir != value:
+            self._logfile_path_changed = True
+        self._logfile_dir = value
+
+    @property
+    def logfile_fullpath(self):
+        if self._logfile_path_changed:
+            self._logfile_fullpath = f"{self._logfile_dir}//{self._logfile}"
+        return self._logfile_fullpath
+
     def msg(self, text: str) -> NoReturn:
-        self.alert_print(text, AlertColor.Msg, "Message")
+        self.alert_print(text, AlertLevel.Msg)
 
     def tip(self, text: str) -> NoReturn:
-        self.alert_print(text, AlertColor.Tip, "Tip")
+        self.alert_print(text, AlertLevel.Tip)
 
     def warn(self, text: str) -> NoReturn:
-        self.alert_print(text, AlertColor.Warn, "Warn")
+        self.alert_print(text, AlertLevel.Warn)
 
     def error(self, text: str) -> NoReturn:
-        self.alert_print(text, AlertColor.Error, "Error")
+        self.alert_print(text, AlertLevel.Error)
 
-    def alert_print(self, text: str, color: Union[CmdFgColor, AlertColor], alertLevel: str) -> None:
+    def alert_print(self, text: str, level: Tuple[CmdFgColor, str]) -> None:
+        color, label = level
         time_stamp = datetime.now().strftime("%Y%m%d-%H:%M:%S")
-        t = f"{time_stamp}[{alertLevel}]{text}"
-        tinted_print(t, color)
+        t = f"{time_stamp}[{label}]{text}"
+        tinted_print(t, fgcolor=color)
         if self.logfile is not None:
-            with open(self.logfile, "a") as log:
+            if not os.path.exists(self.logfile_dir):
+                os.makedirs(self.logfile_dir)
+            with open(self.logfile_fullpath, "a+", encoding='utf-16') as log:
                 log.write(t + '\n')
 
 
@@ -96,7 +143,7 @@ class buffer:
     def addtext(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
                 bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
         pass
-    
+
     @property
     @abstractmethod
     def width(self):
@@ -106,6 +153,7 @@ class buffer:
     @abstractmethod
     def height(self):
         pass
+
 
 class i_display(ABC):
     @abstractmethod
@@ -141,12 +189,12 @@ class cmd_display(i_display):
         return False
 
     class cmd_buffer(buffer):
-        def __init__(self, displayer: "cmd_display",width:int,height:int):
+        def __init__(self, displayer: "cmd_display", width: int, height: int):
             super().__init__()
             self.displayer: "cmd_display" = displayer
             self.render_list: List[str] = []
-            self._width=width
-            self._height=height
+            self._width = width
+            self._height = height
 
         def addtext(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
                     bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
@@ -154,12 +202,12 @@ class cmd_display(i_display):
 
         @property
         def width(self):
-            return self,_width
+            return self, _width
 
         @property
         def height(self):
             return self._height
 
     def gen_buffer(self) -> buffer:
-        size = terminal.get_terminal_size()
-        return cmd_display.cmd_buffer(self,size.columns,size.lines)
+        size = get_winsize()
+        return cmd_display.cmd_buffer(self, size[0], size[1])

@@ -1,6 +1,6 @@
 from core.chats import *
+from core.utils import get, not_none, to_seconds
 from net.networks import msg
-from utils import get, not_none, to_seconds
 
 
 class authentication(msg):
@@ -82,4 +82,4 @@ class chatting(msg):
     @staticmethod
     def handle(self, context):
         client, channel, token = context
-        client.receive_room_text(self.user_id, self.room_id, self.text, self.send_time)
+        client.receive_text(self.room_id, self.user_id, self.text, self.send_time)

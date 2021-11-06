@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
 from io import StringIO
 from typing import Union, List, Optional
 
 import chars
 import keys
-import utils
 from cmd import cmdmanager
-from core.chats import roomid, userid
+from core import utils
+from core.chats import roomid, i_msgmager
+from core.events import event
 from net.networks import server_token
 from ui import outputs as output
 from ui.k import kbinding
@@ -15,8 +15,7 @@ from ui.outputs import CmdBkColor, CmdFgColor
 from ui.outputs import buffer
 from ui.states import state, smachine
 from ui.tbox import textbox
-from utils import clear_screen
-from core.events import event
+
 
 class xtextbox(textbox):
     def __init__(self, cursor_icon: str = '^'):
@@ -73,6 +72,7 @@ class chat_tab(tab):
         self.history: List[str] = []
         self.max_display_line = 10
         self.fill_until_max = True
+        self.msg_manager: i_msgmager = self.client.msg_manager
 
         def set_client(state: state) -> None:
             state.client = self.client
@@ -89,12 +89,18 @@ class chat_tab(tab):
 
         self.sm = smachine(state_pre=set_client, stype_pre=gen_state)
         self.sm.enter(cmd_mode)
-        self.textbox.on_append.add(lambda b, p, c: client.make_dirty())
-        self.textbox.on_delete.add(lambda b, p, c: client.make_dirty())
-        self.textbox.on_cursor_move.add(lambda b, f, c: client.make_dirty())
-        self.textbox.on_list_replace.add(lambda b, f, c: client.make_dirty())
+        self.textbox.on_append.add(lambda b, p, c: client.mark_dirty())
+        self.textbox.on_delete.add(lambda b, p, c: client.mark_dirty())
+        self.textbox.on_cursor_move.add(lambda b, f, c: client.mark_dirty())
+        self.textbox.on_list_replace.add(lambda b, f, c: client.mark_dirty())
 
     def draw_on(self, buf: buffer):
+        # TODO:Change the room id
+        li = self.msg_manager.load_until_today(roomid(12345), self.max_display_line)
+        self.history = []
+        for time, uid, text in li:
+            self.history.append(f"{time.strftime('%Y%m%d-%H:%M:%S')}\n\t{uid}:{text}")
+
         buf.addtext(self.distext)
         self.sm.draw_on(buf)
         buf.addtext(self.textbox.distext)
@@ -142,15 +148,15 @@ class tablist:
         self.view_history = []
         self.max_view_history = 5
         self.chat_tabs: List[tab] = []
-        self._on_curtab_changed=event()
-        self._on_tablist_changed=event()
-    
+        self._on_curtab_changed = event()
+        self._on_tablist_changed = event()
+
     @property
-    def on_curtab_changed(self)->event:
+    def on_curtab_changed(self) -> event:
         return self._on_curtab_changed
 
     @property
-    def on_tablist_changed(self)->event:
+    def on_tablist_changed(self) -> event:
         return self._on_tablist_changed
 
     def __len__(self) -> int:
@@ -160,23 +166,23 @@ class tablist:
         self.tabs.append(tab)
         if isinstance(tab, chat_tab):
             self.chat_tabs.append(tab)
-            self.on_tablist_changed(self,True,tab)
+            self.on_tablist_changed(self, True, tab)
         if self.cur is None:
             self.cur = tab
-            self.cur_index=self.tabs.index(self.cur)
-            self.on_curtab_changed(self,tab)
+            self.cur_index = self.tabs.index(self.cur)
+            self.on_curtab_changed(self, tab)
 
     def remove(self, item: Union[int, "tab"]):
         if isinstance(item, int):
-            if 0<=item<len(self.tabs):
-                removed=self.tabs[item]
+            if 0 <= item < len(self.tabs):
+                removed = self.tabs[item]
                 del self.tabs[item]
-                self.on_tablist_changed(self,False,removed)
+                self.on_tablist_changed(self, False, removed)
             if isinstance(removed, chat_tab):
                 self.chat_tabs.remove(need_removed)
         elif isinstance(item, tab):
             self.tabs.remove(item)
-            self.on_tablist_changed(self,False,item)
+            self.on_tablist_changed(self, False, item)
             if isinstance(tab, chat_tab):
                 self.chat_tabs.remove(tab)
 
@@ -185,20 +191,20 @@ class tablist:
             self.goto(self.view_history[-1])
 
     def goto(self, number: int):
-        if self.cur_index==number:
+        if self.cur_index == number:
             return
         if 0 <= number < len(self.tabs):
             self.cur = self.tabs[number]
             self.add_view_history(number)
-            self.cur_index=self.tabs.index(self.cur)
-            self.on_curtab_changed(self,number,self.cur)
+            self.cur_index = self.tabs.index(self.cur)
+            self.on_curtab_changed(self, number, self.cur)
 
     def next(self):
-        self.goto(self.cur_index+1)
+        self.goto(self.cur_index + 1)
 
     def back(self):
-        self.goto(self.cur_index-1)
-    
+        self.goto(self.cur_index - 1)
+
     def add_view_history(self, number: int):
         self.view_history.append(number)
         if len(self.view_history) > self.max_view_history:
@@ -223,7 +229,7 @@ class tablist:
                     buf.addtext("│", end='')
                     if t is cur:
                         separator.write("└")
-                    elif i+1 < tab_count and self.tabs[i+1] is cur:
+                    elif i + 1 < tab_count and self.tabs[i + 1] is cur:
                         separator.write("┘")
                     else:
                         separator.write("┴")
@@ -239,8 +245,8 @@ class window:
         self.tablist = tablist(self)
         self.screen_buffer: Optional[buffer] = None
         self.newtab(chat_tab)
-        self.tablist.on_curtab_changed.add(lambda li,n,t:self.client.make_dirty())
-        self.tablist.on_tablist_changed.add(lambda li,mode,t:self.client.make_dirty())
+        self.tablist.on_curtab_changed.add(lambda li, n, t: self.client.mark_dirty())
+        self.tablist.on_tablist_changed.add(lambda li, mode, t: self.client.mark_dirty())
 
     def newtab(self, tabtype: type):
         self.tablist.add(tabtype(self.client, self.tablist))
@@ -249,7 +255,7 @@ class window:
         self.screen_buffer = self.displayer.gen_buffer()
 
     def update_screen(self):
-        clear_screen()
+        utils.clear_screen()
         self.prepare()
         self.tablist.draw_on(self.screen_buffer)
         curtab = self.tablist.cur
@@ -262,9 +268,6 @@ class window:
         curtab = self.tablist.cur
         if curtab:
             curtab.on_input(char)
-
-    def receive_room_text(self, user_id: userid, room_id: roomid, text: str, time: datetime):
-        add_text(f"{time.strftime('%Y%m%d-%H:%M:%S')}\n\t{user_id}:{text}")
         """
         if len(self.history) < self.max_display_line:
             displayed = self.history
@@ -313,7 +316,7 @@ class cmd_mode(inputable_state):
         self.autofilling_all = None
 
     def on_en(self):
-        self.client.make_dirty()
+        self.client.mark_dirty()
         self.textbox.clear()
         self.cmd_manager: cmdmanager = self.client.cmd_manger
 
@@ -392,7 +395,7 @@ class cmd_mode(inputable_state):
                 tb.append(chars.c_colon)
             elif chars.c_q == char:
                 c.running = False
-            elif chars.c_a== char:
+            elif chars.c_a == char:
                 self.tablist.back()
             elif chars.c_d == char:
                 self.tablist.next()
@@ -416,7 +419,7 @@ class text_mode(inputable_state):
         kbs.on_any = lambda c: self.textbox.append(c)
 
     def on_en(self):
-        self.client.make_dirty()
+        self.client.mark_dirty()
         self.textbox.clear()
 
     tip: str = utils.fillto("Text mode:", " ", 40)
