@@ -1,18 +1,20 @@
 import calendar
 import os
+import sys
 import time
 from datetime import datetime
 from io import StringIO
 from threading import RLock
 from typing import Dict, List, Tuple, Optional
-import sys
 
-def get_executed_path()->Tuple[str,str]:
+
+def get_executed_path() -> Tuple[str, str]:
     """
     Gets the path of executed file(is always __file__)
     :return: (dir_path,file_path)
     """
     return os.path.split(os.path.abspath(sys.argv[0]))
+
 
 def get(dic: Dict, key):
     if key in dic:

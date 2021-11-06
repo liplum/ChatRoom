@@ -1,10 +1,7 @@
 ﻿using ChattingRoom.Core.Networks;
-using ChattingRoom.Core.Users;
-using ChattingRoom.Core.Util;
 using ChattingRoom.Core.Utils;
-using System.Diagnostics.CodeAnalysis;
 
-namespace ChattingRoom.Core.Message;
+namespace ChattingRoom.Core.Messages;
 
 [Msg("Chatting", Direction.ClientToServer, Direction.ServerToClient)]
 public class ChattingMsg : IMessage

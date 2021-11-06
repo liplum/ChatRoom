@@ -1,8 +1,4 @@
-﻿using ChattingRoom.Core.Messages;
-using ChattingRoom.Core.Networks;
-using ChattingRoom.Core.Users;
-using ChattingRoom.Core.Utils;
-using System.Diagnostics.CodeAnalysis;
+﻿using ChattingRoom.Core.Networks;
 
 namespace ChattingRoom.Server.Messages;
 
@@ -15,7 +11,7 @@ public class AuthenticationMsgHandler : IMessageHandler<AuthenticationMsg>
         string? password = msg.Password;
         if ((clientID, password).NotNull())
         {
-            server.UserService.Verify(clientID!.Value, password!);
+            server?.UserService?.Verify(clientID!.Value, password!);
         }
     }
 }

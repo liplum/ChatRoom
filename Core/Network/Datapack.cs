@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-
-namespace ChattingRoom.Core.Networks;
+﻿namespace ChattingRoom.Core.Networks;
 public class WriteableDatapack : IDatapack
 {
     public WriteableDatapack()

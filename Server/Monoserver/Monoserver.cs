@@ -1,19 +1,19 @@
-﻿using ChattingRoom.Core;
-using ChattingRoom.Core.Message;
-using ChattingRoom.Core.Messages;
+﻿global using ChattingRoom.Core;
+global using ChattingRoom.Core.Messages;
+global using ChattingRoom.Core.Users;
+global using ChattingRoom.Core.Utils;
+global using System.Diagnostics.CodeAnalysis;
+global using ChatRoom = ChattingRoom.Core.ChattingRoom;
+global using IServiceProvider = ChattingRoom.Core.IServiceProvider;
 using ChattingRoom.Core.Networks;
 using ChattingRoom.Core.Services;
-using ChattingRoom.Core.User;
 using ChattingRoom.Server.Messages;
-using System.Diagnostics.CodeAnalysis;
 using static ChattingRoom.Core.IServer;
-using Room = ChattingRoom.Core.ChattingRoom;
-
 
 namespace ChattingRoom.Server;
 public partial class Monoserver : IServer
 {
-    private readonly Room _chatingRoom = new() { ID = new(12345) };
+    private readonly ChatRoom _chatingRoom = new() { ID = new(12345) };
     private readonly ServiceContainer _serviceContainer = new();
     private Network? _network;
     private Thread? MainThread
@@ -126,7 +126,7 @@ public partial class Monoserver : IServer
                 ChattingRoomID = 12345,
                 UserID = "System",
                 SendTime = DateTime.UtcNow,
-                ChattingText = "From System!!!"
+                ChattingText = "Hello user, welcome to the chatting room!"
             });
             Logger.SendMessage($"{token.IpAddress} was sent a msg from system.");
         };
@@ -143,7 +143,7 @@ public partial class Monoserver : IServer
         Chatting.RegisterMessageHandler<ChattingMsg, ChattingMsgHandler>();
     }
 
-    public Room? GetChattingRoomBy(ChattingRoomID ID)
+    public ChatRoom? GetChattingRoomBy(ChattingRoomID ID)
     {
         return _chatingRoom.ID == ID ? _chatingRoom : null;
     }

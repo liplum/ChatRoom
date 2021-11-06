@@ -1,15 +1,9 @@
-﻿using ChattingRoom.Core;
-using ChattingRoom.Core.Networks;
+﻿using ChattingRoom.Core.Networks;
 using ChattingRoom.Core.Services;
-using ChattingRoom.Core.User;
-using ChattingRoom.Core.Users;
-using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using static ChattingRoom.Core.IServer;
 using static ChattingRoom.Core.Networks.IMessageChannel;
 using static ChattingRoom.Core.Networks.INetwork;
-using IServiceProvider = ChattingRoom.Core.IServiceProvider;
-using Room = ChattingRoom.Core.ChattingRoom;
 
 
 namespace ChattingRoom.Server;
@@ -38,7 +32,7 @@ public class MultiServer : IServer
         throw new NotImplementedException();
     }
 
-    public Room GetChattingRoomBy(ChattingRoomID ID)
+    public ChatRoom GetChattingRoomBy(ChattingRoomID ID)
     {
         throw new NotImplementedException();
     }

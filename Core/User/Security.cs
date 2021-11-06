@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-
-namespace ChattingRoom.Core.Users.Securities;
+﻿namespace ChattingRoom.Core.Users.Securities;
 public struct Password
 {
     private readonly string Md5Passwrod;

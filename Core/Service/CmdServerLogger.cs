@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-
-namespace ChattingRoom.Core.Services;
+﻿namespace ChattingRoom.Core.Services;
 public class CmdServerLogger : ILogger
 {
     private object _lock = new();

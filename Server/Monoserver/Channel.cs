@@ -1,5 +1,4 @@
 ﻿using ChattingRoom.Core.Networks;
-using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using System.Reflection;
 using static ChattingRoom.Core.Networks.IMessageChannel;

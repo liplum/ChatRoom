@@ -1,5 +1,4 @@
 ﻿using ChattingRoom.Core.Networks;
-using System.Diagnostics.CodeAnalysis;
 
 namespace ChattingRoom.Core.Messages;
 

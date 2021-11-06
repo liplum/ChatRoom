@@ -103,7 +103,7 @@ class client:
         self.cmd_manger: cmdmanager = ct.resolve(cmdmanager)
         self.logger.msg("Service component initialized.")
         self.msg_filer: i_msgfiler = ct.resolve(i_msgfiler)
-        self.msg_filer.msg_storages_dir=f"{self.root_path}\\data"
+        self.msg_filer.msg_storages_dir = f"{self.root_path}\\data"
         self.msg_manager: i_msgmager = ct.resolve(i_msgmager)
 
         def on_msg_pre_analyzed(network, server_token, source, json):
@@ -156,7 +156,7 @@ class client:
     def connect(self, ip_and_port: Tuple[str, int]):
         self.network.connect(server_token(server=ip_and_port))
 
-    def receive_text(self,room_id: roomid, user_id: userid, text: str, time: datetime):
+    def receive_text(self, room_id: roomid, user_id: userid, text: str, time: datetime):
         self.msg_manager.receive(room_id, (time, user_id, text))
         self.mark_dirty()
 

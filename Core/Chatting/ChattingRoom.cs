@@ -1,8 +1,6 @@
-﻿using ChattingRoom.Core.Message;
+﻿global using ChattingRoom.Core.Users;
+using ChattingRoom.Core.Messages;
 using ChattingRoom.Core.Networks;
-using ChattingRoom.Core.User;
-using ChattingRoom.Core.Users;
-using System.Diagnostics.CodeAnalysis;
 
 namespace ChattingRoom.Core;
 public class ChattingRoom : IInjectable

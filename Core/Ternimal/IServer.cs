@@ -1,6 +1,4 @@
-﻿using ChattingRoom.Core.User;
-using System.Diagnostics.CodeAnalysis;
-using Room = ChattingRoom.Core.ChattingRoom;
+﻿global using ChatRoom = ChattingRoom.Core.ChattingRoom;
 namespace ChattingRoom.Core;
 public interface IServer
 {
@@ -8,7 +6,7 @@ public interface IServer
 
     public void Start();
 
-    public Room? GetChattingRoomBy(ChattingRoomID ID);
+    public ChatRoom? GetChattingRoomBy(ChattingRoomID ID);
 
 
     public event OnRegisterServiceHandler OnRegisterService;

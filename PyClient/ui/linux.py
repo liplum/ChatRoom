@@ -6,9 +6,9 @@ from typing import List
 
 from select import select
 
+from core.utils import lock
 from linuxchars import *
 from ui.inputs import i_nbinput
-from core.utils import lock
 
 
 class nbinput(i_nbinput):

@@ -1,6 +1,4 @@
-﻿using ChattingRoom.Core.Messages;
-using ChattingRoom.Core.Networks;
-using System.Diagnostics.CodeAnalysis;
+﻿using ChattingRoom.Core.Networks;
 
 namespace ChattingRoom.Server.Messages;
 public class RegisterRequestMsgHandler : IMessageHandler<RegisterRequestMsg>
@@ -11,7 +9,7 @@ public class RegisterRequestMsgHandler : IMessageHandler<RegisterRequestMsg>
         if (token is not null)
         {
             var server = context.Server;
-            var userService = server.UserService;
+            var userService = server.UserService!;
             var id = userService.GenAvailableUserID();
             try
             {

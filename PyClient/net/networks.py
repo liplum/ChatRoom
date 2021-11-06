@@ -6,8 +6,8 @@ from typing import Dict, Tuple, Callable
 
 from core import converts
 from core.events import event
-from ui import outputs
 from core.utils import get, not_none
+from ui import outputs
 
 
 class server_token:

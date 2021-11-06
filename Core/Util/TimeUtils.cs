@@ -1,4 +1,4 @@
-﻿namespace ChattingRoom.Core.Util;
+﻿namespace ChattingRoom.Core.Utils;
 public static class TimeUtils
 {
     public static DateTime ToUnixDatetime(this long unixSeconds)

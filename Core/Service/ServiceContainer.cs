@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-
-namespace ChattingRoom.Core.Services;
+﻿namespace ChattingRoom.Core.Services;
 public class ServiceContainer : IServiceProvider, IServiceRegistry
 {
     private readonly Dictionary<Type, ServiceEntry> _allServices = new();

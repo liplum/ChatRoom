@@ -1,7 +1,6 @@
 ﻿using ChattingRoom.Core.Networks;
-using ChattingRoom.Core.Users;
 
-namespace ChattingRoom.Core.Message;
+namespace ChattingRoom.Core.Messages;
 [Msg("Whisper", Direction.ClientToServer, Direction.ServerToClient)]
 public class WhisperMsg : IMessage
 {

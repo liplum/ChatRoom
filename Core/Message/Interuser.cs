@@ -1,6 +1,6 @@
 ﻿using ChattingRoom.Core.Networks;
 
-namespace ChattingRoom.Core.Message;
+namespace ChattingRoom.Core.Messages;
 public class BlockListMsg : IMessage
 {
 

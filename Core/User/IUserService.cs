@@ -1,6 +1,4 @@
-﻿using ChattingRoom.Core.Users;
-
-namespace ChattingRoom.Core.User;
+﻿namespace ChattingRoom.Core.Users;
 public interface IUserService : IInjectable
 {
     public UserID GenAvailableUserID();

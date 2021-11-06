@@ -1,7 +1,4 @@
-﻿using ChattingRoom.Core.Users;
-using System.Diagnostics.CodeAnalysis;
-
-namespace ChattingRoom.Core.Database;
+﻿namespace ChattingRoom.Core.Database;
 public interface IUserDatabase
 {
     public UserInfo? GetInfo([NotNull] UserID userID);

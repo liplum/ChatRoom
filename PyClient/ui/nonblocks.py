@@ -3,10 +3,10 @@ from threading import Thread, RLock
 from typing import Optional, List, NoReturn
 
 import chars
+from core.utils import lock
 from ui.clients import client
 from ui.inputs import i_nbinput
 from ui.outputs import i_display, CmdFgColor, CmdBkColor
-from core.utils import lock
 
 
 class nbdispaly(i_display):

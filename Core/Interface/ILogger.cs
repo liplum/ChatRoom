@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿global using System.Diagnostics.CodeAnalysis;
 
 namespace ChattingRoom.Core;
 public interface ILogger : IInjectable

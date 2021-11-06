@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-
-namespace ChattingRoom.Core;
+﻿namespace ChattingRoom.Core;
 public interface IServiceRegistry
 {
     /// <summary>
