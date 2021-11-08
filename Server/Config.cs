@@ -88,7 +88,6 @@ public class Configurations : DynamicObject
         lock (_lock)
         {
             var dicJobj = _jobj!;
-            result = dicJobj[key];
             if (dicJobj.TryGetValue(key, out result))
             {
                 return true;
