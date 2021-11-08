@@ -89,20 +89,20 @@ public class Configurations : DynamicObject
         {
             var dicJobj = _jobj!;
             result = dicJobj[key];
-            if (result is null)
+            if (dicJobj.TryGetValue(key, out result))
             {
-                if (_metadic.TryGetValue(key, out var configT))
-                {
-                    var defaultV = configT.DefaultValue;
-                    dicJobj[key] = defaultV;
-                    result = defaultV;
-                    return true;
-                }
-                return false;
+                return true;
+            }
+            else if (_metadic.TryGetValue(key, out var configT))
+            {
+                var defaultV = configT.DefaultValue;
+                dicJobj[key] = defaultV;
+                result = defaultV;
+                return true;
             }
             else
             {
-                return true;
+                return false;
             }
         }
     }
