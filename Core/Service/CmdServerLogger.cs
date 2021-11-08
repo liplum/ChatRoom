@@ -1,7 +1,7 @@
 ﻿namespace ChattingRoom.Core.Services;
 public class CmdServerLogger : ILogger
 {
-    private object _lock = new();
+    private readonly object _lock = new();
     public void Log([NotNull] WarnningLevel level, string message)
     {
         lock (_lock)

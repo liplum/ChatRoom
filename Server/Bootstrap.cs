@@ -3,9 +3,16 @@ public class Bootstrap
 {
     public static void Main(string[] args)
     {
+        AppDomain.CurrentDomain.ProcessExit += OnQuit;
+        Assets.InitConfigs();
+        Assets.LoadConfigs();
         var server = new Monoserver();
         server.Initialize();
         server.Start();
-        Thread.Sleep(2000);
+    }
+
+    private static void OnQuit(object? sender, EventArgs e)
+    {
+        Assets.SaveConfig();
     }
 }

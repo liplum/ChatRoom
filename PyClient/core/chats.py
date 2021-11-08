@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from threading import RLock
 from typing import Tuple, List, Dict, Optional
 
 from core import utils
@@ -143,9 +144,9 @@ class msgstorage:
                     return snapshot[::order]
                 else:
                     return snapshot
-            return inrange[start_pos:end_pos - number_limit:order]
+            return inrange[start_pos:end_pos + 1 - number_limit:order]
         else:
-            return snapshot[start_pos:end_pos:order]
+            return snapshot[start_pos:end_pos + 1:order]
 
     def retrieve_lasted(self, number_limit: int) -> List[StorageUnit]:
         """
@@ -169,10 +170,12 @@ class msgstorage:
         end_pos, _ = utils.find_range(dt_snapshot, end)
         if number_limit:
             if number_limit >= len(snapshot):
-                return snapshot[:end_pos]
-            return snapshot[end_pos - number_limit:end_pos]
+                return snapshot[:end_pos + 1]
+            else:
+                start_pos = max(end_pos - number_limit, 0)
+                return snapshot[start_pos:end_pos + 1]
         else:
-            return snapshot[:end_pos]
+            return snapshot[:end_pos + 1]
 
 
 class i_msgmager:
@@ -234,6 +237,7 @@ class msgfiler(i_msgfiler):
 class msgmager(i_msgmager):
     def __init__(self):
         self.cache: Dict[roomid, msgstorage] = {}
+        self._lock = RLock()
 
     def init(self, container):
         self.filer: i_msgfiler = container.resolve(i_msgfiler)
@@ -253,30 +257,34 @@ class msgmager(i_msgmager):
                 return None
 
     def load_lasted(self, room_id: roomid, amount: int) -> List[StorageUnit]:
-        storage = self.get_storage(room_id)
-        if storage:
-            return storage.retrieve_lasted(amount)
-        else:
-            self.logger.error(f"Cannot load msg storage from {room_id}")
+        with self._lock:
+            storage = self.get_storage(room_id)
+            if storage:
+                return storage.retrieve_lasted(amount)
+            else:
+                self.logger.error(f"Cannot load msg storage from {room_id}")
 
     def retrieve(self, room_id: roomid, amount: int, start: datetime, end: datetime) -> List[StorageUnit]:
-        storage = self.get_storage(room_id)
-        if storage:
-            return storage.retrieve(start=start, end=end, number_limit=amount)
-        else:
-            self.logger.error(f"Cannot load msg storage from {room_id}")
+        with self._lock:
+            storage = self.get_storage(room_id)
+            if storage:
+                return storage.retrieve(start=start, end=end, number_limit=amount)
+            else:
+                self.logger.error(f"Cannot load msg storage from {room_id}")
 
     def receive(self, room_id: roomid, msg_unit: StorageUnit):
-        if room_id in self.cache:
-            storage = self.cache[room_id]
-        else:
-            msgs_file = self.filer.get(room_id)
-            storage = msgstorage(msgs_file)
-        storage.store(msg_unit)
+        with self._lock:
+            if room_id in self.cache:
+                storage = self.cache[room_id]
+            else:
+                msgs_file = self.filer.get(room_id)
+                storage = msgstorage(msgs_file)
+            storage.store(msg_unit)
 
     def load_until_today(self, room_id: roomid, amount: int) -> List[StorageUnit]:
-        storage = self.get_storage(room_id)
-        if storage:
-            return storage.retrieve_until(end=datetime.now(), number_limit=amount)
-        else:
-            self.logger.error(f"Cannot load msg storage from {room_id}")
+        with self._lock:
+            storage = self.get_storage(room_id)
+            if storage:
+                return storage.retrieve_until(end=datetime.now(), number_limit=amount)
+            else:
+                self.logger.error(f"Cannot load msg storage from {room_id}")

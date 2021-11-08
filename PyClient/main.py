@@ -5,7 +5,6 @@ import keys
 from chars import *
 from cmd import cmdmanager
 from core import utils
-from core.chats import msgstorage
 from core.ioc import container
 from ui.clients import client
 from ui.inputs import i_input
@@ -14,11 +13,16 @@ from ui.k import cmdkey
 DEBUG = False
 IDE = False
 args = sys.argv
-if utils.get_at(args, 1) == "debug":
+if utils.get_at(args, -1) == "-debug":
     DEBUG = True
-elif utils.get_at(args, 1) == "ide":
+elif utils.get_at(args, -1) == "-ide":
     DEBUG = True
     IDE = True
+
+server_ip = "127.0.0.1"
+port = 5000
+if utils.get_at(args, 1) == "-login":
+    server_ip = utils.get_at(args, 2)
 
 if IDE:
     setattr(utils, "clear_screen", lambda: None)
@@ -35,10 +39,7 @@ def main():
     _client.on_cmd_register.add(add_commands)
     _client.on_keymapping.add(mapkeys)
     _client.init()
-    st = msgstorage("record.rec")
-    st.deserialize()
-    _client.win.history = [unit[2] for unit in st]
-    _client.connect(("127.0.0.1", 5000))
+    _client.connect((server_ip, port))
     _client.start()
 
 
@@ -61,15 +62,6 @@ def mapkeys(client, keymap: cmdkey):
         return
     elif keymap is client.key_quit_text_mode:
         keymap.map(keys.k_quit)
-
-    """if system_type == "Windows":
-        if keymap is client.key_quit_text_mode:
-            keymap.map(c_esc)
-            return
-    elif system_type == "Linux":
-        if keymap is client.key_quit_text_mode:
-            keymap.map(linux_eot)
-            return"""
 
 
 def add_commands(client, cmd_manager: cmdmanager):

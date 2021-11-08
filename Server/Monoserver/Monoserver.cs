@@ -31,10 +31,19 @@ public partial class Monoserver : IServer
             _network = (Network?)value;
         }
     }
-    public IMessageChannel? User { get; private set; }
-    public IMessageChannel? Chatting { get; private set; }
+    public IMessageChannel? User
+    {
+        get; private set;
+    }
+    public IMessageChannel? Chatting
+    {
+        get; private set;
+    }
 
-    public ILogger? Logger { get; private set; }
+    public ILogger? Logger
+    {
+        get; private set;
+    }
 
     public void Initialize()
     {
@@ -86,7 +95,10 @@ public partial class Monoserver : IServer
         get; init;
     } = new();
 
-    public IUserService? UserService { get; private set; }
+    public IUserService? UserService
+    {
+        get; private set;
+    }
 
     private readonly object _mainThreadLock = new();
 
@@ -109,26 +121,32 @@ public partial class Monoserver : IServer
         {
             throw new NetworkServiceException();
         }
-        NetworkService.OnClientConnected += async token =>
+        NetworkService.OnClientConnected += token =>
         {
-            Logger!.SendMessage($"{token.IpAddress} is connected and will be sent msg 20s soon.");
-            await Task.Delay(20000);
-            User!.SendMessage(token, new RegisterResultMsg(RegisterResultMsg.RegisterResult.Succeed));
-            Logger.SendMessage($"{token.IpAddress} was sent a msg.");
+            AddScheduledTask(async () =>
+            {
+                Logger!.SendMessage($"{token.IpAddress} is connected and will be sent msg 20s soon.");
+                await Task.Delay(20000);
+                User!.SendMessage(token, new RegisterResultMsg(RegisterResultMsg.RegisterResult.Succeed));
+                Logger.SendMessage($"{token.IpAddress} was sent a msg.");
+            });
         };
 
-        NetworkService.OnClientConnected += async token =>
+        NetworkService.OnClientConnected += token =>
         {
-            Logger!.SendMessage($"{token.IpAddress} is connected and will be sent msg 10s soon.");
-            await Task.Delay(10000);
-            Chatting!.SendMessage(token, new ChattingMsg()
+            AddScheduledTask(async () =>
             {
-                ChattingRoomID = 12345,
-                UserID = "System",
-                SendTime = DateTime.UtcNow,
-                ChattingText = "Hello user, welcome to the chatting room!"
+                Logger!.SendMessage($"{token.IpAddress} is connected and will be sent msg 10s soon.");
+                await Task.Delay(10000);
+                Chatting!.SendMessage(token, new ChattingMsg()
+                {
+                    ChattingRoomID = 12345,
+                    UserID = "System",
+                    SendTime = DateTime.UtcNow,
+                    ChattingText = "Hello user, welcome to the chatting room!"
+                });
+                Logger.SendMessage($"{token.IpAddress} was sent a msg from system.");
             });
-            Logger.SendMessage($"{token.IpAddress} was sent a msg from system.");
         };
     }
 
@@ -153,7 +171,9 @@ public partial class Monoserver : IServer
 [Serializable]
 public class NetworkServiceException : Exception
 {
-    public NetworkServiceException() { }
+    public NetworkServiceException()
+    {
+    }
     public NetworkServiceException(string message) : base(message) { }
     public NetworkServiceException(string message, Exception inner) : base(message, inner) { }
     protected NetworkServiceException(

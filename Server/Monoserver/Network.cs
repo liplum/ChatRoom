@@ -1,5 +1,4 @@
 ﻿using ChattingRoom.Core.Networks;
-using ChattingRoom.Server.Protocols;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net;
@@ -189,7 +188,8 @@ public partial class Monoserver : IServer
         public void StartService()
         {
             Logger!.SendMessage("Network component is preparing to start.");
-            _serverSocket = new TcpListener(IPAddress.Any, Protocol.Connection.Port);
+            int port = (int)Assets.Configs.Port;
+            _serverSocket = new TcpListener(IPAddress.Any, port);
             _serverSocket.Start();
             Logger!.SendMessage("Network component started.");
             _listen = new Thread(() =>
@@ -253,11 +253,7 @@ public partial class Monoserver : IServer
             }
 
             listeningThread.Start();
-            //OnClientConnected?.Invoke(token);
-            Server.AddScheduledTask(() =>
-            {
-                OnClientConnected?.Invoke(token);
-            });
+            OnClientConnected?.Invoke(token);
         }
 
         private void RemoveClient([NotNull] NetworkToken token, Action? afterRemoved = null)

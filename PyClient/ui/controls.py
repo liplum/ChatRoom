@@ -412,7 +412,7 @@ class text_mode(inputable_state):
 
         def send_text():
             inputs = self.textbox.inputs
-            self.client.send_text(roomid(12345), inputs, server_token("127.0.0.1", 5000))
+            self.client.send_text(roomid(12345), inputs, server_token("110.42.173.249", 5000))
             self.textbox.clear()
 
         kbs.bind(keys.k_enter, lambda c: send_text())
