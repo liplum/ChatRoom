@@ -1,7 +1,7 @@
 import sys
 import traceback
 from functools import wraps
-from threading import RLock, Thread
+from threading import Thread
 
 import core.ioc as ioc
 import ui.inputs as _input
@@ -35,6 +35,9 @@ class client:
     def key(self, ck: cmdkey) -> cmdkey:
         self.cmdkeys.append(ck)
         return ck
+
+    def check_file_permission(self) -> bool:
+        return os.access(self.root_path, os.F_OK & os.R_OK & os.W_OK)
 
     @property
     def on_service_register(self) -> event:
@@ -98,12 +101,16 @@ class client:
         self.inpt: _input.i_input = ct.resolve(_input.i_input)
         self.logger: output.i_logger = ct.resolve(output.i_logger)
         self.today = datetime.today()
-        self.log_file = f"{self.root_path}\\log", f"{self.today.strftime('%Y%m%d')}.log"
+
+        if not self.check_file_permission():
+            self.root_path=""
+
+        self.log_file = f"{self.root_path}/log", f"{self.today.strftime('%Y%m%d')}.log"
         self.display: output.i_display = ct.resolve(output.i_display)
         self.cmd_manger: cmdmanager = ct.resolve(cmdmanager)
         self.logger.msg("Service component initialized.")
         self.msg_filer: i_msgfiler = ct.resolve(i_msgfiler)
-        self.msg_filer.msg_storages_dir = f"{self.root_path}\\data"
+        self.msg_filer.msg_storages_dir = f"{self.root_path}/data"
         self.msg_manager: i_msgmager = ct.resolve(i_msgmager)
 
         def on_msg_pre_analyzed(network, server_token, source, json):
