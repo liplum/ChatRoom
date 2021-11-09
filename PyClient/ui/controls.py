@@ -145,10 +145,7 @@ class chat_tab(tab):
             return utils.compose(displayed, connector="\n")
 
     def on_input(self, char):
-        if keys.k_enter == char:
-            self.send_text()
-        else:
-            self.sm.on_input(char)
+         self.sm.on_input(char)
 
     @property
     def title(self) -> str:
@@ -464,6 +461,7 @@ class text_mode(inputable_state):
         self.kbs = kbs
 
         kbs.on_any = lambda c: self.textbox.append(c)
+        kbs.bind(keys.k_end, lambda c: self.tab.send_text())
 
     def on_en(self):
         self.client.mark_dirty()
