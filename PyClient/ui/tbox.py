@@ -72,7 +72,6 @@ class textbox(control):
         """
         Para 1:textbox object
 
-
         Para 2:the final string which will be displayed soon(list[0]=str)
 
         :return: event(textbox,list)
@@ -84,9 +83,7 @@ class textbox(control):
         """
         Para 1:textbox object
 
-
         Para 2:former cursor position
-
 
         Para 3:current cursor position
 
@@ -99,9 +96,7 @@ class textbox(control):
         """
         Para 1:textbox object
 
-
         Para 2:cursor position
-
 
         Para 3:char appended
 
@@ -114,9 +109,7 @@ class textbox(control):
         """
         Para 1:textbox object
 
-
         Para 2:cursor position
-
 
         Para 3:char deleted
 
@@ -129,9 +122,7 @@ class textbox(control):
         """
         Para 1:textbox object
 
-
         Para 2:former list
-
 
         Para 3:current list
 

@@ -173,6 +173,7 @@ class client:
         i = self.inpt
         i.initialize()
         self.winsize_monitor.start()
+        self.win.start()
         self.render()
         while self.running:
             try:

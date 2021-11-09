@@ -73,6 +73,9 @@ class chat_tab(tab):
         self.max_display_line = 10
         self.fill_until_max = True
         self.msg_manager: i_msgmager = self.client.msg_manager
+        self._connected: Optional[server_token] = None
+        self.network: "i_network" = self.client.network
+        self.logger: "i_logger" = self.client.logger
 
         def set_client(state: state) -> None:
             state.client = self.client
@@ -93,6 +96,24 @@ class chat_tab(tab):
         self.textbox.on_delete.add(lambda b, p, c: client.mark_dirty())
         self.textbox.on_cursor_move.add(lambda b, f, c: client.mark_dirty())
         self.textbox.on_list_replace.add(lambda b, f, c: client.mark_dirty())
+
+    def send_text(self):
+        if self.connected:
+            inputs = self.textbox.inputs
+            self.client.send_text(roomid(12345), inputs, self.connected)
+        else:
+            self.logger.error("Haven't connected a server yet.")
+        self.textbox.clear()
+
+    @property
+    def connected(self) -> Optional[server_token]:
+        return self._connected
+
+    def connect(self, server_token):
+        if self.network.is_connected(server_token):
+            self._connected = server_token
+        else:
+            self.logger.error("Cannot access a unconnected/disconnected server.")
 
     def draw_on(self, buf: buffer):
         # TODO:Change the room id
@@ -124,7 +145,10 @@ class chat_tab(tab):
             return utils.compose(displayed, connector="\n")
 
     def on_input(self, char):
-        self.sm.on_input(char)
+        if keys.k_enter == char:
+            self.send_text()
+        else:
+            self.sm.on_input(char)
 
     @property
     def title(self) -> str:
@@ -153,10 +177,28 @@ class tablist:
 
     @property
     def on_curtab_changed(self) -> event:
+        """
+        Para 1:tablist object
+
+        Para 2:index of current tab
+
+        Para 3:current tab
+
+        :return: event(tablist,int,tab)
+        """
         return self._on_curtab_changed
 
     @property
     def on_tablist_changed(self) -> event:
+        """
+        Para 1:textbox object
+
+        Para 2:change type: True->add ; False->remove
+
+        Para 3:operated tab
+
+        :return: event(textbox,bool,tab)
+        """
         return self._on_tablist_changed
 
     def __len__(self) -> int:
@@ -170,7 +212,7 @@ class tablist:
         if self.cur is None:
             self.cur = tab
             self.cur_index = self.tabs.index(self.cur)
-            self.on_curtab_changed(self, tab)
+            self.on_curtab_changed(self, self.cur_index, tab)
 
     def remove(self, item: Union[int, "tab"]):
         if isinstance(item, int):
@@ -185,6 +227,7 @@ class tablist:
             self.on_tablist_changed(self, False, item)
             if isinstance(tab, chat_tab):
                 self.chat_tabs.remove(tab)
+        self.goto(self.cur_index - 1)
 
     def switch(self):
         if len(self.view_history) >= 2:
@@ -240,13 +283,23 @@ class tablist:
 class window:
     def __init__(self, client: "client", displayer: output.i_display):
         self.client = client
-        self.max_display_line = 10
         self.displayer: output.i_display = displayer
+        # self.max_display_line = 10
         self.tablist = tablist(self)
         self.screen_buffer: Optional[buffer] = None
-        self.newtab(chat_tab)
         self.tablist.on_curtab_changed.add(lambda li, n, t: self.client.mark_dirty())
         self.tablist.on_tablist_changed.add(lambda li, mode, t: self.client.mark_dirty())
+
+    def start(self):
+        self.network: "i_network" = self.client.network
+        self.gen_default_tab()
+
+    def gen_default_tab(self):
+        chat = chat_tab(self.client, self.tablist)
+        self.tablist.add(chat)
+        first_or_default = utils.get_at(self.network.connected_servers, 0)
+        if first_or_default:
+            chat.connect(first_or_default)
 
     def newtab(self, tabtype: type):
         self.tablist.add(tabtype(self.client, self.tablist))
@@ -410,12 +463,6 @@ class text_mode(inputable_state):
         kbs = kbinding()
         self.kbs = kbs
 
-        def send_text():
-            inputs = self.textbox.inputs
-            self.client.send_text(roomid(12345), inputs, server_token("110.42.173.249", 5000))
-            self.textbox.clear()
-
-        kbs.bind(keys.k_enter, lambda c: send_text())
         kbs.on_any = lambda c: self.textbox.append(c)
 
     def on_en(self):

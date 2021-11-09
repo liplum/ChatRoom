@@ -1,14 +1,14 @@
 import json
 from abc import ABC, abstractmethod
 from socket import socket, AF_INET, SOCK_STREAM
-from threading import Thread
-from typing import Dict, Tuple, Callable
+from threading import Thread, RLock
+from typing import Dict, Tuple, Callable, List
 
 from core import converts
 from core.events import event
 from core.utils import get, not_none
 from ui import outputs
-
+from functools import wraps
 
 class server_token:
     def __init__(self, ip: str = None, port: int = None, server: Tuple[str, int] = None):
@@ -119,29 +119,51 @@ class channel(i_channel):
             self.logger.error(f"Cannot find message type {msg_id}")
 
 
-class i_network:
+class i_network(ABC):
     def __init__(self, client):
         self.client = client
 
-    def connect(self, server: server_token):
+    @abstractmethod
+    def connect(self, server: server_token) -> bool:
         pass
 
+    @abstractmethod
+    def is_connected(self, server: server_token):
+        pass
+
+    @abstractmethod
     def send(self, server: server_token, _msg: msg, jobj: Dict):
         pass
 
+    @abstractmethod
     def new_channel(self, channel_name: str) -> channel:
         pass
 
+    @abstractmethod
     def get_channel(self, name: str):
+        pass
+
+    @property
+    @abstractmethod
+    def connected_servers(self) -> List[server_token]:
         pass
 
 
 class network(i_network):
+
+    def is_connected(self, server: server_token):
+        return server in self.sockets
+
+    @property
+    def connected_servers(self) -> List[server_token]:
+        return list(self.sockets.keys())
+
     def __init__(self, client):
         super().__init__(client)
         self.sockets: Dict[server_token, Tuple[socket, Thread]] = {}
         self.channels: Dict[str, channel] = {}
         self._on_msg_pre_analyzed = event()
+        self._lock = RLock()
 
     @property
     def on_msg_pre_analyzed(self):
@@ -161,24 +183,47 @@ class network(i_network):
     def get_channel(self, name: str):
         return get(self.channels, name)
 
-    def connect(self, server: server_token):
+    def connect(self, server: server_token) -> bool:
         skt = socket(AF_INET, SOCK_STREAM)
-        skt.connect(server.target)
+        try:
+            skt.connect(server.target)
+        except:
+            return False
         listen = Thread(target=self.__receive_datapack, args=(server, skt))
         listen.daemon = True
-        self.sockets[server] = (skt, listen)
+        self.lock(self._add_socket)(server,skt, listen)
         listen.start()
+        return True
+
+    def _add_socket(self, server: server_token, skt: socket, listen: Thread) -> None:
+        self.sockets[server] = (skt, listen)
+
+    def _del_socket(self, server: server_token) -> bool:
+        if server in self.sockets:
+            del self.sockets[server]
+            return True
+        else:
+            return False
 
     def init(self, container):
         self.logger: outputs.i_logger = container.resolve(outputs.i_logger)
 
     def __receive_datapack(self, token: server_token, server_socket):
         while True:
-            _datapack: datapack = read_one(server_socket)
+            try:
+                _datapack: datapack = read_one(server_socket)
+            except:
+                break
             json_text = converts.read_str(_datapack.data)
             _json = json.loads(json_text)
             self.on_msg_pre_analyzed(self, token, json_text, _json)
             self.__analyse(_json, server_socket)
+
+    def disconnect(self, server: server_token):
+        if server in self.sockets:
+            sk, t = self.sockets[server]
+            sk.close()
+            self.lock(self._del_socket)(server)
 
     def __analyse(self, _json: Dict, server: server_token):
         channel_name = get(_json, "ChannelName")
@@ -216,6 +261,16 @@ class network(i_network):
         c = channel(self, channel_name)
         self.channels[channel_name] = c
         return c
+
+    def lock(self, func):
+        @wraps(func)
+        def inner(*args, **kwargs):
+            self._lock.acquire()
+            res = func(*args, **kwargs)
+            self._lock.release()
+            return res
+
+        return inner
 
 
 def to_bytes_starting_with_len(dp: "datapack") -> bytes:
