@@ -194,6 +194,7 @@ class client:
             except Exception as e:
                 traceback.print_exc()
                 self.running = False
+        self.msg_manager.save_all()
         sys.exit(0)
 
     def render(self):

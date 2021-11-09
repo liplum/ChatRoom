@@ -219,7 +219,10 @@ public partial class Monoserver
             get; init;
         }
 
-        private bool Terminaled { get; set; }
+        private bool Terminaled
+        {
+            get; set;
+        }
 
         public bool Terminal()
         {

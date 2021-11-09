@@ -1,6 +1,7 @@
 ﻿using ChattingRoom.Core.Networks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using static ChattingRoom.Core.Networks.INetwork;
@@ -69,7 +70,14 @@ public partial class Monoserver : IServer
                 if (_allConnections.TryGetValue(token, out var info))
                 {
                     var connection = info.connection;
-                    connection.Send(datapack);
+                    try
+                    {
+                        connection.Send(datapack);
+                    }
+                    catch (Exception)
+                    {
+                        Logger!.SendError($"Cannot write datapack to {token.IpAddress}.");
+                    }
                 }
             }
         }

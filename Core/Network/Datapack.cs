@@ -170,7 +170,9 @@ public class ReadOnlyDatapck : IDatapack
 [Serializable]
 public class DatapackCantBeWrittenInException : Exception
 {
-    public DatapackCantBeWrittenInException() { }
+    public DatapackCantBeWrittenInException()
+    {
+    }
     public DatapackCantBeWrittenInException(string message) : base(message) { }
     public DatapackCantBeWrittenInException(string message, Exception inner) : base(message, inner) { }
     protected DatapackCantBeWrittenInException(

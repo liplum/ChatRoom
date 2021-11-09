@@ -127,6 +127,9 @@ class msgstorage:
         :param reverse:If true,retrieves msg starting from end datetime.Otherwise starting from start datetime.
         :return:
         """
+        if len(self.__storage) == 0:
+            return []
+
         start = min(start, end)
         end = max(start, end)
 
@@ -154,6 +157,8 @@ class msgstorage:
         :param number_limit:the max number of message retrieval.
         :return:
         """
+        if len(self.__storage) == 0:
+            return []
 
         if self.changed:
             self.sort()
@@ -162,7 +167,9 @@ class msgstorage:
             return snapshot
         return snapshot[-number_limit:]
 
-    def retrieve_until(self, end: datetime, number_limit: Optional[int] = None):
+    def retrieve_until(self, end: datetime, number_limit: Optional[int] = None) -> List[StorageUnit]:
+        if len(self.__storage) == 0:
+            return []
         if self.changed:
             self.sort()
         snapshot = self.__storage[:]
@@ -189,6 +196,9 @@ class i_msgmager:
         pass
 
     def load_until_today(self, room_id: roomid, amount: int) -> List[StorageUnit]:
+        pass
+
+    def save_all(self):
         pass
 
 
@@ -288,3 +298,7 @@ class msgmager(i_msgmager):
                 return storage.retrieve_until(end=datetime.now(), number_limit=amount)
             else:
                 self.logger.error(f"Cannot load msg storage from {room_id}")
+
+    def save_all(self):
+        for strg in self.cache.values():
+            strg.serialize()
