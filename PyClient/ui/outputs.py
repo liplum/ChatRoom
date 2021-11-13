@@ -4,6 +4,8 @@ from datetime import datetime
 from enum import IntEnum, unique
 from typing import Optional, NoReturn, List, Tuple
 
+from ui.filer import i_filer
+
 
 def get_winsize() -> Tuple[int, int]:
     return os.get_terminal_size()
@@ -81,39 +83,16 @@ def gen_tinted_text(text: str, fgcolor: Optional[CmdFgColor], bkcolor: Optional[
 
 class cmd_logger(i_logger):
 
-    def __init__(self, output_to_cmd: bool = True, logfile: Optional[str] = None, logfile_dir: Optional[str] = None):
+    def __init__(self, output_to_cmd: bool = True):
         super().__init__()
-        self._logfile: Optional[str] = logfile
-        self._logfile_dir: Optional[str] = logfile_dir
-        self._logfile_fullpath: Optional[str] = None
-        self._logfile_path_changed = False
         self.output_to_cmd = output_to_cmd
+
+    def init(self, container):
+        self.filer = container.resolve(i_filer)
 
     @property
     def logfile(self):
-        return self._logfile
-
-    @property
-    def logfile_dir(self):
-        return self._logfile_dir
-
-    @logfile.setter
-    def logfile(self, value):
-        if self._logfile != value:
-            self._logfile_path_changed = True
-        self._logfile = value
-
-    @logfile_dir.setter
-    def logfile_dir(self, value):
-        if self._logfile_dir != value:
-            self._logfile_path_changed = True
-        self._logfile_dir = value
-
-    @property
-    def logfile_fullpath(self):
-        if self._logfile_path_changed:
-            self._logfile_fullpath = f"{self._logfile_dir}//{self._logfile}"
-        return self._logfile_fullpath
+        return self.filer.get_file(f"/log/{datetime.today().strftime('%Y%m%d')}.log")
 
     def msg(self, text: str) -> NoReturn:
         self.alert_print(text, AlertLevel.Msg)
@@ -132,11 +111,8 @@ class cmd_logger(i_logger):
         time_stamp = datetime.now().strftime("%Y%m%d-%H:%M:%S")
         t = f"{time_stamp}[{label}]{text}"
         tinted_print(t, fgcolor=color)
-        if self.logfile is not None:
-            if not os.path.exists(self.logfile_dir):
-                os.makedirs(self.logfile_dir)
-            with open(self.logfile_fullpath, "a+", encoding='utf-16') as log:
-                log.write(t + '\n')
+        with open(self.logfile, "a+", encoding='utf-16') as log:
+            log.write(t + '\n')
 
 
 class buffer:

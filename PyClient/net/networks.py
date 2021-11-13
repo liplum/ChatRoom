@@ -1,39 +1,16 @@
 import json
 from abc import ABC, abstractmethod
+from collections import namedtuple
+from functools import wraps
 from socket import socket, AF_INET, SOCK_STREAM
 from threading import Thread, RLock
 from typing import Dict, Tuple, Callable, List
 
 from core import converts
-from core.events import event
-from core.utils import get, not_none
+from events import event
+from core.shared import server_token
+from utils import get, not_none
 from ui import outputs
-from functools import wraps
-
-class server_token:
-    def __init__(self, ip: str = None, port: int = None, server: Tuple[str, int] = None):
-        if server is not None:
-            self.target = server
-        elif not_none(ip, port):
-            self.target = (ip, port)
-        else:
-            self.target = ("127.0.0.1", 8080)
-
-    def __str__(self):
-        return self.target.__str__()
-
-    def __repr__(self):
-        return self.target.__repr__()
-
-    def __eq__(self, other):
-        if isinstance(other, server_token):
-            return self.target == other.target
-        elif isinstance(other, tuple):
-            return self.target == other
-        return False
-
-    def __hash__(self):
-        return hash(self.target)
 
 
 class msg(ABC):
@@ -72,6 +49,12 @@ class i_channel:
     def receive_datapack(self, _json: Dict, msg_id: str, _from: server_token):
         pass
 
+    def send(self, to: server_token, msg):
+        pass
+
+
+Context = namedtuple("Context", ["client", "channel", "token", "network"])
+
 
 class channel(i_channel):
     def __init__(self, network: "i_network", name):
@@ -102,7 +85,7 @@ class channel(i_channel):
             msg.read(_json)
             if not self.on_msg_received(self, msg, handler):
                 if handler is not None:
-                    context = (self.network.client, self, server_token)
+                    context = Context(self.network.client, self, _from, self.network)
                     handler(msg, context)
         else:
             self.logger.error(f"Cannot find message type called {msg_id}")
@@ -136,11 +119,11 @@ class i_network(ABC):
         pass
 
     @abstractmethod
-    def new_channel(self, channel_name: str) -> channel:
+    def new_channel(self, channel_name: str) -> i_channel:
         pass
 
     @abstractmethod
-    def get_channel(self, name: str):
+    def get_channel(self, name: str) -> i_channel:
         pass
 
     @property
@@ -164,6 +147,15 @@ class network(i_network):
         self.channels: Dict[str, channel] = {}
         self._on_msg_pre_analyzed = event()
         self._lock = RLock()
+        self._max_retry_time = 3
+
+    @property
+    def max_retry_time(self) -> int:
+        return self._max_retry_time
+
+    @max_retry_time.setter
+    def max_retry_time(self, value: int):
+        self._max_retry_time = max(1, int(value))
 
     @property
     def on_msg_pre_analyzed(self):
@@ -185,13 +177,21 @@ class network(i_network):
 
     def connect(self, server: server_token) -> bool:
         skt = socket(AF_INET, SOCK_STREAM)
-        try:
-            skt.connect(server.target)
-        except:
+        succeed = False
+        for i in range(self.max_retry_time):
+            try:
+                self.logger.msg(f"Trying to connect {server} [{i + 1}]...")
+                skt.connect(server)
+                succeed = True
+                break
+            except:
+                continue
+        if not succeed:
+            self.logger.error(f"Cannot connect {server}")
             return False
         listen = Thread(target=self.__receive_datapack, args=(server, skt))
         listen.daemon = True
-        self.lock(self._add_socket)(server,skt, listen)
+        self.lock(self._add_socket)(server, skt, listen)
         listen.start()
         return True
 
@@ -217,7 +217,7 @@ class network(i_network):
             json_text = converts.read_str(_datapack.data)
             _json = json.loads(json_text)
             self.on_msg_pre_analyzed(self, token, json_text, _json)
-            self.__analyse(_json, server_socket)
+            self.__analyse(_json, token)
 
     def disconnect(self, server: server_token):
         if server in self.sockets:

@@ -1,7 +1,7 @@
-﻿using ChattingRoom.Server.Configs;
+﻿using System.Dynamic;
+using ChattingRoom.Server.Configs;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using System.Dynamic;
 
 namespace ChattingRoom.Server;
 
@@ -77,13 +77,13 @@ public static class Assets
     public static void SaveConfig()
     {
         EnsureConfig();
-        var josnText = JsonConvert.SerializeObject(_configJson, Formatting.Indented);
+        string? josnText = JsonConvert.SerializeObject(_configJson, Formatting.Indented);
         File.WriteAllText(ConfigFile, josnText);
     }
 
     private static void EnsureConfig()
     {
-        foreach (var configName in AllBuiltInConfigs.Keys)
+        foreach (string? configName in AllBuiltInConfigs.Keys)
         {
             Configurations.TryGetValue(configName, out dynamic _);
         }

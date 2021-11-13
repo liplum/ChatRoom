@@ -1,9 +1,8 @@
-﻿using ChattingRoom.Core.Networks;
+﻿using System.Net;
+using System.Net.Sockets;
+using ChattingRoom.Core.Networks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Net;
-using System.Net.Sockets;
 using static ChattingRoom.Core.Networks.INetwork;
 
 namespace ChattingRoom.Server;
@@ -196,7 +195,7 @@ public partial class Monoserver : IServer
         public void StartService()
         {
             Logger!.SendMessage("Network component is preparing to start.");
-            int port = (int)Assets.Configs.Port;
+            var port = (int)Assets.Configs.Port;
             _serverSocket = new TcpListener(IPAddress.Any, port);
             _serverSocket.Start();
             Logger!.SendMessage("Network component started.");

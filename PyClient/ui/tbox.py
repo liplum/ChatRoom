@@ -1,8 +1,8 @@
 from io import StringIO
 from typing import List
 
-from core import utils
-from core.events import event
+import utils
+from events import event
 from ui.ctrl import control
 from ui.outputs import CmdBkColor, CmdFgColor
 from ui.outputs import buffer
@@ -131,11 +131,11 @@ class textbox(control):
         return self._on_list_replace
 
     @property
-    def input_list(self):
+    def input_list(self)->List[str]:
         return self._input_list[:]
 
     @property
-    def input_count(self):
+    def input_count(self)->int:
         return len(self._input_list)
 
     @input_list.setter

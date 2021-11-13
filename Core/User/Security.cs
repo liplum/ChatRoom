@@ -1,28 +1,45 @@
-﻿namespace ChattingRoom.Core.Users.Securities;
-public struct Password
+﻿using System.Text;
+using MD5Gener = System.Security.Cryptography.MD5;
+
+namespace ChattingRoom.Core.Users.Securities;
+public static class MD5
 {
-    private readonly string Md5Passwrod;
-    public Password([NotNull] string md5)
+    private static readonly MD5Gener generator;
+    static MD5()
     {
-        Md5Passwrod = md5;
+        generator = MD5Gener.Create();
     }
-    public override bool Equals([NotNullWhen(true)] object? obj)
+    public static string Convert(string password)
     {
-        return obj is Password o && string.Equals(Md5Passwrod, o.Md5Passwrod);
-    }
-
-    public static bool operator ==(Password left, Password right)
-    {
-        return left.Equals(right);
-    }
-
-    public static bool operator !=(Password left, Password right)
-    {
-        return !(left == right);
+        var inputBytes = Encoding.ASCII.GetBytes(password);
+        var hash = generator.ComputeHash(inputBytes);
+        var sb = new StringBuilder();
+        for (var i = 0; i < hash.Length; i++)
+        {
+            sb.Append($"{hash[i]:x2}");
+        }
+        return sb.ToString();
     }
 
-    public override int GetHashCode()
+    public static bool Verify(string clearText, string md5Target)
     {
-        return Md5Passwrod.GetHashCode();
+        var md5Pwd = Convert(clearText);
+        return string.Equals(md5Pwd, md5Target);
+    }
+}
+
+public static class Password
+{
+    public static bool IsValid(this string clear_password)
+    {
+        return true;
+    }
+}
+
+public static class Account
+{
+    public static bool IsValid(this string account)
+    {
+        return true;
     }
 }

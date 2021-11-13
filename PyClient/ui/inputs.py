@@ -1,7 +1,7 @@
 from typing import List
 
 from chars import *
-from core.events import event
+from events import event
 
 
 class i_input:
@@ -24,7 +24,6 @@ class i_input:
     def on_input(self) -> event:
         """
         Para 1:i_input object
-
 
         Para 2:char object
 

@@ -11,16 +11,30 @@ public class ChattingMsg : IMessage
 
     }
 
-    public UserID? UserID { get; set; }
-    public string? ChattingText { get; set; }
+#nullable disable
+    public string Account
+    {
+        get; set;
+    }
+    public string ChattingText
+    {
+        get; set;
+    }
 
-    public DateTime? SendTime { get; set; }
+    public DateTime SendTime
+    {
+        get; set;
+    }
 
-    public ChattingRoomID? ChattingRoomID { get; set; }
+    public int ChattingRoomID
+    {
+        get; set;
+    }
 
+#nullable enable
     public void Deserialize(dynamic json)
     {
-        string? user_id_string = json.UserID;
+        string? user_id_string = json.Account;
         ChattingText = json.Text;
         long? sendtime_long = json.TimeStamp;
         int? roomID = json.ChattingRoomID;
@@ -28,30 +42,20 @@ public class ChattingMsg : IMessage
         {
             throw new Exception($"A parameter is null.");
         }
-        UserID = new(user_id_string);
+        Account = new(user_id_string);
         SendTime = sendtime_long.Value.ToUnixDatetime();
-        ChattingRoomID = new(roomID.Value);
+        ChattingRoomID = roomID.Value;
     }
 
     public void Serialize(dynamic json)
     {
-        if (!(UserID, ChattingText, SendTime, ChattingRoomID).NotNull())
+        if (!(Account, ChattingText, SendTime, ChattingRoomID).NotNull())
         {
             throw new Exception($"A parameter is null.");
         }
-        json.UserID = UserID!.Value.Name;
+        json.Account = Account;
         json.Text = ChattingText;
-        json.ChattingRoomID = ChattingRoomID!.Value.ID;
-        json.TimeStamp = new DateTimeOffset(SendTime!.Value).ToUnixTimeSeconds();
-    }
-}
-
-public class ChattingMsgHandler : IMessageHandler<ChattingMsg>
-{
-    public void Handle([NotNull] ChattingMsg msg, MessageContext context)
-    {
-        var server = context.Server;
-        var room = server.GetChattingRoomBy(msg.ChattingRoomID!.Value);
-        room?.AddChattingItem(msg.UserID!.Value, msg.ChattingText!, msg.SendTime!.Value);
+        json.ChattingRoomID = ChattingRoomID;
+        json.TimeStamp = new DateTimeOffset(SendTime).ToUnixTimeSeconds();
     }
 }

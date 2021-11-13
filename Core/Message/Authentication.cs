@@ -1,5 +1,4 @@
 ﻿using ChattingRoom.Core.Networks;
-using ChattingRoom.Core.Users;
 using ChattingRoom.Core.Utils;
 
 namespace ChattingRoom.Core.Messages;
@@ -7,19 +6,29 @@ namespace ChattingRoom.Core.Messages;
 [Msg("Authentication", Direction.ClientToServer)]
 public class AuthenticationMsg : IMessage
 {
-    public UserID? ID { get; set; }
-    public string? Password { get; set; }
-    public AuthenticationMsg() { }
+#nullable disable
+    public string Account
+    {
+        get; set;
+    }
+    public string Password
+    {
+        get; set;
+    }
+#nullable enable
+    public AuthenticationMsg()
+    {
+    }
 
     public void Deserialize(dynamic json)
     {
-        ID = new(json.ClientID);
+        Account = new(json.ClientID);
         Password = json.Password;
     }
 
     public void Serialize(dynamic json)
     {
-        json.ClientID = ID!.Value.Name;
+        json.ClientID = Account;
         json.Password = Password;
     }
 }
@@ -37,8 +46,12 @@ public class AuthenticationResultMsg : IMessage
     {
 
     }
-
-    public AuthResult? Result { get; set; }
+#nullable disable
+    public AuthResult Result
+    {
+        get; set;
+    }
+#nullable enable
 
     public AuthenticationResultMsg(AuthResult result)
     {
@@ -56,7 +69,7 @@ public class AuthenticationResultMsg : IMessage
 
     public void Serialize(dynamic json)
     {
-        var res = Result!.Value;
+        var res = Result;
         json.Result = (int)res;
     }
 }

@@ -3,12 +3,14 @@ from io import StringIO
 from typing import Union, List, Optional
 
 import chars
+import i18n
 import keys
+import utils
+from cmd import WrongUsageError, CmdError, CmdNotFound
 from cmd import cmdmanager
-from core import utils
-from core.chats import roomid, i_msgmager
-from core.events import event
-from net.networks import server_token
+from core.chats import i_msgmager
+from core.shared import server_token, roomid
+from events import event
 from ui import outputs as output
 from ui.k import kbinding
 from ui.outputs import CmdBkColor, CmdFgColor
@@ -63,6 +65,15 @@ class tab(ABC):
     def title(self) -> str:
         pass
 
+    def add_string(self, string: str):
+        pass
+
+    def on_added(self):
+        pass
+
+    def on_removed(self):
+        pass
+
 
 class chat_tab(tab):
 
@@ -73,14 +84,19 @@ class chat_tab(tab):
         self.max_display_line = 10
         self.fill_until_max = True
         self.msg_manager: i_msgmager = self.client.msg_manager
-        self._connected: Optional[server_token] = None
         self.network: "i_network" = self.client.network
         self.logger: "i_logger" = self.client.logger
+        self.first_loaded = False
+
+        # TODO:Remove this
+        self._connected: Optional[server_token] = None
+        self._joined: Optional[roomid] = None
 
         def set_client(state: state) -> None:
             state.client = self.client
             state.textbox = self.textbox
             state.tablist = self.tablist
+            state.tab = self
 
         def gen_state(statetype: type) -> state:
             if issubclass(statetype, inputable_state):
@@ -106,6 +122,14 @@ class chat_tab(tab):
         self.textbox.clear()
 
     @property
+    def joined(self) -> Optional[roomid]:
+        return self._joined
+
+    @joined.setter
+    def joined(self, value):
+        self._joined = value
+
+    @property
     def connected(self) -> Optional[server_token]:
         return self._connected
 
@@ -115,12 +139,20 @@ class chat_tab(tab):
         else:
             self.logger.error("Cannot access a unconnected/disconnected server.")
 
-    def draw_on(self, buf: buffer):
-        # TODO:Change the room id
-        li = self.msg_manager.load_until_today(roomid(12345), self.max_display_line)
+    def _add_msg(self, time, uid, text):
+        self.history.append(f"{time.strftime('%Y%m%d-%H:%M:%S')}\n  {uid}:  {text}")
+
+    def first_load(self):
         self.history = []
-        for time, uid, text in li:
-            self.history.append(f"{time.strftime('%Y%m%d-%H:%M:%S')}\n\t{uid}:{text}")
+        if self.connected and self.joined:
+            li = self.msg_manager.load_until_today(self.connected, self.joined, self.max_display_line)
+            for time, uid, text in li:
+                self._add_msg(time, uid, text)
+        self.first_loaded = True
+
+    def draw_on(self, buf: buffer):
+        if not self.first_loaded:
+            self.first_load()
 
         buf.addtext(self.distext)
         self.sm.draw_on(buf)
@@ -145,11 +177,27 @@ class chat_tab(tab):
             return utils.compose(displayed, connector="\n")
 
     def on_input(self, char):
-         self.sm.on_input(char)
+        self.sm.on_input(char)
 
     @property
     def title(self) -> str:
-        return "chat tab"
+        if self.connected and self.joined:
+            return str(self.joined.id)
+        return i18n.trans("tabs.chat_tab.name")
+
+    def add_string(self, string: str):
+        self.history.append(string)
+
+    def on_added(self):
+        self.msg_manager.on_received.add(self._on_received_msg)
+
+    def _on_received_msg(self, manager, server, room_id, msg_unit):
+        if server == self.connected and room_id == self.joined:
+            time, uid, text = msg_unit
+            self._add_msg(time, uid, text)
+
+    def on_removed(self):
+        self.msg_manager.on_received.remove(self._on_received_msg)
 
 
 class setting_tab(tab):
@@ -163,7 +211,7 @@ class main_menu_tab(tab):
 class tablist:
     def __init__(self, win: "window"):
         self.tabs: List[tab] = []
-        self.cur: Optional[tab] = None
+        self._cur: Optional[tab] = None
         self.cur_index = 0
         self.win = win
         self.view_history = []
@@ -201,6 +249,18 @@ class tablist:
     def __len__(self) -> int:
         return len(self.tabs)
 
+    @property
+    def cur(self) -> Optional[tab]:
+        return self._cur
+
+    @cur.setter
+    def cur(self, value: Optional[tab]):
+        changed = self._cur is not value
+        if changed:
+            self._cur = value
+            self.cur_index = self.tabs.index(self.cur)
+            self.on_curtab_changed(self, self.cur_index, tab)
+
     def add(self, tab: "tab"):
         self.tabs.append(tab)
         if isinstance(tab, chat_tab):
@@ -208,8 +268,7 @@ class tablist:
             self.on_tablist_changed(self, True, tab)
         if self.cur is None:
             self.cur = tab
-            self.cur_index = self.tabs.index(self.cur)
-            self.on_curtab_changed(self, self.cur_index, tab)
+        tab.on_added()
 
     def remove(self, item: Union[int, "tab"]):
         if isinstance(item, int):
@@ -217,13 +276,16 @@ class tablist:
                 removed = self.tabs[item]
                 del self.tabs[item]
                 self.on_tablist_changed(self, False, removed)
+                removed.on_removed()
             if isinstance(removed, chat_tab):
-                self.chat_tabs.remove(need_removed)
+                self.chat_tabs.remove(removed)
+
         elif isinstance(item, tab):
             self.tabs.remove(item)
             self.on_tablist_changed(self, False, item)
-            if isinstance(tab, chat_tab):
-                self.chat_tabs.remove(tab)
+            item.on_removed()
+            if isinstance(item, chat_tab):
+                self.chat_tabs.remove(item)
         self.goto(self.cur_index - 1)
 
     def switch(self):
@@ -236,8 +298,6 @@ class tablist:
         if 0 <= number < len(self.tabs):
             self.cur = self.tabs[number]
             self.add_view_history(number)
-            self.cur_index = self.tabs.index(self.cur)
-            self.on_curtab_changed(self, number, self.cur)
 
     def next(self):
         self.goto(self.cur_index + 1)
@@ -297,6 +357,7 @@ class window:
         first_or_default = utils.get_at(self.network.connected_servers, 0)
         if first_or_default:
             chat.connect(first_or_default)
+            chat.joined = roomid(12345)
 
     def newtab(self, tabtype: type):
         self.tablist.add(tabtype(self.client, self.tablist))
@@ -318,28 +379,6 @@ class window:
         curtab = self.tablist.cur
         if curtab:
             curtab.on_input(char)
-        """
-        if len(self.history) < self.max_display_line:
-            displayed = self.history
-            have_rest = True
-        else:
-            displayed = self.history[-self.max_display_line:]
-            have_rest = False
-        for d in displayed:
-            self.displayer.display_text(d, end="\n")
-        if have_rest and self.fill_until_max:
-            displayed_len = len(displayed)
-            for i in range(self.max_display_line - displayed_len):
-                self.displayer.display_text(end="\n")
-        """
-
-    """ 
-    def add_text(self, text: str):
-        self.history.append(text)
-
-    def clear_all(self):
-        self.history = []
-    """
 
 
 class context:
@@ -358,53 +397,120 @@ class inputable_state(state):
 class cmd_mode(inputable_state):
     def __init__(self):
         super().__init__()
-        self.long_mode = False
         self.longcmd = ""
         self.autofilling = False
         self.autofilling_it = None
         self.autofilling_cur = None
         self.autofilling_all = None
+        self.cmd_history: List[str] = []
+        self.cmd_history_index = 0
+        self.last_cmd_history: Optional[str] = None
+
+    @property
+    def cmd_history_index(self) -> int:
+        return self._cmd_history_index
+
+    @cmd_history_index.setter
+    def cmd_history_index(self, value: int):
+        if value >= 0:
+            self._cmd_history_index = 0
+        else:
+            value = max(value, -len(self.cmd_history))
+            value = min(value, -1)
+            self._cmd_history_index = value
+
+    @property
+    def cur_cmd_history(self) -> Optional[str]:
+        if len(self.cmd_history) == 0 or self.cmd_history_index == 0:
+            return None
+        else:
+            return self.cmd_history[self.cmd_history_index]
 
     def on_en(self):
         self.client.mark_dirty()
         self.textbox.clear()
         self.cmd_manager: cmdmanager = self.client.cmd_manger
 
-    tip: str = utils.fillto("Command mode:", " ", 40)
-
     def draw_on(self, buf: buffer):
-        buf.addtext(text=cmd_mode.tip, fgcolor=CmdFgColor.Black,
+        tip = utils.fillto(f"{i18n.trans('modes.command_mode.name')}:", " ", 40)
+        buf.addtext(text=tip, fgcolor=CmdFgColor.Black,
                     bkcolor=CmdBkColor.Blue,
                     end='\n')
 
-    def enter_long_mode(self):
-        self.long_mode = True
+    @property
+    def is_long_cmd_mode(self) -> bool:
+        inputs = self.textbox.input_list
+        return len(inputs) > 0 and inputs[0] == ':'
 
-    def quit_long_mode(self):
-        self.long_mode = False
-        self.textbox.clear()
+    def _gen_context(self):
+        contxt = context()
+        contxt.client = self.client
+        contxt.tablist = self.tablist
+        contxt.network = self.client.network
+        contxt.tab = self.tab
+        contxt.cmd_manager = self.cmd_manager
+        return contxt
+
+    def _show_cmd_history(self):
+        cur_his = self.cur_cmd_history
+        if cur_his and cur_his != self.last_cmd_history:
+            self.textbox.input_list = cur_his
+            self.last_cmd_history = cur_his
+            self.textbox.end()
 
     def on_input(self, char: chars.char):
         c = self.client
         tb = self.textbox
         if c.key_quit_text_mode == char:
-            self.quit_long_mode()
+            self.textbox.clear()
+            return
+        if keys.k_up == char:
+            self.cmd_history_index -= 1
+            self._show_cmd_history()
+            return
+        elif keys.k_down == char:
+            self.cmd_history_index += 1
+            self._show_cmd_history()
+            return
+        else:
+            self.cmd_history_index = 0
 
-        if tb.input_count <= 0:
-            self.quit_long_mode()
-        if self.long_mode:
+        if self.is_long_cmd_mode:
             if keys.k_enter == char:
                 input_list = tb.input_list
-                full_args = utils.compose(input_list, connector='')
-                args = utils.split_strip(full_args, by=' ')
-                cmd_name = args[0][1:]
-                contxt = context()
-                contxt.client = self.client
-                contxt.tablist = self.tablist
-                self.cmd_manager.execute(contxt, cmd_name, args[1:])
+                full_cmd = utils.compose(input_list, connector='')
+                cmd_args = utils.split_strip(full_cmd, by=' ')
+                full_cmd = utils.compose(cmd_args, connector=' ')
+                args = cmd_args[1:]
+                cmd_name = cmd_args[0][1:]
+                argslen = len(cmd_args)
+                contxt = self._gen_context()
+                try:
+                    self.cmd_manager.execute(contxt, cmd_name, args)
+                except WrongUsageError as wu:
+                    pos = wu.position
+                    with StringIO() as s:
+                        s.write(full_cmd)
+                        s.write('\n')
+                        s.write(utils.repeat(' ', len(cmd_name) + 2))
+                        for i, arg in enumerate(args):
+                            if i == pos:
+                                s.write(utils.repeat('^', len(arg)))
+                            else:
+                                s.write(utils.repeat(' ', len(arg)))
+                            if i < argslen:
+                                s.write(' ')
+                        s.write('\n')
+                        s.write(wu.msg)
+                        self.tab.add_string(s.getvalue())
+                except CmdNotFound as cnt:
+                    pass
+                except CmdError as ce:
+                    pass
+                self.cmd_history.append(full_cmd)
+                self.cmd_history_index = 0
                 tb.clear()
                 # TODO:Complete This
-                self.quit_long_mode()
             elif chars.c_table == char:
                 if self.autofilling:
                     try:
@@ -441,7 +547,6 @@ class cmd_mode(inputable_state):
                 self.sm.enter(text_mode)
                 return True
             elif chars.c_colon == char:
-                self.enter_long_mode()
                 tb.append(chars.c_colon)
             elif chars.c_q == char:
                 c.running = False
@@ -461,16 +566,15 @@ class text_mode(inputable_state):
         self.kbs = kbs
 
         kbs.on_any = lambda c: self.textbox.append(c)
-        kbs.bind(keys.k_end, lambda c: self.tab.send_text())
+        kbs.bind(keys.k_enter, lambda c: self.tab.send_text())
 
     def on_en(self):
         self.client.mark_dirty()
         self.textbox.clear()
 
-    tip: str = utils.fillto("Text mode:", " ", 40)
-
     def draw_on(self, buf: buffer):
-        buf.addtext(text=text_mode.tip, fgcolor=CmdFgColor.Black,
+        tip = utils.fillto(f"{i18n.trans('modes.text_mode.name')}:", " ", 40)
+        buf.addtext(text=tip, fgcolor=CmdFgColor.Black,
                     bkcolor=CmdBkColor.Blue,
                     end='\n')
 

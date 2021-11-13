@@ -1,34 +1,31 @@
 ﻿namespace ChattingRoom.Core.Users;
 public interface IUserList
 {
-    public void Load(IEnumerable<User> users);
-    public User? this[UserID id] { get; }
-    public void Add(User user);
-    public void Remove(UserID id);
+    public void Load(IEnumerable<IUserEntity> users);
+    public IUserEntity? this[string id] { get; }
+    public void Add(IUserEntity user);
+    public void Remove(string id);
 }
 public class UserList : IUserList
 {
-    private Dictionary<UserID, User> _id2User = new();
+    private Dictionary<string, IUserEntity> _id2User = new();
 
-    public void Load(IEnumerable<User> users)
+    public void Load(IEnumerable<IUserEntity> users)
     {
         _id2User = new();
         foreach (var user in users)
         {
-            _id2User[user.ID] = user;
+            _id2User[user.Account] = user;
         }
     }
-    public User? this[UserID id]
+    public IUserEntity? this[string id] => _id2User.TryGetValue(id, out var user) ? user : null;
+
+    public void Add(IUserEntity user)
     {
-        get => _id2User.TryGetValue(id, out var user) ? user : null;
+        _id2User[user.Account] = user;
     }
 
-    public void Add(User user)
-    {
-        _id2User[user.ID] = user;
-    }
-
-    public void Remove(UserID id)
+    public void Remove(string id)
     {
         _id2User.Remove(id);
     }

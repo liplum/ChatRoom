@@ -1,4 +1,4 @@
-from typing import Dict, List, Callable
+from typing import Dict, List, Callable,Tuple
 
 from autofill import prompt
 
@@ -15,7 +15,6 @@ class command:
         if self.handler:
             self.handler(context, args)
 
-
 class cmdmanager:
     def __init__(self):
         self.autofill = prompt()
@@ -27,7 +26,13 @@ class cmdmanager:
         self.autofill.add(name)
         self.map[name] = cmd
 
-    def prompts(self, inputs: str) -> List[str]:
+    def has(self,cmd_name:str)->bool:
+        return cmd_name in self.map
+
+    def __iter__(self):
+        return iter(self.map.items())
+
+    def prompts(self, inputs: str) -> List[Tuple[str, str]]:
         return self.autofill.autofill(inputs)
 
     def execute(self, context, cmd_name: str, args: [str]):
@@ -57,18 +62,15 @@ class cmdmanager:
 
 class CmdError(BaseException):
 
-    def __init__(self, msg_key: str, args=None):
+    def __init__(self, msg: str):
         super().__init__()
-        if args is None:
-            args = []
-        self.msg_key = msg_key
-        self.args = args
+        self.msg = msg
 
 
 class WrongUsageError(CmdError):
 
-    def __init__(self, msg_key: str, pos: int, args=None):
-        super().__init__(msg_key, args)
+    def __init__(self, msg: str, pos: int):
+        super().__init__(msg)
         self.position = pos
 
 

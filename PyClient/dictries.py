@@ -1,6 +1,6 @@
 from io import StringIO
 from typing import Dict, List, Optional, Tuple
-
+from collections import deque
 
 def insert_word(nd, word: str) -> int:
     """
@@ -137,7 +137,7 @@ def remove_start_with(nd, prefix: str) -> Tuple[int, int]:
 
 
 def get_subnodes_str(nd) -> List[str]:
-    stack = []
+    stack = deque()
     all_matches = []
     res = []
     top_parent = nd.parent
@@ -171,7 +171,7 @@ def get_partial_start_with(nd, prefix: str, max_count: int, add_prefix: bool = T
             cur = cur[ch]
         else:
             return []
-    stack = []
+    stack = deque()
     all_matches = []
     count = [max_count]
     top_parent = cur.parent
@@ -215,7 +215,7 @@ def get_all_start_with(nd, prefix: str, add_prefix: bool = True) -> List[str]:
         else:
             return []
 
-    stack = []
+    stack = deque()
     all_matches = []
     top_parent = cur.parent
 

@@ -1,11 +1,44 @@
 import calendar
 import os
+import platform
 import sys
 import time
 from datetime import datetime
 from io import StringIO
 from threading import RLock
 from typing import Dict, List, Tuple, Optional
+
+system_type = platform.system()
+
+clear_screen = None
+
+
+def split_parent_path(path: str) -> List[str]:
+    """
+    "/p1\\p2\\p3/p4.txt" => ['/', '/p1', '/p1\\p2', '/p1\\p2\\p3', '/p1\\p2\\p3/p4.txt']
+    """
+    parent = path
+    stack = [path]
+    while True:
+        if parent == "/" or parent == "\\" or parent == "":
+            break
+        parent, sub = os.path.split(parent)
+        stack.append(parent)
+    return stack[::-1]
+
+
+def split_path(path: str) -> List[str]:
+    """
+    "/p1\\p2\\p3/p4.txt" => ['p1', 'p2', 'p3', 'p4.txt']
+    """
+    parent = path
+    stack = []
+    while True:
+        if parent == "/" or parent == "\\" or parent == "":
+            break
+        parent, sub = os.path.split(parent)
+        stack.append(sub)
+    return stack[::-1]
 
 
 def get_executed_path() -> Tuple[str, str]:
@@ -264,6 +297,13 @@ def fill(text: str, repeated: str, count: int, max_char_num: Optional[int] = Non
         return s.getvalue()
 
 
+def repeat(repeated: str, times: int) -> str:
+    with StringIO() as s:
+        for i in range(times):
+            s.write(repeated)
+        return s.getvalue()
+
+
 def fillto(text: str, repeated: str, max_char_num: int) -> str:
     repeatedl = len(repeated)
     if repeatedl == 0:
@@ -325,3 +365,9 @@ class timer:
     def is_end(self) -> bool:
         cur_time = now_milisecs()
         return self.start_time - cur_time > self.time
+
+
+if system_type == "Windows":
+    clear_screen = clear_screen_win
+elif system_type == "Linux":
+    clear_screen = clear_screen_linux

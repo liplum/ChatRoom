@@ -3,6 +3,7 @@
 namespace ChattingRoom.Core.Utils;
 public static class FileUtils
 {
+    public static readonly char SPT = Path.DirectorySeparatorChar;
     public static readonly string RootDirectory;
     static FileUtils()
     {
@@ -12,7 +13,7 @@ public static class FileUtils
 
     public static string InRootDir(this string fileName)
     {
-        return $"{RootDirectory}/{fileName}";
+        return $"{RootDirectory}{SPT}{fileName}";
     }
     public static bool Exists(this string file_dirName)
     {

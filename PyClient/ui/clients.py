@@ -4,16 +4,19 @@ from functools import wraps
 from threading import Thread
 
 import core.ioc as ioc
+import i18n
 import ui.inputs as _input
 import ui.outputs as output
 from cmd import cmdmanager
 from core.chats import *
-from core.events import event
-from core.utils import lock
+from events import event
+from utils import lock
 from net import msgs
 from net import networks
-from net.networks import i_network, server_token
+from net.networks import i_network
+from core.shared import server_token, userid, roomid
 from ui.controls import window
+from ui.filer import i_filer, filer
 from ui.k import cmdkey
 
 
@@ -26,7 +29,6 @@ class client:
         self.running: bool = False
         self._display_lock: RLock = RLock()
         self._dirty = False
-        self.logger = None
         self.cmdkeys = []
         self.key_quit_text_mode = self.key(cmdkey())
         self.key_enter_text = self.key(cmdkey())
@@ -72,18 +74,6 @@ class client:
         """
         return self._on_keymapping
 
-    @property
-    def log_file(self) -> Optional[str]:
-        logger = self.logger
-        return f"{logger.logfile_dir}{logger.logfile}" if logger else None
-
-    @log_file.setter
-    def log_file(self, dir_file):
-        logger = self.logger
-        if logger:
-            logger.logfile_dir = dir_file[0]
-            logger.logfile = dir_file[1]
-
     def init(self) -> None:
         ct = self.container
         ct.register_instance(client, self)
@@ -93,6 +83,7 @@ class client:
         ct.register_singleton(cmdmanager, cmdmanager)
         ct.register_singleton(i_msgmager, msgmager)
         ct.register_singleton(i_msgfiler, msgfiler)
+        ct.register_singleton(i_filer, filer)
 
         # services register event
         self.on_service_register(self, ct)
@@ -100,17 +91,15 @@ class client:
         self.network: networks.network = ct.resolve(networks.i_network)
         self.inpt: _input.i_input = ct.resolve(_input.i_input)
         self.logger: output.i_logger = ct.resolve(output.i_logger)
-        self.today = datetime.today()
 
         if not self.check_file_permission():
-            self.root_path=""
+            self.root_path = ""
 
-        self.log_file = f"{self.root_path}/log", f"{self.today.strftime('%Y%m%d')}.log"
+        self.filer: i_filer = ct.resolve(i_filer)
+        self.filer.root_path = self.root_path
         self.display: output.i_display = ct.resolve(output.i_display)
         self.cmd_manger: cmdmanager = ct.resolve(cmdmanager)
         self.logger.msg("Service component initialized.")
-        self.msg_filer: i_msgfiler = ct.resolve(i_msgfiler)
-        self.msg_filer.msg_storages_dir = f"{self.root_path}/data"
         self.msg_manager: i_msgmager = ct.resolve(i_msgmager)
 
         def on_msg_pre_analyzed(network, server_token, source, json):
@@ -138,6 +127,8 @@ class client:
         self.winsize_monitor = Thread(target=self.monitor_winsize)
         self.winsize_monitor.daemon = True
 
+        i18n.load()
+
     def _init_channels(self):
         self.channel_user = self.network.new_channel("User")
         self.channel_chatting = self.network.new_channel("Chatting")
@@ -160,11 +151,11 @@ class client:
             self.winsize = cur
             self.mark_dirty()
 
-    def connect(self, ip_and_port: Tuple[str, int]):
-        self.network.connect(server_token(server=ip_and_port))
+    def connect(self, ip: str, port: int):
+        self.network.connect(server_token(ip, port))
 
-    def receive_text(self, room_id: roomid, user_id: userid, text: str, time: datetime):
-        self.msg_manager.receive(room_id, (time, user_id, text))
+    def receive_text(self, server: server_token, room_id: roomid, user_id: userid, text: str, time: datetime):
+        self.msg_manager.receive(server, room_id, (time, user_id, text))
         self.mark_dirty()
 
     def send_text(self, room_id: roomid, text: str, server: server_token):

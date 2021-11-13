@@ -4,8 +4,9 @@ import sys
 import keys
 from chars import *
 from cmd import cmdmanager
-from core import utils
+import utils
 from core.ioc import container
+from utils import get_at
 from ui.clients import client
 from ui.inputs import i_input
 from ui.k import cmdkey
@@ -13,16 +14,19 @@ from ui.k import cmdkey
 DEBUG = False
 IDE = False
 args = sys.argv
-if utils.get_at(args, -1) == "-debug":
+if get_at(args, -1) == "-debug":
     DEBUG = True
-elif utils.get_at(args, -1) == "-ide":
+elif get_at(args, -1) == "-ide":
     DEBUG = True
     IDE = True
 
 server_ip = "127.0.0.1"
 port = 5000
-if utils.get_at(args, 1) == "-login":
-    server_ip = utils.get_at(args, 2)
+LOGIN = False
+if get_at(args, 1) == "-login":
+    server_ip = get_at(args, 2)
+    port = int(get_at(args, 3))
+    LOGIN = True
 
 if IDE:
     setattr(utils, "clear_screen", lambda: None)
@@ -39,7 +43,8 @@ def main():
     _client.on_cmd_register.add(add_commands)
     _client.on_keymapping.add(mapkeys)
     _client.init()
-    _client.connect((server_ip, port))
+    if LOGIN:
+        _client.connect(server_ip, port)
     _client.start()
 
 

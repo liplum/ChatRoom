@@ -29,7 +29,7 @@ public class ConfigItemT
     {
         get; init;
     }
-    public object DefaultValue
+    public object? DefaultValue
     {
         get; init;
     }
@@ -46,11 +46,11 @@ public class ConfigItemT
         DataType = new(defaultValue.GetType());
 
     }
-    public ConfigItemT([NotNull] string name, [NotNull] object defaultValue, [NotNull] DataType dataType)
+    public ConfigItemT([NotNull] string name, [AllowNull] object? defaultValue, [NotNull] Type dataType)
     {
         Name = name;
         DefaultValue = defaultValue;
-        DataType = dataType;
+        DataType = new(dataType);
     }
 }
 
@@ -87,15 +87,15 @@ public class Configurations : DynamicObject
     {
         lock (_lock)
         {
-            var dicJobj = _jobj!;
+            IDictionary<string, object>? dicJobj = _jobj!;
             if (dicJobj.TryGetValue(key, out result))
             {
                 return true;
             }
-            else if (_metadic.TryGetValue(key, out var configT))
+            else if (_metadic.TryGetValue(key, out ConfigItemT? configT))
             {
-                var defaultV = configT.DefaultValue;
-                dicJobj[key] = defaultV;
+                object? defaultV = configT.DefaultValue;
+                dicJobj[key] = defaultV!;
                 result = defaultV;
                 return true;
             }
@@ -127,7 +127,7 @@ public class Configurations : DynamicObject
             throw new ArgumentException($"Requires 1 {typeof(string).FullName} as argument.");
         }
 
-        var keyName = (string)args[0]!;
+        string? keyName = (string)args[0]!;
         return TryGetValue(keyName, out result);
     }
     public override bool TrySetMember(SetMemberBinder binder, object? value)
@@ -136,8 +136,8 @@ public class Configurations : DynamicObject
         {
             throw new ArgumentNullException(nameof(value));
         }
-        var memberName = binder.Name;
-        var dicJobj = _jobj!;
+        string? memberName = binder.Name;
+        IDictionary<string, object>? dicJobj = _jobj!;
         lock (_lock)
         {
             dicJobj[memberName] = value;

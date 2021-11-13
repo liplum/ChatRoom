@@ -1,13 +1,32 @@
-﻿namespace ChattingRoom.Core.Services;
+﻿using System.Runtime.Serialization;
+
+namespace ChattingRoom.Core.Services;
 public class ServiceContainer : IServiceProvider, IServiceRegistry
 {
     private readonly Dictionary<Type, ServiceEntry> _allServices = new();
-
-    public In Reslove<In>()
+    public bool HotReload
     {
-        var key = typeof(In);
-        In? returnValue = default;
-        if (_allServices.TryGetValue(key, out var entry))
+        get; set;
+    } = false;
+
+    public bool Closed
+    {
+        get; private set;
+    } = false;
+
+    public void Close()
+    {
+        Closed = true;
+    }
+
+    public object Reslove(Type inType)
+    {
+        if (!HotReload && !Closed)
+        {
+            throw new RegistryNotClosedYetException();
+        }
+        object? returnValue = default;
+        if (_allServices.TryGetValue(inType, out var entry))
         {
             switch (entry.RegisterType)
             {
@@ -26,11 +45,15 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry
                 return returnValue;
             }
         }
-        throw new ServiceNotRegisteredException(key.Name);
+        throw new ServiceNotRegisteredException(inType.Name);
         void ReturnIntance([NotNull] ServiceEntry entry)
         {
-            returnValue = (In)entry.Instance!;
-            Inject(returnValue);
+            returnValue = entry.Instance!;
+            if (HotReload || !entry.Injected)
+            {
+                Inject(returnValue);
+                entry.Injected = true;
+            }
         }
         void ReturnTransient([NotNull] ServiceEntry entry)
         {
@@ -38,8 +61,12 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry
             var inType = entry.InType;
             if (outType is not null)
             {
-                returnValue = (In)Activator.CreateInstance(outType)!;
-                Inject(returnValue);
+                returnValue = Activator.CreateInstance(outType)!;
+                if (HotReload || !entry.Injected)
+                {
+                    Inject(returnValue);
+                    entry.Injected = true;
+                }
             }
             else
             {
@@ -49,16 +76,49 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry
 
     }
 
-    public void RegisterSingleton<In, Out>() where In : IInjectable where Out : In, new()
+    public void RegisterSingleton(Type inType, Type outType)
     {
-        var inType = typeof(In);
+        if (!HotReload && Closed)
+        {
+            throw new RegistryClosedException();
+        }
         var entry = this[inType];
 
-        var outType = typeof(Out);
-        entry.Instance = new Out();
+        entry.Instance = Activator.CreateInstance(outType)!;
         entry.RegisterType = RegisterType.Singleton;
         entry.OutType = outType;
     }
+
+    public void RegisterTransient(Type inType, Type outType)
+    {
+        if (!HotReload && Closed)
+        {
+            throw new RegistryClosedException();
+        }
+        var entry = this[inType];
+
+        entry.RegisterType = RegisterType.Transient;
+        entry.OutType = outType;
+    }
+
+    public void RegisterInstance(Type inType, Type outType, [NotNull] object obj)
+    {
+        if (!HotReload && Closed)
+        {
+            throw new RegistryClosedException();
+        }
+
+        if (obj is null)
+        {
+            throw new ArgumentNullException(nameof(obj));
+        }
+        var entry = this[inType];
+
+        entry.Instance = obj;
+        entry.RegisterType = RegisterType.Instance;
+        entry.OutType = outType;
+    }
+
 
     public void HandleReference()
     {
@@ -80,57 +140,27 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry
         }
     }
 
-    public void RegisterTransient<In, Out>() where In : IInjectable where Out : In, new()
-    {
-        var inType = typeof(In);
-        var entry = this[inType];
-
-        var outType = typeof(Out);
-        entry.RegisterType = RegisterType.Transient;
-        entry.OutType = outType;
-    }
-
-    public void RegisterInstance<In, Out>([NotNull] Out obj) where Out : In
-    {
-        if (obj is null)
-        {
-            throw new ArgumentNullException(nameof(obj));
-        }
-        var inType = typeof(In);
-        var entry = this[inType];
-
-        var outType = typeof(Out);
-        entry.Instance = obj;
-        entry.RegisterType = RegisterType.Instance;
-        entry.OutType = outType;
-    }
-
-    private ServiceEntry GetEntry([NotNull] Type type)
-    {
-        if (!_allServices.TryGetValue(type, out var entry))
-        {
-            entry = new(type);
-            _allServices[type] = entry;
-        }
-        return entry;
-    }
-
-    public void Inject(IInjectable injectable)
-    {
-        injectable.Initialize(this);
-    }
-
-    public void Inject(object obj)
+    private bool Inject(object obj)
     {
         if (obj is IInjectable injectable)
         {
-            Inject(injectable);
+            injectable.Initialize(this);
+            return true;
         }
+        return false;
     }
 
     private ServiceEntry this[[NotNull] Type type]
     {
-        get => GetEntry(type);
+        get
+        {
+            if (!_allServices.TryGetValue(type, out var entry))
+            {
+                entry = new(type);
+                _allServices[type] = entry;
+            }
+            return entry;
+        }
     }
 
     private class ServiceEntry
@@ -155,6 +185,10 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry
         {
             get; set;
         } = RegisterType.None;
+        public bool Injected
+        {
+            get; set;
+        } = false;
     }
 
     private enum RegisterType
@@ -172,18 +206,45 @@ public class ServiceNotRegisteredException : Exception
     public ServiceNotRegisteredException(string message) : base(message) { }
     public ServiceNotRegisteredException(string message, Exception inner) : base(message, inner) { }
     protected ServiceNotRegisteredException(
-      System.Runtime.Serialization.SerializationInfo info,
-      System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+      SerializationInfo info,
+      StreamingContext context) : base(info, context) { }
 }
 
 
 [Serializable]
 public class ServiceResolveException : Exception
 {
-    public ServiceResolveException() { }
+    public ServiceResolveException()
+    {
+    }
     public ServiceResolveException(string message) : base(message) { }
     public ServiceResolveException(string message, Exception inner) : base(message, inner) { }
     protected ServiceResolveException(
-      System.Runtime.Serialization.SerializationInfo info,
-      System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+      SerializationInfo info,
+      StreamingContext context) : base(info, context) { }
+}
+
+[Serializable]
+public class RegistryClosedException : Exception
+{
+    public RegistryClosedException()
+    {
+    }
+    public RegistryClosedException(string message) : base(message) { }
+    public RegistryClosedException(string message, Exception inner) : base(message, inner) { }
+    protected RegistryClosedException(SerializationInfo info, StreamingContext context) : base(info, context) { }
+}
+
+
+[Serializable]
+public class RegistryNotClosedYetException : Exception
+{
+    public RegistryNotClosedYetException()
+    {
+    }
+    public RegistryNotClosedYetException(string message) : base(message) { }
+    public RegistryNotClosedYetException(string message, Exception inner) : base(message, inner) { }
+    protected RegistryNotClosedYetException(
+      SerializationInfo info,
+      StreamingContext context) : base(info, context) { }
 }

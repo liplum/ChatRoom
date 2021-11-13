@@ -5,14 +5,29 @@ namespace ChattingRoom.Core.Messages;
 [Msg("RegisterRequest", Direction.ClientToServer)]
 public class RegisterRequestMsg : IMessage
 {
+#nullable disable
+    public string Account
+    {
+        get; set;
+    }
+#nullable enable
+    public string? Password
+    {
+        get; set;
+    }
     public void Deserialize(dynamic json)
     {
-
+        Account = json.Account;
+        Password = json.Password;
     }
 
     public void Serialize(dynamic json)
     {
-
+        json.Account = Account;
+        if (Password is not null)
+        {
+            json.Password = Password;
+        }
     }
 }
 
@@ -21,24 +36,35 @@ public class RegisterResultMsg : IMessage
 {
     public enum RegisterResult
     {
-        Succeed = 0,
-        Failed = 1,
+        Failed = -1,
+        NoFinalResult = 0,
+        Succeed = 1,
     }
 
     public enum FailureCause
     {
-        AlreadyRegistered = 0,
-        ReachedMaxUserNumber = 1,
-        Forbidden = 2,
+        AccountOccupied = 0,
+        InvaildAccount = 1,
+        InvaildPassword = 2,
+        Forbidden = 3,
+    }
+
+#nullable disable
+    public RegisterResult Result
+    {
+        get; set;
+    }
+#nullable enable
+
+    public FailureCause? Cause
+    {
+        get; set;
     }
 
     public RegisterResultMsg()
     {
 
     }
-
-    public RegisterResult? Result { get; set; }
-    public FailureCause? Cause { get; set; }
 
     public RegisterResultMsg(RegisterResult result, [AllowNull] FailureCause? failureCause = null)
     {
@@ -62,8 +88,7 @@ public class RegisterResultMsg : IMessage
 
     public void Serialize(dynamic json)
     {
-        var res = Result!.Value;
-        json.Result = (int)res;
+        json.Result = (int)Result;
         if (Cause.HasValue)
         {
             json.Cause = (int)Cause.Value;

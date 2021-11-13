@@ -9,11 +9,21 @@ public class WhisperMsg : IMessage
     {
 
     }
+#nullable disable
+    public string Target
+    {
+        get; set;
+    }
+    public string Sender
+    {
+        get; set;
+    }
 
-    public UserID? Target { get; set; }
-    public UserID? Sender { get; set; }
-
-    public string? Text { get; set; }
+    public string Text
+    {
+        get; set;
+    }
+#nullable enable
 
     public void Deserialize(dynamic json)
     {

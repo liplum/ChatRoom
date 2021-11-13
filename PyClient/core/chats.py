@@ -3,51 +3,12 @@ from datetime import datetime
 from threading import RLock
 from typing import Tuple, List, Dict, Optional
 
-from core import utils
-from core.utils import compose, separate
+import utils
+from events import event
+from core.shared import server_token, userid, roomid, StorageUnit
+from utils import compose, separate
+from ui.filer import i_filer
 from ui.outputs import i_logger
-
-
-class userid:
-    def __init__(self, userid: str):
-        self.userid = userid
-
-    def __eq__(self, other):
-        if isinstance(other, str):
-            return self.userid == other
-        elif isinstance(other, userid):
-            return self.userid == other.userid
-        return False
-
-    def __hash__(self):
-        return hash(self.userid)
-
-    def __str__(self) -> str:
-        return self.userid
-
-    def __repr__(self):
-        return self.userid
-
-
-class roomid:
-    def __init__(self, _id: int):
-        self.id = _id
-
-    def __eq__(self, other):
-        if isinstance(other, int):
-            return self.id == other
-        elif isinstance(other, roomid):
-            return self.id == other.id
-        return False
-
-    def __hash__(self):
-        return hash(self.id)
-
-    def __str__(self) -> str:
-        return str(self.id)
-
-    def __repr__(self):
-        return self.id
 
 
 class chatting_room:
@@ -60,22 +21,32 @@ class chatting_room:
         return self._history
 
 
-StorageUnit = Tuple[datetime, userid, str]
-
-
 class msgstorage:
     def __init__(self, save_file: str = None):
         self._save_file = save_file
         self.__storage: List[StorageUnit] = []
+        self._on_stored = event()
         self.changed = False
 
     def store(self, msg_unit: StorageUnit):
         self.__storage.append(msg_unit)
         self.changed = True
 
+    @property
+    def on_stored(self) -> event:
+        """
+        Para 1:msgstorage object
+
+        Para 2:storage unit
+
+        :return: event(msgstorage,StorageUnit)
+        """
+        return self._on_stored
+
     def sort(self):
-        self.__storage.sort(key=lambda i: i[0])
-        self.changed = False
+        if self.changed:
+            self.__storage.sort(key=lambda i: i[0])
+            self.changed = False
 
     def __iter__(self) -> [StorageUnit]:
         return iter(self.__storage[:])
@@ -94,6 +65,7 @@ class msgstorage:
     def serialize(self):
         if not self._save_file:
             raise ValueError("You should provide a save file path first.")
+        self.sort()
         with open(self._save_file, "w") as save:
             for unit in self.__storage:
                 unit_str = (str(unit[0]), str(unit[1]), unit[2])
@@ -108,14 +80,18 @@ class msgstorage:
             lines = save.readlines()
             for line in lines:
                 line = line.rstrip()
-                items = separate(line, '|', 2, False)
+                items = separate(line, '|', 2, allow_emptychar=False)
                 if len(items) == 3:
                     time, uid, content = items
-                    time = datetime.fromisoformat(time)
-                    uid = userid(uid)
-                    self.__storage.append((time, uid, content))
+                    try:
+                        time = datetime.fromisoformat(time)
+                        uid = userid(uid)
+                        self.__storage.append((time, uid, content))
+                    except:
+                        continue
                 else:
                     continue
+        self.sort()
 
     def retrieve(self, start: datetime, end: datetime, number_limit: Optional[int] = None,
                  reverse: bool = False) -> List[StorageUnit]:
@@ -133,8 +109,6 @@ class msgstorage:
         start = min(start, end)
         end = max(start, end)
 
-        if self.changed:
-            self.sort()
         snapshot = self.__storage[:]
         dt_snapshot = [unit[0] for unit in snapshot]
         _, start_pos = utils.find_range(dt_snapshot, start)
@@ -160,8 +134,6 @@ class msgstorage:
         if len(self.__storage) == 0:
             return []
 
-        if self.changed:
-            self.sort()
         snapshot = self.__storage[:]
         if number_limit >= len(snapshot):
             return snapshot
@@ -170,8 +142,7 @@ class msgstorage:
     def retrieve_until(self, end: datetime, number_limit: Optional[int] = None) -> List[StorageUnit]:
         if len(self.__storage) == 0:
             return []
-        if self.changed:
-            self.sort()
+
         snapshot = self.__storage[:]
         dt_snapshot = [unit[0] for unit in snapshot]
         end_pos, _ = utils.find_range(dt_snapshot, end)
@@ -186,27 +157,45 @@ class msgstorage:
 
 
 class i_msgmager:
-    def load_lasted(self, room_id: roomid, amount: int) -> List[StorageUnit]:
+    def load_lasted(self, server: server_token, room_id: roomid,
+                    amount: int) -> List[StorageUnit]:
         pass
 
-    def retrieve(self, room_id: roomid, amount: int, start: datetime, end: datetime) -> List[StorageUnit]:
+    def retrieve(self, server: server_token, room_id: roomid, amount: int, start: datetime,
+                 end: datetime) -> List[StorageUnit]:
         pass
 
-    def receive(self, room_id: roomid, msg_unit: StorageUnit):
+    def receive(self, server: server_token, room_id: roomid, msg_unit: StorageUnit):
         pass
 
-    def load_until_today(self, room_id: roomid, amount: int) -> List[StorageUnit]:
+    def load_until_today(self, server: server_token, room_id: roomid,
+                         amount: int) -> List[StorageUnit]:
         pass
 
     def save_all(self):
         pass
 
+    @property
+    def on_received(self) -> event:
+        """
+        Para 1:i_msgmager object
+
+        Para 2:server
+
+        Para 3:room id
+
+        Para 4:storage unit
+
+        :return: event(i_msgmager,server_token,roomid,StorageUnit)
+        """
+        return event()
+
 
 class i_msgfiler:
-    def save(self, room_id: roomid, storage: msgstorage):
+    def save(self, server: server_token, room_id: roomid, storage: msgstorage):
         pass
 
-    def get(self, room_id: roomid) -> Optional[str]:
+    def get(self, server: server_token, room_id: roomid) -> str:
         pass
 
 
@@ -214,86 +203,77 @@ class msgfiler(i_msgfiler):
 
     def init(self, container):
         self.logger: i_logger = container.resolve(i_logger)
+        self.filer: i_filer = container.resolve(i_filer)
 
-    def __init__(self, msg_storages_dir: Optional[str] = None):
-        self.msg_storages_dir = msg_storages_dir
+    def __init__(self):
+        pass
 
-    def save(self, room_id: roomid, storage: msgstorage):
-        if self.msg_storages_dir:
-            try:
-                file = f"{self.msg_storages_dir}/{room_id}.rec"
-                if storage.save_file == file:
-                    if not os.path.exists(self.msg_storages_dir):
-                        os.makedirs(self.msg_storages_dir)
-                storage.serialize()
-            except:
-                self.logger.error(f'Cannot save msg into "{storage.save_file}"')
+    def save(self, server: server_token, room_id: roomid, storage: msgstorage):
+        try:
+            file = self.filer.get_file(f"/data/{server.ip}-{server.port}/{room_id}.rec")
+            storage.save_file = file
+            storage.serialize()
+        except:
+            self.logger.error(f'Cannot save msg into "{storage.save_file}"')
 
-    def get(self, room_id: roomid) -> Optional[str]:
-        if self.msg_storages_dir:
-            file = f"{self.msg_storages_dir}/{room_id}.rec"
-            if os.path.exists(file):
-                return file
-            else:
-                if not os.path.exists(self.msg_storages_dir):
-                    os.makedirs(self.msg_storages_dir)
-                with open(file, "w"):
-                    pass
-                return file
-        else:
-            return None
+    def get(self, server: server_token, room_id: roomid) -> str:
+        return self.filer.get_file(f"/data/{server.ip}-{server.port}/{room_id}.rec")
 
 
 class msgmager(i_msgmager):
     def __init__(self):
-        self.cache: Dict[roomid, msgstorage] = {}
+        self.cache: Dict[Tuple[server_token, roomid], msgstorage] = {}
         self._lock = RLock()
+        self._on_received = event()
 
     def init(self, container):
         self.filer: i_msgfiler = container.resolve(i_msgfiler)
         self.logger: i_logger = container.resolve(i_logger)
 
-    def get_storage(self, room_id: roomid) -> Optional[msgstorage]:
-        if room_id in self.cache:
-            return self.cache[room_id]
+    def get_storage(self, server: server_token, room_id: roomid) -> Optional[msgstorage]:
+        if (server, room_id) in self.cache:
+            return self.cache[server, room_id]
         else:
-            msgs_file = self.filer.get(room_id)
+            msgs_file = self.filer.get(server, room_id)
             if msgs_file:
                 storage = msgstorage(msgs_file)
                 storage.deserialize()
-                self.cache[room_id] = storage
+                self.cache[server, room_id] = storage
                 return storage
             else:
                 return None
 
-    def load_lasted(self, room_id: roomid, amount: int) -> List[StorageUnit]:
+    def load_lasted(self, server: server_token, room_id: roomid, amount: int) -> List[StorageUnit]:
         with self._lock:
-            storage = self.get_storage(room_id)
+            storage = self.get_storage(server, room_id)
             if storage:
                 return storage.retrieve_lasted(amount)
             else:
                 self.logger.error(f"Cannot load msg storage from {room_id}")
 
-    def retrieve(self, room_id: roomid, amount: int, start: datetime, end: datetime) -> List[StorageUnit]:
+    def retrieve(self, server: server_token, room_id: roomid, amount: int, start: datetime,
+                 end: datetime) -> List[StorageUnit]:
         with self._lock:
-            storage = self.get_storage(room_id)
+            storage = self.get_storage(server, room_id)
             if storage:
                 return storage.retrieve(start=start, end=end, number_limit=amount)
             else:
                 self.logger.error(f"Cannot load msg storage from {room_id}")
 
-    def receive(self, room_id: roomid, msg_unit: StorageUnit):
+    def receive(self, server: server_token, room_id: roomid, msg_unit: StorageUnit):
         with self._lock:
-            if room_id in self.cache:
-                storage = self.cache[room_id]
+            if (server, room_id) in self.cache:
+                storage = self.cache[server, room_id]
             else:
-                msgs_file = self.filer.get(room_id)
+                msgs_file = self.filer.get(server, room_id)
                 storage = msgstorage(msgs_file)
+                self.cache[server, room_id] = storage
             storage.store(msg_unit)
+        self.on_received(self, server, room_id, msg_unit)
 
-    def load_until_today(self, room_id: roomid, amount: int) -> List[StorageUnit]:
+    def load_until_today(self, server: server_token, room_id: roomid, amount: int) -> List[StorageUnit]:
         with self._lock:
-            storage = self.get_storage(room_id)
+            storage = self.get_storage(server, room_id)
             if storage:
                 return storage.retrieve_until(end=datetime.now(), number_limit=amount)
             else:
@@ -302,3 +282,7 @@ class msgmager(i_msgmager):
     def save_all(self):
         for strg in self.cache.values():
             strg.serialize()
+
+    @property
+    def on_received(self) -> event:
+        return self._on_received

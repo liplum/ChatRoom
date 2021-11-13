@@ -1,5 +1,3 @@
-import os
-import platform
 from datetime import timezone
 
 import autofill
@@ -7,7 +5,7 @@ import dictries
 import xautofill
 from chars import *
 from core import converts
-from core.utils import *
+from utils import *
 from ui.clients import *
 from ui.tbox import textbox
 
@@ -37,7 +35,9 @@ def win_test():
     # test_autofill()
     # test_func_wrap()
     # test_args()
-    test_file_path()
+    # test_file_path()
+    # test_i18n()
+    test_path()
 
 
 def linux_test():
@@ -46,14 +46,29 @@ def linux_test():
     test_dictrie2()
 
 
-def test():
-    pass
-
+test = None
 
 if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
+
+
+def test_path():
+    path = "/p1\\p2\\p3/p4.txt"
+    res = utils.split_path(path)
+    print(res)
+    res = utils.split_parent_path(path)
+    print(res)
+
+
+
+def test_i18n():
+    import i18n
+    i18n.load("en-us")
+    print(i18n.trans("cmds.goto.usage"))
+    print(i18n.trans("abc.def"))
+    print(i18n.trans("cmds.goto.para1.not_number", "abc"))
 
 
 def test_file_path():
