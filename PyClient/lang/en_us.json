@@ -1,0 +1,55 @@
+{
+  "cmds": {
+    "goto": {
+      "para1": {
+        "not_number": "The first parameter given is not a expected integer but {0}",
+        "over_range": "The number {0} is over range."
+      },
+      "usage": "goto <number>"
+    },
+    "reg": {
+      "usage": "reg [<server ip>:<port>] <account> <password>",
+      "para1": {
+        "invalid": "eg: 127.0.0.1:5000"
+      }
+    },
+    "help": {
+      "usage": "help <command name>/all",
+      "cannot_find": "Can't find a command called {0}"
+    },
+    "con": {
+      "usage": "con <server ip>:<port>"
+    },
+    "run": {
+      "usage": "!Only Debug! exec \"<code>\" or exec -f <file path>",
+      "execute_error": "Can't execute code {code} because {exception}",
+      "cannot_read_file": "Can't read codes from file \"{path}\""
+    },
+    "lang": {
+      "usage": "lang or lang <en-us>",
+      "cannot_load": "Can't load language \"{0}\""
+    },
+    "join": {
+      "usage": "join [<server ip>:<port>] <chatting room id>",
+      "para1": {
+        "invalid": "eg: 127.0.0.1:5000"
+      }
+    }
+  },
+  "tabs": {
+    "chat_tab": {
+      "name": "chat tab"
+    }
+  },
+  "modes": {
+    "command_mode": {
+      "name": "Command mode",
+      "cmd": {
+        "cannot_find": "Can't find a command called {0}"
+      }
+    },
+    "text_mode": {
+      "name": "Text mode"
+    }
+  }
+}

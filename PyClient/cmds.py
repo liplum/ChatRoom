@@ -14,7 +14,7 @@ def add(*args) -> command:
 
 def _goto_tab(context, args: [str]):
     if len(args) != 1:
-        raise WrongUsageError(i18n.trans("usage"), 0)
+        raise CmdError(i18n.trans("cmds.goto.usage"))
     try:
         tab_number = int(args[0])
     except:
@@ -30,11 +30,11 @@ cmd_goto_tab = add("goto", _goto_tab)
 
 
 def _register(context, args: [str]):
-    arglen = len(args)
+    argslen = len(args)
     network: i_network = context.network
-    if arglen == 2:
+    if argslen == 2:
         pass
-    elif arglen == 3:
+    elif argslen == 3:
         server_info = args[0].split(":")
         if len(server_info) != 2:
             raise WrongUsageError(i18n.trans("cmds.reg.para1.invalid"), 0)
@@ -49,7 +49,7 @@ def _register(context, args: [str]):
         msg.password = args[2]
         uc.send(server_token(ip, port), msg)
     else:
-        raise WrongUsageError(i18n.trans("cmds.reg.usage"), 0)
+        raise CmdError(i18n.trans("cmds.reg.usage"))
 
 
 cmd_register = add("reg", _register)
@@ -61,10 +61,10 @@ def _help_show_usage(tab, name):
 
 
 def _help(context, args: [str]):
-    arglen = len(args)
+    argslen = len(args)
     manager: cmdmanager = context.cmd_manager
     tab: tab = context.tab
-    if arglen == 1:
+    if argslen == 1:
         if args[0] == "all":
             for name, cmd in manager:
                 _help_show_usage(tab, name)
@@ -75,7 +75,7 @@ def _help(context, args: [str]):
             else:
                 raise WrongUsageError(i18n.trans("cmds.help.cannot_find", name), 0)
     else:
-        raise WrongUsageError(i18n.trans("cmds.help.usage"), 0)
+        raise CmdError(i18n.trans("cmds.help.usage"))
 
 
 cmd_help = add("help", _help)
@@ -89,13 +89,41 @@ cmd_con = add("con", _con)
 
 
 def _exec(context, args: [str]):
-    if len(args) == 0:
+    argslen = len(args)
+    if argslen == 0:
         return
-    code = args[0].strip('\"')
+    if argslen == 1:
+        code = args[0]
+    elif argslen == 2 and args[0] == "-f":
+        path = args[1]
+        try:
+            with open(path, "r") as f:
+                code = f.read()
+        except:
+            raise WrongUsageError(i18n.trans("cmds.run.cannot_read_file", path=path), 0)
+    else:
+        raise CmdError(i18n.trans("cmds.run.usage"))
     try:
         exec(code)
     except Exception as e:
-        raise CmdError(i18n.trans("cmds.exec.execute_error", code=code, exception=e))
+        raise WrongUsageError(i18n.trans("cmds.run.execute_error", code=code, exception=e), 0)
 
 
-cmd_exec = add("exec", _exec)
+cmd_exec = add("run", _exec)
+
+
+def _lang(context, args: [str]):
+    argslen = len(args)
+    if argslen == 0:
+        i18n.reload()
+    elif argslen == 1:
+        lang = args[0]
+        try:
+            i18n.load(lang, strict=True)
+        except i18n.LocfileLoadError as lle:
+            raise WrongUsageError(i18n.trans("cmds.lang.cannot_load", lang), 0)
+    else:
+        raise CmdError(i18n.trans("cmds.lang.usage"))
+
+
+cmd_lang = add("lang", _lang)

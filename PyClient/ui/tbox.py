@@ -131,11 +131,11 @@ class textbox(control):
         return self._on_list_replace
 
     @property
-    def input_list(self)->List[str]:
+    def input_list(self) -> List[str]:
         return self._input_list[:]
 
     @property
-    def input_count(self)->int:
+    def input_count(self) -> int:
         return len(self._input_list)
 
     @input_list.setter

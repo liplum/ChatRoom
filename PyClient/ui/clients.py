@@ -9,15 +9,15 @@ import ui.inputs as _input
 import ui.outputs as output
 from cmd import cmdmanager
 from core.chats import *
+from core.shared import server_token, userid, roomid
 from events import event
-from utils import lock
 from net import msgs
 from net import networks
 from net.networks import i_network
-from core.shared import server_token, userid, roomid
 from ui.controls import window
 from ui.filer import i_filer, filer
 from ui.k import cmdkey
+from utils import lock
 
 
 class client:

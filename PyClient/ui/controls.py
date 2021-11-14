@@ -6,7 +6,7 @@ import chars
 import i18n
 import keys
 import utils
-from cmd import WrongUsageError, CmdError, CmdNotFound
+from cmd import WrongUsageError, CmdError, CmdNotFound, analyze_cmd_args, compose_full_cmd, is_quoted
 from cmd import cmdmanager
 from core.chats import i_msgmager
 from core.shared import server_token, roomid
@@ -88,7 +88,6 @@ class chat_tab(tab):
         self.logger: "i_logger" = self.client.logger
         self.first_loaded = False
 
-        # TODO:Remove this
         self._connected: Optional[server_token] = None
         self._joined: Optional[roomid] = None
 
@@ -394,6 +393,39 @@ class inputable_state(state):
         super().__init__()
 
 
+def gen_cmd_error_text(cmd_name: str, args: List[str], full_cmd: str, pos: int, msg: str,
+                       is_quoted: bool = False) -> str:
+    argslen = len(args) + 1
+    with StringIO() as s:
+        s.write(full_cmd)
+        s.write('\n')
+        if pos == -1:
+            s.write(' ')
+            for _ in range(len(cmd_name)):
+                s.write('^')
+            for arg in args:
+                for _ in range(len(arg) + 1):
+                    s.write(' ')
+            s.write('\n')
+        elif pos >= 0:
+            for _ in range(len(cmd_name) + 2):
+                s.write(' ')
+            for i, arg in enumerate(args):
+                if i == pos:
+                    if is_quoted:
+                        s.write(' ')
+                    for _ in range(len(arg)):
+                        s.write('^')
+                else:
+                    for _ in range(len(arg)):
+                        s.write(' ')
+                if i < argslen:
+                    s.write(' ')
+            s.write('\n')
+        s.write(msg)
+        return s.getvalue()
+
+
 class cmd_mode(inputable_state):
     def __init__(self):
         super().__init__()
@@ -479,38 +511,30 @@ class cmd_mode(inputable_state):
             if keys.k_enter == char:
                 input_list = tb.input_list
                 full_cmd = utils.compose(input_list, connector='')
-                cmd_args = utils.split_strip(full_cmd, by=' ')
-                full_cmd = utils.compose(cmd_args, connector=' ')
+                cmd_args, quoted_indexes = analyze_cmd_args(full_cmd)
+                full_cmd = compose_full_cmd(cmd_args, quoted_indexes)
                 args = cmd_args[1:]
                 cmd_name = cmd_args[0][1:]
-                argslen = len(cmd_args)
                 contxt = self._gen_context()
                 try:
                     self.cmd_manager.execute(contxt, cmd_name, args)
                 except WrongUsageError as wu:
                     pos = wu.position
-                    with StringIO() as s:
-                        s.write(full_cmd)
-                        s.write('\n')
-                        s.write(utils.repeat(' ', len(cmd_name) + 2))
-                        for i, arg in enumerate(args):
-                            if i == pos:
-                                s.write(utils.repeat('^', len(arg)))
-                            else:
-                                s.write(utils.repeat(' ', len(arg)))
-                            if i < argslen:
-                                s.write(' ')
-                        s.write('\n')
-                        s.write(wu.msg)
-                        self.tab.add_string(s.getvalue())
+                    is_pos_quoted = is_quoted(pos + 1, quoted_indexes)
+                    error_output = gen_cmd_error_text(cmd_name, args, full_cmd, pos, wu.msg, is_pos_quoted)
+                    self.tab.add_string(error_output)
                 except CmdNotFound as cnt:
-                    pass
+                    error_output = gen_cmd_error_text(
+                        cmd_name, args, full_cmd, -1,
+                        i18n.trans("modes.command_mode.cmd.cannot_find", cmd_name))
+                    self.tab.add_string(error_output)
                 except CmdError as ce:
-                    pass
+                    error_output = gen_cmd_error_text(cmd_name, args, full_cmd, -2, ce.msg)
+                    self.tab.add_string(error_output)
                 self.cmd_history.append(full_cmd)
                 self.cmd_history_index = 0
                 tb.clear()
-                # TODO:Complete This
+                # TODO:Complete Autofilling
             elif chars.c_table == char:
                 if self.autofilling:
                     try:

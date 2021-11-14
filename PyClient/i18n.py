@@ -15,7 +15,7 @@ if os.access(_dirpath, os.F_OK & os.R_OK):
 else:
     _root_path = ""
 
-cur_lang = "en-us"
+cur_lang = "en_us"
 
 on_load = event()
 """
@@ -35,10 +35,11 @@ def reload():
         pass
 
 
-def load(lang: Optional[str] = None):
+def load(lang: Optional[str] = None, strict: bool = False):
     global _cache, cur_lang
     if lang is None:
         lang = cur_lang
+    lang = lang.lower()
     file = f"{_root_path}/lang/{lang}.json"
     try:
         with open(file, "r") as f:
@@ -46,7 +47,17 @@ def load(lang: Optional[str] = None):
             cur_lang = lang
             on_load(cur_lang)
     except:
-        _cache = {}
+        if strict:
+            raise LocfileLoadError(lang)
+        else:
+            _cache = {}
+
+
+class LocfileLoadError(Exception):
+
+    def __init__(self, lang):
+        super().__init__()
+        self.lang = lang
 
 
 def trans(key: str, *args, **kwargs):

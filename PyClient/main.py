@@ -2,14 +2,14 @@ import platform
 import sys
 
 import keys
+import utils
 from chars import *
 from cmd import cmdmanager
-import utils
 from core.ioc import container
-from utils import get_at
 from ui.clients import client
 from ui.inputs import i_input
 from ui.k import cmdkey
+from utils import get_at
 
 DEBUG = False
 IDE = False

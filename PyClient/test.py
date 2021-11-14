@@ -1,13 +1,14 @@
 from datetime import timezone
 
 import autofill
+import cmd
 import dictries
 import xautofill
 from chars import *
 from core import converts
-from utils import *
 from ui.clients import *
 from ui.tbox import textbox
+from utils import *
 
 system_type = platform.system()
 
@@ -37,7 +38,8 @@ def win_test():
     # test_args()
     # test_file_path()
     # test_i18n()
-    test_path()
+    # test_path()
+    test_analyze_cmd_args()
 
 
 def linux_test():
@@ -54,13 +56,23 @@ elif system_type == "Linux":
     test = linux_test
 
 
+def test_analyze_cmd_args():
+    a1 = ":goto"
+    print(cmd.analyze_cmd_args(a1))
+    a2 = ":goto 2"
+    print(cmd.analyze_cmd_args(a2))
+    a3 = ':exec "print(123)"'
+    print(cmd.analyze_cmd_args(a3))
+    a4 = ':exec "import sys"'
+    print(cmd.analyze_cmd_args(a4))
+
+
 def test_path():
     path = "/p1\\p2\\p3/p4.txt"
     res = utils.split_path(path)
     print(res)
     res = utils.split_parent_path(path)
     print(res)
-
 
 
 def test_i18n():

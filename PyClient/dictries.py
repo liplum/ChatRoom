@@ -1,6 +1,7 @@
+from collections import deque
 from io import StringIO
 from typing import Dict, List, Optional, Tuple
-from collections import deque
+
 
 def insert_word(nd, word: str) -> int:
     """

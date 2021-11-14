@@ -2,8 +2,8 @@
   "cmds": {
     "goto": {
       "para1": {
-        "not_number": "The first parameter is not a integer but {0}",
-        "over_range": "The number {0} is over range."
+        "not_number": "给定的第一个参数不是预期的整数，而是{0}",
+        "over_range": "数字{0}超过了范围"
       },
       "usage": "goto <number>"
     },
@@ -15,33 +15,40 @@
     },
     "help": {
       "usage": "help <command name>/all",
-      "cannot_find": "Can't find a command called {0}"
+      "cannot_find": "无法找到名为{0}的命令"
     },
     "con": {
       "usage": "con <server ip>:<port>"
+    },
+    "exec": {
+      "usage": "!Only Debug! exec \"<code>\"",
+      "execute_error": "无法执行代码{code}，因为{exception}"
+    },
+    "lang": {
+      "usage": "lang or lang <en-us>",
+      "cannot_load": "无法加载语言\"{0}\""
     },
     "join": {
       "usage": "join [<server ip>:<port>] <chatting room id>",
       "para1": {
         "invalid": "eg: 127.0.0.1:5000"
-      },
-      "exec": {
-        "usage": "!Only Debug! exec \"<code>\"",
-        "execute_error": "Can't execute code {code} because {exception}"
       }
     }
   },
   "tabs": {
     "chat_tab": {
-      "name": "chat tab"
+      "name": "聊天"
     }
   },
   "modes": {
     "command_mode": {
-      "name": "Command mode"
+      "name": "命令模式",
+      "cmd": {
+        "cannot_find": "无法找到名为{0}的命令"
+      }
     },
     "text_mode": {
-      "name": "Text mode"
+      "name": "文本模式"
     }
   }
 }
