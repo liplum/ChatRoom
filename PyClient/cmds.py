@@ -114,14 +114,32 @@ cmd_exec = add("run", _exec)
 
 def _lang(context, args: [str]):
     argslen = len(args)
-    if argslen == 0:
-        i18n.reload()
-    elif argslen == 1:
-        lang = args[0]
+    if argslen == 0:  # reload & easy
         try:
-            i18n.load(lang, strict=True)
+            i18n.reload(strict=True)
         except i18n.LocfileLoadError as lle:
-            raise WrongUsageError(i18n.trans("cmds.lang.cannot_load", lang), 0)
+            raise WrongUsageError(i18n.trans("cmds.lang.cannot_reload"), 0)
+    elif argslen == 1:
+        if args[0] == "-s":  # reload & strict
+            try:
+                i18n.reload(strict=True)
+            except i18n.LocfileLoadError as lle:
+                raise WrongUsageError(i18n.trans("cmds.lang.cannot_reload_cause", cause=repr(lle.inner)), 0)
+        else:  # load & easy
+            lang = args[0]
+            try:
+                i18n.load(lang, strict=True)
+            except i18n.LocfileLoadError as lle:
+                raise WrongUsageError(i18n.trans("cmds.lang.cannot_load", lang=lang), 0)
+    elif argslen == 2:
+        if args[1] == "-s":  # load & strict
+            try:
+                lang = args[0]
+                i18n.load(lang, strict=True)
+            except i18n.LocfileLoadError as lle:
+                raise WrongUsageError(i18n.trans("cmds.lang.cannot_load_cause", lang=lang, cause=repr(lle.inner)), 0)
+        else:
+            raise CmdError(i18n.trans("cmds.lang.usage"))
     else:
         raise CmdError(i18n.trans("cmds.lang.usage"))
 

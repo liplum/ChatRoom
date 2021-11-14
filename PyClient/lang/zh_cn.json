@@ -2,8 +2,8 @@
   "cmds": {
     "goto": {
       "para1": {
-        "not_number": "¸ø¶¨µÄµÚÒ»¸ö²ÎÊı²»ÊÇÔ¤ÆÚµÄÕûÊı£¬¶øÊÇ{0}",
-        "over_range": "Êı×Ö{0}³¬¹ıÁË·¶Î§"
+        "not_number": "ç»™å®šçš„ç¬¬ä¸€ä¸ªå‚æ•°ä¸æ˜¯é¢„æœŸçš„æ•´æ•°ï¼Œè€Œæ˜¯{0}",
+        "over_range": "æ•°å­—{0}è¶…å‡ºèŒƒå›´"
       },
       "usage": "goto <number>"
     },
@@ -15,18 +15,22 @@
     },
     "help": {
       "usage": "help <command name>/all",
-      "cannot_find": "ÎŞ·¨ÕÒµ½ÃûÎª{0}µÄÃüÁî"
+      "cannot_find": "æ‰¾ä¸åˆ°åä¸º{0}çš„å‘½ä»¤"
     },
     "con": {
       "usage": "con <server ip>:<port>"
     },
-    "exec": {
-      "usage": "!Only Debug! exec \"<code>\"",
-      "execute_error": "ÎŞ·¨Ö´ĞĞ´úÂë{code}£¬ÒòÎª{exception}"
+    "run": {
+      "usage": "!Only Debug! exec \"<code>\" or exec -f <file path>",
+      "execute_error": "æ— æ³•æ‰§è¡Œä»£ç {code}ï¼Œå› ä¸º{exception}",
+      "cannot_read_file": "æ— æ³•ä»æ–‡ä»¶\"{path}\"ä¸­è¯»å–ä»£ç "
     },
     "lang": {
-      "usage": "lang or lang <en-us>",
-      "cannot_load": "ÎŞ·¨¼ÓÔØÓïÑÔ\"{0}\""
+      "usage": "lang [-s] or lang <en-us> [-s]",
+      "cannot_reload": "æ— æ³•é‡æ–°åŠ è½½è¯­è¨€",
+      "cannot_reload_cause": "æ— æ³•é‡æ–°åŠ è½½è¯­è¨€ï¼Œå› ä¸º{cause}",
+      "cannot_load": "æ— æ³•åŠ è½½è¯­è¨€\"{lang}\"",
+      "cannot_load_cause": "æ— æ³•åŠ è½½è¯­è¨€\"{lang}\"ï¼Œå› ä¸º{cause}"
     },
     "join": {
       "usage": "join [<server ip>:<port>] <chatting room id>",
@@ -37,18 +41,18 @@
   },
   "tabs": {
     "chat_tab": {
-      "name": "ÁÄÌì"
+      "name": "èŠå¤©æ¡†"
     }
   },
   "modes": {
     "command_mode": {
-      "name": "ÃüÁîÄ£Ê½",
+      "name": "å‘½ä»¤æ¨¡å¼",
       "cmd": {
-        "cannot_find": "ÎŞ·¨ÕÒµ½ÃûÎª{0}µÄÃüÁî"
+        "cannot_find": "æ‰¾ä¸åˆ°åä¸º{0}çš„å‘½ä»¤"
       }
     },
     "text_mode": {
-      "name": "ÎÄ±¾Ä£Ê½"
+      "name": "æ–‡æœ¬æ¨¡å¼"
     }
   }
 }

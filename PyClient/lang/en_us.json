@@ -3,7 +3,7 @@
     "goto": {
       "para1": {
         "not_number": "The first parameter given is not a expected integer but {0}",
-        "over_range": "The number {0} is over range."
+        "over_range": "The number {0} is over range"
       },
       "usage": "goto <number>"
     },
@@ -26,8 +26,11 @@
       "cannot_read_file": "Can't read codes from file \"{path}\""
     },
     "lang": {
-      "usage": "lang or lang <en-us>",
-      "cannot_load": "Can't load language \"{0}\""
+      "usage": "lang [-s] or lang <en-us> [-s]",
+      "cannot_reload": "Can't reload language",
+      "cannot_reload_cause": "Can't reload language because {cause}",
+      "cannot_load": "Can't load language \"{lang}\"",
+      "cannot_load_cause": "Can't load language \"{lang}\" because {cause}"
     },
     "join": {
       "usage": "join [<server ip>:<port>] <chatting room id>",

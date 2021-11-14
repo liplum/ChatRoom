@@ -25,14 +25,17 @@ Para 1:current language
 """
 
 
-def reload():
+def reload(strict: bool = False):
     file = f"{_root_path}/lang/{cur_lang}.json"
     try:
         with open(file, "r") as f:
             _cache = json.load(f)
             on_load(cur_lang)
-    except:
-        pass
+    except Exception as e:
+        if strict:
+            raise LocfileLoadError(e, cur_lang)
+        else:
+            _cache = {}
 
 
 def load(lang: Optional[str] = None, strict: bool = False):
@@ -46,18 +49,19 @@ def load(lang: Optional[str] = None, strict: bool = False):
             _cache = json.load(f)
             cur_lang = lang
             on_load(cur_lang)
-    except:
+    except Exception as e:
         if strict:
-            raise LocfileLoadError(lang)
+            raise LocfileLoadError(e, lang)
         else:
             _cache = {}
 
 
 class LocfileLoadError(Exception):
 
-    def __init__(self, lang):
+    def __init__(self, inner: Exception, lang):
         super().__init__()
         self.lang = lang
+        self.inner: Exception = inner
 
 
 def trans(key: str, *args, **kwargs):
