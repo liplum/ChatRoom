@@ -57,7 +57,8 @@ cmd_register = add("reg", _register)
 
 def _help_show_usage(tab, name):
     usage = i18n.trans(f"cmds.{name}.usage")
-    tab.add_string(f"{name}:{usage}")
+    description=i18n.trans(f"cmds.{name}.description")
+    tab.add_string(f"{name}: {description}\n   {usage}")
 
 
 def _help(context, args: [str]):

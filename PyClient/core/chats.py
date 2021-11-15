@@ -6,7 +6,7 @@ from typing import Tuple, List, Dict, Optional
 import utils
 from core.shared import server_token, userid, roomid, StorageUnit
 from events import event
-from ui.filer import i_filer
+from core.filer import i_filer
 from ui.outputs import i_logger
 from utils import compose, separate
 

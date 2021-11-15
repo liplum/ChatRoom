@@ -5,35 +5,42 @@
         "not_number": "The first parameter given is not a expected integer but {0}",
         "over_range": "The number {0} is over range"
       },
-      "usage": "goto <number>"
+      "usage": "goto <number>",
+      "description": "switch to the target tab"
     },
     "reg": {
       "usage": "reg [<server ip>:<port>] <account> <password>",
       "para1": {
         "invalid": "eg: 127.0.0.1:5000"
-      }
+      },
+      "description": "sign-up"
     },
     "help": {
       "usage": "help <command name>/all",
-      "cannot_find": "Can't find a command called {0}"
+      "cannot_find": "Can't find a command called {0}",
+      "description": "show the usage of command"
     },
     "con": {
-      "usage": "con <server ip>:<port>"
+      "usage": "con <server ip>:<port>",
+      "description": "connect a server on current tab"
     },
     "run": {
-      "usage": "!Only Debug! exec \"<code>\" or exec -f <file path>",
+      "usage": "!Only Debug! run \"<code>\" or exec -f <file path>",
       "execute_error": "Can't execute code {code} because {exception}",
-      "cannot_read_file": "Can't read codes from file \"{path}\""
+      "cannot_read_file": "Can't read codes from file \"{path}\"",
+      "description": "run custom code"
     },
     "lang": {
       "usage": "lang [-s] or lang <en-us> [-s]",
       "cannot_reload": "Can't reload language",
       "cannot_reload_cause": "Can't reload language because {cause}",
       "cannot_load": "Can't load language \"{lang}\"",
-      "cannot_load_cause": "Can't load language \"{lang}\" because {cause}"
+      "cannot_load_cause": "Can't load language \"{lang}\" because {cause}",
+      "description": "change the language of this app"
     },
     "join": {
       "usage": "join [<server ip>:<port>] <chatting room id>",
+      "description": "join a chatting room on current tab",
       "para1": {
         "invalid": "eg: 127.0.0.1:5000"
       }

@@ -1,23 +1,15 @@
-import platform
 import sys
 
-import keys
+import GLOBAL
 import utils
-from chars import *
-from cmd import cmdmanager
-from core.ioc import container
-from ui.clients import client
-from ui.inputs import i_input
-from ui.k import cmdkey
 from utils import get_at
 
-DEBUG = False
 IDE = False
 args = sys.argv
 if get_at(args, -1) == "-debug":
-    DEBUG = True
+    GLOBAL.DEBUG = True
 elif get_at(args, -1) == "-ide":
-    DEBUG = True
+    GLOBAL.DEBUG = True
     IDE = True
 
 server_ip = "127.0.0.1"
@@ -29,7 +21,9 @@ if get_at(args, 1) == "-login":
     LOGIN = True
 
 if IDE:
-    setattr(utils, "clear_screen", lambda: None)
+    utils.clear_screen = lambda: None
+
+import platform
 
 system_type = platform.system()
 
@@ -37,6 +31,7 @@ dirpath, filepath = utils.get_executed_path()
 
 
 def main():
+    from ui.clients import client
     _client = client()
     _client.root_path = dirpath
     _client.on_service_register.add(init_plugin)
@@ -48,7 +43,11 @@ def main():
     _client.start()
 
 
+from ioc import container
+
+
 def init_plugin(client, registry: container):
+    from ui.inputs import i_input
     if system_type == "Windows":
         from ui import nonblocks
         registry.register_singleton(i_input, nonblocks.nbinput)
@@ -56,17 +55,25 @@ def init_plugin(client, registry: container):
         from ui import linux
         registry.register_singleton(i_input, linux.nbinput)
 
-    if DEBUG:
+    if IDE:
         from ui.cmdprompt import cmd_input
         registry.register_singleton(i_input, cmd_input)
 
 
-def mapkeys(client, keymap: cmdkey):
+import ui.k as uik
+
+
+def mapkeys(client, keymap: uik.cmdkey):
+    import keys
+    import chars
     if keymap is client.key_enter_text:
-        keymap.map(c_t)
+        keymap.map(chars.c_t)
         return
     elif keymap is client.key_quit_text_mode:
         keymap.map(keys.k_quit)
+
+
+from cmd import cmdmanager
 
 
 def add_commands(client, cmd_manager: cmdmanager):

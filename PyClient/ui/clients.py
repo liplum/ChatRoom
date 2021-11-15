@@ -3,7 +3,7 @@ import traceback
 from functools import wraps
 from threading import Thread
 
-import core.ioc as ioc
+import ioc as ioc
 import i18n
 import ui.inputs as _input
 import ui.outputs as output
@@ -15,7 +15,7 @@ from net import msgs
 from net import networks
 from net.networks import i_network
 from ui.controls import window
-from ui.filer import i_filer, filer
+from core.filer import i_filer, filer
 from ui.k import cmdkey
 from utils import lock
 

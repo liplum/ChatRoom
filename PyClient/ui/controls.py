@@ -2,9 +2,11 @@ from abc import ABC, abstractmethod
 from io import StringIO
 from typing import Union, List, Optional
 
+import GLOBAL
 import chars
 import i18n
 import keys
+import ui.states
 import utils
 from cmd import WrongUsageError, CmdError, CmdNotFound, analyze_cmd_args, compose_full_cmd, is_quoted
 from cmd import cmdmanager
@@ -15,7 +17,7 @@ from ui import outputs as output
 from ui.k import kbinding
 from ui.outputs import CmdBkColor, CmdFgColor
 from ui.outputs import buffer
-from ui.states import state, smachine
+from ui.states import ui_state, ui_smachine
 from ui.tbox import textbox
 
 
@@ -91,21 +93,21 @@ class chat_tab(tab):
         self._connected: Optional[server_token] = None
         self._joined: Optional[roomid] = None
 
-        def set_client(state: state) -> None:
+        def set_client(state: ui_state) -> None:
             state.client = self.client
             state.textbox = self.textbox
             state.tablist = self.tablist
             state.tab = self
 
-        def gen_state(statetype: type) -> state:
-            if issubclass(statetype, inputable_state):
+        def gen_state(statetype: type) -> ui_state:
+            if issubclass(statetype, ui_state):
                 s = statetype()
                 set_client(s)
                 return s
             else:
                 return statetype()
 
-        self.sm = smachine(state_pre=set_client, stype_pre=gen_state)
+        self.sm = ui_smachine(state_pre=set_client, stype_pre=gen_state, allow_repeated_entry=False)
         self.sm.enter(cmd_mode)
         self.textbox.on_append.add(lambda b, p, c: client.mark_dirty())
         self.textbox.on_delete.add(lambda b, p, c: client.mark_dirty())
@@ -384,15 +386,6 @@ class context:
     pass
 
 
-class inputable_state(state):
-    textbox: textbox
-    client: "client"
-    tablist: tablist
-
-    def __init__(self):
-        super().__init__()
-
-
 def gen_cmd_error_text(cmd_name: str, args: List[str], full_cmd: str, pos: int, msg: str,
                        is_quoted: bool = False) -> str:
     argslen = len(args) + 1
@@ -426,17 +419,40 @@ def gen_cmd_error_text(cmd_name: str, args: List[str], full_cmd: str, pos: int, 
         return s.getvalue()
 
 
-class cmd_mode(inputable_state):
+class _cmd_state(ui.states.state):
+    mode: "cmd_mode"
+    sm: "_cmd_smachine"
+
+    def on_input(self, char: chars.char):
+        pass
+
+
+class _cmd_smachine(ui.states.smachine):
+    def on_input(self, char: chars.char):
+        if self.cur is not None:
+            return self.cur.on_input(char)
+
+
+class cmd_mode(ui_state):
     def __init__(self):
         super().__init__()
-        self.longcmd = ""
-        self.autofilling = False
-        self.autofilling_it = None
-        self.autofilling_cur = None
-        self.autofilling_all = None
         self.cmd_history: List[str] = []
         self.cmd_history_index = 0
         self.last_cmd_history: Optional[str] = None
+
+        def set_cmd_mode(state: _cmd_state) -> None:
+            state.mode = self
+
+        def gen_state(statetype: type) -> _cmd_state:
+            if issubclass(statetype, _cmd_state):
+                s = statetype()
+                set_cmd_mode(s)
+                return s
+            else:
+                return statetype()
+
+        self.cmd_sm = _cmd_smachine(state_pre=set_cmd_mode, stype_pre=gen_state, allow_repeated_entry=False)
+        self.cmd_sm.enter(_cmd_single_mode)
 
     @property
     def cmd_history_index(self) -> int:
@@ -464,17 +480,24 @@ class cmd_mode(inputable_state):
         self.cmd_manager: cmdmanager = self.client.cmd_manger
 
     def draw_on(self, buf: buffer):
-        tip = utils.fillto(f"{i18n.trans('modes.command_mode.name')}:", " ", 40)
+        head_text = f"{i18n.trans('modes.command_mode.name')}"
+        if GLOBAL.DEBUG:
+            head_text = f"{i18n.trans('modes.command_mode.name')}:{self.cmd_history_index} {self.cmd_sm.cur}"
+
+        tip = utils.fillto(head_text, " ", 40)
         buf.addtext(text=tip, fgcolor=CmdFgColor.Black,
                     bkcolor=CmdBkColor.Blue,
                     end='\n')
+
+        if GLOBAL.DEBUG:
+            buf.addtext(repr(self.cmd_history))
 
     @property
     def is_long_cmd_mode(self) -> bool:
         inputs = self.textbox.input_list
         return len(inputs) > 0 and inputs[0] == ':'
 
-    def _gen_context(self):
+    def gen_context(self):
         contxt = context()
         contxt.client = self.client
         contxt.tablist = self.tablist
@@ -485,104 +508,151 @@ class cmd_mode(inputable_state):
 
     def _show_cmd_history(self):
         cur_his = self.cur_cmd_history
-        if cur_his and cur_his != self.last_cmd_history:
-            self.textbox.input_list = cur_his
-            self.last_cmd_history = cur_his
-            self.textbox.end()
+        if cur_his:
+            if cur_his != self.last_cmd_history:
+                # display history
+                self.textbox.input_list = cur_his
+                self.last_cmd_history = cur_his
+                self.textbox.end()
+        else:
+            self.textbox.clear()
 
     def on_input(self, char: chars.char):
         c = self.client
         tb = self.textbox
+        # press quit to clear textbox
         if c.key_quit_text_mode == char:
             self.textbox.clear()
             return
+
+        # browser command using history
         if keys.k_up == char:
-            self.cmd_history_index -= 1
-            self._show_cmd_history()
-            return
+            up_or_down = -1
         elif keys.k_down == char:
-            self.cmd_history_index += 1
-            self._show_cmd_history()
-            return
+            up_or_down = -1
         else:
+            up_or_down = 0
             self.cmd_history_index = 0
-
+        if up_or_down:
+            saved = False
+            if self.cmd_history_index == 0 and self.textbox.input_count > 0:
+                # save current text
+                input_list = self.textbox.input_list
+                cur_content = utils.compose(input_list, connector='')
+                saved = True
+            self.cmd_history_index += up_or_down
+            self._show_cmd_history()
+            if saved:
+                self.cmd_history.append(cur_content)
+                self.cmd_history_index -= 1
+            return
+        # switch mode
         if self.is_long_cmd_mode:
-            if keys.k_enter == char:
-                input_list = tb.input_list
-                full_cmd = utils.compose(input_list, connector='')
-                cmd_args, quoted_indexes = analyze_cmd_args(full_cmd)
-                full_cmd = compose_full_cmd(cmd_args, quoted_indexes)
-                args = cmd_args[1:]
-                cmd_name = cmd_args[0][1:]
-                contxt = self._gen_context()
-                try:
-                    self.cmd_manager.execute(contxt, cmd_name, args)
-                except WrongUsageError as wu:
-                    pos = wu.position
-                    is_pos_quoted = is_quoted(pos + 1, quoted_indexes)
-                    error_output = gen_cmd_error_text(cmd_name, args, full_cmd, pos, wu.msg, is_pos_quoted)
-                    self.tab.add_string(error_output)
-                except CmdNotFound as cnt:
-                    error_output = gen_cmd_error_text(
-                        cmd_name, args, full_cmd, -1,
-                        i18n.trans("modes.command_mode.cmd.cannot_find", cmd_name))
-                    self.tab.add_string(error_output)
-                except CmdError as ce:
-                    error_output = gen_cmd_error_text(cmd_name, args, full_cmd, -2, ce.msg)
-                    self.tab.add_string(error_output)
-                self.cmd_history.append(full_cmd)
-                self.cmd_history_index = 0
-                tb.clear()
-                # TODO:Complete Autofilling
-            elif chars.c_table == char:
-                if self.autofilling:
-                    try:
-                        cur_len = len(self.autofilling_cur)
-                        tb.rmtext(cur_len)
+            self.cmd_sm.enter(_cmd_long_mode)
+        else:
+            self.cmd_sm.enter(_cmd_single_mode)
 
-                    except StopIteration:
-                        self.autofilling_it = iter(self.autofilling_all)
+        self.cmd_sm.on_input(char)
+
+
+def _cmd_long_mode_execute_cmd(mode: cmd_mode, tb: textbox):
+    input_list = tb.input_list
+    full_cmd = utils.compose(input_list, connector='')
+    cmd_args, quoted_indexes = analyze_cmd_args(full_cmd)
+    full_cmd = compose_full_cmd(cmd_args, quoted_indexes)
+    args = cmd_args[1:]
+    cmd_name = cmd_args[0][1:]
+    contxt = mode.gen_context()
+    try:
+        mode.cmd_manager.execute(contxt, cmd_name, args)
+    except WrongUsageError as wu:
+        pos = wu.position
+        is_pos_quoted = is_quoted(pos + 1, quoted_indexes)
+        error_output = gen_cmd_error_text(cmd_name, args, full_cmd, pos, wu.msg, is_pos_quoted)
+        mode.tab.add_string(error_output)
+    except CmdNotFound as cnt:
+        error_output = gen_cmd_error_text(
+            cmd_name, args, full_cmd, -1,
+            i18n.trans("modes.command_mode.cmd.cannot_find", cmd_name))
+        mode.tab.add_string(error_output)
+    except CmdError as ce:
+        error_output = gen_cmd_error_text(cmd_name, args, full_cmd, -2, ce.msg)
+        mode.tab.add_string(error_output)
+    mode.cmd_history.append(full_cmd)
+    mode.cmd_history_index = 0
+    tb.clear()
+
+class _cmd_long_mode(_cmd_state):
+    def __init__(self):
+        self.autofilling = False
+        self.autofilling_it = None
+        self.autofilling_cur = None
+        self.autofilling_all = None
+
+    def on_input(self, char: chars.char):
+        mode = self.mode
+        tb = mode.textbox
+
+        # execute command
+        if keys.k_enter == char:
+            _cmd_long_mode_execute_cmd(mode, tb)
+        # auto filling
+        elif chars.c_table == char:
+            # TODO:Complete Autofilling
+            if mode.autofilling:  # press tab and already entered auto-filling mode
+                # to next candidate
+                # cur_len = len(self.autofilling_cur)
+                # tb.rmtext(cur_len)
+                # self.autofilling_it = iter(self.autofilling_all)
+                pass
+            else:  # press tab but haven't enter auto-filling mode yet
+                self.autofilling = True
+                cmd_manager: cmdmanager = c.cmd_manager
+                inputs = tb.inputs[1:]
+                self.autofilling_all = cmd_manager.prompts(inputs)
+                if len(all_prompts) == 0:
+                    self.autofilling = False
                 else:
-                    self.autofilling = True
-                    cmd_manager: cmdmanager = c.cmd_manager
-                    inputs = tb.inputs[1:]
-                    self.autofilling_all = cmd_manager.prompts(inputs)
-                    if len(all_prompts) == 0:
-                        self.autofilling = False
-                    else:
-                        self.autofilling_it = iter(autofilling_all)
-                        self.autofilling_cur = next(self.autofilling_it)
-                        tb.addtext(self.autofilling_cur)
+                    self.autofilling_it = iter(autofilling_all)
+                    self.autofilling_cur = next(self.autofilling_it)
+                    tb.addtext(self.autofilling_cur)
+        else:  # not enter and not tab
+            tb.append(char)  # normally,add this char into textbox
+            if self.autofilling:  # if already entered auto-filling
+                # update candidate list
+                self.autofilling_all = cmd_manager.prompts(inputs)
+                if len(all_prompts) == 0:
+                    self.autofilling = False
+                else:
+                    self.autofilling_it = iter(autofilling_all)
+                    self.autofilling_cur = next(self.autofilling_it)
+                    tb.addtext(self.autofilling_cur)
             else:
-                tb.append(char)
-                if self.autofilling:
-                    self.autofilling_all = cmd_manager.prompts(inputs)
-                    if len(all_prompts) == 0:
-                        self.autofilling = False
-                    else:
-                        self.autofilling_it = iter(autofilling_all)
-                        self.autofilling_cur = next(self.autofilling_it)
-                        tb.addtext(self.autofilling_cur)
-                else:
-                    pass
-        else:  # single mode
-            if c.key_enter_text == char:
-                self.sm.enter(text_mode)
-                return True
-            elif chars.c_colon == char:
-                tb.append(chars.c_colon)
-            elif chars.c_q == char:
-                c.running = False
-            elif chars.c_a == char:
-                self.tablist.back()
-            elif chars.c_d == char:
-                self.tablist.next()
-            elif chars.c_n == char:
-                self.tablist.add(chat_tab(self.client, self.tablist))
+                pass
 
 
-class text_mode(inputable_state):
+class _cmd_single_mode(_cmd_state):
+
+    def on_input(self, char: chars.char):
+        mode = self.mode
+        tb = mode.textbox
+
+        if mode.client.key_enter_text == char:
+            mode.sm.enter(text_mode)
+            return
+        elif chars.c_colon == char:
+            tb.append(chars.c_colon)
+        elif chars.c_q == char:
+            mode.client.running = False
+        elif chars.c_a == char:
+            mode.tablist.back()
+        elif chars.c_d == char:
+            mode.tablist.next()
+        elif chars.c_n == char:
+            mode.tablist.add(chat_tab(mode.client, mode.tablist))
+
+
+class text_mode(ui_state):
 
     def __init__(self):
         super().__init__()

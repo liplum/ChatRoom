@@ -39,7 +39,8 @@ def win_test():
     # test_file_path()
     # test_i18n()
     # test_path()
-    test_analyze_cmd_args()
+    # test_analyze_cmd_args()
+    test_generic()
 
 
 def linux_test():
@@ -54,6 +55,12 @@ if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
+
+
+def test_generic():
+    from typing import TypeVar
+    T = TypeVar('T')
+
 
 
 def test_analyze_cmd_args():
