@@ -119,7 +119,7 @@ class chat_tab(tab):
             inputs = self.textbox.inputs
             self.client.send_text(roomid(12345), inputs, self.connected)
         else:
-            self.logger.error("Haven't connected a server yet.")
+            self.logger.error(f"[Tab][{self}]Haven't connected a server yet.")
         self.textbox.clear()
 
     @property
@@ -138,7 +138,7 @@ class chat_tab(tab):
         if self.network.is_connected(server_token):
             self._connected = server_token
         else:
-            self.logger.error("Cannot access a unconnected/disconnected server.")
+            self.logger.error(f"[Tab][{self}]Cannot access a unconnected/disconnected server.")
 
     def _add_msg(self, time, uid, text):
         self.history.append(f"{time.strftime('%Y%m%d-%H:%M:%S')}\n  {uid}:  {text}")
@@ -155,9 +155,22 @@ class chat_tab(tab):
         if not self.first_loaded:
             self.first_load()
 
+        self.render_connection_info(buf)
         buf.addtext(self.distext)
         self.sm.draw_on(buf)
         buf.addtext(self.textbox.distext)
+
+    def render_connection_info(self, buf: buffer):
+        if self.connected:
+            if self.joined:
+                tip = i18n.trans('tabs.chat_tab.joined',
+                                 ip=self.connected.ip, port=self.connected.port, room_id=self.joined.id)
+            else:
+                tip = i18n.trans('tabs.chat_tab.connected',
+                                 ip=self.connected.ip, port=self.connected.port)
+        else:
+            tip = i18n.trans('tabs.chat_tab.no_connection')
+        buf.addtext(text=tip, bkcolor=CmdBkColor.White, fgcolor=CmdFgColor.Black, end='\n')
 
     @property
     def distext(self) -> str:
@@ -480,12 +493,12 @@ class cmd_mode(ui_state):
         self.cmd_manager: cmdmanager = self.client.cmd_manger
 
     def draw_on(self, buf: buffer):
-        head_text = f"{i18n.trans('modes.command_mode.name')}"
+        head_text = f"{i18n.trans('modes.command_mode.name')}:"
         if GLOBAL.DEBUG:
             head_text = f"{i18n.trans('modes.command_mode.name')}:{self.cmd_history_index} {self.cmd_sm.cur}"
 
         tip = utils.fillto(head_text, " ", 40)
-        buf.addtext(text=tip, fgcolor=CmdFgColor.Black,
+        buf.addtext(text=tip, fgcolor=CmdFgColor.White,
                     bkcolor=CmdBkColor.Blue,
                     end='\n')
 
@@ -555,33 +568,6 @@ class cmd_mode(ui_state):
         self.cmd_sm.on_input(char)
 
 
-def _cmd_long_mode_execute_cmd(mode: cmd_mode, tb: textbox):
-    input_list = tb.input_list
-    full_cmd = utils.compose(input_list, connector='')
-    cmd_args, quoted_indexes = analyze_cmd_args(full_cmd)
-    full_cmd = compose_full_cmd(cmd_args, quoted_indexes)
-    args = cmd_args[1:]
-    cmd_name = cmd_args[0][1:]
-    contxt = mode.gen_context()
-    try:
-        mode.cmd_manager.execute(contxt, cmd_name, args)
-    except WrongUsageError as wu:
-        pos = wu.position
-        is_pos_quoted = is_quoted(pos + 1, quoted_indexes)
-        error_output = gen_cmd_error_text(cmd_name, args, full_cmd, pos, wu.msg, is_pos_quoted)
-        mode.tab.add_string(error_output)
-    except CmdNotFound as cnt:
-        error_output = gen_cmd_error_text(
-            cmd_name, args, full_cmd, -1,
-            i18n.trans("modes.command_mode.cmd.cannot_find", cmd_name))
-        mode.tab.add_string(error_output)
-    except CmdError as ce:
-        error_output = gen_cmd_error_text(cmd_name, args, full_cmd, -2, ce.msg)
-        mode.tab.add_string(error_output)
-    mode.cmd_history.append(full_cmd)
-    mode.cmd_history_index = 0
-    tb.clear()
-
 class _cmd_long_mode(_cmd_state):
     def __init__(self):
         self.autofilling = False
@@ -589,13 +575,57 @@ class _cmd_long_mode(_cmd_state):
         self.autofilling_cur = None
         self.autofilling_all = None
 
+    def cmd_long_mode_execute_cmd(self):
+        mode = self.mode
+        tb = self.mode.textbox
+        input_list = tb.input_list
+        full_cmd = utils.compose(input_list, connector='')
+        cmd_args, quoted_indexes = analyze_cmd_args(full_cmd)
+        full_cmd = compose_full_cmd(cmd_args, quoted_indexes)
+        args = cmd_args[1:]
+        cmd_name = cmd_args[0][1:]
+        contxt = mode.gen_context()
+        try:
+            mode.cmd_manager.execute(contxt, cmd_name, args)
+        except WrongUsageError as wu:
+            with StringIO() as s:
+                s.write(i18n.trans("modes.command_mode.cmd.wrong_usage"))
+                s.write(' : ')
+                pos = wu.position
+                is_pos_quoted = is_quoted(pos + 1, quoted_indexes)
+                s.write(gen_cmd_error_text(cmd_name, args, full_cmd, pos, wu.msg, is_pos_quoted))
+                mode.tab.add_string(s.getvalue())
+        except CmdNotFound as cnt:
+            error_output = gen_cmd_error_text(
+                cmd_name, args, full_cmd, -1,
+                i18n.trans("modes.command_mode.cmd.cannot_find", name=cmd_name))
+            mode.tab.add_string(error_output)
+        except CmdError as ce:
+            with StringIO() as s:
+                s.write(i18n.trans("modes.command_mode.cmd.cmd_error"))
+                s.write(' : ')
+                s.write(gen_cmd_error_text(cmd_name, args, full_cmd, -2, ce.msg))
+                mode.tab.add_string(s.getvalue())
+        except Exception as any_e:
+            with StringIO() as s:
+                s.write(i18n.trans("modes.command_mode.cmd.unknown_error"))
+                s.write(' : ')
+                s.write(gen_cmd_error_text(
+                    cmd_name, args, full_cmd, -2,
+                    i18n.trans("modes.command_mode.cmd.not_support", name=cmd_name)))
+                mode.tab.add_string(s.getvalue())
+
+        mode.cmd_history.append(full_cmd)
+        mode.cmd_history_index = 0
+        tb.clear()
+
     def on_input(self, char: chars.char):
         mode = self.mode
         tb = mode.textbox
 
         # execute command
         if keys.k_enter == char:
-            _cmd_long_mode_execute_cmd(mode, tb)
+            self.cmd_long_mode_execute_cmd()
         # auto filling
         elif chars.c_table == char:
             # TODO:Complete Autofilling
@@ -643,7 +673,7 @@ class _cmd_single_mode(_cmd_state):
         elif chars.c_colon == char:
             tb.append(chars.c_colon)
         elif chars.c_q == char:
-            mode.client.running = False
+            mode.client.stop()
         elif chars.c_a == char:
             mode.tablist.back()
         elif chars.c_d == char:
@@ -668,7 +698,7 @@ class text_mode(ui_state):
 
     def draw_on(self, buf: buffer):
         tip = utils.fillto(f"{i18n.trans('modes.text_mode.name')}:", " ", 40)
-        buf.addtext(text=tip, fgcolor=CmdFgColor.Black,
+        buf.addtext(text=tip, fgcolor=CmdFgColor.White,
                     bkcolor=CmdBkColor.Blue,
                     end='\n')
 

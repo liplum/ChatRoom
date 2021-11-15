@@ -16,8 +16,13 @@ server_ip = "127.0.0.1"
 port = 5000
 LOGIN = False
 if get_at(args, 1) == "-login":
-    server_ip = get_at(args, 2)
-    port = int(get_at(args, 3))
+    may_ip = get_at(args, 2)
+    server_ip = may_ip if may_ip and not may_ip.startswith("-") else server_ip
+    try:
+        may_port = int(get_at(args, 3))
+    except:
+        may_port = None
+    port = may_port if may_port and not may_port.startswith("-") else port
     LOGIN = True
 
 if IDE:
@@ -40,6 +45,9 @@ def main():
     _client.init()
     if LOGIN:
         _client.connect(server_ip, port)
+    if GLOBAL.DEBUG and not IDE:
+        from pef.monitor import pef_monitor
+        _client.container.resolve(pef_monitor)
     _client.start()
 
 
@@ -58,6 +66,10 @@ def init_plugin(client, registry: container):
     if IDE:
         from ui.cmdprompt import cmd_input
         registry.register_singleton(i_input, cmd_input)
+
+    if GLOBAL.DEBUG and not IDE:
+        from pef.monitor import pef_monitor
+        registry.register_instance(pef_monitor, pef_monitor(interval=0.1))
 
 
 import ui.k as uik

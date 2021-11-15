@@ -1,6 +1,6 @@
 from cmd import command
 from net.msgs import register_request
-from net.networks import i_network
+from net.networks import i_network, CannotConnectError
 from ui.controls import *
 
 cmds = []
@@ -32,9 +32,9 @@ cmd_goto_tab = add("goto", _goto_tab)
 def _register(context, args: [str]):
     argslen = len(args)
     network: i_network = context.network
-    if argslen == 2:
-        pass
-    elif argslen == 3:
+    if argslen != 2 and args != 3:
+        raise CmdError(i18n.trans("cmds.reg.usage"))
+    if argslen == 3:  # first is server
         server_info = args[0].split(":")
         if len(server_info) != 2:
             raise WrongUsageError(i18n.trans("cmds.reg.para1.invalid"), 0)
@@ -43,13 +43,28 @@ def _register(context, args: [str]):
             port = int(server_info[1])
         except:
             raise WrongUsageError(i18n.trans("cmds.reg.para1.invalid"), 0)
-        uc = network.get_channel("User")
-        msg = register_request()
-        msg.account = args[1]
-        msg.password = args[2]
-        uc.send(server_token(ip, port), msg)
-    else:
-        raise CmdError(i18n.trans("cmds.reg.usage"))
+        server = server_token(ip, port)
+        if not network.is_connected(server):
+            try:
+                network.connect(server, strict=True)
+            except CannotConnectError as cce:
+                raise CmdError(
+                    i18n.trans("cmds.reg.cannot_connect_server", ip=ip, port=port))
+        account = args[1]
+        pwd = args[2]
+    elif argslen == 2:
+        tab: chat_tab = context.tab
+        server = tab.connected
+        if not server:
+            raise WrongUsageError(i18n.trans("cmds.reg.current_tab_is_unconnected"), 0)
+        account = args[0]
+        pwd=args[1]
+
+    uc = network.get_channel("User")
+    msg = register_request()
+    msg.account = account
+    msg.password = pwd
+    uc.send(server, msg)
 
 
 cmd_register = add("reg", _register)
@@ -57,7 +72,7 @@ cmd_register = add("reg", _register)
 
 def _help_show_usage(tab, name):
     usage = i18n.trans(f"cmds.{name}.usage")
-    description=i18n.trans(f"cmds.{name}.description")
+    description = i18n.trans(f"cmds.{name}.description")
     tab.add_string(f"{name}: {description}\n   {usage}")
 
 
@@ -83,7 +98,31 @@ cmd_help = add("help", _help)
 
 
 def _con(context, args: [str]):
-    pass
+    argslen = len(args)
+    if argslen != 1:
+        raise WrongUsageError(i18n.trans("cmds.con.usage", name), 0)
+    server_info = args[0].split(":")
+    if len(server_info) != 2:
+        raise WrongUsageError(i18n.trans("cmds.con.para1.invalid"), 0)
+    ip = server_info[0]
+    try:
+        port = int(server_info[1])
+    except:
+        raise WrongUsageError(i18n.trans("cmds.con.para1.invalid"), 0)
+    server = server_token(ip, port)
+    if not network.is_connected(server):
+        try:
+            network.connect(server, strict=True)
+        except CannotConnectError as cce:
+            raise CmdError(
+                i18n.trans("cmds.reg.cannot_connect_server", ip=ip, port=port))
+    tab = context.tab
+    has_connect_attr = hasattr(tab, "connected") and hasattr(tab, "connect")
+    if has_connect_attr:
+        if tab.connected == server:
+            raise WrongUsageError(i18n.trans("cmds.con.already_connected", ip=ip, port=port), 0)
+        else:
+            tab.connect(server)
 
 
 cmd_con = add("con", _con)

@@ -1,21 +1,20 @@
 import sys
-import traceback
 from functools import wraps
 from threading import Thread
 
-import ioc as ioc
 import i18n
+import ioc as ioc
 import ui.inputs as _input
 import ui.outputs as output
 from cmd import cmdmanager
 from core.chats import *
+from core.filer import i_filer, filer
 from core.shared import server_token, userid, roomid
 from events import event
 from net import msgs
 from net import networks
 from net.networks import i_network
 from ui.controls import window
-from core.filer import i_filer, filer
 from ui.k import cmdkey
 from utils import lock
 
@@ -26,7 +25,7 @@ class client:
         self._on_service_register = event()
         self._on_cmd_register = event()
         self._on_keymapping = event()
-        self.running: bool = False
+        self._running: bool = False
         self._display_lock: RLock = RLock()
         self._dirty = False
         self.cmdkeys = []
@@ -91,6 +90,7 @@ class client:
         self.network: networks.network = ct.resolve(networks.i_network)
         self.inpt: _input.i_input = ct.resolve(_input.i_input)
         self.logger: output.i_logger = ct.resolve(output.i_logger)
+        self.logger.output_to_cmd = False
 
         if not self.check_file_permission():
             self.root_path = ""
@@ -99,7 +99,7 @@ class client:
         self.filer.root_path = self.root_path
         self.display: output.i_display = ct.resolve(output.i_display)
         self.cmd_manger: cmdmanager = ct.resolve(cmdmanager)
-        self.logger.msg("Service component initialized.")
+        self.logger.msg("[Client]Service component initialized.")
         self.msg_manager: i_msgmager = ct.resolve(i_msgmager)
 
         def on_msg_pre_analyzed(network, server_token, source, json):
@@ -116,7 +116,7 @@ class client:
             if ch is char:
                 return self.win.on_input(ch)
             else:
-                self.logger.error(f"Input event provides a wrong char '{ch} -> {char}'.")
+                self.logger.error(f"[Client]Input event provides a wrong char '{ch} -> {char}'.")
 
         self.inpt.on_input.add(on_input)
 
@@ -134,6 +134,7 @@ class client:
         self.channel_chatting = self.network.new_channel("Chatting")
 
         self.channel_chatting.register(msgs.chatting)
+        self.channel_user.register(msgs.register_request)
 
     @property
     def need_update(self):
@@ -167,13 +168,13 @@ class client:
         self.channel_chatting.send(server, msg)
 
     def start(self):
-        self.running = True
+        self._running = True
         i = self.inpt
         i.initialize()
         self.winsize_monitor.start()
         self.win.start()
         self.render()
-        while self.running:
+        while self._running:
             try:
                 self.inpt.get_input()
                 # self.tps.delay()
@@ -183,10 +184,13 @@ class client:
                 self._clear_dirty()
                 self.render()
             except Exception as e:
-                traceback.print_exc()
-                self.running = False
+                self.logger.error(f"[Client]{e}\n{sys.exc_info()}")
+                self.stop()
         self.msg_manager.save_all()
         sys.exit(0)
+
+    def stop(self):
+        self._running = False
 
     def render(self):
         self.dlock(self.win.update_screen)()

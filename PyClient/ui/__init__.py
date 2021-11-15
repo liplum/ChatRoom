@@ -2,6 +2,7 @@ import platform
 
 system_type = platform.system()
 
+
 def init_keys():
     import keys
     if system_type == "Windows":

@@ -6,11 +6,15 @@ import time
 from datetime import datetime
 from io import StringIO
 from threading import RLock
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, TypeVar
 
 system_type = platform.system()
 
 clear_screen = None
+
+T = TypeVar('T')
+TK = TypeVar('TK')
+TV = TypeVar('TV')
 
 
 def split_parent_path(path: str) -> List[str]:
@@ -49,21 +53,21 @@ def get_executed_path() -> Tuple[str, str]:
     return os.path.split(os.path.abspath(sys.argv[0]))
 
 
-def get(dic: Dict, key):
+def get(dic: Dict[TK, TV], key: TK) -> TV:
     if key in dic:
         return dic[key]
     else:
         return None
 
 
-def get_at(li: list, index: int):
+def get_at(li: List[T], index: int) -> T:
     if len(li) > index:
         return li[index]
     else:
         return None
 
 
-def multiget(dic: Dict, key):
+def multiget(dic: Dict[TK, List[TV]], key: TK) -> List[TV]:
     if key in dic:
         li = dic[key]
         if isinstance(li, list):

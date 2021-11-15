@@ -25,7 +25,7 @@ public class RegisterRequestMsgHandler : IMessageHandler<RegisterRequestMsg>
         }
         else//Account is valid
         {
-            var isOccupied = userService.NotOccupied(account);
+            var isOccupied = !userService.NotOccupied(account);
             if (isOccupied)
             {
                 reply = new(RegisterResult.Failed, FailureCause.AccountOccupied);

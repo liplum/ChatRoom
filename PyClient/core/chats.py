@@ -4,9 +4,9 @@ from threading import RLock
 from typing import Tuple, List, Dict, Optional
 
 import utils
+from core.filer import i_filer
 from core.shared import server_token, userid, roomid, StorageUnit
 from events import event
-from core.filer import i_filer
 from ui.outputs import i_logger
 from utils import compose, separate
 
@@ -214,7 +214,7 @@ class msgfiler(i_msgfiler):
             storage.save_file = file
             storage.serialize()
         except:
-            self.logger.error(f'Cannot save msg into "{storage.save_file}"')
+            self.logger.error(f'[MsgFiler]Cannot save msg into "{storage.save_file}"')
 
     def get(self, server: server_token, room_id: roomid) -> str:
         return self.filer.get_file(f"/data/{server.ip}-{server.port}/{room_id}.rec")
@@ -249,7 +249,7 @@ class msgmager(i_msgmager):
             if storage:
                 return storage.retrieve_lasted(amount)
             else:
-                self.logger.error(f"Cannot load msg storage from {room_id}")
+                self.logger.error(f"[MsgManager]Cannot load msg storage from {room_id}")
 
     def retrieve(self, server: server_token, room_id: roomid, amount: int, start: datetime,
                  end: datetime) -> List[StorageUnit]:
@@ -258,7 +258,7 @@ class msgmager(i_msgmager):
             if storage:
                 return storage.retrieve(start=start, end=end, number_limit=amount)
             else:
-                self.logger.error(f"Cannot load msg storage from {room_id}")
+                self.logger.error(f"[MsgManager]Cannot load msg storage from {room_id}")
 
     def receive(self, server: server_token, room_id: roomid, msg_unit: StorageUnit):
         with self._lock:
@@ -277,7 +277,7 @@ class msgmager(i_msgmager):
             if storage:
                 return storage.retrieve_until(end=datetime.now(), number_limit=amount)
             else:
-                self.logger.error(f"Cannot load msg storage from {room_id}")
+                self.logger.error(f"[MsgManager]Cannot load msg storage from {room_id}")
 
     def save_all(self):
         for strg in self.cache.values():

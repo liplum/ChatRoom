@@ -1,15 +1,22 @@
 import msvcrt
+import sys
 from threading import Thread, RLock
 from typing import Optional, List, NoReturn
 
 import chars
 from ui.clients import client
 from ui.inputs import i_nbinput
-from ui.outputs import i_display, CmdFgColor, CmdBkColor
+from ui.outputs import i_display, CmdFgColor, CmdBkColor, i_logger, buffer
 from utils import lock
 
 
 class nbdispaly(i_display):
+
+    def gen_buffer(self) -> buffer:
+        pass
+
+    def render(self, buf: buffer) -> bool:
+        pass
 
     def display_text(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
                      bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
@@ -33,22 +40,27 @@ class nbinput(i_nbinput):
             self._lock = RLock()
 
     def init(self, container):
-        self.client = container.resolve(client)
+        self.client: client = container.resolve(client)
+        self.logger: i_logger = container.resolve(i_logger)
 
     def _listen_input(self):
-        while True:
-            if msvcrt.kbhit():
-                ch = msvcrt.getwch()
-                ch_number = ord(ch)
-                if ch_number == chars.control_keycode_1:
-                    ch_full = chars.control(ord(msvcrt.getwch()))
-                    self.input_new(ch_full)
-                elif ch_number == chars.f_keycode_1:
-                    ch_full = chars.f(ord(msvcrt.getwch()))
-                    self.input_new(ch_full)
-                else:
-                    ch_full = chars.char(ch_number)
-                    self.input_new(ch_full)
+        try:
+            while True:
+                if msvcrt.kbhit():
+                    ch = msvcrt.getwch()
+                    ch_number = ord(ch)
+                    if ch_number == chars.control_keycode_1:
+                        ch_full = chars.control(ord(msvcrt.getwch()))
+                        self.input_new(ch_full)
+                    elif ch_number == chars.f_keycode_1:
+                        ch_full = chars.f(ord(msvcrt.getwch()))
+                        self.input_new(ch_full)
+                    else:
+                        ch_full = chars.char(ch_number)
+                        self.input_new(ch_full)
+        except Exception as e:
+            self.logger.error(f"[Input]{e}\n{sys.exc_info()}")
+            self.client.stop()
 
     def input_new(self, char: chars.char):
         self.client.dlock(self._input_new)(char)

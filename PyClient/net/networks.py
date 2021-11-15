@@ -88,7 +88,7 @@ class channel(i_channel):
                     context = Context(self.network.client, self, _from, self.network)
                     handler(msg, context)
         else:
-            self.logger.error(f"Cannot find message type called {msg_id}")
+            self.logger.error(f"[Channel<{self.name}>]Cannot find message type called {msg_id}")
 
     def send(self, to: server_token, msg):
         msg_id = get(self.msg2id, type(msg))
@@ -99,7 +99,7 @@ class channel(i_channel):
             }
             self.network.send(to, msg, jobj)
         else:
-            self.logger.error(f"Cannot find message type {msg_id}")
+            self.logger.error(f"[Channel<{self.name}>]Cannot find message type {msg_id}")
 
 
 class i_network(ABC):
@@ -107,7 +107,14 @@ class i_network(ABC):
         self.client = client
 
     @abstractmethod
-    def connect(self, server: server_token) -> bool:
+    def connect(self, server: server_token, strict: bool = False) -> bool:
+        """
+
+        :param strict:
+        :param server:
+        :return:
+        :exception: CannotConnectError only strict mode
+        """
         pass
 
     @abstractmethod
@@ -130,6 +137,12 @@ class i_network(ABC):
     @abstractmethod
     def connected_servers(self) -> List[server_token]:
         pass
+
+
+class CannotConnectError(Exception):
+    def __init__(self, server: server_token):
+        super().__init__()
+        self.server = server
 
 
 class network(i_network):
@@ -175,20 +188,23 @@ class network(i_network):
     def get_channel(self, name: str):
         return get(self.channels, name)
 
-    def connect(self, server: server_token) -> bool:
+    def connect(self, server: server_token, strict: bool = False) -> bool:
         skt = socket(AF_INET, SOCK_STREAM)
         succeed = False
         for i in range(self.max_retry_time):
             try:
-                self.logger.msg(f"Trying to connect {server} [{i + 1}]...")
+                self.logger.msg(f"[Network]Trying to connect {server} [{i + 1}]...")
                 skt.connect(server)
                 succeed = True
                 break
             except:
                 continue
         if not succeed:
-            self.logger.error(f"Cannot connect {server}")
-            return False
+            if strict:
+                raise CannotConnectError(server)
+            else:
+                self.logger.error(f"[Network]Cannot connect {server}")
+                return False
         listen = Thread(target=self.__receive_datapack, args=(server, skt))
         listen.daemon = True
         self.lock(self._add_socket)(server, skt, listen)
@@ -238,9 +254,9 @@ class network(i_network):
                     _json["Content"] = content
                 _channel.receive_datapack(content, msg_id, server)
             else:
-                self.logger.error(f"Cannot find channel called {channel_name}")
+                self.logger.error(f"[Network]Cannot find channel called {channel_name}")
         else:
-            self.logger.error("Cannot analyse datapack")
+            self.logger.error("[Network]Cannot analyse datapack")
 
     def send(self, server: server_token, _msg: msg, jobj: Dict):
         content = {}
@@ -255,7 +271,7 @@ class network(i_network):
             dp = datapack(jobj_str_b)
             skt.send(to_bytes_starting_with_len(dp))
         else:
-            self.logger.error(f"Cannot find server {server}")
+            self.logger.error(f"[Network]Cannot find server {server}")
 
     def new_channel(self, channel_name: str) -> channel:
         c = channel(self, channel_name)

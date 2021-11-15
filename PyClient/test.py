@@ -62,7 +62,6 @@ def test_generic():
     T = TypeVar('T')
 
 
-
 def test_analyze_cmd_args():
     a1 = ":goto"
     print(cmd.analyze_cmd_args(a1))

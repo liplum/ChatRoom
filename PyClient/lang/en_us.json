@@ -13,6 +13,8 @@
       "para1": {
         "invalid": "eg: 127.0.0.1:5000"
       },
+      "current_tab_is_unconnected": "Current tab hasn't connected any server",
+      "cannot_connect_server": "Can't connect the server {ip}:{port}",
       "description": "sign-up"
     },
     "help": {
@@ -22,7 +24,11 @@
     },
     "con": {
       "usage": "con <server ip>:<port>",
-      "description": "connect a server on current tab"
+      "description": "connect a server on current tab",
+      "para1": {
+        "invalid": "eg: 127.0.0.1:5000"
+      },
+      "already_connected": "Current tab has already connected the server {ip}:{port}"
     },
     "run": {
       "usage": "!Only Debug! run \"<code>\" or exec -f <file path>",
@@ -48,14 +54,22 @@
   },
   "tabs": {
     "chat_tab": {
-      "name": "chat tab"
+      "name": "chat tab",
+      "no_connection": "No Connection",
+      "connected": "Connected: {ip}:{port}",
+      "disconnected": "Disconnected",
+      "joined": "Connected: {ip}:{port} - {room_id}"
     }
   },
   "modes": {
     "command_mode": {
       "name": "Command mode",
       "cmd": {
-        "cannot_find": "Can't find a command called {0}"
+        "cannot_find": "Can't find a command called {name}",
+        "not_support": "Current command \"{name}\" is not supported.",
+        "cmd_error": "Error Occurred",
+        "wrong_usage": "Wrong Usage",
+        "unknown_error": "Unknown Error"
       }
     },
     "text_mode": {

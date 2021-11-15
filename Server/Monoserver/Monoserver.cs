@@ -169,7 +169,7 @@ public partial class Monoserver : IServer
         User = NetworkService.New("User");
         User.RegisterMessageHandler<AuthenticationMsg, AuthenticationMsgHandler>();
         User.RegisterMessage<RegisterResultMsg>();
-        User.RegisterMessage<RegisterRequestMsg>();
+        User.RegisterMessageHandler<RegisterRequestMsg, RegisterRequestMsgHandler>();
 
         Chatting = NetworkService.New("Chatting");
         Chatting.RegisterMessageHandler<ChattingMsg, ChattingMsgHandler>();

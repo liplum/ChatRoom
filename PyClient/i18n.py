@@ -26,6 +26,7 @@ Para 1:current language
 
 
 def reload(strict: bool = False):
+    global _cache, cur_lang
     file = f"{_root_path}/lang/{cur_lang}.json"
     try:
         with open(file, "r") as f:

@@ -110,7 +110,8 @@ class cmd_logger(i_logger):
         color, label = level
         time_stamp = datetime.now().strftime("%Y%m%d-%H:%M:%S")
         t = f"{time_stamp}[{label}]{text}"
-        tinted_print(t, fgcolor=color)
+        if self.output_to_cmd:
+            tinted_print(t, fgcolor=color)
         with open(self.logfile, "a+", encoding='utf-16') as log:
             log.write(t + '\n')
 
