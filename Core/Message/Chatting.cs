@@ -1,4 +1,4 @@
-﻿using ChattingRoom.Core.Networks;
+﻿global using ChattingRoom.Core.Networks;
 using ChattingRoom.Core.Utils;
 
 namespace ChattingRoom.Core.Messages;
@@ -31,31 +31,28 @@ public class ChattingMsg : IMessage
         get; set;
     }
 
+    public int VerificationCode
+    {
+        get; set;
+    }
+
 #nullable enable
     public void Deserialize(dynamic json)
     {
-        string? user_id_string = json.Account;
         ChattingText = json.Text;
-        long? sendtime_long = json.TimeStamp;
-        int? roomID = json.ChattingRoomID;
-        if (!(user_id_string, ChattingText, sendtime_long, roomID).NotNull())
-        {
-            throw new Exception($"A parameter is null.");
-        }
-        Account = new(user_id_string);
-        SendTime = sendtime_long.Value.ToUnixDatetime();
-        ChattingRoomID = roomID.Value;
+        Account = json.Account;
+        long timestamp = json.TimeStamp;
+        SendTime = timestamp.ToUnixDatetime();
+        ChattingRoomID = json.ChattingRoomID;
+        VerificationCode = json.VCode;
     }
 
     public void Serialize(dynamic json)
     {
-        if (!(Account, ChattingText, SendTime, ChattingRoomID).NotNull())
-        {
-            throw new Exception($"A parameter is null.");
-        }
         json.Account = Account;
         json.Text = ChattingText;
         json.ChattingRoomID = ChattingRoomID;
         json.TimeStamp = new DateTimeOffset(SendTime).ToUnixTimeSeconds();
+        json.VCode = VerificationCode;
     }
 }

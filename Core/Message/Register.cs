@@ -1,6 +1,4 @@
-﻿using ChattingRoom.Core.Networks;
-
-namespace ChattingRoom.Core.Messages;
+﻿namespace ChattingRoom.Core.Messages;
 
 [Msg("RegisterRequest", Direction.ClientToServer)]
 public class RegisterRequestMsg : IMessage

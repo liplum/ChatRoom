@@ -14,7 +14,7 @@ public class ChattingMsgHandler : IMessageHandler<ChattingMsg>
             return;
         }
         var userService = server.ServiceProvider.Reslove<IUserService>();
-        var user = userService.ByAccount(msg.Account);
+        var user = userService.FindOnline(msg.Account);
         if (user is null)
         {
             return;

@@ -14,7 +14,7 @@ public class UserService : IUserService
         get; set;
     }
 #nullable enable
-    private readonly Dictionary<string, UserEntity> _cache = new();
+    private Dictionary<string, UserEntity> OnlineUsers { get; init; } = new();
 
     public void RegisterUser(string account, string clear_password, DateTime registerTime)
     {
@@ -29,77 +29,8 @@ public class UserService : IUserService
         });
         DB.SaveChange();
     }
-
-    public bool Verify(string account, string clear_password, out IUserEntity? entity)
-    {
-        UserEntity? res = null;
-        if (_cache.TryGetValue(account, out var user))
-        {
-            res = user.Info.IsActive ? user : null;
-        }
-        else
-        {
-            var target = (from u in DB.UserTable where u.Account == account select u).FirstOrDefault();
-            if (target is not null && target.IsActive)
-            {
-                res = new UserEntity()
-                {
-                    Info = target,
-                    UserService = this,
-                };
-                _cache[account] = res;
-            }
-        }
-
-        if (res is null)
-        {
-            entity = null;
-            return false;
-        }
-
-        if (MD5.Verify(clear_password, res.Info.Password))
-        {
-            entity = res;
-            return true;
-        }
-        else
-        {
-            entity = null;
-            return false;
-        }
-    }
-
-    public IUserEntity? ByAccount(string account)
-    {
-        if (_cache.TryGetValue(account, out var user))
-        {
-            if (user.Info.IsActive)
-            {
-                return user;
-            }
-            else
-            {
-                _cache.Remove(account);
-                return null;
-            }
-        }
-        var target = (from u in DB.UserTable where u.Account == account select u).FirstOrDefault();
-        if (target is not null && target.IsActive)
-        {
-            var newEntity = new UserEntity()
-            {
-                Info = target,
-                UserService = this,
-            };
-            _cache[account] = newEntity;
-            return newEntity;
-        }
-        return null;
-    }
-
     public bool DeleteUser(string account)
     {
-        _cache.Remove(account);
         var target = (from u in DB.UserTable where u.Account == account select u).FirstOrDefault();
         if (target is null || !target.IsActive)
         {
@@ -128,10 +59,93 @@ public class UserService : IUserService
         Network = serviceProvider.Reslove<INetwork>();
     }
 
-    public bool NotOccupied(string account)
+    public bool NameNotOccupied(string account)
     {
         var shouldBeNull = DB.UserTable.Find(account);
         return shouldBeNull is null;
+    }
+
+    public bool IsOnline(string account)
+    {
+        return true;
+    }
+
+    public bool Verify(string account, string clear_password)
+    {
+        throw new NotImplementedException();
+    }
+
+    public bool VerifyAndOnline(string account, string clear_password, [MaybeNullWhen(false)] out IUserEntity entity)
+    {
+        UserEntity? res = null;
+
+        var target = (from u in DB.UserTable where u.Account == account select u).FirstOrDefault();
+        if (target is not null && target.IsActive)
+        {
+            res = new UserEntity()
+            {
+                Info = target,
+                UserService = this,
+                VerificationCode = Random.Shared.Next()
+            };
+        }
+
+        if (res is null)
+        {
+            entity = null;
+            return false;
+        }
+
+        if (MD5.Verify(clear_password, res.Info.Password))
+        {
+            entity = res;
+            OnlineUsers[account] = res;
+            return true;
+        }
+        else
+        {
+            entity = null;
+            return false;
+        }
+    }
+
+    public IUserEntity? FindOnline(string account)
+    {
+        if (OnlineUsers.TryGetValue(account, out var user) && user.Info.IsActive)
+        {
+            return user;
+        }
+        return null;
+    }
+
+    public bool Online(string account, NetworkToken clientToken)
+    {
+        if (OnlineUsers.ContainsKey(account))
+        {
+            return false;
+        }
+        var target = (from u in DB.UserTable where u.Account == account select u).FirstOrDefault();
+        if (target is not null && target.IsActive)
+        {
+            OnlineUsers[account] = new()
+            {
+                Info = target,
+                UserService = this,
+                VerificationCode = Random.Shared.Next()
+            };
+            return true;
+        }
+        return false;
+    }
+
+    public bool Offline(string account)
+    {
+        if (OnlineUsers.TryGetValue(account, out var entity))
+        {
+            entity.IsOnline = false;
+            return OnlineUsers.Remove(account);
+        }
+        return false;
     }
 
     private class UserEntity : IUserEntity
@@ -147,12 +161,21 @@ public class UserService : IUserService
             get; set;
 
         }
-        public bool IsOnline => Token is not null && UserService.Network.IsConnected(Token);
 #nullable enable
+        public bool IsOnline
+        {
+            get; set;
+        } = false;
         public NetworkToken? Token
         {
             get; set;
         }
+
+        public int VerificationCode
+        {
+            get; set;
+        }
+
         public void SaveChange()
         {
             UserService.DB.SaveChange();

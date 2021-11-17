@@ -12,6 +12,18 @@ elif get_at(args, -1) == "-ide":
     GLOBAL.DEBUG = True
     IDE = True
 
+import core.settings as settings
+import configs
+
+for config in configs.configs:
+    settings.add(config)
+
+settings.load()
+configurations = settings.table()
+import i18n
+
+i18n.load(configurations.Language)
+
 server_ip = "127.0.0.1"
 port = 5000
 LOGIN = False
@@ -49,6 +61,7 @@ def main():
         from pef.monitor import pef_monitor
         _client.container.resolve(pef_monitor)
     _client.start()
+    settings.save()
 
 
 from ioc import container

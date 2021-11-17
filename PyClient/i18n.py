@@ -6,7 +6,7 @@ from typing import Optional
 
 from events import event
 
-_cache: Dict[str, str] = {"123": "123"}
+_cache: Dict[str, str] = {}
 
 _dirpath, _filepath = os.path.split(os.path.abspath(sys.argv[0]))
 
@@ -29,7 +29,7 @@ def reload(strict: bool = False):
     global _cache, cur_lang
     file = f"{_root_path}/lang/{cur_lang}.json"
     try:
-        with open(file, "r") as f:
+        with open(file, "r", encoding="utf-8") as f:
             _cache = json.load(f)
             on_load(cur_lang)
     except Exception as e:
@@ -46,7 +46,7 @@ def load(lang: Optional[str] = None, strict: bool = False):
     lang = lang.lower()
     file = f"{_root_path}/lang/{lang}.json"
     try:
-        with open(file, "r") as f:
+        with open(file, "r", encoding="utf-8") as f:
             _cache = json.load(f)
             cur_lang = lang
             on_load(cur_lang)

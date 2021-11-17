@@ -26,7 +26,7 @@
       "usage": "con <server ip>:<port>",
       "description": "connect a server on current tab",
       "para1": {
-        "invalid": "eg: 127.0.0.1:5000"
+        "invalid": "The format of server's ip and port is wrong. eg: 127.0.0.1:5000"
       },
       "already_connected": "Current tab has already connected the server {ip}:{port}"
     },
@@ -47,8 +47,24 @@
     "join": {
       "usage": "join [<server ip>:<port>] <chatting room id>",
       "description": "join a chatting room on current tab",
-      "para1": {
-        "invalid": "eg: 127.0.0.1:5000"
+      "para_invalid": {
+        "server": "The format of server's ip and port is wrong. eg: 127.0.0.1:5000",
+        "room_id": "Room ID requires a integer not {0}"
+      },
+      "cur_tab_unconnected": "Current tab hasn't connected any server.",
+      "cannot_connect_server": "Can't connect the server {ip}:{port}",
+      "already_joined": "Current tab has already joined the chatting room {id}"
+    },
+    "close": {
+      "usage": "close or close <number>",
+      "description": "close a tab",
+      "para_invalid": {
+        "not_number": "The first parameter given is not a expected integer but {0}",
+        "over_range": "The number {0} is over range"
+      },
+      "login": {
+        "usage": "login [<server ip>:<port>] <account> <password>",
+        "description": "login a server"
       }
     }
   },

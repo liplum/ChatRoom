@@ -44,7 +44,7 @@ class filer(i_filer):
             folder, file = os.path.split(full)
             os.makedirs(folder, exist_ok=True)
             if not os.path.exists(file):
-                with open(full, "w"):
+                with open(full, "w", encoding="utf-8"):
                     pass
         return full
 

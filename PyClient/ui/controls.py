@@ -19,7 +19,7 @@ from ui.outputs import CmdBkColor, CmdFgColor
 from ui.outputs import buffer
 from ui.states import ui_state, ui_smachine
 from ui.tbox import textbox
-
+import sys
 
 class xtextbox(textbox):
     def __init__(self, cursor_icon: str = '^'):
@@ -590,7 +590,7 @@ class _cmd_long_mode(_cmd_state):
         except WrongUsageError as wu:
             with StringIO() as s:
                 s.write(i18n.trans("modes.command_mode.cmd.wrong_usage"))
-                s.write(' : ')
+                s.write(':\n')
                 pos = wu.position
                 is_pos_quoted = is_quoted(pos + 1, quoted_indexes)
                 s.write(gen_cmd_error_text(cmd_name, args, full_cmd, pos, wu.msg, is_pos_quoted))
@@ -603,17 +603,20 @@ class _cmd_long_mode(_cmd_state):
         except CmdError as ce:
             with StringIO() as s:
                 s.write(i18n.trans("modes.command_mode.cmd.cmd_error"))
-                s.write(' : ')
+                s.write(':\n')
                 s.write(gen_cmd_error_text(cmd_name, args, full_cmd, -2, ce.msg))
                 mode.tab.add_string(s.getvalue())
         except Exception as any_e:
             with StringIO() as s:
-                s.write(i18n.trans("modes.command_mode.cmd.unknown_error"))
-                s.write(' : ')
-                s.write(gen_cmd_error_text(
-                    cmd_name, args, full_cmd, -2,
-                    i18n.trans("modes.command_mode.cmd.not_support", name=cmd_name)))
-                mode.tab.add_string(s.getvalue())
+                if GLOBAL.DEBUG:
+                    mode.tab.add_string(f"{any_e}\n{sys.exc_info()}")
+                else:
+                    s.write(i18n.trans("modes.command_mode.cmd.unknown_error"))
+                    s.write(':\n')
+                    s.write(gen_cmd_error_text(
+                        cmd_name, args, full_cmd, -2,
+                        i18n.trans("modes.command_mode.cmd.not_support", name=cmd_name)))
+                    mode.tab.add_string(s.getvalue())
 
         mode.cmd_history.append(full_cmd)
         mode.cmd_history_index = 0

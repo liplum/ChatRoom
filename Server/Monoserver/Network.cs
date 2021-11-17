@@ -15,19 +15,51 @@ public partial class Monoserver : IServer
         private TcpListener? _serverSocket;
         private readonly object _clientLock = new();
         private readonly object _channelLock = new();
-        internal ILogger? Logger
+        private Thread MsgSendThread
+        {
+            get; init;
+        }
+#nullable disable
+        internal ILogger Logger
         {
             get; set;
+        }
+#nullable enable
+        private Thread? Listen
+        {
+            get; set;
+        }
+        private Queue<Task> SendTasks
+        {
+            get; init;
+        } = new();
+
+
+        public void AddSendTask([NotNull] Action task)
+        {
+            SendTasks.Enqueue(new Task(task));
         }
 
         public Monoserver Server
         {
             get; init;
         }
+
         public Network(Monoserver server)
         {
             Server = server;
+            MsgSendThread = new Thread(() =>
+            {
+                while (true)
+                {
+                    while (SendTasks.TryDequeue(out var task))
+                    {
+                        task.Start();
+                    }
+                }
+            });
         }
+
         private int _buffSize = 1024;
         public int BufferSize
         {
@@ -134,42 +166,45 @@ public partial class Monoserver : IServer
 
         public void SendMessage([NotNull] MessageChannel channel, [NotNull] NetworkToken target, [NotNull] IMessage msg, string msgID)
         {
-            if (!_allConnections.TryGetValue(target, out var info) || !info.connection.IsConnected)
+            AddSendTask(() =>
             {
-                Logger!.SendError($"Cannot send message<{msgID}> to {target.IpAddress} who has been already disconnected.");
-                return;
-            }
+                if (!_allConnections.TryGetValue(target, out var info) || !info.connection.IsConnected)
+                {
+                    Logger!.SendError($"Cannot send message<{msgID}> to {target.IpAddress} who has been already disconnected.");
+                    return;
+                }
 
-            if (!channel.CanPass(msgID, Direction.ServerToClient))
-            {
-                throw new MessageDirectionException($"{msg.GetType().Name} cannot be sent to Client.");
-            }
-            dynamic json = new JObject();
-            WriteHeader();
-            json.Content = new JObject();
-            try
-            {
-                msg.Serialize(json.Content);
-            }
-            catch (Exception e)
-            {
-                Logger!.SendError($"Cannot serialize Message<{msgID}>\nBecause {e.Message}\n{e.StackTrace}");
-                return;
-            }
-            string jsonTxt = json.ToString(Formatting.None);
-            var stringBytes = _unicoder.ConvertToBytes(jsonTxt, startWithLength: false);
-            var datapack = new WriteableDatapack();
-            datapack.Write(stringBytes.Count)
-                .Write(stringBytes);
-            datapack.Close();
-            SendDatapackTo(datapack, target);
+                if (!channel.CanPass(msgID, Direction.ServerToClient))
+                {
+                    throw new MessageDirectionException($"{msg.GetType().Name} cannot be sent to Client.");
+                }
+                dynamic json = new JObject();
+                WriteHeader();
+                json.Content = new JObject();
+                try
+                {
+                    msg.Serialize(json.Content);
+                }
+                catch (Exception e)
+                {
+                    Logger!.SendError($"Cannot serialize Message<{msgID}>\nBecause {e.Message}\n{e.StackTrace}");
+                    return;
+                }
+                string jsonTxt = json.ToString(Formatting.None);
+                var stringBytes = _unicoder.ConvertToBytes(jsonTxt, startWithLength: false);
+                var datapack = new WriteableDatapack();
+                datapack.Write(stringBytes.Count)
+                    .Write(stringBytes);
+                datapack.Close();
+                SendDatapackTo(datapack, target);
 
-            void WriteHeader()
-            {
-                json.ChannelName = channel.ChannelName;
-                json.MessageID = msgID;
-                json.TimeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            }
+                void WriteHeader()
+                {
+                    json.ChannelName = channel.ChannelName;
+                    json.MessageID = msgID;
+                    json.TimeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+                }
+            });
         }
 
         public void SendMessageToAll([NotNull] MessageChannel channel, [NotNull] IMessage msg, string msgID)
@@ -190,16 +225,15 @@ public partial class Monoserver : IServer
             return channel;
         }
 
-        private Thread? _listen;
 
         public void StartService()
         {
-            Logger!.SendMessage("Network component is preparing to start.");
+            Logger.SendMessage("Network component is preparing to start.");
             var port = (int)Assets.Configs.Port;
             _serverSocket = new TcpListener(IPAddress.Any, port);
             _serverSocket.Start();
-            Logger!.SendMessage("Network component started.");
-            _listen = new Thread(() =>
+            Logger.SendMessage("Network component started.");
+            Listen = new Thread(() =>
             {
                 while (true)
                 {
@@ -208,13 +242,14 @@ public partial class Monoserver : IServer
                     {
                         var ip = ipEndPoint.Address;
                         var token = new NetworkToken(ip);
-                        Logger!.SendWarn($"{ip} connected.");
+                        Logger.SendWarn($"{ip} connected.");
                         AddNewClient(token, client);
                     }
                 }
             });
-            _listen.Start();
-            Logger!.SendMessage("Server started listening connection of clients.");
+            Listen.Start();
+            MsgSendThread.Start();
+            Logger.SendMessage("Server started listening connection of clients.");
         }
 
         private void AddNewClient([NotNull] NetworkToken token, [NotNull] TcpClient client)
@@ -275,7 +310,7 @@ public partial class Monoserver : IServer
         public void StopService()
         {
             Logger!.SendMessage("Network component is preparing to stop.");
-            _listen?.Interrupt();
+            Listen?.Interrupt();
             foreach (var (connection, _) in _allConnections.Values)
             {
                 var c = connection;

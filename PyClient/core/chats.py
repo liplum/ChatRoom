@@ -59,14 +59,14 @@ class msgstorage:
     def save_file(self, value):
         self._save_file = value
         if not os.path.exists(value):
-            with open(value, "w"):
+            with open(value, "w", encoding="utf-16"):
                 pass
 
     def serialize(self):
         if not self._save_file:
             raise ValueError("You should provide a save file path first.")
         self.sort()
-        with open(self._save_file, "w") as save:
+        with open(self._save_file, "w", encoding="utf-16") as save:
             for unit in self.__storage:
                 unit_str = (str(unit[0]), str(unit[1]), unit[2])
                 saved_line = compose(unit_str, '|', end='\n')
@@ -76,7 +76,7 @@ class msgstorage:
         if not self._save_file:
             raise ValueError("You should provide a save file path first.")
         self.__storage = []
-        with open(self._save_file, "r") as save:
+        with open(self._save_file, "r", encoding="utf-16") as save:
             lines = save.readlines()
             for line in lines:
                 line = line.rstrip()

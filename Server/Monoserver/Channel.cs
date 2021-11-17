@@ -1,6 +1,6 @@
-﻿using ChattingRoom.Core.Networks;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using System.Reflection;
+using ChattingRoom.Core.Networks;
 using static ChattingRoom.Core.Networks.IMessageChannel;
 
 namespace ChattingRoom.Server;
@@ -57,7 +57,7 @@ public partial class Monoserver
             return true;
         }
 
-        public Dictionary<string, (Type msg, dynamic? handler, MsgAttribute? meta)> Id2MsgTypeAndHandler
+        public Dictionary<string, (Type msgType, Func<IMessage> msgGetter, dynamic? handler, MsgAttribute? meta)> Id2MsgTypeAndHandler
         {
             get;
         } = new();
@@ -70,79 +70,10 @@ public partial class Monoserver
         public event OnMessageHandledHandler? OnMessageHandled;
         public event OnMessageReceivedHandler? OnMessageReceived;
 
-        public void RegisterMessageHandler<Msg, Handler>(string messageID)
-            where Msg : class, IMessage, new()
-            where Handler : class, IMessageHandler<Msg>, new()
+        public static MsgAttribute? GetMsgAttribute(Type msgType)
         {
-            var msg = typeof(Msg);
-            var attrs = msg.GetCustomAttributes<MsgAttribute>().ToArray();
-            var meta = attrs.Length > 0 ? attrs[0] : null;
-            lock (_msgLock)
-            {
-                Msg2Id[msg] = messageID;
-                Id2MsgTypeAndHandler[messageID] = (msg, new Handler(), meta);
-            }
-        }
-
-        public void RegisterMessage<Msg>(string messageID) where Msg : class, IMessage, new()
-        {
-            var msg = typeof(Msg);
-            var attrs = msg.GetCustomAttributes<MsgAttribute>().ToArray();
-            var meta = attrs.Length > 0 ? attrs[0] : null;
-            lock (_msgLock)
-            {
-                Msg2Id[msg] = messageID;
-                Id2MsgTypeAndHandler[messageID] = (msg, null, meta);
-            }
-        }
-        public void RegisterMessageHandler<Msg, Handler>()
-            where Msg : class, IMessage, new()
-            where Handler : class, IMessageHandler<Msg>, new()
-        {
-            var msg = typeof(Msg);
-            var attrs = msg.GetCustomAttributes<MsgAttribute>().ToArray();
-            if (attrs.Length > 0)
-            {
-                var nameAttr = attrs[0];
-                var name = nameAttr.Name;
-                if (string.IsNullOrEmpty(name))
-                {
-                    throw new MessageTypeHasNoNameException(msg.FullName ?? msg.Name);
-                }
-                lock (_msgLock)
-                {
-                    Msg2Id[msg] = name;
-                    Id2MsgTypeAndHandler[name] = (msg, new Handler(), nameAttr);
-                }
-            }
-            else
-            {
-                throw new MessageTypeHasNoNameException(msg.FullName ?? msg.Name);
-            }
-        }
-
-        public void RegisterMessage<Msg>() where Msg : class, IMessage, new()
-        {
-            var msg = typeof(Msg);
-            var attrs = msg.GetCustomAttributes<MsgAttribute>().ToArray();
-            if (attrs.Length > 0)
-            {
-                var nameAttr = attrs[0];
-                var name = nameAttr.Name;
-                if (string.IsNullOrEmpty(name))
-                {
-                    throw new MessageTypeHasNoNameException(msg.FullName ?? msg.Name);
-                }
-                lock (_msgLock)
-                {
-                    Msg2Id[msg] = name;
-                    Id2MsgTypeAndHandler[name] = (msg, null, nameAttr);
-                }
-            }
-            else
-            {
-                throw new MessageTypeHasNoNameException(msg.FullName ?? msg.Name);
-            }
+            var attrs = msgType.GetCustomAttributes<MsgAttribute>().ToArray();
+            return attrs.Length > 0 ? attrs[0] : null;
         }
 
         public void ReceiveMessage(string messageID, dynamic jsonContent, [AllowNull] NetworkToken token = null)
@@ -152,11 +83,11 @@ public partial class Monoserver
                 dynamic? msg;
                 try
                 {
-                    msg = Activator.CreateInstance(info.msg);
+                    msg = info.msgGetter();
                 }
                 catch
                 {
-                    Network.Logger!.SendError($"Cannot create Message<{info.msg.FullName ?? info.msg.Name}> object");
+                    Network.Logger!.SendError($"Cannot create Message<{messageID}> object");
                     return;
                 }
                 if (msg is not null)
@@ -197,7 +128,23 @@ public partial class Monoserver
             }
         }
 
+        public void RegisterMessage(Type msgType, Func<IMessage> msgGetter, Func<object>? handlerGetter = null, string? msgID = null)
+        {
+            var handler = handlerGetter?.Invoke();
+            var meta = GetMsgAttribute(msgType);
+            msgID = msgID is null ? meta?.ID : msgID;
+            if (msgID is null)
+            {
+                throw new MessageTypeHasNoNameException(msgType.FullName ?? msgType.Name);
+            }
+            lock (_msgLock)
+            {
+                Msg2Id[msgType] = msgID;
+                Id2MsgTypeAndHandler[msgID] = (msgType, msgGetter, handler, meta);
+            }
+        }
     }
+
     private class SocketConnection : IConnection
     {
         public NetworkStream Stream

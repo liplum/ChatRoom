@@ -2,7 +2,6 @@ import sys
 from functools import wraps
 from threading import Thread
 
-import i18n
 import ioc as ioc
 import ui.inputs as _input
 import ui.outputs as output
@@ -127,14 +126,15 @@ class client:
         self.winsize_monitor = Thread(target=self.monitor_winsize)
         self.winsize_monitor.daemon = True
 
-        i18n.load()
-
     def _init_channels(self):
         self.channel_user = self.network.new_channel("User")
         self.channel_chatting = self.network.new_channel("Chatting")
 
         self.channel_chatting.register(msgs.chatting)
         self.channel_user.register(msgs.register_request)
+        self.channel_user.register(msgs.register_result)
+        self.channel_user.register(msgs.authentication_req)
+        self.channel_user.register(msgs.authentication_result)
 
     @property
     def need_update(self):
@@ -187,7 +187,7 @@ class client:
                 self.logger.error(f"[Client]{e}\n{sys.exc_info()}")
                 self.stop()
         self.msg_manager.save_all()
-        sys.exit(0)
+        return
 
     def stop(self):
         self._running = False

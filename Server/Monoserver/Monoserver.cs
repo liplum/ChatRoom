@@ -96,12 +96,9 @@ public partial class Monoserver : IServer
         {
             while (true)
             {
-                lock (_mainThreadLock)
+                while (ScheduledTask.TryDequeue(out var task))
                 {
-                    while (ScheduledTask.TryDequeue(out var task))
-                    {
-                        task.Start();
-                    }
+                    task.Start();
                 }
             }
         });
@@ -114,14 +111,9 @@ public partial class Monoserver : IServer
     } = new();
 
 
-    private readonly object _mainThreadLock = new();
-
     public void AddScheduledTask([NotNull] Action task)
     {
-        lock (_mainThreadLock)
-        {
-            ScheduledTask.Enqueue(new Task(task));
-        }
+        ScheduledTask.Enqueue(new Task(task));
     }
 
     private void InitChannels()
@@ -167,12 +159,12 @@ public partial class Monoserver : IServer
     private void InitUserChannel()
     {
         User = NetworkService.New("User");
-        User.RegisterMessageHandler<AuthenticationMsg, AuthenticationMsgHandler>();
-        User.RegisterMessage<RegisterResultMsg>();
-        User.RegisterMessageHandler<RegisterRequestMsg, RegisterRequestMsgHandler>();
+        User.RegisterMessage(() => new AuthenticationReqMsg(), () => new AuthenticationMsgHandler());
+        User.RegisterMessage(() => new RegisterResultMsg());
+        User.RegisterMessage(() => new RegisterRequestMsg(), () => new RegisterRequestMsgHandler());
 
         Chatting = NetworkService.New("Chatting");
-        Chatting.RegisterMessageHandler<ChattingMsg, ChattingMsgHandler>();
+        Chatting.RegisterMessage(() => new ChattingMsg(), () => new ChattingMsgHandler());
     }
 
     public ChatRoom? GetChattingRoomBy(int chattingRoomID)

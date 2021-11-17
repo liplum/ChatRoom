@@ -14,7 +14,7 @@ public enum Direction
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 public sealed class MsgAttribute : Attribute
 {
-    public string? Name
+    public string? ID
     {
         get; init;
     }
@@ -22,9 +22,9 @@ public sealed class MsgAttribute : Attribute
     {
         get; init;
     }
-    public MsgAttribute(string name, params Direction[] direction)
+    public MsgAttribute(string id, params Direction[] direction)
     {
-        Name = name;
+        ID = id;
         Direction = direction;
     }
 

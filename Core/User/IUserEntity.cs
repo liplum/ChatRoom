@@ -1,5 +1,4 @@
 ﻿using ChattingRoom.Core.DB.Models;
-using ChattingRoom.Core.Networks;
 
 namespace ChattingRoom.Core.Users;
 #nullable disable
@@ -20,6 +19,14 @@ public interface IUserEntity
     public void SaveChange();
 
     public bool IsOnline
+    {
+        get;
+    }
+
+    /// <summary>
+    /// The verification code which will be changed every login.
+    /// </summary>
+    public int VerificationCode
     {
         get;
     }

@@ -1,10 +1,7 @@
-﻿using ChattingRoom.Core.Networks;
-using ChattingRoom.Core.Utils;
+﻿namespace ChattingRoom.Core.Messages;
 
-namespace ChattingRoom.Core.Messages;
-
-[Msg("Authentication", Direction.ClientToServer)]
-public class AuthenticationMsg : IMessage
+[Msg("AuthenticationReq", Direction.ClientToServer)]
+public class AuthenticationReqMsg : IMessage
 {
 #nullable disable
     public string Account
@@ -16,19 +13,19 @@ public class AuthenticationMsg : IMessage
         get; set;
     }
 #nullable enable
-    public AuthenticationMsg()
+    public AuthenticationReqMsg()
     {
     }
 
     public void Deserialize(dynamic json)
     {
-        Account = new(json.ClientID);
+        Account = json.Account;
         Password = json.Password;
     }
 
     public void Serialize(dynamic json)
     {
-        json.ClientID = Account;
+        json.Account = Account;
         json.Password = Password;
     }
 }
@@ -36,40 +33,44 @@ public class AuthenticationMsg : IMessage
 [Msg("AuthenticationResult", Direction.ServerToClient)]
 public class AuthenticationResultMsg : IMessage
 {
-    public enum AuthResult
-    {
-        Succeed = 0,
-        Failed = 1,
-    }
-
     public AuthenticationResultMsg()
     {
 
     }
 #nullable disable
-    public AuthResult Result
+    public string Account
     {
         get; set;
     }
 #nullable enable
-
-    public AuthenticationResultMsg(AuthResult result)
+    public bool OK
     {
-        Result = result;
+        get; set;
+    }
+    public int? VerificationCode
+    {
+        get; set;
+    }
+
+    public AuthenticationResultMsg(bool ok)
+    {
+        OK = ok;
     }
 
     public void Deserialize(dynamic json)
     {
-        int? result = json.Result;
-        if (result.NotNull())
-        {
-            Result = (AuthResult)result.Value;
-        }
+        OK = json.OK;
+        Account = json.Account;
+        VerificationCode = json.VCode;
     }
 
     public void Serialize(dynamic json)
     {
-        var res = Result;
-        json.Result = (int)res;
+        json.OK = OK;
+        json.Account = Account;
+        if (VerificationCode is not null)
+        {
+            json.VCode = VerificationCode;
+        }
     }
 }

@@ -4,28 +4,36 @@ from net.networks import msg
 from utils import get, not_none, to_seconds
 
 
-class authentication(msg):
-    name = "Authentication"
+class authentication_req(msg):
+    name = "AuthenticationReq"
+    k_Account = "Account"
+    k_Password = "Password"
 
     def read(self, json):
-        pass
+        self.account = get(json, register_request.k_Account)
+        self.password = get(json, register_request.k_Password)
 
     def write(self, json):
-        pass
+        json[register_request.k_Account] = self.account
+        json[register_request.k_Password] = self.password
 
 
 class authentication_result(msg):
     name = "AuthenticationResult"
+    k_OK="OK"
+    k_VCode="VCode"
 
     def read(self, json):
-        pass
+        self.OK = get(json,authentication_result.k_OK)
+        self.VCode = get(json,authentication_result.k_VCode)
 
     def write(self, json):
-        pass
+        json[authentication_result.k_OK] = self.OK
+        json[authentication_result.k_VCode] = self.VCode
 
     @staticmethod
-    def handle(self, context):
-        pass
+    def handle(self:"authentication_result", context):
+        print(f"AuthenticationResult : {self.OK}")
 
 
 class register_request(msg):
@@ -52,7 +60,7 @@ class register_result(msg):
         pass
 
     @staticmethod
-    def handle(self, context):
+    def handle(self:"register_result", context):
         pass
 
 
@@ -84,6 +92,6 @@ class chatting(msg):
         json[chatting.k_ChattingRoomID] = self.room_id.id
 
     @staticmethod
-    def handle(self, context):
+    def handle(self:"chatting", context):
         client, channel, token, network = context
         client.receive_text(token, self.room_id, self.user_id, self.text, self.send_time)

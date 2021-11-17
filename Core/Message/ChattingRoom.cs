@@ -1,26 +1,23 @@
 ﻿namespace ChattingRoom.Core.Messages;
-[Msg("Whisper", Direction.ClientToServer, Direction.ServerToClient)]
-public class WhisperMsg : IMessage
+
+[Msg("JoinRoomRequest", Direction.ClientToServer)]
+public class JoinRoomRequestMessage : IMessage
 {
 
-    public WhisperMsg()
-    {
-
-    }
 #nullable disable
-    public string Target
+    public string Account
     {
         get; set;
     }
-    public string Sender
+    public int ChattingRoomID
+    {
+        get; set;
+    }
+    public int VerificationCode
     {
         get; set;
     }
 
-    public string Text
-    {
-        get; set;
-    }
 #nullable enable
 
     public void Deserialize(dynamic json)
@@ -30,5 +27,6 @@ public class WhisperMsg : IMessage
 
     public void Serialize(dynamic json)
     {
+
     }
 }

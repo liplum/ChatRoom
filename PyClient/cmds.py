@@ -1,4 +1,6 @@
+import net.msgs as msgs
 from cmd import command
+from core.settings import table as settings_table
 from net.msgs import register_request
 from net.networks import i_network, CannotConnectError
 from ui.controls import *
@@ -32,24 +34,11 @@ cmd_goto_tab = add("goto", _goto_tab)
 def _register(context, args: [str]):
     argslen = len(args)
     network: i_network = context.network
-    if argslen != 2 and args != 3:
+    if argslen != 2 and argslen != 3:
         raise CmdError(i18n.trans("cmds.reg.usage"))
     if argslen == 3:  # first is server
-        server_info = args[0].split(":")
-        if len(server_info) != 2:
-            raise WrongUsageError(i18n.trans("cmds.reg.para1.invalid"), 0)
-        ip = server_info[0]
-        try:
-            port = int(server_info[1])
-        except:
-            raise WrongUsageError(i18n.trans("cmds.reg.para1.invalid"), 0)
-        server = server_token(ip, port)
-        if not network.is_connected(server):
-            try:
-                network.connect(server, strict=True)
-            except CannotConnectError as cce:
-                raise CmdError(
-                    i18n.trans("cmds.reg.cannot_connect_server", ip=ip, port=port))
+        full_server = args[0:1]
+        server = _con(context, full_server)
         account = args[1]
         pwd = args[2]
     elif argslen == 2:
@@ -58,7 +47,7 @@ def _register(context, args: [str]):
         if not server:
             raise WrongUsageError(i18n.trans("cmds.reg.current_tab_is_unconnected"), 0)
         account = args[0]
-        pwd=args[1]
+        pwd = args[1]
 
     uc = network.get_channel("User")
     msg = register_request()
@@ -97,10 +86,10 @@ def _help(context, args: [str]):
 cmd_help = add("help", _help)
 
 
-def _con(context, args: [str]):
+def _con(context, args: [str]) -> server_token:
     argslen = len(args)
     if argslen != 1:
-        raise WrongUsageError(i18n.trans("cmds.con.usage", name), 0)
+        raise WrongUsageError(i18n.trans("cmds.con.usage"), 0)
     server_info = args[0].split(":")
     if len(server_info) != 2:
         raise WrongUsageError(i18n.trans("cmds.con.para1.invalid"), 0)
@@ -110,6 +99,7 @@ def _con(context, args: [str]):
     except:
         raise WrongUsageError(i18n.trans("cmds.con.para1.invalid"), 0)
     server = server_token(ip, port)
+    network = context.network
     if not network.is_connected(server):
         try:
             network.connect(server, strict=True)
@@ -123,9 +113,77 @@ def _con(context, args: [str]):
             raise WrongUsageError(i18n.trans("cmds.con.already_connected", ip=ip, port=port), 0)
         else:
             tab.connect(server)
+    return server
 
 
 cmd_con = add("con", _con)
+
+
+def _join(context, args: [str]):
+    # TODO:Complete join cmd
+    argslen = len(args)
+    if argslen == 2:  # 1:<server ip>:<port> 2:<chatting room id>
+        full_server = args[0:1]
+        _con(context, full_server)
+        try:
+            room_id = roomid(int(args[1]))
+        except:
+            raise WrongUsageError(i18n.trans("cmds.con.para_invalid.room_id", args[1]), 1)
+        tab: chat_tab = context.tab
+        if tab.joined:
+            raise CmdError(i18n.trans("cmds.con.already_joined", room_id))
+        tab.joined = roomid
+    elif argslen == 1:
+        pass
+    else:
+        raise WrongUsageError(i18n.trans("cmds.join.usage"), 0)
+
+
+cmd_join = add("join", _join)
+
+
+def _close(context, args: [str]):
+    argslen = len(args)
+    tbl: tablist = context.tablist
+    if argslen == 0:
+        tbl.remove(context.tab)
+    elif argslen == 1:
+        try:
+            tab_number = int(args[0])
+        except:
+            raise WrongUsageError(i18n.trans("cmds.close.para_invalid.not_number", args[0]), 0)
+        if 0 <= tab_number < len(tbl):
+            tbl.remove(tab_number)
+        else:
+            raise WrongUsageError(i18n.trans("cmds.close.para_invalid.over_range", tab_number), 0)
+    else:
+        raise WrongUsageError(i18n.trans("cmds.close.usage"), 0)
+
+
+cmd_close = add("close", _close)
+
+
+def _login(context, args: [str]):
+    argslen = len(args)
+    if argslen != 3 and argslen != 2:
+        raise WrongUsageError(i18n.trans("cmds.close.usage"), 0)
+
+    if argslen == 3:
+        full_server = args[0:1]
+        server = _con(context, full_server)
+    elif argslen == 2:
+        tab: chat_tab = context.tab
+        server = tab.connected
+
+    network: i_network = context.network
+    user = network.get_channel("User")
+    msg = msgs.authentication_req()
+    msg.account = args[1]
+    msg.password = args[2]
+    user.send(server, msg)
+
+
+cmd_login = add("login", _login)
 
 
 def _exec(context, args: [str]):
@@ -137,7 +195,7 @@ def _exec(context, args: [str]):
     elif argslen == 2 and args[0] == "-f":
         path = args[1]
         try:
-            with open(path, "r") as f:
+            with open(path, "r", encoding="utf-8") as f:
                 code = f.read()
         except:
             raise WrongUsageError(i18n.trans("cmds.run.cannot_read_file", path=path), 0)
@@ -169,13 +227,17 @@ def _lang(context, args: [str]):
             lang = args[0]
             try:
                 i18n.load(lang, strict=True)
+                settings = settings_table()
+                settings.set("Language", lang)
             except i18n.LocfileLoadError as lle:
                 raise WrongUsageError(i18n.trans("cmds.lang.cannot_load", lang=lang), 0)
     elif argslen == 2:
         if args[1] == "-s":  # load & strict
+            lang = args[0]
             try:
-                lang = args[0]
                 i18n.load(lang, strict=True)
+                settings = settings_table()
+                settings.set("Language", lang)
             except i18n.LocfileLoadError as lle:
                 raise WrongUsageError(i18n.trans("cmds.lang.cannot_load_cause", lang=lang, cause=repr(lle.inner)), 0)
         else:

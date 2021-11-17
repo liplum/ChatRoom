@@ -1,4 +1,6 @@
-﻿namespace ChattingRoom.Core.Networks;
+﻿using System.Runtime.Serialization;
+
+namespace ChattingRoom.Core.Networks;
 public interface IMessageChannel
 {
     /// <summary>
@@ -15,7 +17,7 @@ public interface IMessageChannel
     /// <param name="targets"></param>
     /// <param name="msg"></param>
     /// <exception cref="MessageDirectionException"></exception>
-    public void SendMessage([NotNull] IEnumerable<NetworkToken> targets, [NotNull] IMessage msg)
+    public virtual void SendMessage([NotNull] IEnumerable<NetworkToken> targets, [NotNull] IMessage msg)
     {
         foreach (var target in targets)
         {
@@ -35,25 +37,16 @@ public interface IMessageChannel
 
     public void ReceiveMessage(string messageID, dynamic jsonContent, [AllowNull] NetworkToken token = null);
 
-    public void RegisterMessageHandler<Msg, Handler>(string messageID) where Msg : class, IMessage, new() where Handler : class, IMessageHandler<Msg>, new();
+    public void RegisterMessage(Type msgType, Func<IMessage> msgGetter, Func<object>? handlerGetter = null, string? msgID = null);
 
-    public void RegisterMessage<Msg>(string messageID) where Msg : class, IMessage, new();
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <typeparam name="Msg"></typeparam>
-    /// <typeparam name="Handler"></typeparam>
-    /// <exception cref="MessageTypeHasNoNameException"></exception>
-    public void RegisterMessageHandler<Msg, Handler>() where Msg : class, IMessage, new() where Handler : class, IMessageHandler<Msg>, new();
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <typeparam name="Msg"></typeparam>
-    /// <typeparam name="Handler"></typeparam>
-    /// <exception cref="MessageTypeHasNoNameException"></exception>
-    public void RegisterMessage<Msg>() where Msg : class, IMessage, new();
+    public virtual void RegisterMessage<Msg, Handler>(Func<Msg> msgGetter, Func<Handler> handlerGetter, string? msgID = null) where Msg : class, IMessage where Handler : class, IMessageHandler<Msg>
+    {
+        RegisterMessage(typeof(Msg), msgGetter, handlerGetter, msgID);
+    }
+    public virtual void RegisterMessage<Msg>(Func<Msg> msgGetter, string? msgID = null) where Msg : class, IMessage
+    {
+        RegisterMessage(typeof(Msg), msgGetter, null, msgID);
+    }
 
     public string ChannelName
     {
@@ -75,22 +68,55 @@ public interface IMessageChannel
 [Serializable]
 public class MessageDirectionException : Exception
 {
-    public MessageDirectionException() { }
+    public MessageDirectionException()
+    {
+    }
     public MessageDirectionException(string message) : base(message) { }
     public MessageDirectionException(string message, Exception inner) : base(message, inner) { }
     protected MessageDirectionException(
-      System.Runtime.Serialization.SerializationInfo info,
-      System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+      SerializationInfo info,
+      StreamingContext context) : base(info, context) { }
 }
 
 
 [Serializable]
 public class MessageTypeHasNoNameException : Exception
 {
-    public MessageTypeHasNoNameException() { }
+    public MessageTypeHasNoNameException()
+    {
+    }
     public MessageTypeHasNoNameException(string message) : base(message) { }
     public MessageTypeHasNoNameException(string message, Exception inner) : base(message, inner) { }
     protected MessageTypeHasNoNameException(
-      System.Runtime.Serialization.SerializationInfo info,
-      System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+      SerializationInfo info,
+      StreamingContext context) : base(info, context) { }
+}
+
+
+[Serializable]
+public class CannotCreateMsgObjException : Exception
+{
+    public CannotCreateMsgObjException()
+    {
+    }
+    public CannotCreateMsgObjException(string message) : base(message) { }
+    public CannotCreateMsgObjException(string message, Exception inner) : base(message, inner) { }
+    protected CannotCreateMsgObjException(
+      SerializationInfo info,
+      StreamingContext context) : base(info, context) { }
+}
+
+
+[Serializable]
+public class CannotCreateHandlerObjException : Exception
+{
+    public CannotCreateHandlerObjException()
+    {
+
+    }
+    public CannotCreateHandlerObjException(string message) : base(message) { }
+    public CannotCreateHandlerObjException(string message, Exception inner) : base(message, inner) { }
+    protected CannotCreateHandlerObjException(
+      SerializationInfo info,
+      StreamingContext context) : base(info, context) { }
 }
