@@ -40,7 +40,8 @@ def win_test():
     # test_i18n()
     # test_path()
     # test_analyze_cmd_args()
-    test_generic()
+    # test_generic()
+    test_traceback()
 
 
 def linux_test():
@@ -55,6 +56,15 @@ if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
+
+
+def test_traceback():
+    import traceback
+    try:
+        1 / 0
+    except:
+        t, v, tb = sys.exc_info()
+        print(traceback.format_exc())
 
 
 def test_generic():

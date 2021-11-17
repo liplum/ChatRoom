@@ -1,5 +1,4 @@
 import msvcrt
-import sys
 from threading import Thread, RLock
 from typing import Optional, List, NoReturn
 
@@ -59,7 +58,7 @@ class nbinput(i_nbinput):
                         ch_full = chars.char(ch_number)
                         self.input_new(ch_full)
         except Exception as e:
-            self.logger.error(f"[Input]{e}\n{sys.exc_info()}")
+            self.logger.error(f"[Input]{e}\n{traceback.format_exc()}")
             self.client.stop()
 
     def input_new(self, char: chars.char):

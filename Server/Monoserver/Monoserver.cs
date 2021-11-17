@@ -98,7 +98,10 @@ public partial class Monoserver : IServer
             {
                 while (ScheduledTask.TryDequeue(out var task))
                 {
-                    task.Start();
+                    if (task is not null)
+                    {
+                        task.Start();
+                    }
                 }
             }
         });
@@ -136,7 +139,8 @@ public partial class Monoserver : IServer
                 User!.SendMessage(token, new RegisterResultMsg(RegisterResultMsg.RegisterResult.Succeed));
                 Logger.SendMessage($"{token.IpAddress} was sent a msg.");
             });
-        };
+        }
+        !;
 
         NetworkService.OnClientConnected += token =>
         {
@@ -153,13 +157,15 @@ public partial class Monoserver : IServer
                 });
                 Logger.SendMessage($"{token.IpAddress} was sent a msg from system.");
             });
-        };
+        }
+        !;
     }
 
     private void InitUserChannel()
     {
         User = NetworkService.New("User");
         User.RegisterMessage(() => new AuthenticationReqMsg(), () => new AuthenticationMsgHandler());
+        User.RegisterMessage(() => new AuthenticationResultMsg());
         User.RegisterMessage(() => new RegisterResultMsg());
         User.RegisterMessage(() => new RegisterRequestMsg(), () => new RegisterRequestMsgHandler());
 

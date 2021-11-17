@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from io import StringIO
 from threading import RLock
-from typing import Dict, List, Tuple, Optional, TypeVar
+from typing import Dict, List, Tuple, Optional, TypeVar, Callable
 
 system_type = platform.system()
 
@@ -15,6 +15,13 @@ clear_screen = None
 T = TypeVar('T')
 TK = TypeVar('TK')
 TV = TypeVar('TV')
+
+
+def find(li: [T], predicate: Callable[[T], bool]) -> Optional[T]:
+    for item in li:
+        if predicate(item):
+            return item
+    return None
 
 
 def split_parent_path(path: str) -> List[str]:

@@ -1,18 +1,18 @@
-import sys
+import traceback
 from functools import wraps
 from threading import Thread
 
+import GLOBAL
 import ioc as ioc
 import ui.inputs as _input
 import ui.outputs as output
 from cmd import cmdmanager
 from core.chats import *
 from core.filer import i_filer, filer
-from core.shared import server_token, userid, roomid
+from core.operations import *
+from core.settings import table as settings
 from events import event
-from net import msgs
 from net import networks
-from net.networks import i_network
 from ui.controls import window
 from ui.k import cmdkey
 from utils import lock
@@ -101,10 +101,11 @@ class client:
         self.logger.msg("[Client]Service component initialized.")
         self.msg_manager: i_msgmager = ct.resolve(i_msgmager)
 
-        def on_msg_pre_analyzed(network, server_token, source, json):
-            self.logger.msg(source)
+        if GLOBAL.DEBUG:
+            def on_msg_pre_analyzed(network, server_token, source, json):
+                self.logger.msg(json)
 
-        # self.network.on_msg_pre_analyzed.add(on_msg_pre_analyzed)
+            self.network.on_msg_pre_analyzed.add(on_msg_pre_analyzed)
 
         self.win = window(self, self.display)
         self._init_channels()
@@ -159,18 +160,44 @@ class client:
         self.msg_manager.receive(server, room_id, (time, user_id, text))
         self.mark_dirty()
 
-    def send_text(self, room_id: roomid, text: str, server: server_token):
+    def send_text(self, user_info: uentity, room_id: roomid, text: str):
         msg = msgs.chatting()
         msg.room_id = room_id
         msg.send_time = datetime.utcnow()
         msg.text = text
-        msg.user_id = userid("TestID")
-        self.channel_chatting.send(server, msg)
+        msg.vcode = user_info.vcode
+        msg.user_id = user_info.uid
+        self.channel_chatting.send(user_info.server, msg)
+
+    def auto_login(self):
+        configs = settings()
+        info: Dict[str, str] = configs.AutoLogin
+        for server_full, ap in info.items():
+            token = to_server_token(server_full)
+            if token:
+                ap = ap.split()
+                if len(ap) == 2:
+                    login(self.network, token, ap[0], ap[1])
+                    chat = self.win.new_chat_tab()
+                    chat.connect(token)
+                    # TODO:Change this
+                    chat.join(12345)
+                    chat.user_info = uentity(token, ap[0])
+
+    def auto_connection(self):
+        configs = settings()
+        connections = configs.AutoConnection
+        for server_full_str in connections:
+            token = to_server_token(server_full_str)
+            if token:
+                self.network.connect(token)
 
     def start(self):
         self._running = True
         i = self.inpt
         i.initialize()
+        self.auto_connection()
+        self.auto_login()
         self.winsize_monitor.start()
         self.win.start()
         self.render()
@@ -184,9 +211,10 @@ class client:
                 self._clear_dirty()
                 self.render()
             except Exception as e:
-                self.logger.error(f"[Client]{e}\n{sys.exc_info()}")
+                self.logger.error(f"[Client]{e}\n{traceback.format_exc()}")
                 self.stop()
         self.msg_manager.save_all()
+        self.logger.tip("[Client]Programme quited.")
         return
 
     def stop(self):

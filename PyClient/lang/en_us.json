@@ -77,6 +77,11 @@
       "joined": "Connected: {ip}:{port} - {room_id}"
     }
   },
+  "users": {
+    "authentication": {
+      "failure": "Authentication of {ip}:{port}-\"{account}\" failed"
+    }
+  },
   "modes": {
     "command_mode": {
       "name": "Command mode",

@@ -1,65 +1,42 @@
 from collections import namedtuple
 from datetime import datetime
-from typing import Tuple
+from typing import Tuple, List, Optional
 
 server_token = namedtuple("server_token", ["ip", "port"])
 
+userid = str
 
-class userid:
-    def __init__(self, userid: str):
-        self.userid = userid
+roomid = int
 
-    def __eq__(self, other):
-        if isinstance(other, str):
-            return self.userid == other
-        elif isinstance(other, userid):
-            return self.userid == other.userid
-        return False
-
-    def __hash__(self):
-        return hash(self.userid)
-
-    def __str__(self) -> str:
-        return self.userid
-
-    def __repr__(self):
-        return self.userid
-
-
-class roomid:
-    def __init__(self, _id: int):
-        self.id = _id
-
-    def __eq__(self, other):
-        if isinstance(other, int):
-            return self.id == other
-        elif isinstance(other, roomid):
-            return self.id == other.id
-        return False
-
-    def __hash__(self):
-        return hash(self.id)
-
-    def __str__(self) -> str:
-        return str(self.id)
-
-    def __repr__(self):
-        return self.id
-
-
-class con_info:
-    def __init__(self, server: server_token, room_id: roomid):
-        self.server = server
-        self.room_id = room_id
-
-    def __eq__(self, other):
-        if isinstance(other, con_info):
-            return self.server == other.server and self.room_id == other.room_id
-        else:
-            return False
-
-    def __hash__(self):
-        return hash((self.server, self.room_id))
-
+sr_info = namedtuple("sr_info", ["server", "room_id"])
 
 StorageUnit = Tuple[datetime, userid, str]
+
+
+class chat_room:
+    def __init__(self, info: sr_info):
+        self.info = info
+        self.members: List[userid] = []
+
+
+class uentity:
+    def __init__(self, server: server_token, uid: userid):
+        self.uid = uid
+        self.server = server
+        self.vcode: Optional[int] = None
+
+    @property
+    def verified(self) -> bool:
+        return self.vcode is not None
+
+
+def to_server_token(full: str) -> Optional[server_token]:
+    server_info = full.split(":")
+    if len(server_info) != 2:
+        return None
+    try:
+        port = int(server_info[1])
+    except:
+        return None
+    ip = server_info[0]
+    return server_token(ip, port)

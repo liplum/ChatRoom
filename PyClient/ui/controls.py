@@ -1,6 +1,7 @@
+import sys
 from abc import ABC, abstractmethod
 from io import StringIO
-from typing import Union, List, Optional
+from typing import Union, TypeVar, Type
 
 import GLOBAL
 import chars
@@ -11,6 +12,7 @@ import utils
 from cmd import WrongUsageError, CmdError, CmdNotFound, analyze_cmd_args, compose_full_cmd, is_quoted
 from cmd import cmdmanager
 from core.chats import i_msgmager
+from core.shared import *
 from core.shared import server_token, roomid
 from events import event
 from ui import outputs as output
@@ -19,7 +21,9 @@ from ui.outputs import CmdBkColor, CmdFgColor
 from ui.outputs import buffer
 from ui.states import ui_state, ui_smachine
 from ui.tbox import textbox
-import sys
+
+T = TypeVar('T')
+
 
 class xtextbox(textbox):
     def __init__(self, cursor_icon: str = '^'):
@@ -92,6 +96,7 @@ class chat_tab(tab):
 
         self._connected: Optional[server_token] = None
         self._joined: Optional[roomid] = None
+        self._user_info: Optional[uentity] = None
 
         def set_client(state: ui_state) -> None:
             state.client = self.client
@@ -115,9 +120,9 @@ class chat_tab(tab):
         self.textbox.on_list_replace.add(lambda b, f, c: client.mark_dirty())
 
     def send_text(self):
-        if self.connected:
+        if self.connected and self.joined and self.user_info:
             inputs = self.textbox.inputs
-            self.client.send_text(roomid(12345), inputs, self.connected)
+            self.client.send_text(self.user_info, self.joined, inputs)
         else:
             self.logger.error(f"[Tab][{self}]Haven't connected a server yet.")
         self.textbox.clear()
@@ -126,8 +131,7 @@ class chat_tab(tab):
     def joined(self) -> Optional[roomid]:
         return self._joined
 
-    @joined.setter
-    def joined(self, value):
+    def join(self, value):
         self._joined = value
 
     @property
@@ -139,6 +143,14 @@ class chat_tab(tab):
             self._connected = server_token
         else:
             self.logger.error(f"[Tab][{self}]Cannot access a unconnected/disconnected server.")
+
+    @property
+    def user_info(self) -> Optional[uentity]:
+        return self._user_info
+
+    @user_info.setter
+    def user_info(self, value: Optional[uentity]):
+        self._user_info = value
 
     def _add_msg(self, time, uid, text):
         self.history.append(f"{time.strftime('%Y%m%d-%H:%M:%S')}\n  {uid}:  {text}")
@@ -164,7 +176,7 @@ class chat_tab(tab):
         if self.connected:
             if self.joined:
                 tip = i18n.trans('tabs.chat_tab.joined',
-                                 ip=self.connected.ip, port=self.connected.port, room_id=self.joined.id)
+                                 ip=self.connected.ip, port=self.connected.port, room_id=self.joined)
             else:
                 tip = i18n.trans('tabs.chat_tab.connected',
                                  ip=self.connected.ip, port=self.connected.port)
@@ -196,7 +208,7 @@ class chat_tab(tab):
     @property
     def title(self) -> str:
         if self.connected and self.joined:
-            return str(self.joined.id)
+            return str(self.joined)
         return i18n.trans("tabs.chat_tab.name")
 
     def add_string(self, string: str):
@@ -230,9 +242,16 @@ class tablist:
         self.win = win
         self.view_history = []
         self.max_view_history = 5
-        self.chat_tabs: List[tab] = []
         self._on_curtab_changed = event()
         self._on_tablist_changed = event()
+
+    @property
+    def chat_tabs(self) -> List[chat_tab]:
+        return [t for t in self.tabs if isinstance(t, chat_tab)]
+
+    @property
+    def tabs_count(self) -> int:
+        return len(self.tabs)
 
     @property
     def on_curtab_changed(self) -> event:
@@ -250,13 +269,13 @@ class tablist:
     @property
     def on_tablist_changed(self) -> event:
         """
-        Para 1:textbox object
+        Para 1:tablist object
 
         Para 2:change type: True->add ; False->remove
 
         Para 3:operated tab
 
-        :return: event(textbox,bool,tab)
+        :return: event(tablist,bool,tab)
         """
         return self._on_tablist_changed
 
@@ -278,7 +297,6 @@ class tablist:
     def add(self, tab: "tab"):
         self.tabs.append(tab)
         if isinstance(tab, chat_tab):
-            self.chat_tabs.append(tab)
             self.on_tablist_changed(self, True, tab)
         if self.cur is None:
             self.cur = tab
@@ -291,16 +309,15 @@ class tablist:
                 del self.tabs[item]
                 self.on_tablist_changed(self, False, removed)
                 removed.on_removed()
-            if isinstance(removed, chat_tab):
-                self.chat_tabs.remove(removed)
 
         elif isinstance(item, tab):
             self.tabs.remove(item)
             self.on_tablist_changed(self, False, item)
             item.on_removed()
-            if isinstance(item, chat_tab):
-                self.chat_tabs.remove(item)
-        self.goto(self.cur_index - 1)
+        if len(self.tabs) == 0:
+            self.cur = None
+        else:
+            self.goto(self.cur_index - 1)
 
     def switch(self):
         if len(self.view_history) >= 2:
@@ -325,12 +342,10 @@ class tablist:
             self.view_history = self.view_history[-self.max_view_history:]
 
     def draw_on(self, buf: buffer):
-        c = 0
         tab_count = len(self.tabs)
         cur = self.cur
         with StringIO() as separator:
             for i, t in enumerate(self.tabs):
-                c += 1
                 bk = CmdBkColor.Yellow if t is cur else CmdBkColor.Green
                 fg = CmdFgColor.Black if t is cur else CmdFgColor.Violet
                 title = t.title
@@ -339,7 +354,7 @@ class tablist:
                 repeated = " " if t is cur else "─"
                 second_line = repeated * len(displayed_title)
                 separator.write(second_line)
-                if c < tab_count:
+                if i + 1 < tab_count:
                     buf.addtext("│", end='')
                     if t is cur:
                         separator.write("└")
@@ -360,21 +375,34 @@ class window:
         self.screen_buffer: Optional[buffer] = None
         self.tablist.on_curtab_changed.add(lambda li, n, t: self.client.mark_dirty())
         self.tablist.on_tablist_changed.add(lambda li, mode, t: self.client.mark_dirty())
+        self.network: "i_network" = self.client.network
+
+        def on_close_last_tab(li: tablist, mode, t):
+            if li.tabs_count == 0:
+                self.client.stop()
+
+        self.tablist.on_tablist_changed.add(on_close_last_tab)
 
     def start(self):
-        self.network: "i_network" = self.client.network
         self.gen_default_tab()
 
     def gen_default_tab(self):
-        chat = chat_tab(self.client, self.tablist)
-        self.tablist.add(chat)
-        first_or_default = utils.get_at(self.network.connected_servers, 0)
-        if first_or_default:
-            chat.connect(first_or_default)
-            chat.joined = roomid(12345)
+        if tablist.tabs_count == 0:
+            chat = chat_tab(self.client, self.tablist)
+            self.tablist.add(chat)
+            first_or_default = utils.get_at(self.network.connected_servers, 0)
+            if first_or_default:
+                chat.connect(first_or_default)
+                # TODO:Change it to customizable one
+                chat.join(roomid(12345))
 
-    def newtab(self, tabtype: type):
-        self.tablist.add(tabtype(self.client, self.tablist))
+    def newtab(self, tabtype: Type[T]) -> T:
+        t = tabtype(self.client, self.tablist)
+        self.tablist.add(t)
+        return t
+
+    def new_chat_tab(self) -> chat_tab:
+        return self.newtab(chat_tab)
 
     def prepare(self):
         self.screen_buffer = self.displayer.gen_buffer()
@@ -393,6 +421,11 @@ class window:
         curtab = self.tablist.cur
         if curtab:
             curtab.on_input(char)
+
+    def add_string(self, string: str):
+        curtab = self.tablist.cur
+        if curtab:
+            curtab.add_string(string)
 
 
 class context:
@@ -589,7 +622,7 @@ class _cmd_long_mode(_cmd_state):
             mode.cmd_manager.execute(contxt, cmd_name, args)
         except WrongUsageError as wu:
             with StringIO() as s:
-                s.write(i18n.trans("modes.command_mode.cmd.wrong_usage"))
+                s.write(output.tintedtxt(i18n.trans("modes.command_mode.cmd.wrong_usage"), fgcolor=CmdFgColor.Red))
                 s.write(':\n')
                 pos = wu.position
                 is_pos_quoted = is_quoted(pos + 1, quoted_indexes)
@@ -602,21 +635,21 @@ class _cmd_long_mode(_cmd_state):
             mode.tab.add_string(error_output)
         except CmdError as ce:
             with StringIO() as s:
-                s.write(i18n.trans("modes.command_mode.cmd.cmd_error"))
+                s.write(output.tintedtxt(i18n.trans("modes.command_mode.cmd.cmd_error"), fgcolor=CmdFgColor.Red))
                 s.write(':\n')
                 s.write(gen_cmd_error_text(cmd_name, args, full_cmd, -2, ce.msg))
                 mode.tab.add_string(s.getvalue())
         except Exception as any_e:
             with StringIO() as s:
+                s.write(output.tintedtxt(i18n.trans("modes.command_mode.cmd.unknown_error"), fgcolor=CmdFgColor.Red))
+                s.write(':\n')
+                s.write(gen_cmd_error_text(
+                    cmd_name, args, full_cmd, -2,
+                    i18n.trans("modes.command_mode.cmd.not_support", name=cmd_name)))
+                mode.tab.add_string(s.getvalue())
                 if GLOBAL.DEBUG:
-                    mode.tab.add_string(f"{any_e}\n{sys.exc_info()}")
-                else:
-                    s.write(i18n.trans("modes.command_mode.cmd.unknown_error"))
-                    s.write(':\n')
-                    s.write(gen_cmd_error_text(
-                        cmd_name, args, full_cmd, -2,
-                        i18n.trans("modes.command_mode.cmd.not_support", name=cmd_name)))
-                    mode.tab.add_string(s.getvalue())
+                    t, v, tb = sys.exc_info()
+                    mode.tab.logger(f"{any_e}\n{tb}")
 
         mode.cmd_history.append(full_cmd)
         mode.cmd_history_index = 0

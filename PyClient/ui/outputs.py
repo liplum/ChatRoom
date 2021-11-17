@@ -5,7 +5,7 @@ from enum import IntEnum, unique
 from typing import Optional, NoReturn, List, Tuple
 
 from core.filer import i_filer
-
+import GLOBAL
 
 def get_winsize() -> Tuple[int, int]:
     return os.get_terminal_size()
@@ -75,7 +75,7 @@ def tinted_print(text: str, fgcolor: Optional[CmdFgColor] = None, bkcolor: Optio
     print(f"\033[0;{fg};{bk}m{text}\033[0m", end=end)
 
 
-def gen_tinted_text(text: str, fgcolor: Optional[CmdFgColor], bkcolor: Optional[CmdBkColor] = None, end='\n') -> str:
+def tintedtxt(text: str, fgcolor: Optional[CmdFgColor] = None, bkcolor: Optional[CmdBkColor] = None, end='\n') -> str:
     fg = 0 if fgcolor is None else int(fgcolor)
     bk = 0 if bkcolor is None else int(bkcolor)
     return f"\033[0;{fg};{bk}m{text}\033[0m{end}"
@@ -109,7 +109,10 @@ class cmd_logger(i_logger):
     def alert_print(self, text: str, level: Tuple[CmdFgColor, str]) -> None:
         color, label = level
         time_stamp = datetime.now().strftime("%Y%m%d-%H:%M:%S")
-        t = f"{time_stamp}[{label}]{text}"
+        if GLOBAL.DEBUG:
+            t = f"{time_stamp}[DEBUG][{label}]{text}"
+        else:
+            t = f"{time_stamp}[{label}]{text}"
         if self.output_to_cmd:
             tinted_print(t, fgcolor=color)
         with open(self.logfile, "a+", encoding='utf-8') as log:
@@ -155,7 +158,7 @@ class cmd_display(i_display):
         if fgcolor is None and bkcolor is None:
             added_text = f"{text}{end}"
         else:
-            added_text = gen_tinted_text(text, fgcolor, bkcolor, end)
+            added_text = tintedtxt(text, fgcolor, bkcolor, end)
         buffer_list.append(added_text)
 
     def render(self, buf: buffer) -> bool:

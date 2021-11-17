@@ -54,7 +54,10 @@ public partial class Monoserver : IServer
                 {
                     while (SendTasks.TryDequeue(out var task))
                     {
-                        task.Start();
+                        if (task is not null)
+                        {
+                            task.Start();
+                        }
                     }
                 }
             });
@@ -92,6 +95,7 @@ public partial class Monoserver : IServer
         #region Event
         public event OnClientConnectedHandler? OnClientConnected;
         public event OnMessagePreAnalyzeHandler? OnMessagePreAnalyze;
+        public event OnClientDisconnectedHandler? OnClientDisconnected;
         #endregion
 
         public void SendDatapackTo([NotNull] IDatapack datapack, [NotNull] NetworkToken token)
@@ -305,6 +309,7 @@ public partial class Monoserver : IServer
                 _allConnections.Remove(token);
             }
             afterRemoved?.Invoke();
+            OnClientDisconnected?.Invoke(token);
         }
 
         public void StopService()

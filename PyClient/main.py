@@ -34,7 +34,7 @@ if get_at(args, 1) == "-login":
         may_port = int(get_at(args, 3))
     except:
         may_port = None
-    port = may_port if may_port and not may_port.startswith("-") else port
+    port = may_port if may_port and not str(may_port).startswith("-") else port
     LOGIN = True
 
 if IDE:

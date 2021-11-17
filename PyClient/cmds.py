@@ -1,8 +1,8 @@
-import net.msgs as msgs
 from cmd import command
+from core.operations import *
 from core.settings import table as settings_table
 from net.msgs import register_request
-from net.networks import i_network, CannotConnectError
+from net.networks import CannotConnectError
 from ui.controls import *
 
 cmds = []
@@ -132,7 +132,7 @@ def _join(context, args: [str]):
         tab: chat_tab = context.tab
         if tab.joined:
             raise CmdError(i18n.trans("cmds.con.already_joined", room_id))
-        tab.joined = roomid
+        tab.join(roomid)
     elif argslen == 1:
         pass
     else:
@@ -174,13 +174,10 @@ def _login(context, args: [str]):
     elif argslen == 2:
         tab: chat_tab = context.tab
         server = tab.connected
+        if server is None:
+            raise WrongUsageError(i18n.trans("cmds.close.cur_tab_unconnected"), 0)
 
-    network: i_network = context.network
-    user = network.get_channel("User")
-    msg = msgs.authentication_req()
-    msg.account = args[1]
-    msg.password = args[2]
-    user.send(server, msg)
+    login(context.network, server, args[argslen - 2], args[argslen - 1])
 
 
 cmd_login = add("login", _login)
