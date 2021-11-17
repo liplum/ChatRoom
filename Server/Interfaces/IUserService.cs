@@ -5,8 +5,9 @@ public interface IUserService : IInjectable
 {
     public void RegisterUser(string account, string clear_password, DateTime registerTime);
     public bool Verify(string account, string clear_password);
-    public bool VerifyAndOnline(string account, string clear_password, [MaybeNullWhen(false)] out IUserEntity entity);
+    public bool VerifyAndOnline(NetworkToken clientToken, string account, string clear_password, [MaybeNullWhen(false)] out IUserEntity entity);
     public IUserEntity? FindOnline(string account);
+    public IUserEntity? FindOnline(NetworkToken token);
 
     public bool DeleteUser(string account);
 

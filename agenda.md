@@ -23,3 +23,4 @@
     {11/15}: Non-flash output on CLI
     (11/15): Settings
      11/16 : Message Reply
+     11/17 : Auto-login

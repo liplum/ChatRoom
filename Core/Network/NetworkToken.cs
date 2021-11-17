@@ -11,4 +11,9 @@ public class NetworkToken
     {
         get; init;
     }
+
+    public override string ToString()
+    {
+        return IpAddress.ToString();
+    }
 }

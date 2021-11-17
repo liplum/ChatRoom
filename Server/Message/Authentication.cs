@@ -17,7 +17,7 @@ public class AuthenticationMsgHandler : IMessageHandler<AuthenticationReqMsg>
         var password = msg.Password;
         var userService = server.ServiceProvider.Reslove<IUserService>();
         AuthenticationResultMsg reply;
-        if (userService.VerifyAndOnline(account, password, out var entity))
+        if (userService.VerifyAndOnline(target, account, password, out var entity))
         {
             var vcode = entity.VerificationCode;
             reply = new()

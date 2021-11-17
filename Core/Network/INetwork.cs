@@ -11,11 +11,18 @@ public interface INetwork : IInjectable, IMessageChannelContainer
 
     public bool IsConnected([NotNull] NetworkToken token);
 
-    public IEnumerable<NetworkToken> AllConnectedClient { get; }
+    public IEnumerable<NetworkToken> AllConnectedClient
+    {
+        get;
+    }
 
     public event OnClientConnectedHandler OnClientConnected;
 
     public delegate void OnClientConnectedHandler([NotNull] NetworkToken token);
+
+    public event OnClientDisconnectedHandler OnClientDisconnected;
+
+    public delegate void OnClientDisconnectedHandler([NotNull] NetworkToken token);
 
     public event OnMessagePreAnalyzeHandler OnMessagePreAnalyze;
 

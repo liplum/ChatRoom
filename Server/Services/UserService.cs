@@ -15,6 +15,7 @@ public class UserService : IUserService
     }
 #nullable enable
     private Dictionary<string, UserEntity> OnlineUsers { get; init; } = new();
+    private Dictionary<NetworkToken, UserEntity> OnlineUsers_Token2Entity { get; init; } = new();
 
     public void RegisterUser(string account, string clear_password, DateTime registerTime)
     {
@@ -57,6 +58,15 @@ public class UserService : IUserService
     {
         DB = serviceProvider.Reslove<IDatabase>();
         Network = serviceProvider.Reslove<INetwork>();
+        Network.OnClientDisconnected += token =>
+        {
+            if (OnlineUsers_Token2Entity.TryGetValue(token, out var entity))
+            {
+                OnlineUsers_Token2Entity.Remove(token);
+                OnlineUsers.Remove(entity.Info.Account);
+            }
+        }
+        !;
     }
 
     public bool NameNotOccupied(string account)
@@ -72,10 +82,15 @@ public class UserService : IUserService
 
     public bool Verify(string account, string clear_password)
     {
-        throw new NotImplementedException();
+        var target = (from u in DB.UserTable where u.Account == account select u).FirstOrDefault();
+        if (target is not null && target.IsActive)
+        {
+            return MD5.Verify(clear_password, target.Password);
+        }
+        return false;
     }
 
-    public bool VerifyAndOnline(string account, string clear_password, [MaybeNullWhen(false)] out IUserEntity entity)
+    public bool VerifyAndOnline(NetworkToken clientToken, string account, string clear_password, [MaybeNullWhen(false)] out IUserEntity entity)
     {
         UserEntity? res = null;
 
@@ -100,6 +115,7 @@ public class UserService : IUserService
         {
             entity = res;
             OnlineUsers[account] = res;
+            OnlineUsers_Token2Entity[clientToken] = res;
             return true;
         }
         else
@@ -127,12 +143,14 @@ public class UserService : IUserService
         var target = (from u in DB.UserTable where u.Account == account select u).FirstOrDefault();
         if (target is not null && target.IsActive)
         {
-            OnlineUsers[account] = new()
+            var entity = new UserEntity()
             {
                 Info = target,
                 UserService = this,
                 VerificationCode = Random.Shared.Next()
             };
+            OnlineUsers[account] = entity;
+            OnlineUsers_Token2Entity[clientToken] = entity;
             return true;
         }
         return false;
@@ -142,10 +160,20 @@ public class UserService : IUserService
     {
         if (OnlineUsers.TryGetValue(account, out var entity))
         {
-            entity.IsOnline = false;
-            return OnlineUsers.Remove(account);
+            OnlineUsers_Token2Entity.Remove(entity.Token);
+            OnlineUsers.Remove(account);
+            return true;
         }
         return false;
+    }
+
+    public IUserEntity? FindOnline(NetworkToken token)
+    {
+        if (OnlineUsers_Token2Entity.TryGetValue(token, out var user) && user.Info.IsActive)
+        {
+            return user;
+        }
+        return null;
     }
 
     private class UserEntity : IUserEntity
@@ -161,15 +189,12 @@ public class UserService : IUserService
             get; set;
 
         }
-#nullable enable
-        public bool IsOnline
-        {
-            get; set;
-        } = false;
-        public NetworkToken? Token
+        public NetworkToken Token
         {
             get; set;
         }
+#nullable enable
+        public bool IsOnline => UserService.OnlineUsers_Token2Entity.ContainsKey(Token);
 
         public int VerificationCode
         {
