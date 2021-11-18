@@ -1,9 +1,24 @@
 from abc import ABC, abstractmethod
+from typing import Callable
 
+import chars
+from events import event
 from ui.outputs import buffer
 
 
 class control(ABC):
+    def __init__(self):
+        self._on_content_changed = event()
+
+    @property
+    def on_content_changed(self) -> event:
+        """
+        Para 1:textbox object
+
+        :return: event(control)
+        """
+        return self._on_content_changed
+
     @property
     @abstractmethod
     def width(self) -> int:
@@ -61,3 +76,17 @@ class control(ABC):
     @property
     def focused(self) -> bool:
         return False
+
+    def on_input(self, char: chars.char):
+        pass
+
+
+class content_getter:
+    def __init__(self, getter: Callable[[], str]):
+        self.getter = getter
+
+    def get(self) -> str:
+        return self.getter()
+
+    def __call__(self, *args, **kwargs):
+        return self.getter()

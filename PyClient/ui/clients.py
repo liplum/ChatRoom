@@ -10,7 +10,7 @@ from cmd import cmdmanager
 from core.chats import *
 from core.filer import i_filer, filer
 from core.operations import *
-from core.settings import table as settings
+from core.settings import entity as settings
 from events import event
 from net import networks
 from ui.controls import window
@@ -177,6 +177,7 @@ class client:
             if token:
                 ap = ap.split()
                 if len(ap) == 2:
+                    connect(self.network, token)
                     login(self.network, token, ap[0], ap[1])
                     chat = self.win.new_chat_tab()
                     chat.connect(token)
@@ -194,15 +195,15 @@ class client:
 
     def start(self):
         self._running = True
-        i = self.inpt
-        i.initialize()
-        self.auto_connection()
-        self.auto_login()
-        self.winsize_monitor.start()
-        self.win.start()
-        self.render()
-        while self._running:
-            try:
+        try:
+            i = self.inpt
+            i.initialize()
+            self.auto_connection()
+            self.auto_login()
+            self.winsize_monitor.start()
+            self.win.start()
+            self.render()
+            while self._running:
                 self.inpt.get_input()
                 # self.tps.delay()
                 if not self.need_update:
@@ -210,10 +211,14 @@ class client:
                 # The following is to need update
                 self._clear_dirty()
                 self.render()
-            except Exception as e:
-                self.logger.error(f"[Client]{e}\n{traceback.format_exc()}")
-                self.stop()
-        self.msg_manager.save_all()
+        except Exception as e:
+            self.logger.error(f"[Client]{e}\n{traceback.format_exc()}")
+            self.stop()
+        try:
+            self.msg_manager.save_all()
+            self.win.stop()
+        except Exception as e:
+            self.logger.error(f"[Client]{e}\n{traceback.format_exc()}")
         self.logger.tip("[Client]Programme quited.")
         return
 

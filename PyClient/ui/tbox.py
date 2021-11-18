@@ -45,10 +45,30 @@ class textbox(control):
     def width_limited(self, value):
         self._width_limited = bool(value)
 
+    @property
+    def max_inputs_count(self) -> int:
+        return self._max_inputs_count
+
+    @max_inputs_count.setter
+    def max_inputs_count(self, value: int):
+        self._max_inputs_count = max(0, value)
+        self.inputs_count_limited = True
+
+    @property
+    def inputs_count_limited(self) -> bool:
+        return self._inputs_count_limited
+
+    @inputs_count_limited.setter
+    def inputs_count_limited(self, value: bool):
+        self._inputs_count_limited = value
+
     def draw_on(self, buf: buffer):
         bk = CmdBkColor.White if self.focused else None
         fg = CmdFgColor.Black if self.focused else None
-        buf.addtext(self.limited_distext, end='', fgcolor=fg, bkcolor=bk)
+        drawn = self.limited_distext
+        if len(drawn) < self.width:
+            drawn = utils.fillto(drawn, " ", self.width)
+        buf.addtext(drawn, end='', fgcolor=fg, bkcolor=bk)
 
     def __init__(self, cursor_icon: str = "^"):
         super().__init__()
@@ -66,6 +86,13 @@ class textbox(control):
         self._width_limited = False
         self._height = 1
         self._focused = False
+        self._inputs_count_limited = False
+        self._max_inputs_count = 10
+
+        self._on_append.add(lambda _, _1, _2: self.on_content_changed(self))
+        self._on_delete.add(lambda _, _1, _2: self.on_content_changed(self))
+        self._on_cursor_move.add(lambda _, _1, _2: self.on_content_changed(self))
+        self._on_list_replace.add(lambda _, _1, _2: self.on_content_changed(self))
 
     @property
     def on_gen_distext(self) -> event:
@@ -223,6 +250,9 @@ class textbox(control):
             return displayed[0]
 
     def append(self, char):
+        if self.inputs_count_limited:
+            if self.input_count >= self.max_inputs_count:
+                return
         self._input_list.insert(self.cursor, char)
         self.on_append(self, self.cursor, char)
         self.cursor += 1

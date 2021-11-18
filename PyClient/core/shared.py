@@ -29,6 +29,9 @@ class uentity:
     def verified(self) -> bool:
         return self.vcode is not None
 
+    def __hash__(self):
+        return hash((self.server, self.uid, self.vcode))
+
 
 def to_server_token(full: str) -> Optional[server_token]:
     server_info = full.split(":")

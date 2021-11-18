@@ -70,7 +70,7 @@ class settings:
 _settings: Optional[settings] = None
 
 
-def table() -> settings:
+def entity() -> settings:
     if _settings is None:
         raise NotLoadedError()
     else:

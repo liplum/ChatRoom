@@ -59,7 +59,7 @@ class msgstorage:
     def save_file(self, value):
         self._save_file = value
         if not os.path.exists(value):
-            with open(value, "w", encoding="utf-16"):
+            with open(value, "w", encoding="utf-8"):
                 pass
 
     def serialize(self):

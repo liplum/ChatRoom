@@ -1,7 +1,7 @@
 import msvcrt
 from threading import Thread, RLock
 from typing import Optional, List, NoReturn
-
+import traceback
 import chars
 from ui.clients import client
 from ui.inputs import i_nbinput

@@ -24,7 +24,7 @@ def win_test():
     # test_input()
     # cmd_input()
     # test_str()
-    # test_textbox()
+    test_textbox()
     # test_char()
     # test_fill()
     # test_decode_str()
@@ -41,7 +41,7 @@ def win_test():
     # test_path()
     # test_analyze_cmd_args()
     # test_generic()
-    test_traceback()
+    # test_traceback()
 
 
 def linux_test():
@@ -451,19 +451,25 @@ def test_textbox():
     tb.width = 5
     tb.on_focused()
 
-    def switch():
-        if tb.focused:
-            tb.on_lost_focus()
-        else:
-            tb.on_focused()
+    def switching():
+        def switch():
+            if tb.focused:
+                tb.on_lost_focus()
+            else:
+                tb.on_focused()
 
-    for i in range(10):
-        buf = displayer.gen_buffer()
-        tb.right()
-        tb.draw_on(buf)
-        buf.addtext()
-        displayer.render(buf)
-        switch()
+        for i in range(10):
+            buf = displayer.gen_buffer()
+            tb.right()
+            tb.draw_on(buf)
+            buf.addtext()
+            displayer.render(buf)
+            switch()
+
+    switching()
+    tb.input_list = "A word"
+    tb.width = 20
+    switching()
 
 
 def cmd_input():

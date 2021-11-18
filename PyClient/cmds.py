@@ -1,6 +1,6 @@
 from cmd import command
 from core.operations import *
-from core.settings import table as settings_table
+from core.settings import entity as settings_table
 from net.msgs import register_request
 from net.networks import CannotConnectError
 from ui.controls import *
@@ -132,9 +132,16 @@ def _join(context, args: [str]):
         tab: chat_tab = context.tab
         if tab.joined:
             raise CmdError(i18n.trans("cmds.con.already_joined", room_id))
-        tab.join(roomid)
+        tab.join(room_id)
     elif argslen == 1:
-        pass
+        try:
+            room_id = roomid(int(args[0]))
+        except:
+            raise WrongUsageError(i18n.trans("cmds.con.para_invalid.room_id", args[0]), 1)
+        tab: chat_tab = context.tab
+        if tab.joined:
+            raise CmdError(i18n.trans("cmds.con.already_joined", room_id))
+        tab.join(room_id)
     else:
         raise WrongUsageError(i18n.trans("cmds.join.usage"), 0)
 

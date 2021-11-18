@@ -74,7 +74,20 @@
       "no_connection": "No Connection",
       "connected": "Connected: {ip}:{port}",
       "disconnected": "Disconnected",
-      "joined": "Connected: {ip}:{port} - {room_id}"
+      "joined": "Connected: {ip}:{port} - {room_id}",
+      "badge": {
+        "unlogin": "unlogin",
+        "unverified": "?"
+      }
+    },
+    "login_tab":{
+      "name": "login",
+      "labels": {
+        "server_ip": "server ip",
+        "server_port": "server port",
+        "account": "account",
+        "password": "password"
+      }
     }
   },
   "users": {

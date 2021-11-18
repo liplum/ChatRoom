@@ -19,7 +19,7 @@ for config in configs.configs:
     settings.add(config)
 
 settings.load()
-configurations = settings.table()
+configurations = settings.entity()
 import i18n
 
 i18n.load(configurations.Language)

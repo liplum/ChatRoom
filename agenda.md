@@ -24,3 +24,5 @@
     (11/15): Settings
      11/16 : Message Reply
      11/17 : Auto-login
+    (11/18): Badge of unread message on chat tab+
+    -11/18-: Login tab
