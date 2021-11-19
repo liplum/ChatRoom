@@ -60,7 +60,7 @@ class textbox(control):
     @property
     def show_cursor(self) -> bool:
         if self.in_container:
-            return self.focused
+            return self.is_focused
         else:
             return True
 
@@ -107,8 +107,8 @@ class textbox(control):
         self._inputs_count_limited = value
 
     def draw_on(self, buf: buffer):
-        bk = CmdBkColor.White if self.focused else None
-        fg = CmdFgColor.Black if self.focused else None
+        bk = CmdBkColor.White if self.is_focused else None
+        fg = CmdFgColor.Black if self.is_focused else None
         drawn = self.limited_distext
         if len(drawn) < self.width:
             drawn = utils.fillto(drawn, " ", self.width)
@@ -310,6 +310,7 @@ class textbox(control):
         if self.inputs_count_limited:
             if self.input_count >= self.max_inputs_count:
                 return False
+        char = str(char)
         self._input_list.insert(self.cursor, char)
         self.on_append(self, self.cursor, char)
         self.cursor += 1
@@ -352,15 +353,20 @@ class textbox(control):
 
 class button(control):
     def draw_on(self, buf: buffer):
-        bk = CmdBkColor.White if self.focused else None
-        fg = CmdFgColor.Black if self.focused else None
+        bk = CmdBkColor.White if self.is_focused else None
+        fg = CmdFgColor.Black if self.is_focused else None
         buf.addtext(self.distext, end='', fgcolor=fg, bkcolor=bk)
 
     @property
     def distext(self) -> str:
         if self.margin > 0:
-            margin = utils.repeat(" ", self.margin)
-            return f"{margin}{self.getter()}{margin}"
+            if self.is_focused:
+                margin = utils.repeat(" ", self.margin)
+                return f"{margin}{self.getter()}{margin}"
+            else:
+                margin = utils.repeat(" ", self.margin - 1)
+                return f"[{margin}{self.getter()}{margin}]"
+
         else:
             return self.getter()
 
@@ -376,6 +382,9 @@ class button(control):
     def on_input(self, char: chars.char) -> bool:
         if keys.k_enter == char:
             self.on_press()
+            return True
+        elif chars.c_esc == char:
+            self.on_exit_focus(self)
             return True
         return False
 

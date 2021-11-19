@@ -453,7 +453,7 @@ def test_textbox():
 
     def switching():
         def switch():
-            if tb.focused:
+            if tb.is_focused:
                 tb.on_lost_focus()
             else:
                 tb.on_focused()

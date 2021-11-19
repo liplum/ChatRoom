@@ -3,40 +3,42 @@ from typing import Callable, TypeVar
 
 import chars
 from events import event
+from ui.notice import notified
 from ui.outputs import buffer
 
 auto = "auto"
 PROP = TypeVar('PROP', str, int)
 
 
-class control(ABC):
+class control(notified, ABC):
     def __init__(self):
-        self._on_content_changed = event()
+        super().__init__()
         self._in_container = False
         self._focused = False
         self._width = auto
         self._height = auto
         self._on_prop_changed = event()
+        self._on_exit_focus = event()
+
+    @property
+    def on_exit_focus(self) -> event:
+        """
+        Para 1:control object
+
+        :return: event(control)
+        """
+        return self._on_exit_focus
 
     @property
     def on_prop_changed(self) -> event:
         """
-        Para 1:panel object
+        Para 1:control object
 
         Para 2:property name
 
-        :return: event(panel,str)
+        :return: event(control,str)
         """
         return self._on_prop_changed
-
-    @property
-    def on_content_changed(self) -> event:
-        """
-        Para 1:textbox object
-
-        :return: event(control)
-        """
-        return self._on_content_changed
 
     @property
     def width(self) -> PROP:
@@ -58,6 +60,20 @@ class control(ABC):
         if self._width != value:
             self._width = value
             self.on_prop_changed(self, "width")
+
+    @property
+    def render_height(self) -> int:
+        if self.height != auto:
+            return self.height
+        else:
+            raise NotImplementedError()
+
+    @property
+    def render_width(self) -> int:
+        if self.width != auto:
+            return self.width
+        else:
+            raise NotImplementedError()
 
     @property
     def height(self) -> PROP:
@@ -94,7 +110,7 @@ class control(ABC):
         pass
 
     @property
-    def focused(self) -> bool:
+    def is_focused(self) -> bool:
         return False
 
     def on_input(self, char: chars.char) -> bool:
@@ -117,7 +133,7 @@ class control(ABC):
         return id(self)
 
     @property
-    def focused(self) -> bool:
+    def is_focused(self) -> bool:
         return self._focused
 
     def on_focused(self):
@@ -136,3 +152,6 @@ class content_getter:
 
     def __call__(self, *args, **kwargs):
         return self.getter()
+
+
+CGT = content_getter

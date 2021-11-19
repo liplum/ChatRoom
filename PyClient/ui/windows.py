@@ -18,9 +18,10 @@ from core.shared import *
 from core.shared import server_token, roomid
 from events import event
 from ui import outputs as output
-from ui.controls import label, textbox
-from ui.ctrl import control, content_getter
+from ui.controls import label, textbox, button
+from ui.ctrl import control, content_getter, CGT
 from ui.k import kbinding
+from ui.notice import notified
 from ui.outputs import CmdBkColor, CmdFgColor
 from ui.outputs import buffer
 from ui.panels import stack
@@ -56,6 +57,7 @@ class xtextbox(textbox):
         kbs.bind(keys.k_right, lambda c: self.right())
         kbs.bind(keys.k_home, lambda c: self.home())
         kbs.bind(keys.k_end, lambda c: self.end())
+        kbs.bind(chars.c_esc, lambda c: self.on_exit_focus(self))
         spapp = super().append
         kbs.on_any = lambda c: spapp(chars.to_str(c)) if c.is_printable() else None
 
@@ -69,8 +71,9 @@ class xtextbox(textbox):
         return False
 
 
-class tab(ABC):
+class tab(notified, ABC):
     def __init__(self, client: "client", tablist: "tablist"):
+        super().__init__()
         self.tablist = tablist
         self.client = client
 
@@ -330,18 +333,41 @@ class test_tab(tab):
     def __init__(self, client: "client", tablist: "tablist"):
         super().__init__(client, tablist)
         self.stack = stack()
-        self.stack.add(label(content_getter(lambda: "Label A")))
-        self.stack.add(label(content_getter(lambda: "Test Label B")))
-        self.stack.add(label(content_getter(lambda: "Test")))
-        self.stack.orientation = panels.horizontal
-        self.stack.elemt_interval = 2
+        self.stack.on_content_changed.add(lambda _: self.on_content_changed(self))
+        self.stack.add(label(CGT(lambda: "Label A")))
+        self.account_tbox = xtextbox()
+        account_stack = stack()
+        account_stack.add(label(CGT(lambda: "Account")))
+        account_stack.add(self.account_tbox)
+        account_stack.orientation = panels.horizontal
+        self.stack.add(account_stack)
+        self.stack.add(label(CGT(lambda: "Test Label B")))
+        self.stack.add(label(CGT(lambda: "Test")))
+        self.input_box = xtextbox()
+        self.stack.add(self.input_box)
+        self.button = button(CGT(lambda: "Button"), lambda: None)
+        self.button.margin = 2
+        self.stack.add(self.button)
+        # self.stack.orientation = panels.horizontal
+
+        self.stack.elemt_interval = 1
 
     def draw_on(self, buf: buffer):
         self.stack.draw_on(buf)
+        if GLOBAL.DEBUG:
+            stak = self.stack
+            c = stak.cur_focused
+            info = f"focused index= {stak.cur_focused_index}\nfocused control= {c}\n"
+            buf.addtext(info)
+            if c:
+                pass
 
     @property
     def title(self) -> str:
         return "Test"
+
+    def on_input(self, char: chars.char):
+        self.stack.on_input(char)
 
 
 class main_menu_tab(tab):
@@ -442,30 +468,6 @@ class login_tab(tab):
         # TODO:Change this
         self.client.mark_dirty()
 
-    """ 
-    def go_next_focusable(self):
-         oi, oj = self.focused_index
-         for ci in range(oi, self.container_row):
-             for cj in range(oj, self.container_column):
-                 ct = self.container[ci][cj]
-                 if self.focused != ct:
-                     if ct.focusable:
-                         self.focused = ct
-                         self.focused_index = (ci, cj)
-                         return
-
-    def go_pre_focusable(self):
-         oi, oj = self.focused_index
-         for ci in range(oi, -1, -1):
-             for cj in range(oj, -1, -1):
-                 ct = self.container[ci][cj]
-                 if self.focused != ct:
-                     if ct.focusable:
-                         self.focused = ct
-                         self.focused_index = (ci, cj)
-                         return
-    """
-
     def mark_dirt(self):
         self.client.mark_dirty()
 
@@ -517,8 +519,9 @@ class login_tab(tab):
 add_tabtype("login_tab", login_tab)
 
 
-class tablist:
+class tablist(notified):
     def __init__(self, win: "window"):
+        super().__init__()
         self.tabs: List[tab] = []
         self._cur: Optional[tab] = None
         self.cur_index = 0
@@ -529,7 +532,10 @@ class tablist:
         self._on_tablist_changed = event()
 
     def has_chat_tab(self) -> bool:
-        pass
+        for t in self.tabs:
+            if isinstance(t, chat_tab):
+                return True
+        return False
 
     @property
     def chat_tabs(self) -> List[chat_tab]:
@@ -590,6 +596,7 @@ class tablist:
         if self.cur is None:
             self.cur = tab
         tab.on_added()
+        tab.on_content_changed.add(lambda _: self.on_content_changed(self))
 
     def replace(self, old_tab: Union[int, "tab"], new_tab: "tab"):
         if isinstance(old_tab, int):
@@ -710,6 +717,7 @@ class window:
         # self.max_display_line = 10
         self.tablist = tablist(self)
         self.screen_buffer: Optional[buffer] = None
+        self.tablist.on_content_changed.add(lambda _: self.client.mark_dirty())
         self.tablist.on_curtab_changed.add(lambda li, n, t: self.client.mark_dirty())
         self.tablist.on_tablist_changed.add(lambda li, mode, t: self.client.mark_dirty())
         self.network: "i_network" = self.client.network
@@ -722,9 +730,11 @@ class window:
 
     def start(self):
         configs = settings()
+        """
         self.newtab(login_tab)
         self.newtab(test_tab)
         self.tablist.goto(1)
+        """
         if configs.RestoreTabWhenRestart:
             self.restore_last_time_tabs()
         if self.tablist.tabs_count == 0:
