@@ -90,27 +90,21 @@ def _con(context, args: [str]) -> server_token:
     argslen = len(args)
     if argslen != 1:
         raise WrongUsageError(i18n.trans("cmds.con.usage"), 0)
-    server_info = args[0].split(":")
-    if len(server_info) != 2:
+    server = to_server_token(args[0])
+    if server is None:
         raise WrongUsageError(i18n.trans("cmds.con.para1.invalid"), 0)
-    ip = server_info[0]
-    try:
-        port = int(server_info[1])
-    except:
-        raise WrongUsageError(i18n.trans("cmds.con.para1.invalid"), 0)
-    server = server_token(ip, port)
     network = context.network
-    if not network.is_connected(server):
-        try:
-            network.connect(server, strict=True)
-        except CannotConnectError as cce:
-            raise CmdError(
-                i18n.trans("cmds.reg.cannot_connect_server", ip=ip, port=port))
+    try:
+        connect(network, server, strict=True)
+    except CannotConnectError as cce:
+        raise CmdError(
+            i18n.trans("cmds.reg.cannot_connect_server", ip=server.ip, port=server.port))
     tab = context.tab
-    has_connect_attr = hasattr(tab, "connected") and hasattr(tab, "connect")
-    if has_connect_attr:
-        if tab.connected == server:
-            raise WrongUsageError(i18n.trans("cmds.con.already_connected", ip=ip, port=port), 0)
+    has_attr = hasattr(tab, "connected") and hasattr(tab, "connect")
+    if has_attr:
+        connected = tab.connected
+        if connected and connected != server:
+            raise WrongUsageError(i18n.trans("cmds.con.already_connected", ip=connected.ip, port=connected.port), 0)
         else:
             tab.connect(server)
     return server

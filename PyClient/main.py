@@ -10,7 +10,7 @@ if get_at(args, -1) == "-debug":
     GLOBAL.DEBUG = True
 elif get_at(args, -1) == "-debugX":
     GLOBAL.DEBUG = True
-    GLOBAL.MONITOR=True
+    GLOBAL.MONITOR = True
 elif get_at(args, -1) == "-ide":
     GLOBAL.DEBUG = True
     IDE = True

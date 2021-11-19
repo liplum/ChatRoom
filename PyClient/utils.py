@@ -115,6 +115,13 @@ def not_none(*args) -> bool:
     return True
 
 
+def all_none(*args) -> bool:
+    for arg in args:
+        if arg is not None:
+            return False
+    return True
+
+
 def clear_screen_win():
     os.system("cls")
 

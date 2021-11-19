@@ -1,7 +1,7 @@
 import traceback
 from abc import ABC, abstractmethod
 from io import StringIO
-from typing import Union, TypeVar, Type, Dict
+from typing import Union, TypeVar, Type, Dict, Callable, Iterable
 
 import GLOBAL
 import chars
@@ -17,6 +17,7 @@ from core.settings import entity as settings
 from core.shared import *
 from core.shared import server_token, roomid
 from events import event
+from net.networks import i_network
 from ui import outputs as output
 from ui.controls import label, textbox, button
 from ui.ctrl import control, content_getter, CGT
@@ -26,13 +27,55 @@ from ui.outputs import CmdBkColor, CmdFgColor
 from ui.outputs import buffer
 from ui.panels import stack
 from ui.states import ui_state, ui_smachine
-from utils import get, not_none, fill_2d_array, multiget
+from utils import get, fill_2d_array, multiget, all_none
 
 T = TypeVar('T')
 CTRL = TypeVar('CTRL', bound=control)
 
 tab_name2type: Dict[str, Type["tab"]] = {}
 tab_type2name: Dict[Type["tab"], str] = {}
+
+
+def common_hotkey(char: chars.char, tab: "tab", client: "client", tablist: "tablist"):
+    """
+
+    :param tab:
+    :param char:
+    :param client:
+    :param tablist:
+    :return: (True | None) Whether the char wasn't consumed
+    """
+    if chars.c_q == char:
+        client.stop()
+    elif chars.c_a == char:
+        tablist.back()
+    elif chars.c_s == char:
+        tablist.switch()
+    elif chars.c_d == char:
+        tablist.next()
+    elif chars.c_x == char:
+        tablist.remove_cur()
+    elif chars.c_n == char:
+        tablist.new_chat_tab()
+    else:
+        return True
+
+
+def find_best_incomplete_chat_tab(tablist: "tablist", server: server_token,
+                                  account: userid) -> Optional["chat_tab"]:
+    possible = []
+    for t in tablist.chat_tabs_it:
+        if t.authenticated:
+            continue
+        ts = t.connected
+        ta = t.user_info.uid if t.user_info else None
+        if (ts and ts != server) or (ta and ta != account):
+            continue
+        else:
+            possible.append(t)
+    if len(possible) == 0:
+        return None
+    return possible[0]
 
 
 def add_tabtype(name: str, tabtype: Type["tab"]):
@@ -44,6 +87,12 @@ class CannotRestoreTab(Exception):
     def __init__(self, tabtype: Type["tab"]):
         super().__init__()
         self.tabtype = tabtype
+
+
+class CannotStoreTab(Exception):
+    def __init__(self, tab: "tab"):
+        super().__init__()
+        self.tab = tab
 
 
 class xtextbox(textbox):
@@ -90,6 +139,10 @@ class tab(notified, ABC):
     @classmethod
     def serialize(cls, self: T) -> dict:
         pass
+
+    @classmethod
+    def serializable(cls) -> bool:
+        return False
 
     @property
     @abstractmethod
@@ -182,11 +235,15 @@ class chat_tab(tab):
         return self._connected
 
     def connect(self, server_token):
-        if self.network.is_connected(server_token):
-            self._connected = server_token
-            self.client.mark_dirty()
-        else:
-            self.logger.error(f"[Tab][{self}]Cannot access a unconnected/disconnected server.")
+        if not self.network.is_connected(server_token):
+            try:
+                self.network.connect(server_token, strict=True)
+            except:
+                self.logger.error(f"[Tab][{self}]Cannot connect the server {server_token}")
+                return
+        self._connected = server_token
+        self.client.mark_dirty()
+        # self.logger.error(f"[Tab][{self}]Cannot access a unconnected/disconnected server.")
 
     @property
     def user_info(self) -> Optional[uentity]:
@@ -197,8 +254,14 @@ class chat_tab(tab):
         self._user_info = value
         self.client.mark_dirty()
 
+    @property
+    def authenticated(self) -> bool:
+        return self.connected and self.user_info and self.user_info.verified
+
     def _add_msg(self, time, uid, text):
-        self.history.append(f"{time.strftime('%Y%m%d-%H:%M:%S')}\n  {uid}:  {text}")
+        configs = settings()
+        date_format = configs.DateFormat
+        self.history.append(f"{time.strftime(date_format)}\n  {uid}:  {text}")
 
     def first_load(self):
         self.history = []
@@ -287,22 +350,26 @@ class chat_tab(tab):
         server = get(data, "server")
         room_id = get(data, "room_id")
         account = get(data, "account")
-        if not_none(server, room_id, account):
-            server = to_server_token(server)
-            if server:
-                t.connect(server)
-                t.join(roomid)
+        server = to_server_token(server)
+        if all_none(server, room_id, account):
+            raise CannotRestoreTab(chat_tab)
+        if server:
+            t.connect(server)
+            if account:
                 t.user_info = uentity(server, account)
-            return t
-        raise CannotRestoreTab(chat_tab)
+        if room_id:
+            t.join(room_id)
+        return t
 
     @classmethod
     def serialize(cls, self: "chat_tab") -> dict:
-        d = {}
-        if self.connected and self.joined and self.user_info:
-            d["server"] = f"{self.connected.ip}:{self.connected.port}"
-            d["room_id"] = self.joined
-            d["account"] = self.user_info.uid
+        if all_none(self.connected, self.joined, self.user_info):
+            raise CannotStoreTab(self)
+        d = {
+            "server": f"{self.connected.ip}:{self.connected.port}" if self.connected else None,
+            "room_id": self.joined if self.joined else None,
+            "account": self.user_info.uid if self.user_info else None
+        }
         return d
 
     def on_focused(self):
@@ -312,8 +379,15 @@ class chat_tab(tab):
     def on_lost_focus(self):
         self.focused = False
 
-    def __hash__(self):
-        return hash((self.connected, self.joined, self.user_info))
+    @classmethod
+    def serializable(cls) -> bool:
+        return True
+
+    def __repr__(self) -> str:
+        c = f" {self.connected.ip}:{self.connected.port}" if self.connected else ""
+        j = f"-{self.joined}" if self.joined else ""
+        a = f"-{self.user_info.uid}" if self.user_info else ""
+        return f"<chat_tab{c}{j}{a}>"
 
 
 add_tabtype("chat_tab", chat_tab)
@@ -336,6 +410,7 @@ class test_tab(tab):
         self.stack.on_content_changed.add(lambda _: self.on_content_changed(self))
         self.stack.add(label(CGT(lambda: "Label A")))
         self.account_tbox = xtextbox()
+        self.account_tbox.space_placeholder = "_"
         account_stack = stack()
         account_stack.add(label(CGT(lambda: "Account")))
         account_stack.add(self.account_tbox)
@@ -344,6 +419,7 @@ class test_tab(tab):
         self.stack.add(label(CGT(lambda: "Test Label B")))
         self.stack.add(label(CGT(lambda: "Test")))
         self.input_box = xtextbox()
+        self.input_box.space_placeholder = "_"
         self.stack.add(self.input_box)
         self.button = button(CGT(lambda: "Button"), lambda: None)
         self.button.margin = 2
@@ -351,6 +427,12 @@ class test_tab(tab):
         # self.stack.orientation = panels.horizontal
 
         self.stack.elemt_interval = 1
+        self._stack_focused = True
+
+        def _on_stack_exit_focus(stak):
+            self._stack_focused = False
+
+        self.stack.on_exit_focus.add(_on_stack_exit_focus)
 
     def draw_on(self, buf: buffer):
         self.stack.draw_on(buf)
@@ -367,7 +449,13 @@ class test_tab(tab):
         return "Test"
 
     def on_input(self, char: chars.char):
-        self.stack.on_input(char)
+        if self._stack_focused:
+            self.stack.on_input(char)
+        else:
+            if keys.k_enter == char:
+                self._stack_focused = True
+            elif self._stack_focused:
+                consumed = common_hotkey(char, self, self.client, self.tablist)
 
 
 class main_menu_tab(tab):
@@ -531,15 +619,40 @@ class tablist(notified):
         self._on_curtab_changed = event()
         self._on_tablist_changed = event()
 
+    def newtab(self, tabtype: Type[T]) -> T:
+        t = tabtype(self.win.client, self)
+        self.add(t)
+        return t
+
+    def new_chat_tab(self) -> chat_tab:
+        return self.newtab(chat_tab)
+
     def has_chat_tab(self) -> bool:
         for t in self.tabs:
             if isinstance(t, chat_tab):
                 return True
         return False
 
+    def match_chat_tab(self, predicate: Callable[["chat_tab"], bool]) -> Optional["chat_tab"]:
+        for t in self.tabs:
+            if isinstance(t, chat_tab) and predicate(t):
+                return t
+        return None
+
+    def match_chat_tabs(self, predicate: Callable[["chat_tab"], bool]) -> Iterable["chat_tab"]:
+        for t in self.tabs:
+            if isinstance(t, chat_tab) and predicate(t):
+                yield t
+
     @property
     def chat_tabs(self) -> List[chat_tab]:
         return [t for t in self.tabs if isinstance(t, chat_tab)]
+
+    @property
+    def chat_tabs_it(self) -> Iterable[chat_tab]:
+        for t in self.tabs:
+            if isinstance(t, chat_tab):
+                yield t
 
     @property
     def tabs_count(self) -> int:
@@ -714,8 +827,7 @@ class window:
     def __init__(self, client: "client", displayer: output.i_display):
         self.client = client
         self.displayer: output.i_display = displayer
-        # self.max_display_line = 10
-        self.tablist = tablist(self)
+        self.tablist: tablist = tablist(self)
         self.screen_buffer: Optional[buffer] = None
         self.tablist.on_content_changed.add(lambda _: self.client.mark_dirty())
         self.tablist.on_curtab_changed.add(lambda li, n, t: self.client.mark_dirty())
@@ -731,14 +843,12 @@ class window:
     def start(self):
         configs = settings()
         """
-        self.newtab(login_tab)
-        self.newtab(test_tab)
-        self.tablist.goto(1)
+        t = self.newtab(login_tab)
+        t = self.newtab(test_tab)
+        self.tablist.cur = t
         """
         if configs.RestoreTabWhenRestart:
             self.restore_last_time_tabs()
-        if self.tablist.tabs_count == 0:
-            self.gen_default_tab()
 
     def stop(self):
         configs = settings()
@@ -751,13 +861,14 @@ class window:
         for tab_name, li in last_opened.items():
             if tab_name in tab_name2type:
                 tabtype = tab_name2type[tab_name]
-                for entity in li:
-                    try:
-                        tab = tabtype.deserialize(entity, self.client, self.tablist)
-                    except:
-                        continue
-                    if tab:
-                        self.tablist.add(tab)
+                if tabtype.serializable():
+                    for entity in li:
+                        try:
+                            tab = tabtype.deserialize(entity, self.client, self.tablist)
+                        except:
+                            continue
+                        if tab:
+                            self.tablist.add(tab)
 
     def store_unclosed_tabs(self):
         configs = settings()
@@ -765,31 +876,31 @@ class window:
         for tab in self.tablist.tabs:
             tabtype = type(tab)
             if tabtype in tab_type2name:
-                li = multiget(last_opened, tab_type2name[tabtype])
-                try:
-                    dic = tabtype.serialize(tab)
-                except:
-                    continue
-                if dic:
-                    li.append(dic)
+                if tabtype.serializable():
+                    li = multiget(last_opened, tab_type2name[tabtype])
+                    try:
+                        dic = tabtype.serialize(tab)
+                    except:
+                        continue
+                    if dic:
+                        li.append(dic)
         configs.set("LastOpenedTabs", last_opened)
 
     def gen_default_tab(self):
-        chat = chat_tab(self.client, self.tablist)
-        self.tablist.add(chat)
-        first_or_default = utils.get_at(self.network.connected_servers, 0)
-        if first_or_default:
-            chat.connect(first_or_default)
-            # TODO:Change it to customizable one
-            chat.join(roomid(12345))
+        if self.tablist.tabs_count == 0:
+            chat = chat_tab(self.client, self.tablist)
+            self.tablist.add(chat)
+            first_or_default = utils.get_at(self.network.connected_servers, 0)
+            if first_or_default:
+                chat.connect(first_or_default)
+                # TODO:Change it to customizable one
+                chat.join(roomid(12345))
 
     def newtab(self, tabtype: Type[T]) -> T:
-        t = tabtype(self.client, self.tablist)
-        self.tablist.add(t)
-        return t
+        return self.tablist.newtab(tabtype)
 
     def new_chat_tab(self) -> chat_tab:
-        return self.newtab(chat_tab)
+        return self.tablist.new_chat_tab()
 
     def prepare(self):
         self.screen_buffer = self.displayer.gen_buffer()
@@ -906,7 +1017,7 @@ class cmd_mode(ui_state):
             return self.cmd_history[self.cmd_history_index]
 
     def on_en(self):
-        self.cmd_sm.enter(_cmd_single_mode)
+        self.cmd_sm.enter(_cmd_hotkey_mode)
         self.client.mark_dirty()
         self.textbox.clear()
         self.cmd_manager: cmdmanager = self.client.cmd_manger
@@ -982,7 +1093,7 @@ class cmd_mode(ui_state):
         if self.is_long_cmd_mode:
             self.cmd_sm.enter(_cmd_long_mode)
         else:
-            self.cmd_sm.enter(_cmd_single_mode)
+            self.cmd_sm.enter(_cmd_hotkey_mode)
 
         self.cmd_sm.on_input(char)
 
@@ -1083,7 +1194,7 @@ class _cmd_long_mode(_cmd_state):
                 pass
 
 
-class _cmd_single_mode(_cmd_state):
+class _cmd_hotkey_mode(_cmd_state):
     def __init__(self, mode: "cmd_mode"):
         super().__init__(mode)
 
@@ -1095,18 +1206,10 @@ class _cmd_single_mode(_cmd_state):
             mode.sm.enter(text_mode)
         elif chars.c_colon == char:
             tb.append(chars.c_colon)
-        elif chars.c_q == char:
-            mode.client.stop()
-        elif chars.c_a == char:
-            mode.tablist.back()
-        elif chars.c_s == char:
-            mode.tablist.switch()
-        elif chars.c_d == char:
-            mode.tablist.next()
-        elif chars.c_x == char:
-            mode.tablist.remove_cur()
-        elif chars.c_n == char:
-            mode.tablist.set(chat_tab(mode.client, mode.tablist))
+        else:
+            not_consumed = common_hotkey(char, mode.tab, mode.client, mode.tablist)
+            if not_consumed:
+                pass
 
 
 class text_mode(ui_state):

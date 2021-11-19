@@ -13,8 +13,8 @@ from core.operations import *
 from core.settings import entity as settings
 from events import event
 from net import networks
-from ui.windows import window
 from ui.k import cmdkey
+from ui.windows import window
 from utils import lock
 
 
@@ -179,11 +179,6 @@ class client:
                 if len(ap) == 2:
                     connect(self.network, token)
                     login(self.network, token, ap[0], ap[1])
-                    chat = self.win.new_chat_tab()
-                    chat.connect(token)
-                    # TODO:Change this
-                    chat.join(12345)
-                    chat.user_info = uentity(token, ap[0])
 
     def auto_connection(self):
         configs = settings()
@@ -199,9 +194,10 @@ class client:
             i = self.inpt
             i.initialize()
             self.auto_connection()
-            self.auto_login()
             self.winsize_monitor.start()
             self.win.start()
+            self.auto_login()
+            self.win.gen_default_tab()
             self.render()
             while self._running:
                 self.inpt.get_input()

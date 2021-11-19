@@ -171,7 +171,7 @@ class network(i_network):
         self._max_retry_time = max(1, int(value))
 
     @property
-    def on_msg_pre_analyzed(self)->event:
+    def on_msg_pre_analyzed(self) -> event:
         """
         Para 1:network object
 
@@ -229,6 +229,8 @@ class network(i_network):
             try:
                 _datapack: datapack = read_one(server_socket)
             except:
+                self.logger.error(f"[Network]Can't receive data from {token}")
+                self.logger.tip("Maybe it occurred because of disconnection.")
                 break
             json_text = converts.read_str(_datapack.data)
             _json = json.loads(json_text)

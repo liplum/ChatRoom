@@ -25,6 +25,8 @@ def add(*args, **kwargs) -> config:
 
 language = add("Language", "en_us")
 
+date_format = add("DateFormat", "%Y-%m-%d %H:%M:%S")
+
 auto_connection = addx("AutoConnection", [])
 
 auto_login = addx("AutoLogin", {})

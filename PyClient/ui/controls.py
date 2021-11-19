@@ -111,7 +111,7 @@ class textbox(control):
         fg = CmdFgColor.Black if self.is_focused else None
         drawn = self.limited_distext
         if len(drawn) < self.width:
-            drawn = utils.fillto(drawn, " ", self.width)
+            drawn = utils.fillto(drawn, self.space_placeholder, self.width)
         buf.addtext(drawn, end='', fgcolor=fg, bkcolor=bk)
 
     def __init__(self, cursor_icon: str = "^"):
@@ -131,6 +131,7 @@ class textbox(control):
         self._height = 1
         self._inputs_count_limited = False
         self._max_inputs_count = 10
+        self._space_placeholder = " "
 
         self._on_append.add(lambda _, _1, _2: self.on_content_changed(self))
         self._on_delete.add(lambda _, _1, _2: self.on_content_changed(self))
@@ -139,6 +140,17 @@ class textbox(control):
 
     def on_input(self, char: chars.char) -> bool:
         return self.append(char)
+
+    @property
+    def space_placeholder(self) -> str:
+        return self._space_placeholder
+
+    @space_placeholder.setter
+    def space_placeholder(self, value: str):
+        value = str(value)[0]
+        if value != "" and self._space_placeholder != value:
+            self._space_placeholder = value
+            self.on_prop_changed(self, "space_placeholder")
 
     @property
     def on_gen_distext(self) -> event:

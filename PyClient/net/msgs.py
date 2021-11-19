@@ -1,7 +1,6 @@
 import i18n
-import ui.windows as controls
-from core.chats import *
-from core.shared import userid, roomid
+import ui.windows as ws
+from core.shared import *
 from net.networks import msg
 from ui.outputs import CmdFgColor, tintedtxt
 from utils import get, not_none, to_seconds
@@ -40,13 +39,21 @@ class authentication_result(msg):
     @staticmethod
     def handle(self: "authentication_result", context):
         client, channel, token, network = context
-        win: controls.window = client.win
+        win: ws.window = client.win
         if self.OK:
-            chat_tabs: List[controls.chat_tab] = win.tablist.chat_tabs
-            for tab in chat_tabs:
+            tablist = win.tablist
+            tab = ws.find_best_incomplete_chat_tab(tablist, token, self.account)
+            if tab:
+                if tab.user_info is None:
+                    tab.user_info = uentity(token, self.account)
                 info = tab.user_info
-                if info and info.server == token and info.uid == self.account:
-                    info.vcode = self.vcode
+                info.vcode = self.vcode
+            else:
+                tab = win.new_chat_tab()
+                # TODO:Change this
+                tab.join(12345)
+                tab.connect(token)
+                tab.user_info = uentity(token, self.account, self.vcode)
         else:
             win.add_string(tintedtxt(i18n.trans(
                 "users.authentication.failure", ip=token.ip, port=token.port, account=self.account

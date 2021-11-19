@@ -93,8 +93,9 @@ def save(strict: bool = False):
                 _final[k] = finalV
             else:
                 _final[k] = v
+        settings_text = json.dumps(_final, indent=2)
         with open(file, "w", encoding="utf-8") as f:
-            json.dump(_final, f, indent=4)
+            f.write(settings_text)
     except Exception as e:
         if strict:
             raise SaveError(e, file)
@@ -106,16 +107,17 @@ def load(strict: bool = False):
     read = settings(_meta)
     try:
         with open(file, "r", encoding="utf-8") as f:
-            cache: Dict[str, str] = json.load(f)
-            for k, v in cache.items():
-                if k in _meta:
-                    try:
-                        finalv = _meta[k].convert_to(v)
-                        read.set(k, finalv)
-                    except:
-                        continue
-                else:
-                    read.set(k, v)
+            settings_text = f.read()
+        cache: Dict[str, str] = json.loads(settings_text)
+        for k, v in cache.items():
+            if k in _meta:
+                try:
+                    finalv = _meta[k].convert_to(v)
+                    read.set(k, finalv)
+                except:
+                    continue
+            else:
+                read.set(k, v)
     except Exception as e:
         if strict:
             raise LoadError(e, file)

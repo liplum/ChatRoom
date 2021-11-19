@@ -4,8 +4,9 @@ from datetime import datetime
 from enum import IntEnum, unique
 from typing import Optional, NoReturn, List, Tuple
 
-from core.filer import i_filer
 import GLOBAL
+from core.filer import i_filer
+
 
 def get_winsize() -> Tuple[int, int]:
     return os.get_terminal_size()

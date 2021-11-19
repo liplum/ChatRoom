@@ -2,9 +2,11 @@ import net.msgs as msgs
 from core.shared import *
 from net.networks import i_network
 
-def connect(network: i_network, server: server_token):
+
+def connect(network: i_network, server: server_token, strict: bool = False):
     if not network.is_connected(server):
-        network.connect(server)
+        network.connect(server, strict)
+
 
 def login(network: i_network, server: server_token, account: str, password: str):
     user = network.get_channel("User")

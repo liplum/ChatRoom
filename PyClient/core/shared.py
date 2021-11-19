@@ -20,10 +20,10 @@ class chat_room:
 
 
 class uentity:
-    def __init__(self, server: server_token, uid: userid):
+    def __init__(self, server: server_token, uid: userid, vcode: Optional[int] = None):
         self.uid = uid
         self.server = server
-        self.vcode: Optional[int] = None
+        self.vcode: Optional[int] = vcode
 
     @property
     def verified(self) -> bool:
