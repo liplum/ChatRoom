@@ -7,6 +7,7 @@ global using ChatRoom = ChattingRoom.Core.DB.Models.ChattingRoom;
 global using Membership = ChattingRoom.Core.DB.Models.Membership;
 global using User = ChattingRoom.Core.DB.Models.User;
 global using IServiceProvider = ChattingRoom.Core.IServiceProvider;
+using System.Collections.Concurrent;
 using ChattingRoom.Core.Networks;
 using ChattingRoom.Core.Services;
 using ChattingRoom.Server.DB;
@@ -94,21 +95,15 @@ public partial class Monoserver : IServer
     {
         MainThread = new Thread(() =>
         {
-            while (true)
+            foreach (var task in ScheduledTask.GetConsumingEnumerable())
             {
-                while (ScheduledTask.TryDequeue(out var task))
-                {
-                    if (task is not null)
-                    {
-                        task.Start();
-                    }
-                }
+                task?.Start();
             }
         });
         MainThread.Start();
     }
 
-    private Queue<Task> ScheduledTask
+    private BlockingCollection<Task> ScheduledTask
     {
         get; init;
     } = new();
@@ -116,7 +111,7 @@ public partial class Monoserver : IServer
 
     public void AddScheduledTask([NotNull] Action task)
     {
-        ScheduledTask.Enqueue(new Task(task));
+        ScheduledTask.Add(new Task(task));
     }
 
     private void InitChannels()
@@ -130,17 +125,6 @@ public partial class Monoserver : IServer
         {
             throw new NetworkServiceException();
         }
-        NetworkService.OnClientConnected += token =>
-        {
-            AddScheduledTask(async () =>
-            {
-                Logger!.SendMessage($"{token.IpAddress} is connected and will be sent msg 20s soon.");
-                await Task.Delay(20000);
-                User!.SendMessage(token, new RegisterResultMsg(RegisterResultMsg.RegisterResult.Succeed));
-                Logger.SendMessage($"{token.IpAddress} was sent a msg.");
-            });
-        }
-        !;
 
         NetworkService.OnClientConnected += token =>
         {

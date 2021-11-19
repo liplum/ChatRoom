@@ -14,6 +14,7 @@
      11/16 : User permissions management
     -11/16-: Verification of user
     [11/16]: Message Reply
+    -11/20-: Chatting room members management
 
 # PyClient
 ## 2021

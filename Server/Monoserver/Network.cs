@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Collections.Concurrent;
+using System.Net;
 using System.Net.Sockets;
 using ChattingRoom.Core.Networks;
 using Newtonsoft.Json;
@@ -15,7 +16,11 @@ public partial class Monoserver : IServer
         private TcpListener? _serverSocket;
         private readonly object _clientLock = new();
         private readonly object _channelLock = new();
-        private Thread MsgSendThread
+        private Thread MsgSendingThread
+        {
+            get; init;
+        }
+        private Thread MsgAnalysisThread
         {
             get; init;
         }
@@ -29,7 +34,11 @@ public partial class Monoserver : IServer
         {
             get; set;
         }
-        private Queue<Task> SendTasks
+        private BlockingCollection<Task> SendTasks
+        {
+            get; init;
+        } = new();
+        private BlockingCollection<Task> AnalyzeMsgTasks
         {
             get; init;
         } = new();
@@ -37,7 +46,11 @@ public partial class Monoserver : IServer
 
         public void AddSendTask([NotNull] Action task)
         {
-            SendTasks.Enqueue(new Task(task));
+            SendTasks.Add(new Task(task));
+        }
+        public void AddAnaylzeTask([NotNull] Action task)
+        {
+            AnalyzeMsgTasks.Add(new Task(task));
         }
 
         public Monoserver Server
@@ -48,19 +61,26 @@ public partial class Monoserver : IServer
         public Network(Monoserver server)
         {
             Server = server;
-            MsgSendThread = new Thread(() =>
+            MsgSendingThread = new Thread(() =>
             {
-                while (true)
+                foreach (var task in SendTasks.GetConsumingEnumerable())
                 {
-                    while (SendTasks.TryDequeue(out var task))
-                    {
-                        if (task is not null)
-                        {
-                            task.Start();
-                        }
-                    }
+                    task?.Start();
                 }
-            });
+            })
+            {
+                IsBackground = true
+            };
+            MsgAnalysisThread = new Thread(() =>
+            {
+                foreach (var task in AnalyzeMsgTasks.GetConsumingEnumerable())
+                {
+                    task?.Start();
+                }
+            })
+            {
+                IsBackground = true
+            };
         }
 
         private int _buffSize = 1024;
@@ -119,46 +139,49 @@ public partial class Monoserver : IServer
         private static readonly string EmptyJObjectStr = new JObject().ToString();
         public void RecevieDatapack([NotNull] IDatapack datapack, [AllowNull] NetworkToken token = null)
         {
-            try
+            AddAnaylzeTask(() =>
             {
-                var jsonString = _unicoder.ConvertToString(datapack.ToBytes());
-                jsonString = jsonString.Trim();
-                dynamic json = JObject.Parse(jsonString);
-                OnMessagePreAnalyze?.Invoke(token, jsonString, json);
-                string? channelName = json.ChannelName;
-                string? messageID = json.MessageID;
-                dynamic content = json.Content ?? new JObject();
-
-                lock (_channelLock)
+                try
                 {
-                    if ((channelName, messageID).NotNull())
+                    var jsonString = _unicoder.ConvertToString(datapack.ToBytes());
+                    jsonString = jsonString.Trim();
+                    dynamic json = JObject.Parse(jsonString);
+                    OnMessagePreAnalyze?.Invoke(token, jsonString, json);
+                    string? channelName = json.ChannelName;
+                    string? messageID = json.MessageID;
+                    dynamic content = json.Content ?? new JObject();
+
+                    lock (_channelLock)
                     {
-                        if (_allChannels.TryGetValue(channelName, out var channel))
+                        if ((channelName, messageID).NotNull())
                         {
-                            if (channel.CanPass(messageID, Direction.ClientToServer))
+                            if (_allChannels.TryGetValue(channelName, out var channel))
                             {
-                                channel.ReceiveMessage(messageID, content, token);
+                                if (channel.CanPass(messageID, Direction.ClientToServer))
+                                {
+                                    channel.ReceiveMessage(messageID, content, token);
+                                }
+                                else
+                                {
+                                    Logger!.SendMessage($"Message<{messageID}> cannot pass the Channel<{channelName}>.");
+                                }
                             }
                             else
                             {
-                                Logger!.SendMessage($"Message<{messageID}> cannot pass the Channel<{channelName}>.");
+                                Logger!.SendError($"Cannot find channel called {channelName}");
                             }
                         }
                         else
                         {
-                            Logger!.SendError($"Cannot find channel called {channelName}");
+                            Logger!.SendError($"Cannot analyse datapack: \"{jsonString}\" because of no header.");
                         }
                     }
-                    else
-                    {
-                        Logger!.SendError($"Cannot analyse datapack: \"{jsonString}\" because of no header.");
-                    }
                 }
-            }
-            catch (Exception e)
-            {
-                Logger!.SendError($"Cannot analyse datapack from {token?.IpAddress},because {e.Message}");
-            }
+                catch (Exception e)
+                {
+                    Logger!.SendError($"Cannot analyse datapack from {token?.IpAddress},because {e.Message}");
+                }
+            });
         }
 
         public void Initialize(IServiceProvider serviceProvider)
@@ -252,7 +275,8 @@ public partial class Monoserver : IServer
                 }
             });
             Listen.Start();
-            MsgSendThread.Start();
+            MsgSendingThread.Start();
+            MsgAnalysisThread.Start();
             Logger.SendMessage("Server started listening connection of clients.");
         }
 
@@ -282,7 +306,7 @@ public partial class Monoserver : IServer
                         }
                     }
                 }
-
+                client.Close();
                 RemoveClient(token, () =>
                 {
                     if (client.Connected)
@@ -315,6 +339,7 @@ public partial class Monoserver : IServer
         public void StopService()
         {
             Logger!.SendMessage("Network component is preparing to stop.");
+            _serverSocket?.Stop();
             Listen?.Interrupt();
             foreach (var (connection, _) in _allConnections.Values)
             {

@@ -1,5 +1,6 @@
 ﻿using ChattingRoom.Core.Networks;
 using ChattingRoom.Server.Interfaces;
+using ILogger = ChattingRoom.Core.ILogger;
 
 namespace ChattingRoom.Server.Messages;
 
@@ -26,14 +27,18 @@ public class AuthenticationMsgHandler : IMessageHandler<AuthenticationReqMsg>
                 Account = account,
                 VerificationCode = vcode
             };
+            var logger = server.ServiceProvider.Reslove<ILogger>();
+            logger.SendTip($"[User][Authentication]User \"{account}\" authentication succeed.");
         }
         else
         {
             reply = new()
             {
-                OK = true,
+                OK = false,
                 Account = account,
             };
+            var logger = server.ServiceProvider.Reslove<ILogger>();
+            logger.SendTip($"[User][Authentication]User \"{account}\" authentication failed.");
         }
         context.Channel.SendMessage(target, reply);
     }
