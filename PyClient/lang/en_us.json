@@ -109,5 +109,9 @@
     "text_mode": {
       "name": "Text mode"
     }
+  },
+  "controls": {
+    "ok":"OK",
+    "cancel": "Cancel"
   }
 }

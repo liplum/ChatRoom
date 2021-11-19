@@ -1,5 +1,5 @@
 import i18n
-import ui.controls as controls
+import ui.windows as controls
 from core.chats import *
 from core.shared import userid, roomid
 from net.networks import msg
@@ -101,7 +101,7 @@ class chatting(msg):
         self.room_id = roomid(chatting_room_id)
         self.user_id = userid(user_id)
         self.send_time = datetime.fromtimestamp(tiemstamp)
-        self.vcode =  get(json, chatting.k_VCode)
+        self.vcode = get(json, chatting.k_VCode)
 
     def write(self, json):
         json[chatting.k_Account] = self.user_id

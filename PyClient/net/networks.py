@@ -171,7 +171,7 @@ class network(i_network):
         self._max_retry_time = max(1, int(value))
 
     @property
-    def on_msg_pre_analyzed(self):
+    def on_msg_pre_analyzed(self)->event:
         """
         Para 1:network object
 

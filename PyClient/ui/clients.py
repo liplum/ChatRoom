@@ -13,7 +13,7 @@ from core.operations import *
 from core.settings import entity as settings
 from events import event
 from net import networks
-from ui.controls import window
+from ui.windows import window
 from ui.k import cmdkey
 from utils import lock
 

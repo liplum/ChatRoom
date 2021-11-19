@@ -3,7 +3,7 @@ from core.operations import *
 from core.settings import entity as settings_table
 from net.msgs import register_request
 from net.networks import CannotConnectError
-from ui.controls import *
+from ui.windows import *
 
 cmds = []
 

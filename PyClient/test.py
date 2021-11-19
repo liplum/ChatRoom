@@ -7,7 +7,7 @@ import xautofill
 from chars import *
 from core import converts
 from ui.clients import *
-from ui.tbox import textbox
+from ui.controls import textbox
 from utils import *
 
 system_type = platform.system()

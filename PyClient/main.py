@@ -8,6 +8,9 @@ IDE = False
 args = sys.argv
 if get_at(args, -1) == "-debug":
     GLOBAL.DEBUG = True
+elif get_at(args, -1) == "-debugX":
+    GLOBAL.DEBUG = True
+    GLOBAL.MONITOR=True
 elif get_at(args, -1) == "-ide":
     GLOBAL.DEBUG = True
     IDE = True
@@ -57,7 +60,7 @@ def main():
     _client.init()
     if LOGIN:
         _client.connect(server_ip, port)
-    if GLOBAL.DEBUG and not IDE:
+    if GLOBAL.MONITOR:
         from pef.monitor import pef_monitor
         _client.container.resolve(pef_monitor)
     _client.start()
@@ -80,7 +83,7 @@ def init_plugin(client, registry: container):
         from ui.cmdprompt import cmd_input
         registry.register_singleton(i_input, cmd_input)
 
-    if GLOBAL.DEBUG and not IDE:
+    if GLOBAL.MONITOR:
         from pef.monitor import pef_monitor
         registry.register_instance(pef_monitor, pef_monitor(interval=0.1))
 

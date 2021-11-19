@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from io import StringIO
 from threading import RLock
-from typing import Dict, List, Tuple, Optional, TypeVar, Callable,Any
+from typing import Dict, List, Tuple, Optional, TypeVar, Callable, Any
 
 system_type = platform.system()
 
@@ -17,8 +17,12 @@ TK = TypeVar('TK')
 TV = TypeVar('TV')
 
 
-def gen_2d_array(row: int, column: int, filler: Optional[T] = 0) -> List[List[Any]]:
+def fill_2d_array(row: int, column: int, filler: Optional[T] = 0) -> List[List[Any]]:
     return [[filler for i in range(column)] for j in range(row)]
+
+
+def gen_2d_array(row: int, column: int, getter: Callable[[], T]) -> List[List[Any]]:
+    return [[getter() for i in range(column)] for j in range(row)]
 
 
 def find(li: [T], predicate: Callable[[T], bool]) -> Optional[T]:
