@@ -5,6 +5,7 @@ using ChattingRoom.Core.Networks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static ChattingRoom.Core.Networks.INetwork;
+using ILogger = ChattingRoom.Core.ILogger;
 
 namespace ChattingRoom.Server;
 public partial class Monoserver : IServer
@@ -25,7 +26,7 @@ public partial class Monoserver : IServer
             get; init;
         }
 #nullable disable
-        internal ILogger Logger
+        public ILogger Logger
         {
             get; set;
         }
@@ -137,6 +138,15 @@ public partial class Monoserver : IServer
             }
         }
         private static readonly string EmptyJObjectStr = new JObject().ToString();
+
+
+        public void Initialize(IServiceProvider serviceProvider)
+        {
+            Logger = serviceProvider.Reslove<ILogger>();
+        }
+
+        private readonly UnicodeBytesConverter _unicoder = new();
+
         public void RecevieDatapack([NotNull] IDatapack datapack, [AllowNull] NetworkToken token = null)
         {
             AddAnaylzeTask(() =>
@@ -150,46 +160,39 @@ public partial class Monoserver : IServer
                     string? channelName = json.ChannelName;
                     string? messageID = json.MessageID;
                     dynamic content = json.Content ?? new JObject();
+                    if (!(channelName, messageID).NotNull())
+                    {
+                        Logger.SendError($"Cannot analyse datapack: \"{jsonString}\" because of no header.");
+                        return;
+                    }
 
+                    IMessageChannel? channel;
                     lock (_channelLock)
                     {
-                        if ((channelName, messageID).NotNull())
+                        _allChannels.TryGetValue(channelName, out channel);
+                    }
+                    if (channel is not null)
+                    {
+                        if (channel.CanPass(messageID, Direction.ClientToServer))
                         {
-                            if (_allChannels.TryGetValue(channelName, out var channel))
-                            {
-                                if (channel.CanPass(messageID, Direction.ClientToServer))
-                                {
-                                    channel.ReceiveMessage(messageID, content, token);
-                                }
-                                else
-                                {
-                                    Logger!.SendMessage($"Message<{messageID}> cannot pass the Channel<{channelName}>.");
-                                }
-                            }
-                            else
-                            {
-                                Logger!.SendError($"Cannot find channel called {channelName}");
-                            }
+                            channel.ReceiveMessage(messageID, content, token);
                         }
                         else
                         {
-                            Logger!.SendError($"Cannot analyse datapack: \"{jsonString}\" because of no header.");
+                            Logger!.SendMessage($"Message<{messageID}> cannot pass the Channel<{channelName}>.");
                         }
+                    }
+                    else
+                    {
+                        Logger.SendError($"Cannot find channel called {channelName}");
                     }
                 }
                 catch (Exception e)
                 {
-                    Logger!.SendError($"Cannot analyse datapack from {token?.IpAddress},because {e.Message}");
+                    Logger.SendError($"Cannot analyse datapack from {token?.IpAddress},because {e.Message}");
                 }
             });
         }
-
-        public void Initialize(IServiceProvider serviceProvider)
-        {
-            Logger = serviceProvider.Reslove<ILogger>();
-        }
-
-        private readonly UnicodeBytesConverter _unicoder = new();
 
         public void SendMessage([NotNull] MessageChannel channel, [NotNull] NetworkToken target, [NotNull] IMessage msg, string msgID)
         {

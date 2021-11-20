@@ -39,8 +39,7 @@ public static class Assets
 #nullable enable
     public static void InitConfigs()
     {
-        AddConfig(new("IP", "127.0.0.1"));
-        AddConfig(new("Port", 5000));
+        AddConfig(new("Port", 25000));
     }
 
     public static void AddConfig(ConfigItemT config)
@@ -77,15 +76,15 @@ public static class Assets
     public static void SaveConfig()
     {
         EnsureConfig();
-        string? josnText = JsonConvert.SerializeObject(_configJson, Formatting.Indented);
+        var josnText = JsonConvert.SerializeObject(_configJson, Formatting.Indented);
         File.WriteAllText(ConfigFile, josnText);
     }
 
     private static void EnsureConfig()
     {
-        foreach (string? configName in AllBuiltInConfigs.Keys)
+        foreach (var configName in AllBuiltInConfigs.Keys)
         {
-            Configurations.TryGetValue(configName, out dynamic _);
+            Configurations.TryGetValue(configName, out var _);
         }
     }
 
