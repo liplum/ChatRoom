@@ -11,7 +11,7 @@
     "reg": {
       "usage": "reg [<server ip>:<port>] <account> <password>",
       "para1": {
-        "invalid": "eg: 127.0.0.1:5000"
+        "invalid": "eg: 127.0.0.1:25000"
       },
       "current_tab_is_unconnected": "Current tab hasn't connected any server",
       "cannot_connect_server": "Can't connect the server {ip}:{port}",
@@ -28,7 +28,7 @@
       "para1": {
         "invalid": "The format of server's ip and port is wrong. eg: 127.0.0.1:5000"
       },
-      "already_connected": "Current tab has already connected the server {ip}:{port}"
+      "already_connected": "Current tab has already connected another server {ip}:{port}"
     },
     "run": {
       "usage": "!Only Debug! run \"<code>\" or exec -f <file path>",
@@ -48,12 +48,12 @@
       "usage": "join [<server ip>:<port>] <chatting room id>",
       "description": "join a chatting room on current tab",
       "para_invalid": {
-        "server": "The format of server's ip and port is wrong. eg: 127.0.0.1:5000",
+        "server": "The format of server's ip or port is wrong. Correct example: 127.0.0.1:25000",
         "room_id": "Room ID requires a integer not {0}"
       },
-      "cur_tab_unconnected": "Current tab hasn't connected any server.",
+      "cur_tab_unconnected": "Current tab hasn't connected any server yet",
       "cannot_connect_server": "Can't connect the server {ip}:{port}",
-      "already_joined": "Current tab has already joined the chatting room {id}"
+      "already_joined": "Current tab has already joined another chatting room {id}"
     },
     "close": {
       "usage": "close or close <number>",
@@ -79,7 +79,7 @@
         "unlogin": "unlogin",
         "unverified": "?"
       },
-      "account_unverified": "Your account \"{account}\" hasn't be authenticated on the server {ip}"
+      "account_unverified": "Your account \"{account}\" hasn't be authenticated on the server {ip} yet"
     },
     "login_tab":{
       "name": "login",
@@ -93,7 +93,7 @@
   },
   "users": {
     "authentication": {
-      "failure": "Authentication of {ip}:{port}-\"{account}\" failed"
+      "failure": "Authentication of \"{account}\" on {ip}:{port} failed"
     }
   },
   "modes": {
@@ -101,7 +101,7 @@
       "name": "Command mode",
       "cmd": {
         "cannot_find": "Can't find a command called {name}",
-        "not_support": "Current command \"{name}\" is not supported.",
+        "not_support": "Current command \"{name}\" is not supported",
         "cmd_error": "Error Occurred",
         "wrong_usage": "Wrong Usage",
         "unknown_error": "Unknown Error"

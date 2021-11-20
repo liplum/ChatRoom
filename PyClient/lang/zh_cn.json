@@ -5,54 +5,114 @@
         "not_number": "给定的第一个参数不是预期的整数，而是{0}",
         "over_range": "数字{0}超出范围"
       },
-      "usage": "goto <number>"
+      "usage": "goto <整数>",
+      "description": "切换到目标标签页"
     },
     "reg": {
-      "usage": "reg [<server ip>:<port>] <account> <password>",
+      "usage": "reg [<IP地址>:<端口>] <账号> <密码>",
       "para1": {
-        "invalid": "eg: 127.0.0.1:5000"
-      }
+        "invalid": "示例：127.0.0.1:5000"
+      },
+      "current_tab_is_unconnected": "当前标签页还未连接到任何服务器",
+      "cannot_connect_server": "无法连接到服务器{ip}:{port}",
+      "description": "注册"
     },
     "help": {
-      "usage": "help <command name>/all",
-      "cannot_find": "找不到名为{0}的命令"
+      "usage": "help <命令名称>/all",
+      "cannot_find": "找不到名为{0}的命令",
+      "description": "展示命令的用法和说明"
     },
     "con": {
-      "usage": "con <server ip>:<port>"
+      "usage": "con <IP地址>:<端口>",
+      "description": "在当前标签页上连接到服务器",
+      "para1": {
+        "invalid": "服务器IP地址或端口的格式错误，正确示例: 127.0.0.1:25000"
+      },
+      "already_connected": "当前标签页已经连接了另一个服务器{ip}:{port}"
     },
     "run": {
-      "usage": "!Only Debug! exec \"<code>\" or exec -f <file path>",
+      "usage": "！仅调试！ exec \"<代码>\" or exec -f <文件路径>",
       "execute_error": "无法执行代码{code}，因为{exception}",
-      "cannot_read_file": "无法从文件\"{path}\"中读取代码"
+      "cannot_read_file": "无法从文件\"{path}\"中读取代码",
+      "description": "运行自定义代码"
     },
     "lang": {
-      "usage": "lang [-s] or lang <en-us> [-s]",
+      "usage": "lang [-s] 或 lang <en-us> [-s]",
       "cannot_reload": "无法重新加载语言",
       "cannot_reload_cause": "无法重新加载语言，因为{cause}",
       "cannot_load": "无法加载语言\"{lang}\"",
-      "cannot_load_cause": "无法加载语言\"{lang}\"，因为{cause}"
+      "cannot_load_cause": "无法加载语言\"{lang}\"，因为{cause}",
+      "description": "更改当前应用的语言"
     },
     "join": {
-      "usage": "join [<server ip>:<port>] <chatting room id>",
-      "para1": {
-        "invalid": "eg: 127.0.0.1:5000"
+      "usage": "join [<IP地址>:<端口>] <聊天室ID>",
+      "description": "在当前聊天框内加入一个聊天室",
+      "para_invalid": {
+        "server": "服务器IP地址或端口的格式错误，正确示例: 127.0.0.1:25000",
+        "room_id": "聊天室ID需要一个整数，而不是{0}"
+      },
+      "cur_tab_unconnected": "当前标签页还未连接到任何服务器",
+      "cannot_connect_server": "无法连接服务器{ip}:{port}",
+      "already_joined": "当前标签页已经加入了另一个聊天室{id}"
+    },
+    "close": {
+      "usage": "close 或者 close <整数>",
+      "description": "关闭一个窗口",
+      "para_invalid": {
+        "not_number": "给定的第一个参数不是预期的整数，而是{0}",
+        "over_range": "数字{0}超出范围"
       }
+    },
+    "login": {
+      "usage": "login [<IP地址>:<端口>] <账号> <密码>",
+      "description": "登录服务器"
+    }
+  },
+  "users": {
+    "authentication": {
+      "failure": "在服务器{ip}:{port}上账号\"{account}\"的身份验证失败"
     }
   },
   "tabs": {
     "chat_tab": {
-      "name": "聊天框"
+      "name": "聊天框",
+      "no_connection": "无连接",
+      "connected": "已连接至 {ip}:{port}",
+      "disconnected": "失去连接",
+      "joined": "已连接至 {ip}:{port} - {room_id}",
+      "badge": {
+        "unlogin": "未登录",
+        "unverified": "?"
+      },
+      "account_unverified": "你的账号\"{account}\"还未在服务器{ip}上进行身份验证"
+    },
+    "login_tab": {
+      "name": "登录",
+      "labels": {
+        "server_ip": "服务器IP地址",
+        "server_port": "端口号",
+        "account": "账号",
+        "password": "密码"
+      }
     }
   },
   "modes": {
     "command_mode": {
       "name": "命令模式",
       "cmd": {
-        "cannot_find": "找不到名为{0}的命令"
+        "cannot_find": "找不到名为{0}的命令",
+        "not_support": "当前命令 \"{name}\" 不受支持",
+        "cmd_error": "发生错误",
+        "wrong_usage": "用法错误",
+        "unknown_error": "未知错误"
       }
     },
     "text_mode": {
       "name": "文本模式"
     }
+  },
+  "controls": {
+    "ok": "确认",
+    "cancel": "取消"
   }
 }
