@@ -94,7 +94,7 @@ class panel(control, ABC):
         pass
 
     @property
-    def elements(self) -> Set[CTRL]:
+    def elements(self) -> Set[control]:
         return self._elements
 
     @property
@@ -175,6 +175,10 @@ class stack(panel):
         h = 0
         w = 0
         for i, elemt in enumerate(self._elements_stack):
+            if self.width != auto and w >= self.width and self.over_range == discard:
+                continue
+            if self.height != auto and h >= self.height and self.over_range == discard:
+                continue
             h += elemt.render_height
             w += elemt.render_width
             if i > 0:
@@ -182,8 +186,7 @@ class stack(panel):
                     h += self._r_elemt_interval
                 else:
                     w += self._r_elemt_interval
-            if self.height != auto and h >= self.height and self.over_range == discard:
-                break
+
         self._r_width = w
         self._r_height = h
 
@@ -215,7 +218,8 @@ class stack(panel):
                 elemt.draw_on(buf)
                 interval = utils.repeat(" ", self._r_elemt_interval)
                 buf.addtext(text=interval, end="")
-        buf.addtext()
+        if not self.in_container:
+            buf.addtext()
 
     def __init__(self):
         super().__init__()
@@ -343,32 +347,175 @@ class stack(panel):
         return self._r_width
 
 
-class _grid_layout_unit:
-    def __init__(self, width=auto, height=auto):
-        self.width = width
-        self.height = height
+class row:
+    def __init__(self):
+        self.height: int = 1
 
 
-_GLU = _grid_layout_unit
+class column:
+    def __init__(self, width: PROP):
+        self.width: PROP = width
+
+
+class _unit:
+    def __init__(self, row: row, column: column):
+        self.row = row
+        self.column = column
+
+    @property
+    def width(self) -> PROP:
+        return self.column.width
+
+    @property
+    def height(self) -> int:
+        return self.row.height
+
+
+def gen_grid(row_count: int, columns: [column]):
+    return grid(rows=[row() for i in range(row_count)], columns=columns)
 
 
 class grid(panel):
+    """
+    Example 1:
 
-    def __init__(self, row: int, column: int):
+    3*2:
+    interval width = 2
+    interval height = 1
+    column[0] width = 4
+    column[1] width = 13
+
+    Date__  1/1_______________
+
+    Name__  Liplum____________
+
+    Email_  Liplum@outlook.com
+    Example 2:
+
+    6*3:
+    interval width = 1
+    interval height = 0
+    column[0] width = 4
+    column[1] width = 13
+    column[2] width = 13
+
+    Day_ Event________ With whom____
+    1___ Nothing______ Only me______
+    2___ Stay home____ My parents___
+    3___ Programming__ Only me______
+    4___ Sports_______ Friends______
+    5___ Study________ Classmates___
+    """
+
+    def __init__(self, rows: [row], columns: [column]):
         super().__init__()
-        self._grid: List[List[control]] = utils.fill_2d_array(row, column, None)
-        self._layout: List[List[_GLU]] = utils.gen_2d_array(row, column, _GLU)
+        self.rowlen = len(rows)
+        self.columnlen = len(columns)
+        self.rows = rows
+        self.columns = columns
+
+        if self.rowlen == 0:
+            self.rows = [row()]
+        if self.columnlen == 0:
+            self.columns = [column(width=auto)]
+
         self._elemt_interval_w = auto
         self._elemt_interval_h = auto
+        self.gen_unit()
+        self._grid: List[List[control]] = utils.fill_2d_array(self.rowlen, self.columnlen, None)
+        self._r_width = 0
+        self._r_height = 0
+        self._r_elemt_interval_w = 0
+        self._r_elemt_interval_h = 0
+
+    def gen_unit(self):
+        self._units: List[List[_unit]] = utils.gen_2d_arrayX(
+            self.rowlen, self.columnlen, lambda i, j: _unit(self.rows[i], self.columns[j]))
 
     def draw_on(self, buf: buffer):
         if self._layout_changed:
             self.cache_layout()
 
+        for i in range(self.rowlen):
+            for j in range(self.columnlen):
+                c = self._grid[i][j]
+                if c:
+                    c.draw_on(buf)
+                    w = c.render_width
+                    rest = self.columns[j].width - w
+                    if rest > 0:
+                        buf.addtext(utils.repeat(" ", rest), end="")
+                else:
+                    buf.addtext(utils.repeat(" ", self.columns[j].width), end="")
+                buf.addtext(utils.repeat(" ", self._r_elemt_interval_w), end="")
+            buf.addtext(utils.repeat("\n", self._r_elemt_interval_h))
+        if not self.in_container:
+            buf.addtext()
+
     def cache_layout(self):
         self._layout_changed = False
+
+        w = 0
+        h = 0
         if self.width == auto:
-            pass
+            if self.elemt_interval_w == auto:
+                self._r_elemt_interval_w = 1
+            else:
+                self._r_elemt_interval_w = self.elemt_interval_w
+
+            for j, column in enumerate(self.columns):
+                max_width = max(c.render_width for c in self.column_items(j) if c)
+                column.width = max_width
+                w += max_width
+        else:
+            occupied_width = 0
+            for j, column in enumerate(self.columns):
+                max_width = max(c.render_width for c in self.column_items(j) if c)
+                column.width = max_width
+                w += max_width
+                occupied_width += max_width
+
+            if self.elemt_interval_w == auto:
+                if columnlen == 1:
+                    self._r_elemt_interval_w = 0
+                else:
+                    self._r_elemt_interval_w = (self.width - occupied_width) // (self.columnlen - 1)
+            else:
+                self._r_elemt_interval_w = self.elemt_interval_w
+
+        w += self._r_elemt_interval_w * (self.columnlen - 1)
+
+        if self.height == auto:
+            if self.elemt_interval_h == auto:
+                self._r_elemt_interval_h = 0
+            else:
+                self._r_elemt_interval_h = self.elemt_interval_h
+        else:
+            if self.elemt_interval_h == auto:
+                if self.rowlen == 1:
+                    self._r_elemt_interval_w = 0
+                else:
+                    self._r_elemt_interval_h = (self.height - self.rowlen) // (self.columnlen - 1)
+            else:
+                self._r_elemt_interval_h = self.elemt_interval_h
+
+        h += self.rowlen + self._r_elemt_interval_h * (self.rowlen - 1)
+        self._r_width = w
+        self._r_height = h
+
+        for i in range(self.rowlen):
+            for j in range(self.columnlen):
+                c = self._grid[i][j]
+                if c:
+                    c.width = self._units[i][j].width
+
+    def row_items(self, row: int):
+        for j in range(self.columnlen):
+            yield self._grid[row][j]
+
+    def column_items(self, column: int):
+        for i in range(self.rowlen):
+            yield self._grid[i][column]
 
     @property
     def elemt_interval_w(self) -> PROP:
@@ -395,14 +542,25 @@ class grid(panel):
             self.on_prop_changed(self, "elemt_interval_h")
 
     def __getitem__(self, item: Tuple[int, int]) -> Optional[CTRL]:
-        return self._grid[item[0]][item[1]]
+        i, j = item
+        return self._grid[i][j]
 
     def __setitem__(self, key: Tuple[int, int], value: control):
-        self._grid[key[0]][key[1]] = value
+        i, j = key
+        self.set(i, j, value)
 
     def set(self, i: int, j: int, ctrl: control):
-        former: control = self[i, j]
+        former: control = self._grid[i][j]
         if former:
             self.remove(former)
-        self[i, j] = ctrl
+        self._grid[i][j] = ctrl
         self.add(ctrl)
+
+    @property
+    def render_height(self) -> int:
+        return self._r_height
+
+    @property
+    def render_width(self) -> int:
+        return self._r_width
+

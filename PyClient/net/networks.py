@@ -11,7 +11,7 @@ from core.shared import server_token
 from events import event
 from ui import outputs
 from utils import get, not_none
-
+import traceback
 
 class msg(ABC):
     @abstractmethod
@@ -190,6 +190,7 @@ class network(i_network):
 
     def connect(self, server: server_token, strict: bool = False) -> bool:
         skt = socket(AF_INET, SOCK_STREAM)
+        skt.settimeout(5)
         succeed = False
         for i in range(self.max_retry_time):
             try:
@@ -205,6 +206,7 @@ class network(i_network):
             else:
                 self.logger.error(f"[Network]Cannot connect {server}")
                 return False
+        skt.settimeout(None)
         listen = Thread(target=self.__receive_datapack, args=(server, skt))
         listen.daemon = True
         self.lock(self._add_socket)(server, skt, listen)
@@ -229,7 +231,7 @@ class network(i_network):
             try:
                 _datapack: datapack = read_one(server_socket)
             except:
-                self.logger.error(f"[Network]Can't receive data from {token}")
+                self.logger.error(f"[Network]Can't receive data from {token} because \n{traceback.format_exc()}")
                 self.logger.tip("Maybe it occurred because of disconnection.")
                 break
             json_text = converts.read_str(_datapack.data)

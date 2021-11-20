@@ -155,3 +155,7 @@ class content_getter:
 
 
 CGT = content_getter
+
+
+def CGT_fix_text(text: str) -> content_getter:
+    return content_getter(lambda: text)

@@ -78,7 +78,8 @@
       "badge": {
         "unlogin": "unlogin",
         "unverified": "?"
-      }
+      },
+      "account_unverified": "Your account \"{account}\" hasn't be authenticated on the server {ip}"
     },
     "login_tab":{
       "name": "login",

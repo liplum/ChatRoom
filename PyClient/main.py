@@ -28,7 +28,7 @@ import i18n
 i18n.load(configurations.Language)
 
 server_ip = "127.0.0.1"
-port = 5000
+port = 25000
 LOGIN = False
 if get_at(args, 1) == "-login":
     may_ip = get_at(args, 2)

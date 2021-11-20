@@ -1,10 +1,8 @@
 import traceback
-from abc import ABC, abstractmethod
 from io import StringIO
-from typing import Union, TypeVar, Type, Dict, Callable, Iterable
+from typing import Union, Type, Dict, Iterable
 
 import GLOBAL
-import chars
 import i18n
 import keys
 import ui.panels as panels
@@ -13,27 +11,29 @@ import utils
 from cmd import WrongUsageError, CmdError, CmdNotFound, analyze_cmd_args, compose_full_cmd, is_quoted
 from cmd import cmdmanager
 from core.chats import i_msgmager
+import core.operations as op
 from core.settings import entity as settings
-from core.shared import *
-from core.shared import server_token, roomid
-from events import event
-from net.networks import i_network
 from ui import outputs as output
-from ui.controls import label, textbox, button
-from ui.ctrl import control, content_getter, CGT
+from ui.controls import label, textbox, button, fix_text_label
+from ui.ctrl import *
 from ui.k import kbinding
 from ui.notice import notified
 from ui.outputs import CmdBkColor, CmdFgColor
 from ui.outputs import buffer
-from ui.panels import stack
+from ui.panels import stack, gen_grid, column
 from ui.states import ui_state, ui_smachine
 from utils import get, fill_2d_array, multiget, all_none
+from core.shared import *
 
 T = TypeVar('T')
 CTRL = TypeVar('CTRL', bound=control)
 
 tab_name2type: Dict[str, Type["tab"]] = {}
 tab_type2name: Dict[Type["tab"], str] = {}
+
+
+def i18n_label(i18n_key: str, *args, **kwargs):
+    return label(CGT(lambda: i18n.trans(i18n_key, *args, **kwargs)))
 
 
 def common_hotkey(char: chars.char, tab: "tab", client: "client", tablist: "tablist"):
@@ -164,6 +164,12 @@ class tab(notified, ABC):
     def on_lost_focus(self):
         pass
 
+    def __hash__(self) -> int:
+        return id(self)
+
+    def __eq__(self, other):
+        return id(self) == id(other)
+
 
 class chat_tab(tab):
     def __init__(self, client: "client", tablist: "tablist"):
@@ -215,9 +221,13 @@ class chat_tab(tab):
             self.client.mark_dirty()
 
     def send_text(self):
-        if self.connected and self.joined and self.user_info:
-            inputs = self.textbox.inputs
-            self.client.send_text(self.user_info, self.joined, inputs)
+        info = self.user_info
+        if self.connected and self.joined and info:
+            if info.verified:
+                inputs = self.textbox.inputs
+                self.client.send_text(info, self.joined, inputs)
+            else:
+                self.add_string(i18n.trans("tabs.chat_tab.account_unverified", account=info.uid, ip=self.connected.ip))
         else:
             self.logger.error(f"[Tab][{self}]Haven't connected a server yet.")
         self.textbox.clear()
@@ -315,6 +325,8 @@ class chat_tab(tab):
 
     @property
     def title(self) -> str:
+        if GLOBAL.DEBUG:
+            return f"chat tab<{hash(self)}>"
         if self.connected and self.joined:
             badge = ""
             if self.user_info:
@@ -389,6 +401,16 @@ class chat_tab(tab):
         a = f"-{self.user_info.uid}" if self.user_info else ""
         return f"<chat_tab{c}{j}{a}>"
 
+    def __hash__(self):
+        account = self.user_info.uid if self.user_info else None
+        return hash((self.connected, self.joined, account))
+
+    def __eq__(self, other):
+        if isinstance(other, chat_tab):
+            return self.connected == other.connected and self.joined == other.joined and self.user_info == other.user_info
+        else:
+            return False
+
 
 add_tabtype("chat_tab", chat_tab)
 
@@ -408,20 +430,30 @@ class test_tab(tab):
         super().__init__(client, tablist)
         self.stack = stack()
         self.stack.on_content_changed.add(lambda _: self.on_content_changed(self))
-        self.stack.add(label(CGT(lambda: "Label A")))
+        self.stack.add(fix_text_label("Label A"))
         self.account_tbox = xtextbox()
         self.account_tbox.space_placeholder = "_"
         account_stack = stack()
-        account_stack.add(label(CGT(lambda: "Account")))
+        account_stack.add(fix_text_label("Account"))
         account_stack.add(self.account_tbox)
         account_stack.orientation = panels.horizontal
         self.stack.add(account_stack)
-        self.stack.add(label(CGT(lambda: "Test Label B")))
-        self.stack.add(label(CGT(lambda: "Test")))
+        self.stack.add(fix_text_label("Test Label B"))
+        self.stack.add(fix_text_label("Test"))
         self.input_box = xtextbox()
         self.input_box.space_placeholder = "_"
         self.stack.add(self.input_box)
-        self.button = button(CGT(lambda: "Button"), lambda: None)
+        button_content = "Button"
+
+        def button_content_getter() -> str:
+            return button_content
+
+        def _click_button():
+            nonlocal button_content
+            button_content = "Clicked"
+            self.client.mark_dirty()
+
+        self.button = button(CGT(button_content_getter), _click_button)
         self.button.margin = 2
         self.stack.add(self.button)
         # self.stack.orientation = panels.horizontal
@@ -449,13 +481,48 @@ class test_tab(tab):
         return "Test"
 
     def on_input(self, char: chars.char):
-        if self._stack_focused:
+        self.stack.on_input(char)
+        """if self._stack_focused:
             self.stack.on_input(char)
         else:
             if keys.k_enter == char:
                 self._stack_focused = True
             elif self._stack_focused:
                 consumed = common_hotkey(char, self, self.client, self.tablist)
+        """
+
+
+class grid_tab(tab):
+
+    def __init__(self, client: "client", tablist: "tablist"):
+        super().__init__(client, tablist)
+        self.grid = gen_grid(2, [column(15), column(20)])
+        l1_1 = label("Label 1 1")
+        l1_2 = label("Label 1 2")
+        l2_1 = label("Label 2 1")
+        l2_2 = label("Label 2 2")
+        account_tbox = xtextbox()
+        account_tbox.space_placeholder = "_"
+        account_stack = stack()
+        # account_stack.over_range = panels.expend
+        account_stack.add(label("Account"))
+        account_stack.add(account_tbox)
+        account_stack.orientation = panels.horizontal
+        b = button("Button", lambda: None)
+        b.margin = 2
+        self.grid[0, 0] = account_stack
+        self.grid[0, 1] = l1_2
+        self.grid[1, 0] = l2_1
+        self.grid[1, 1] = b
+        self.grid.elemt_interval_w = 5
+        self.grid.elemt_interval_h = 1
+
+    def draw_on(self, buf: buffer):
+        self.grid.draw_on(buf)
+
+    @property
+    def title(self) -> str:
+        return "grid tab"
 
 
 class main_menu_tab(tab):
@@ -473,20 +540,21 @@ class login_tab(tab):
 
     def __init__(self, client: "client", tablist: "tablist"):
         super().__init__(client, tablist)
+        self.network: i_network = self.client.network
         self.container_row = 4
         self.container_column = 2
         self.container: List[List[CTRL]] = fill_2d_array(self.container_row, self.container_column, None)
         self.l_server_ip: label = self.set(
-            label(content_getter(lambda: i18n.trans("tabs.login_tab.labels.server_ip"))),
+            i18n_label("tabs.login_tab.labels.server_ip"),
             0, 0)
         self.l_server_port: label = self.set(
-            label(content_getter(lambda: i18n.trans("tabs.login_tab.labels.server_port"))),
+            i18n_label("tabs.login_tab.labels.server_port"),
             1, 0)
         self.l_account: label = self.set(
-            label(content_getter(lambda: i18n.trans("tabs.login_tab.labels.account"))),
+            i18n_label("tabs.login_tab.labels.account"),
             2, 0)
         self.l_password: label = self.set(
-            label(content_getter(lambda: i18n.trans("tabs.login_tab.labels.password"))),
+            i18n_label("tabs.login_tab.labels.password"),
             3, 0)
 
         self.l_server_ip.width = 15
@@ -565,11 +633,30 @@ class login_tab(tab):
         control.in_container = True
         return control
 
+    def login(self):
+        ip = self.t_server_ip.inputs.strip()
+        port = self.t_server_port.inputs.strip()
+        full = f"{ip}:{port}" if port != "" else ip
+        account = self.t_account.inputs.strip()
+        password = self.t_password.inputs.strip()
+        token = to_server_token(full)
+        if token:
+            chat = chat_tab(self.client, self.tablist)
+            chat.connect(token)
+            chat.user_info = uentity(token, account)
+            self.tablist.replace(self, chat)
+            op.login(self.network, token, account, password)
+
     def on_input(self, char: chars.char):
         if keys.k_up == char:
             self.textbox_index -= 1
-        elif keys.k_down == char or keys.k_enter == char or chars.c_table == char:
+        elif keys.k_down == char or chars.c_table == char:
             self.textbox_index += 1
+        elif keys.k_enter == char:
+            if self.textbox_index < self.container_row - 1:
+                self.textbox_index += 1
+            else:
+                self.login()
         elif chars.c_esc == char:
             if isinstance(self.focused, textbox):
                 tb: textbox = self.focused
@@ -589,6 +676,7 @@ class login_tab(tab):
                     ct.draw_on(buf)
                 buf.addtext("  ", end="")
             buf.addtext()
+
         if GLOBAL.DEBUG:
             buf.addtext()
             pos = self.focused_index
@@ -618,6 +706,12 @@ class tablist(notified):
         self.max_view_history = 5
         self._on_curtab_changed = event()
         self._on_tablist_changed = event()
+
+    def unite_like_tabs(self):
+        no_duplicate = dict.fromkeys(self.tabs)
+        self.tabs = list(no_duplicate)
+        if self.cur:
+            self.cur_index = self.tabs.index(self._cur)
 
     def newtab(self, tabtype: Type[T]) -> T:
         t = tabtype(self.win.client, self)
@@ -727,12 +821,12 @@ class tablist(notified):
                 return
             del self.tabs[pos]
 
-        self.on_tablist_changed(self, False, removed)
         removed.on_removed()
-
-        self.tabs.insert(pos, new_tab)
-        self.on_tablist_changed(self, True, new_tab)
         new_tab.on_added()
+        self.tabs.insert(pos, new_tab)
+
+        self.on_tablist_changed(self, False, removed)
+        self.on_tablist_changed(self, True, new_tab)
 
         if self.cur is old_tab:
             self.cur = new_tab
@@ -834,17 +928,17 @@ class window:
         self.tablist.on_tablist_changed.add(lambda li, mode, t: self.client.mark_dirty())
         self.network: "i_network" = self.client.network
 
-        def on_close_last_tab(li: tablist, mode, t):
+        def on_closed_last_tab(li: tablist, mode, t):
             if li.tabs_count == 0:
                 self.client.stop()
 
-        self.tablist.on_tablist_changed.add(on_close_last_tab)
+        self.tablist.on_tablist_changed.add(on_closed_last_tab)
 
     def start(self):
         configs = settings()
         """
-        t = self.newtab(login_tab)
         t = self.newtab(test_tab)
+        t = self.newtab(grid_tab)
         self.tablist.cur = t
         """
         if configs.RestoreTabWhenRestart:
@@ -869,8 +963,10 @@ class window:
                             continue
                         if tab:
                             self.tablist.add(tab)
+        self.tablist.unite_like_tabs()
 
     def store_unclosed_tabs(self):
+        self.tablist.unite_like_tabs()
         configs = settings()
         last_opened: Dict[str, List[dict]] = {}
         for tab in self.tablist.tabs:
@@ -888,13 +984,7 @@ class window:
 
     def gen_default_tab(self):
         if self.tablist.tabs_count == 0:
-            chat = chat_tab(self.client, self.tablist)
-            self.tablist.add(chat)
-            first_or_default = utils.get_at(self.network.connected_servers, 0)
-            if first_or_default:
-                chat.connect(first_or_default)
-                # TODO:Change it to customizable one
-                chat.join(roomid(12345))
+            t = self.newtab(login_tab)
 
     def newtab(self, tabtype: Type[T]) -> T:
         return self.tablist.newtab(tabtype)
@@ -1089,13 +1179,16 @@ class cmd_mode(ui_state):
                 self.cmd_history.append(cur_content)
                 self.cmd_history_index -= 1
             return
-        # switch mode
+        # switch mode and input
+        self.switch_mode()
+        self.cmd_sm.on_input(char)
+        self.switch_mode()
+
+    def switch_mode(self):
         if self.is_long_cmd_mode:
             self.cmd_sm.enter(_cmd_long_mode)
         else:
             self.cmd_sm.enter(_cmd_hotkey_mode)
-
-        self.cmd_sm.on_input(char)
 
 
 class _cmd_long_mode(_cmd_state):

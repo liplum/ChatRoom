@@ -34,3 +34,5 @@ auto_login = addx("AutoLogin", {})
 last_opened_tabs = addx("LastOpenedTabs", {})
 
 restore_tab_when_restart = addx("RestoreTabWhenRestart", False)
+
+auto_login_switch = addx("AutoLoginSwitch", True)

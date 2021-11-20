@@ -1,18 +1,19 @@
 from io import StringIO
-from typing import Optional, List, Callable, NoReturn
+from typing import List, NoReturn, Union
 
-import chars
 import keys
 import utils
-from events import event
-from ui.ctrl import control, content_getter
+from ui.ctrl import *
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
 
 
 class label(control):
-    def __init__(self, content: Optional[content_getter] = None):
+    def __init__(self, content: Union[content_getter, str]):
         super().__init__()
-        self.content = content
+        if isinstance(content, str):
+            self.content = lambda: content
+        else:
+            self.content = content
         self._width_limited = False
         self._min_width = 1
         self._width = 1
@@ -55,7 +56,15 @@ class label(control):
         self.width_limited = True
 
 
+def fix_text_label(text: str) -> label:
+    return label(CGT_fix_text(text))
+
+
 class textbox(control):
+
+    @property
+    def render_width(self) -> int:
+        return self.input_count + len(self.cursor_icon)
 
     @property
     def show_cursor(self) -> bool:
@@ -374,26 +383,29 @@ class button(control):
         if self.margin > 0:
             if self.is_focused:
                 margin = utils.repeat(" ", self.margin)
-                return f"{margin}{self.getter()}{margin}"
+                return f"{margin}{self.content()}{margin}"
             else:
-                margin = utils.repeat(" ", self.margin - 1)
-                return f"[{margin}{self.getter()}{margin}]"
+                margin = utils.repeat(" ", self.margin - 2)
+                return f"[{margin}{self.content()}{margin}]"
 
         else:
-            return self.getter()
+            return self.content()
 
-    def __init__(self, getter: content_getter, on_press: Callable[[], NoReturn]):
+    def __init__(self, content:Union[content_getter, str], on_press: Callable[[], NoReturn]):
         super().__init__()
-        self.getter = getter
+        if isinstance(content, str):
+            self.content = lambda: content
+        else:
+            self.content = content
         self._margin = 0
-        self.on_press = on_press
+        self.on_press_func = on_press
 
     def press(self):
-        self.on_press()
+        self.on_press_func()
 
     def on_input(self, char: chars.char) -> bool:
         if keys.k_enter == char:
-            self.on_press()
+            self.on_press_func()
             return True
         elif chars.c_esc == char:
             self.on_exit_focus(self)
@@ -411,11 +423,19 @@ class button(control):
 
     @property
     def width(self) -> int:
-        return len(self.getter()) + 2 * self.margin
+        return len(self.content()) + 2 * self.margin
+
+    @width.setter
+    def width(self, value: int):
+        pass
 
     @property
     def height(self) -> int:
         return 1
+
+    @height.setter
+    def height(self, value: int):
+        pass
 
     @property
     def focusable(self) -> bool:

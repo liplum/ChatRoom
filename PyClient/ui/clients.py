@@ -171,14 +171,15 @@ class client:
 
     def auto_login(self):
         configs = settings()
-        info: Dict[str, str] = configs.AutoLogin
-        for server_full, ap in info.items():
-            token = to_server_token(server_full)
-            if token:
-                ap = ap.split()
-                if len(ap) == 2:
-                    connect(self.network, token)
-                    login(self.network, token, ap[0], ap[1])
+        if configs.AutoLoginSwitch:
+            info: Dict[str, str] = configs.AutoLogin
+            for server_full, ap in info.items():
+                token = to_server_token(server_full)
+                if token:
+                    ap = ap.split()
+                    if len(ap) == 2:
+                        connect(self.network, token)
+                        login(self.network, token, ap[0], ap[1])
 
     def auto_connection(self):
         configs = settings()
