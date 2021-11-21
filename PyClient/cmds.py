@@ -6,6 +6,10 @@ from net.msgs import register_request
 from net.networks import CannotConnectError
 from ui.cmd_modes import Cmd_Context
 from ui.windows import *
+from cmd import *
+import i18n
+import ui.tab as xtabs
+import ui.tabs as tabs
 
 cmds = []
 
@@ -70,7 +74,7 @@ def _help_show_usage(tab, name):
 def _help(context: Cmd_Context, args: [str]):
     argslen = len(args)
     manager: cmdmanager = context.cmd_manager
-    tab: tab = ui.tabs.tab
+    tab: tabs.tab = context.tab
     if argslen == 1:
         if args[0] == "all":
             for name, cmd in manager:

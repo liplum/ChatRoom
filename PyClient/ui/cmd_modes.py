@@ -237,7 +237,7 @@ class cmd_long_mode(cmd_state):
             mode.cmd_manager.execute(contxt, cmd_name, args)
         except WrongUsageError as wu:
             with StringIO() as s:
-                s.write(output.tintedtxt(i18n.trans("modes.command_mode.cmd.wrong_usage"), fgcolor=CmdFgColor.Red))
+                s.write(output.tintedtxt(i18n.trans("modes.command_mode.cmd.wrong_usage"), fgcolor=CmdFgColor.Red,end=""))
                 s.write(':\n')
                 pos = wu.position
                 is_pos_quoted = is_quoted(pos + 1, quoted_indexes)
@@ -250,7 +250,7 @@ class cmd_long_mode(cmd_state):
             mode.tab.add_string(error_output)
         except CmdError as ce:
             with StringIO() as s:
-                s.write(output.tintedtxt(i18n.trans("modes.command_mode.cmd.cmd_error"), fgcolor=CmdFgColor.Red))
+                s.write(output.tintedtxt(i18n.trans("modes.command_mode.cmd.cmd_error"), fgcolor=CmdFgColor.Red,end=""))
                 s.write(':\n')
                 s.write(gen_cmd_error_text(cmd_name, args, full_cmd, -2, ce.msg))
                 mode.tab.add_string(s.getvalue())
