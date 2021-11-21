@@ -1,6 +1,6 @@
+import json
 import traceback
 from functools import wraps
-from threading import Thread
 
 import GLOBAL
 import ioc as ioc
@@ -102,8 +102,8 @@ class client:
         self.msg_manager: i_msgmager = ct.resolve(i_msgmager)
 
         if GLOBAL.DEBUG:
-            def on_msg_pre_analyzed(network, server_token, source, json):
-                self.logger.msg(json)
+            def on_msg_pre_analyzed(network, server_token, source, jobj):
+                self.logger.msg(json.dumps(jobj, indent=2))
 
             self.network.on_msg_pre_analyzed.add(on_msg_pre_analyzed)
 
@@ -123,9 +123,11 @@ class client:
         for k in self.cmdkeys:
             self.on_keymapping(self, k)
 
+        """
         self.winsize = output.get_winsize()
         self.winsize_monitor = Thread(target=self.monitor_winsize)
         self.winsize_monitor.daemon = True
+        """
 
     def _init_channels(self):
         self.channel_user = self.network.new_channel("User")
@@ -148,10 +150,11 @@ class client:
         self._dirty = False
 
     def monitor_winsize(self):
-        cur = output.get_winsize()
-        if self.winsize != cur:
-            self.winsize = cur
-            self.mark_dirty()
+        while True:
+            cur = output.get_winsize()
+            if self.winsize != cur:
+                self.winsize = cur
+                self.mark_dirty()
 
     def connect(self, ip: str, port: int):
         self.network.connect(server_token(ip, port))
@@ -195,7 +198,7 @@ class client:
             i = self.inpt
             i.initialize()
             self.auto_connection()
-            self.winsize_monitor.start()
+            # self.winsize_monitor.start()
             self.win.start()
             self.auto_login()
             self.win.gen_default_tab()
@@ -205,7 +208,6 @@ class client:
                 # self.tps.delay()
                 if not self.need_update:
                     continue
-                # The following is to need update
                 self._clear_dirty()
                 self.render()
         except Exception as e:

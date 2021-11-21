@@ -27,8 +27,7 @@ class kbinding:
             func(ch, *args, **kwargs)
             return True
         if self.on_any is not None:
-            self.on_any(ch, *args, **kwargs)
-            return True
+            return self.on_any(ch, *args, **kwargs)
         return False
 
 

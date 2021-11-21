@@ -3,8 +3,9 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import IntEnum, unique
 from typing import Optional, NoReturn, List, Tuple
-
+import traceback
 import GLOBAL
+import i18n
 from core.filer import i_filer
 
 
@@ -154,6 +155,9 @@ class cmd_display(i_display):
     def __init__(self):
         pass
 
+    def init(self, container: "container"):
+        self.logger: i_logger = container.resolve(i_logger)
+
     def text(self, buffer_list, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
              bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
         if fgcolor is None and bkcolor is None:
@@ -165,7 +169,11 @@ class cmd_display(i_display):
     def render(self, buf: buffer) -> bool:
         if isinstance(buf, cmd_display.cmd_buffer):
             for text in buf.render_list:
-                print(text, end='')
+                try:
+                    print(text, end='')
+                except:
+                    print(i18n.trans("outputs.render.print_error"))
+                    self.logger.error(f"[Output]Cannot print the text because \n{traceback.format_exc()}")
             return True
         return False
 

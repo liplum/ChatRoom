@@ -1,7 +1,7 @@
 import i18n
 import ui.windows as ws
 from core.shared import *
-from net.networks import msg
+from net.networks import msg, Context
 from ui.outputs import CmdFgColor, tintedtxt
 from utils import get, not_none, to_seconds
 
@@ -37,7 +37,7 @@ class authentication_result(msg):
         json[authentication_result.k_VCode] = self.VCode
 
     @staticmethod
-    def handle(self: "authentication_result", context):
+    def handle(self: "authentication_result", context: Context):
         client, channel, token, network = context
         win: ws.window = client.win
         if self.OK:
@@ -84,7 +84,7 @@ class register_result(msg):
         pass
 
     @staticmethod
-    def handle(self: "register_result", context):
+    def handle(self: "register_result", context: Context):
         pass
 
 
@@ -119,6 +119,6 @@ class chatting(msg):
         json[chatting.k_VCode] = self.vcode
 
     @staticmethod
-    def handle(self: "chatting", context):
+    def handle(self: "chatting", context: Context):
         client, channel, token, network = context
         client.receive_text(token, self.room_id, self.user_id, self.text, self.send_time)

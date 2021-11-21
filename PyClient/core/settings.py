@@ -51,6 +51,9 @@ class settings:
         self.all_settings: Dict[str, T] = {}
 
     def __getattr__(self, item) -> Optional[T]:
+        return self.get(item)
+
+    def get(self, item):
         item = str(item)
         if item in self.all_settings:
             return self.all_settings[item]
@@ -65,6 +68,13 @@ class settings:
 
     def set(self, key: str, value: T):
         self.all_settings[key] = value
+
+    def __getitem__(self, item):
+        return self.get(item)
+
+    def __setitem__(self, key, value):
+        key = str(key)
+        self.set(key, value)
 
 
 _settings: Optional[settings] = None

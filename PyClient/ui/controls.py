@@ -147,7 +147,7 @@ class textbox(control):
         self._on_cursor_move.add(lambda _, _1, _2: self.on_content_changed(self))
         self._on_list_replace.add(lambda _, _1, _2: self.on_content_changed(self))
 
-    def on_input(self, char: chars.char) -> bool:
+    def on_input(self, char: chars.char) -> Is_Consumed:
         return self.append(char)
 
     @property
@@ -385,7 +385,7 @@ class button(control):
                 margin = utils.repeat(" ", self.margin)
                 return f"{margin}{self.content()}{margin}"
             else:
-                margin = utils.repeat(" ", self.margin - 2)
+                margin = utils.repeat(" ", self.margin - 1)
                 return f"[{margin}{self.content()}{margin}]"
 
         else:
@@ -397,13 +397,13 @@ class button(control):
             self.content = lambda: content
         else:
             self.content = content
-        self._margin = 0
+        self._margin = 1
         self.on_press_func = on_press
 
     def press(self):
         self.on_press_func()
 
-    def on_input(self, char: chars.char) -> bool:
+    def on_input(self, char: chars.char) -> Is_Consumed:
         if keys.k_enter == char:
             self.on_press_func()
             return True

@@ -1,4 +1,5 @@
 import json
+import traceback
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from functools import wraps
@@ -11,7 +12,7 @@ from core.shared import server_token
 from events import event
 from ui import outputs
 from utils import get, not_none
-import traceback
+
 
 class msg(ABC):
     @abstractmethod
@@ -139,6 +140,13 @@ class i_network(ABC):
         pass
 
 
+class ChannelNotFoundError(Exception):
+
+    def __init__(self, channel_name: str):
+        super().__init__()
+        self.channel_name = channel_name
+
+
 class CannotConnectError(Exception):
     def __init__(self, server: server_token):
         super().__init__()
@@ -186,7 +194,10 @@ class network(i_network):
         return self._on_msg_pre_analyzed
 
     def get_channel(self, name: str):
-        return get(self.channels, name)
+        if name in self.channels:
+            return self.channels[name]
+        else:
+            raise ChannelNotFoundError(name)
 
     def connect(self, server: server_token, strict: bool = False) -> bool:
         skt = socket(AF_INET, SOCK_STREAM)

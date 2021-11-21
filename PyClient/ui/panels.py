@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Set, List
+from typing import Optional, Tuple, Set, List, Iterator
 
 import keys
 import utils
@@ -40,21 +40,25 @@ class panel(control, ABC):
     def cache_layout(self):
         pass
 
-    def add(self, elemt: control):
-        if elemt not in self._elements:
+    def add(self, elemt: control) -> bool:
+        if elemt and elemt not in self._elements:
             self._elements.add(elemt)
             elemt.in_container = True
             elemt.on_content_changed.add(self._on_elemt_content_changed)
             self.on_elements_changed(self, True, elemt)
             elemt.on_exit_focus.add(self._on_elemt_exit_focus)
+            return True
+        return False
 
-    def remove(self, elemt: control):
-        if elemt in self._elements:
+    def remove(self, elemt: control) -> bool:
+        if elemt and elemt in self._elements:
             self._elements.remove(elemt)
             elemt.in_container = False
             elemt.on_content_changed.remove(self._on_elemt_content_changed)
             self.on_elements_changed(self, False, elemt)
             elemt.on_exit_focus.remove(self._on_elemt_exit_focus)
+            return True
+        return False
 
     def _on_elemt_content_changed(self, elemt):
         self.on_content_changed(self)
@@ -129,19 +133,31 @@ class panel(control, ABC):
     def elemts_total_height(self):
         return sum(elemt.height for elemt in self.elements)
 
-    def go_next_focusable(self):
-        pass
-
-    def go_pre_focusable(self):
-        pass
-
-    def on_input(self, char: chars.char) -> bool:
-        if self.cur_focused:
-            return self.cur_focused.on_input(char)
-        elif chars.c_esc == char:
-            self.on_exit_focus(self)
-            return True
+    def go_next_focusable(self) -> bool:
         return False
+
+    def go_pre_focusable(self) -> bool:
+        return False
+
+    def on_input(self, char: chars.char) -> Is_Consumed:
+        if self.cur_focused:
+            consumed = self.cur_focused.on_input(char)
+            if consumed:
+                return True
+            else:
+                if keys.k_up == char:
+                    return self.go_pre_focusable()
+                elif keys.k_down == char:
+                    return self.go_next_focusable()
+                elif chars.c_esc == char:
+                    self.on_exit_focus(self)
+                    return True
+                return False
+        else:
+            return False
+
+    def switch_to_first_or_default_item(self):
+        pass
 
 
 Orientation = str
@@ -231,7 +247,6 @@ class stack(panel):
         self._cur_focused_index = None
         self._r_width = 0
         self._r_height = 0
-        self._is_selected: bool = True
 
     @property
     def cur_focused_index(self) -> Optional[int]:
@@ -288,46 +303,31 @@ class stack(panel):
             c = self._elements_stack[ci]
             if c.focusable:
                 self.cur_focused_index = ci
-                break
+                return True
+        return False
 
     def go_pre_focusable(self):
         if self.cur_focused_index is None:
             return
         else:
             i = self.cur_focused_index
-        for ci in range(i - 1, 0, -1):
+        for ci in range(i - 1, -1, -1):
             c = self._elements_stack[ci]
             if c.focusable:
                 self.cur_focused_index = ci
-                break
+                return True
+        return False
 
     def add(self, elemt: control):
         self._elements_stack.append(elemt)
-        super().add(elemt)
+        return super().add(elemt)
 
     def remove(self, elemt: control):
         try:
             self._elements_stack.remove(elemt)
         except:
             pass
-        super().remove(elemt)
-
-    def on_input(self, char: chars.char) -> bool:
-        if self.cur_focused and self._is_selected:
-            return self.cur_focused.on_input(char)
-        elif keys.k_enter == char:
-            self._is_selected = True
-            return True
-        elif keys.k_up == char:
-            self.go_pre_focusable()
-            return True
-        elif keys.k_down == char:
-            self.go_next_focusable()
-            return True
-        elif chars.c_esc == char:
-            self.on_exit_focus(self)
-            return True
-        return False
+        return super().remove(elemt)
 
     def _on_elemt_exit_focus(self, elemt) -> bool:
         if super()._on_elemt_exit_focus(elemt):
@@ -345,6 +345,18 @@ class stack(panel):
     @property
     def render_width(self) -> int:
         return self._r_width
+
+    def on_focused(self):
+        super().on_focused()
+        self.switch_to_first_or_default_item()
+
+    def on_lost_focus(self):
+        super().on_lost_focus()
+        self.cur_focused = None
+
+    def switch_to_first_or_default_item(self):
+        self.cur_focused_index = None
+        self.go_next_focusable()
 
 
 class row:
@@ -373,6 +385,11 @@ class _unit:
 
 def gen_grid(row_count: int, columns: [column]):
     return grid(rows=[row() for i in range(row_count)], columns=columns)
+
+
+FIndex = Tuple[int, int]
+Grid = List[List[Optional[control]]]
+Units = List[List[_unit]]
 
 
 class grid(panel):
@@ -422,14 +439,15 @@ class grid(panel):
         self._elemt_interval_w = auto
         self._elemt_interval_h = auto
         self.gen_unit()
-        self._grid: List[List[control]] = utils.fill_2d_array(self.rowlen, self.columnlen, None)
+        self._grid: Grid = utils.fill_2d_array(self.rowlen, self.columnlen, None)
         self._r_width = 0
         self._r_height = 0
         self._r_elemt_interval_w = 0
         self._r_elemt_interval_h = 0
+        self._cur_focused_index: Optional[FIndex] = (0, 0)
 
     def gen_unit(self):
-        self._units: List[List[_unit]] = utils.gen_2d_arrayX(
+        self._units: Units = utils.gen_2d_arrayX(
             self.rowlen, self.columnlen, lambda i, j: _unit(self.rows[i], self.columns[j]))
 
     def draw_on(self, buf: buffer):
@@ -464,13 +482,19 @@ class grid(panel):
                 self._r_elemt_interval_w = self.elemt_interval_w
 
             for j, column in enumerate(self.columns):
-                max_width = max(c.render_width for c in self.column_items(j) if c)
+                try:
+                    max_width = max(c.render_width for c in self.column_items(j) if c)
+                except:
+                    max_width = column.width
                 column.width = max_width
                 w += max_width
         else:
             occupied_width = 0
             for j, column in enumerate(self.columns):
-                max_width = max(c.render_width for c in self.column_items(j) if c)
+                try:
+                    max_width = max(c.render_width for c in self.column_items(j) if c)
+                except:
+                    max_width = column.width
                 column.width = max_width
                 w += max_width
                 occupied_width += max_width
@@ -549,12 +573,12 @@ class grid(panel):
         i, j = key
         self.set(i, j, value)
 
-    def set(self, i: int, j: int, ctrl: control):
+    def set(self, i: int, j: int, ctrl: control) -> bool:
         former: control = self._grid[i][j]
         if former:
-            self.remove(former)
+            self.remove(former, (i, j))
         self._grid[i][j] = ctrl
-        self.add(ctrl)
+        return super().add(ctrl)
 
     @property
     def render_height(self) -> int:
@@ -564,3 +588,101 @@ class grid(panel):
     def render_width(self) -> int:
         return self._r_width
 
+    def go_next_focusable(self) -> bool:
+        index = self.cur_focused_index
+        if index:
+            i, j = index
+            if i == self.rowlen - 1 and j == self.columnlen - 1:
+                return False
+        else:
+            i, j = 0, -1
+        for item, index in self.all_next((i, j)):
+            if item and item.focusable:
+                self.cur_focused_index = index
+                return True
+        return False
+
+    def go_pre_focusable(self) -> bool:
+        index = self.cur_focused_index
+        if index:
+            i, j = index
+            if i == 0 and j == 0:
+                return False
+        else:
+            return False
+        for item, index in self.all_pre((i, j)):
+            if item and item.focusable:
+                self.cur_focused_index = index
+                return True
+        return False
+
+    def switch_to_first_or_default_item(self):
+        self.cur_focused_index = None
+        self.go_next_focusable()
+
+    def remove(self, elemt: control, index: Optional[FIndex] = None) -> bool:
+        if super().remove(elemt):
+            if index is None:
+                index = self.find(elemt)
+            if index:
+                i, j = index
+                self._grid[i][j] = None
+                return True
+        return False
+
+    def find(self, elemt: Optional[control]) -> Optional[FIndex]:
+        for i in range(self.rowlen):
+            for j in range(self.columnlen):
+                if self._grid[i][j] == elemt:
+                    return i, j
+        return None
+
+    def all_next(self, start: FIndex) -> Iterator[Tuple[Optional[control], FIndex]]:
+        i, j = start
+        i_end = self.rowlen - 1
+        j_end = self.columnlen - 1
+        while i != i_end or j != j_end:
+            if j == j_end:
+                i += 1
+                j = 0
+            else:
+                j += 1
+            yield self._grid[i][j], (i, j)
+
+    def all_pre(self, start: FIndex) -> Iterator[Tuple[Optional[control], FIndex]]:
+        i, j = start
+        j_end = self.columnlen - 1
+        while i != 0 or j != 0:
+            if j == 0:
+                i -= 1
+                j = j_end
+            else:
+                j -= 1
+            yield self._grid[i][j], (i, j)
+
+    def add(self, elemt: control, index: Optional[FIndex] = None) -> bool:
+        if index is None:
+            index = self.find(None)
+        if index:
+            i, j = index
+            former = self._grid[i][j]
+            if former is None:
+                self._grid[i][j] = elemt
+                return super().add(elemt)
+        return False
+
+    @property
+    def cur_focused_index(self) -> FIndex:
+        return self._cur_focused_index
+
+    @cur_focused_index.setter
+    def cur_focused_index(self, value: FIndex):
+        if value:
+            i, j = value
+            if 0 <= i < self.rowlen and 0 <= j < self.columnlen:
+                c = self._grid[i][j]
+                self._cur_focused_index = value
+                self.cur_focused = c
+        else:
+            self._cur_focused_index = value
+            self.cur_focused = None

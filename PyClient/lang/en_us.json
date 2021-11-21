@@ -114,5 +114,10 @@
   "controls": {
     "ok":"OK",
     "cancel": "Cancel"
+  },
+  "outputs": {
+    "render": {
+      "print_error": "Cannot print the text maybe because of encoding error"
+    }
   }
 }

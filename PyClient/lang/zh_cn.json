@@ -68,11 +68,6 @@
       "description": "登录服务器"
     }
   },
-  "users": {
-    "authentication": {
-      "failure": "在服务器{ip}:{port}上账号\"{account}\"的身份验证失败"
-    }
-  },
   "tabs": {
     "chat_tab": {
       "name": "聊天框",
@@ -96,6 +91,11 @@
       }
     }
   },
+  "users": {
+    "authentication": {
+      "failure": "在服务器{ip}:{port}上账号\"{account}\"的身份验证失败"
+    }
+  },
   "modes": {
     "command_mode": {
       "name": "命令模式",
@@ -114,5 +114,10 @@
   "controls": {
     "ok": "确认",
     "cancel": "取消"
+  },
+  "outputs": {
+    "render": {
+      "print_error": "无法显示文本，或许是因为文字编码错误"
+    }
   }
 }

@@ -3,6 +3,7 @@ from io import StringIO
 from typing import Union, Type, Dict, Iterable
 
 import GLOBAL
+import core.operations as op
 import i18n
 import keys
 import ui.panels as panels
@@ -11,8 +12,8 @@ import utils
 from cmd import WrongUsageError, CmdError, CmdNotFound, analyze_cmd_args, compose_full_cmd, is_quoted
 from cmd import cmdmanager
 from core.chats import i_msgmager
-import core.operations as op
 from core.settings import entity as settings
+from core.shared import *
 from ui import outputs as output
 from ui.controls import label, textbox, button, fix_text_label
 from ui.ctrl import *
@@ -23,7 +24,6 @@ from ui.outputs import buffer
 from ui.panels import stack, gen_grid, column
 from ui.states import ui_state, ui_smachine
 from utils import get, fill_2d_array, multiget, all_none
-from core.shared import *
 
 T = TypeVar('T')
 CTRL = TypeVar('CTRL', bound=control)
@@ -108,7 +108,7 @@ class xtextbox(textbox):
         kbs.bind(keys.k_end, lambda c: self.end())
         kbs.bind(chars.c_esc, lambda c: self.on_exit_focus(self))
         spapp = super().append
-        kbs.on_any = lambda c: spapp(chars.to_str(c)) if c.is_printable() else None
+        kbs.on_any = lambda c: spapp(chars.to_str(c)) if c.is_printable() else False
 
     def append(self, ch: Union[str, chars.char]) -> bool:
         if isinstance(ch, str):
@@ -116,7 +116,7 @@ class xtextbox(textbox):
         elif isinstance(ch, chars.char):
             consumed = self.kbs.trigger(ch)
             if not consumed:
-                return super().append(to_str(ch))
+                return False
         return False
 
 
@@ -325,8 +325,6 @@ class chat_tab(tab):
 
     @property
     def title(self) -> str:
-        if GLOBAL.DEBUG:
-            return f"chat tab<{hash(self)}>"
         if self.connected and self.joined:
             badge = ""
             if self.user_info:
@@ -395,7 +393,7 @@ class chat_tab(tab):
     def serializable(cls) -> bool:
         return True
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         c = f" {self.connected.ip}:{self.connected.port}" if self.connected else ""
         j = f"-{self.joined}" if self.joined else ""
         a = f"-{self.user_info.uid}" if self.user_info else ""
@@ -429,7 +427,18 @@ class test_tab(tab):
     def __init__(self, client: "client", tablist: "tablist"):
         super().__init__(client, tablist)
         self.stack = stack()
+        button_content = "Button"
+
+        def button_content_getter() -> str:
+            return button_content
+
+        def _click_button():
+            nonlocal button_content
+            button_content = "Clicked"
+            self.client.mark_dirty()
+
         self.stack.on_content_changed.add(lambda _: self.on_content_changed(self))
+        self.stack.add(button(CGT(button_content_getter), _click_button))
         self.stack.add(fix_text_label("Label A"))
         self.account_tbox = xtextbox()
         self.account_tbox.space_placeholder = "_"
@@ -443,19 +452,13 @@ class test_tab(tab):
         self.input_box = xtextbox()
         self.input_box.space_placeholder = "_"
         self.stack.add(self.input_box)
-        button_content = "Button"
-
-        def button_content_getter() -> str:
-            return button_content
-
-        def _click_button():
-            nonlocal button_content
-            button_content = "Clicked"
-            self.client.mark_dirty()
 
         self.button = button(CGT(button_content_getter), _click_button)
         self.button.margin = 2
         self.stack.add(self.button)
+        self.stack.add(button(CGT(button_content_getter), _click_button))
+        self.stack.add(button(CGT(button_content_getter), _click_button))
+        self.stack.add(button("Close", lambda: self.client.stop()))
         # self.stack.orientation = panels.horizontal
 
         self.stack.elemt_interval = 1
@@ -465,6 +468,7 @@ class test_tab(tab):
             self._stack_focused = False
 
         self.stack.on_exit_focus.add(_on_stack_exit_focus)
+        self.stack.switch_to_first_or_default_item()
 
     def draw_on(self, buf: buffer):
         self.stack.draw_on(buf)
@@ -482,21 +486,14 @@ class test_tab(tab):
 
     def on_input(self, char: chars.char):
         self.stack.on_input(char)
-        """if self._stack_focused:
-            self.stack.on_input(char)
-        else:
-            if keys.k_enter == char:
-                self._stack_focused = True
-            elif self._stack_focused:
-                consumed = common_hotkey(char, self, self.client, self.tablist)
-        """
 
 
 class grid_tab(tab):
 
     def __init__(self, client: "client", tablist: "tablist"):
         super().__init__(client, tablist)
-        self.grid = gen_grid(2, [column(15), column(20)])
+        self.grid = gen_grid(3, [column(15), column(20), column(18)])
+        self.grid.on_content_changed.add(lambda _: self.client.mark_dirty())
         l1_1 = label("Label 1 1")
         l1_2 = label("Label 1 2")
         l2_1 = label("Label 2 1")
@@ -510,12 +507,18 @@ class grid_tab(tab):
         account_stack.orientation = panels.horizontal
         b = button("Button", lambda: None)
         b.margin = 2
-        self.grid[0, 0] = account_stack
-        self.grid[0, 1] = l1_2
+        # self.grid[0, 0] = account_stack
+        self.grid[0, 0] = l1_1
+        self.grid[0, 1] = button("Button A", lambda: None)
         self.grid[1, 0] = l2_1
+        self.grid[2, 0] = label("Label 3 1")
         self.grid[1, 1] = b
+        self.grid[0, 2] = button("Button B", lambda: None)
+        self.grid[2, 2] = button("Button C", lambda: None)
+
         self.grid.elemt_interval_w = 5
         self.grid.elemt_interval_h = 1
+        self.grid.switch_to_first_or_default_item()
 
     def draw_on(self, buf: buffer):
         self.grid.draw_on(buf)
@@ -523,6 +526,9 @@ class grid_tab(tab):
     @property
     def title(self) -> str:
         return "grid tab"
+
+    def on_input(self, char: chars.char):
+        self.grid.on_input(char)
 
 
 class main_menu_tab(tab):
@@ -938,9 +944,9 @@ class window:
         configs = settings()
         """
         t = self.newtab(test_tab)
+        """
         t = self.newtab(grid_tab)
         self.tablist.cur = t
-        """
         if configs.RestoreTabWhenRestart:
             self.restore_last_time_tabs()
 
@@ -980,7 +986,7 @@ class window:
                         continue
                     if dic:
                         li.append(dic)
-        configs.set("LastOpenedTabs", last_opened)
+        configs["LastOpenedTabs"] = last_opened
 
     def gen_default_tab(self):
         if self.tablist.tabs_count == 0:

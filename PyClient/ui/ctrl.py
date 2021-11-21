@@ -9,6 +9,8 @@ from ui.outputs import buffer
 auto = "auto"
 PROP = TypeVar('PROP', str, int)
 
+Is_Consumed = bool
+
 
 class control(notified, ABC):
     def __init__(self):
@@ -113,7 +115,7 @@ class control(notified, ABC):
     def is_focused(self) -> bool:
         return False
 
-    def on_input(self, char: chars.char) -> bool:
+    def on_input(self, char: chars.char) -> Is_Consumed:
         """
 
         :param char:
