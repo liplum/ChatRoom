@@ -27,8 +27,10 @@ class window:
     def start(self):
         configs = settings()
         """
-        t = self.newtab(test_tab)
+        from ui.tab.grid_tab import grid_tab
         t = self.newtab(grid_tab)
+        from ui.tab.test_tab import test_tab
+        t = self.newtab(test_tab)
         self.tablist.cur = t
         """
         if configs.RestoreTabWhenRestart:

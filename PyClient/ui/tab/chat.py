@@ -199,13 +199,14 @@ class chat_tab(tab):
 
     @classmethod
     def deserialize(cls, data: dict, client: "client", tablist: "tablist") -> "chat_tab":
-        t = chat_tab(client, tablist)
         server = get(data, "server")
         room_id = get(data, "room_id")
         account = get(data, "account")
         server = to_server_token(server)
         if all_none(server, room_id, account):
             raise CannotRestoreTab(chat_tab)
+
+        t = chat_tab(client, tablist)
         if server:
             t.connect(server)
             if account:

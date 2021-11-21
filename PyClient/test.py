@@ -24,7 +24,7 @@ def win_test():
     # test_input()
     # cmd_input()
     # test_str()
-    test_textbox()
+    # test_textbox()
     # test_char()
     # test_fill()
     # test_decode_str()
@@ -42,6 +42,7 @@ def win_test():
     # test_analyze_cmd_args()
     # test_generic()
     # test_traceback()
+    test_gen_2d_array()
 
 
 def linux_test():
@@ -56,6 +57,17 @@ if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
+
+
+def test_gen_2d_array():
+    from utils import gen_2d_arrayX
+
+    def gen(i, j):
+        print(f"{i=},{j=}")
+        return None
+
+    a = gen_2d_arrayX(2, 4, gen)
+    print(a)
 
 
 def test_traceback():

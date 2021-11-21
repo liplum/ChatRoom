@@ -121,11 +121,16 @@ public partial class Monoserver : IServer
 
         public void SendDatapackTo([NotNull] IDatapack datapack, [NotNull] NetworkToken token)
         {
+            (IConnection connection, Thread listning) info;
             lock (_clientLock)
             {
-                if (_allConnections.TryGetValue(token, out var info))
+                _allConnections.TryGetValue(token, out info);
+            }
+            if (info != default)
+            {
+                var connection = info.connection;
+                if (connection.IsConnected)
                 {
-                    var connection = info.connection;
                     try
                     {
                         connection.Send(datapack);

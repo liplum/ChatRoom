@@ -65,15 +65,17 @@ class control(notified, ABC):
 
     @property
     def render_height(self) -> int:
-        if self.height != auto:
-            return self.height
+        height = self.height
+        if height != auto:
+            return height
         else:
             raise NotImplementedError()
 
     @property
     def render_width(self) -> int:
-        if self.width != auto:
-            return self.width
+        width = self.width
+        if width != auto:
+            return width
         else:
             raise NotImplementedError()
 

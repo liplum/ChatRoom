@@ -16,6 +16,8 @@ class panel(control, ABC):
         self._on_elements_changed = event()
         self._on_focused_changed = event()
         self._layout_changed = True
+        self._left_margin = 0
+        self._top_margin = 0
 
         self.on_prop_changed.add(self._on_layout_changed)
 
@@ -133,6 +135,30 @@ class panel(control, ABC):
     def elemts_total_height(self):
         return sum(elemt.height for elemt in self.elements)
 
+    @property
+    def left_margin(self) -> int:
+        return self._left_margin
+
+    @left_margin.setter
+    def left_margin(self, value: int):
+        if value < 0:
+            return
+        if self._left_margin != value:
+            self._left_margin = value
+            self.on_prop_changed(self, "left_margin")
+
+    @property
+    def top_margin(self) -> int:
+        return self._top_margin
+
+    @top_margin.setter
+    def top_margin(self, value: int):
+        if value < 0:
+            return
+        if self._top_margin != value:
+            self._top_margin = value
+            self.on_prop_changed(self, "top_margin")
+
     def go_next_focusable(self) -> bool:
         return False
 
@@ -147,7 +173,7 @@ class panel(control, ABC):
             else:
                 if keys.k_up == char:
                     return self.go_pre_focusable()
-                elif keys.k_down == char:
+                elif keys.k_down == char or keys.k_enter == char or chars.c_table:
                     return self.go_next_focusable()
                 elif chars.c_esc == char:
                     self.on_exit_focus(self)
@@ -203,8 +229,8 @@ class stack(panel):
                 else:
                     w += self._r_elemt_interval
 
-        self._r_width = w
-        self._r_height = h
+        self._r_width = w + self.left_margin
+        self._r_height = h + self.top_margin
 
     def draw_on(self, buf: buffer):
         if self._layout_changed:
@@ -212,24 +238,32 @@ class stack(panel):
 
         if self.orientation == vertical:
             h = 0
+            if self.top_margin > 0:
+                buf.addtext(utils.repeat("\n", self.top_margin), end="")
             for i, elemt in enumerate(self._elements_stack):
                 h += elemt.render_height
                 if i > 0:
                     h += self._r_elemt_interval
                 if self.height != auto and h >= self.height and self.over_range == discard:
                     break
+                if self.left_margin > 0:
+                    buf.addtext(utils.repeat(" ", self.left_margin), end="")
                 elemt: control
                 elemt.draw_on(buf)
                 interval = utils.repeat("\n", self._r_elemt_interval)
                 buf.addtext(text=interval)
         else:
             w = 0
+            if self.top_margin > 0:
+                buf.addtext(utils.repeat("\n", self.top_margin), end="")
             for i, elemt in enumerate(self._elements_stack):
                 w += elemt.render_width
                 if i > 0:
                     w += self._r_elemt_interval
                 if self.width != auto and w >= self.width and self.over_range == discard:
                     break
+                if self.left_margin > 0:
+                    buf.addtext(utils.repeat(" ", self.left_margin), end="")
                 elemt: control
                 elemt.draw_on(buf)
                 interval = utils.repeat(" ", self._r_elemt_interval)
@@ -453,8 +487,11 @@ class grid(panel):
     def draw_on(self, buf: buffer):
         if self._layout_changed:
             self.cache_layout()
-
+        if self.top_margin > 0:
+            buf.addtext(utils.repeat("\n", self.top_margin), end="")
         for i in range(self.rowlen):
+            if self.left_margin > 0:
+                buf.addtext(utils.repeat(" ", self.left_margin), end="")
             for j in range(self.columnlen):
                 c = self._grid[i][j]
                 if c:
@@ -524,8 +561,8 @@ class grid(panel):
                 self._r_elemt_interval_h = self.elemt_interval_h
 
         h += self.rowlen + self._r_elemt_interval_h * (self.rowlen - 1)
-        self._r_width = w
-        self._r_height = h
+        self._r_width = w + self.left_margin
+        self._r_height = h + self.top_margin
 
         for i in range(self.rowlen):
             for j in range(self.columnlen):
@@ -686,3 +723,11 @@ class grid(panel):
         else:
             self._cur_focused_index = value
             self.cur_focused = None
+
+    def on_focused(self):
+        super().on_focused()
+        self.switch_to_first_or_default_item()
+
+    def on_lost_focus(self):
+        super().on_lost_focus()
+        self.cur_focused = None

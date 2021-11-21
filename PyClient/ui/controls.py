@@ -64,7 +64,10 @@ class textbox(control):
 
     @property
     def render_width(self) -> int:
-        return self.input_count + len(self.cursor_icon)
+        if self.width_limited:
+            return self.width
+        else:
+            return self.input_count + len(self.cursor_icon)
 
     @property
     def show_cursor(self) -> bool:
@@ -119,7 +122,9 @@ class textbox(control):
         bk = CmdBkColor.White if self.is_focused else None
         fg = CmdFgColor.Black if self.is_focused else None
         drawn = self.limited_distext
-        if len(drawn) < self.width:
+        if self.inputs_count_limited:
+            drawn = utils.fillto(drawn, self.space_placeholder, self.max_inputs_count)
+        elif len(drawn) < self.width:
             drawn = utils.fillto(drawn, self.space_placeholder, self.width)
         buf.addtext(drawn, end='', fgcolor=fg, bkcolor=bk)
 
@@ -393,10 +398,40 @@ class button(control):
     def draw_on(self, buf: buffer):
         bk = CmdBkColor.White if self.is_focused else None
         fg = CmdFgColor.Black if self.is_focused else None
-        buf.addtext(self.distext, end='', fgcolor=fg, bkcolor=bk)
+        distext = self.limited_distext if self.width_limited else self.distext
+        buf.addtext(distext, end='', fgcolor=fg, bkcolor=bk)
+
+    @property
+    def limited_distext(self) -> str:
+        text = self.content()
+        text_len = len(text)
+        total = text_len + 2 * self.margin
+        if self.margin > 0:
+            without_margin_len = text_len + 2
+        else:
+            without_margin_len = text_len
+
+        if self.width >= without_margin_len:
+            rest = self.width - total
+            self.margin += rest // 2
+        else:
+            inadequate = self.width - without_margin_len
+            text = text[:text_len + inadequate]
+
+        if self.margin > 0:
+            if self.is_focused:
+                margin = utils.repeat(" ", self.margin)
+                return f"{margin}{text}{margin}"
+            else:
+                margin = utils.repeat(" ", self.margin - 1)
+                return f"[{margin}{text}{margin}]"
+        else:
+            return text
 
     @property
     def distext(self) -> str:
+        if self.width_limited:
+            return self.limited_distext
         if self.margin > 0:
             if self.is_focused:
                 margin = utils.repeat(" ", self.margin)
@@ -416,6 +451,8 @@ class button(control):
             self.content = content
         self._margin = 1
         self.on_press_func = on_press
+        self._width = 0
+        self._width_limited = False
 
     def press(self):
         self.on_press_func()
@@ -439,12 +476,27 @@ class button(control):
         self._margin = value
 
     @property
+    def width_limited(self) -> bool:
+        return self._width_limited
+
+    @width_limited.setter
+    def width_limited(self, value):
+        self._width_limited = bool(value)
+
+    @property
     def width(self) -> int:
-        return len(self.content()) + 2 * self.margin
+        if self.width_limited:
+            return self._width
+        else:
+            return len(self.content()) + 2 * self.margin
 
     @width.setter
     def width(self, value: int):
-        pass
+        value = max(0, value)
+        if self._width != value:
+            self._width = value
+            self.width_limited = True
+            self.on_prop_changed(self, "width")
 
     @property
     def height(self) -> int:

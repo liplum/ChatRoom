@@ -202,11 +202,13 @@ c_grave_accent = printable('`')
 c_tilde = printable('~')
 
 c_null = char(0)
-c_table = char(7)
+c_table = char(7)  # carriage_return \r
+
 c_backspace = char(8)
+c_tab_key = char(9)  # \t
 c_line_end = char(10)
 c_vtable = char(11)
-c_carriage_return = char(13)
+c_carriage_return = char(13)  # aka Vertical Tab \r\n
 c_esc = char(27)
 c_delete127 = char(127)
 

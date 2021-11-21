@@ -31,11 +31,10 @@ class xtextbox(textbox):
 
     def append(self, ch: Union[str, chars.char]) -> bool:
         if isinstance(ch, str):
-            super().append(ch)
+            return super().append(ch)
         elif isinstance(ch, chars.char):
             consumed = self.kbs.trigger(ch)
-            if not consumed:
-                return False
+            return consumed
         return False
 
     @property

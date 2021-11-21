@@ -26,17 +26,23 @@ class grid_tab(tab):
         account_stack.orientation = panels.horizontal
         b = button("Button", lambda: None)
         b.margin = 2
-        # self.grid[0, 0] = l1_1
-        self.grid[0, 0] = account_stack
-        self.grid[0, 1] = button("Button A", lambda: None)
-        self.grid[1, 0] = l2_1
-        self.grid[2, 0] = label("Label 3 1")
-        self.grid[1, 1] = b
+        # self.grid[0, 0] = account_stack
+        self.grid[0, 0] = l1_1
+        self.grid[0, 1] = button("A", lambda: None)
         self.grid[0, 2] = button("Button B", lambda: None)
+
+        self.grid[1, 0] = l2_1
+        self.grid[1, 1] = b
+        self.grid[1, 2] = button("A", lambda: None)
+
+        self.grid[2, 0] = label("Label 3 1")
+        self.grid[2, 1] = button("A", lambda: None)
         self.grid[2, 2] = button("Close", lambda: self.client.stop())
 
         self.grid.elemt_interval_w = 5
         self.grid.elemt_interval_h = 1
+        self.grid.left_margin = 15
+        self.grid.top_margin = 3
         self.grid.switch_to_first_or_default_item()
 
     def draw_on(self, buf: buffer):

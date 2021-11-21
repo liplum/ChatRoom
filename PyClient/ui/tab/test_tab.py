@@ -55,6 +55,7 @@ class test_tab(tab):
 
         self.stack.on_exit_focus.add(_on_stack_exit_focus)
         self.stack.switch_to_first_or_default_item()
+        self.stack.left_margin = 10
 
     def draw_on(self, buf: buffer):
         self.stack.draw_on(buf)

@@ -26,7 +26,7 @@ def gen_2d_array(row: int, column: int, getter: Callable[[], T]) -> List[List[An
 
 
 def gen_2d_arrayX(row: int, column: int, gen: Callable[[int, int], T]) -> List[List[Any]]:
-    return [[gen(i, j) for i in range(column)] for j in range(row)]
+    return [[gen(j, i) for i in range(column)] for j in range(row)]
 
 
 def find(li: [T], predicate: Callable[[T], bool]) -> Optional[T]:
