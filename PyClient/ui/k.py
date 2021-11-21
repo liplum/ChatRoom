@@ -1,3 +1,4 @@
+from typing import Callable
 from typing import Set
 
 import chars
@@ -10,24 +11,23 @@ class kbinding:
         self.bindings = {}
         self._on_any = None
 
-    def bind(self, ch: chars.char, func):
+    def bind(self, ch: chars.char, func: Callable[[chars.char], bool]):
         self.bindings[ch] = func
 
     @property
-    def on_any(self):
+    def on_any(self) -> Callable[[chars.char], bool]:
         return self._on_any
 
     @on_any.setter
-    def on_any(self, func):
+    def on_any(self, func: Callable[[chars.char], bool]):
         self._on_any = func
 
-    def trigger(self, ch: chars.char, *args, **kwargs) -> bool:
-        func = get(self.bindings, ch)
+    def trigger(self, ch: chars.char) -> bool:
+        func: Callable[[chars.char], bool] = get(self.bindings, ch)
         if func is not None:
-            func(ch, *args, **kwargs)
-            return True
+            return func(ch)
         if self.on_any is not None:
-            return self.on_any(ch, *args, **kwargs)
+            return self.on_any(ch)
         return False
 
 

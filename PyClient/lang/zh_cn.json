@@ -1,4 +1,9 @@
 {
+  "langs": {
+    "zh_cn": "简体中文",
+    "zh_tw": "繁体中文",
+    "en_us": "美式英语"
+  },
   "cmds": {
     "goto": {
       "para1": {
@@ -37,7 +42,7 @@
       "description": "运行自定义代码"
     },
     "lang": {
-      "usage": "lang [-s] 或 lang <en-us> [-s]",
+      "usage": "lang [-s] 或 lang <en_us> [-s]",
       "cannot_reload": "无法重新加载语言",
       "cannot_reload_cause": "无法重新加载语言，因为{cause}",
       "cannot_load": "无法加载语言\"{lang}\"",

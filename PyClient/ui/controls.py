@@ -141,7 +141,7 @@ class textbox(control):
         self._inputs_count_limited = False
         self._max_inputs_count = 10
         self._space_placeholder = " "
-
+        self._locked = False
         self._on_append.add(lambda _, _1, _2: self.on_content_changed(self))
         self._on_delete.add(lambda _, _1, _2: self.on_content_changed(self))
         self._on_cursor_move.add(lambda _, _1, _2: self.on_content_changed(self))
@@ -263,17 +263,21 @@ class textbox(control):
             self._cursor = current
             self.on_cursor_move(self, former, current)
 
-    def home(self):
+    def home(self) -> bool:
         self.cursor = 0
+        return True
 
-    def left(self):
+    def left(self) -> bool:
         self.cursor -= 1
+        return True
 
-    def right(self):
+    def right(self) -> bool:
         self.cursor += 1
+        return True
 
-    def end(self):
+    def end(self) -> bool:
         self.cursor = self.input_count
+        return True
 
     @property
     def limited_distext(self):
@@ -328,6 +332,8 @@ class textbox(control):
             return displayed[0]
 
     def append(self, char) -> bool:
+        if self.locked:
+            return False
         if self.inputs_count_limited:
             if self.input_count >= self.max_inputs_count:
                 return False
@@ -356,7 +362,7 @@ class textbox(control):
             count -= 1
         self.cursor = cursor_pos
 
-    def delete(self, left=True):
+    def delete(self, left=True) -> bool:
         if left:
             if self.cursor > 0:
                 n = self.cursor - 1
@@ -370,6 +376,17 @@ class textbox(control):
                 if n < len(self._input_list):
                     ch = self._input_list.pop(n)
                     self.on_delete(self, self.cursor, ch)
+        return True
+
+    def lock(self):
+        self._locked = True
+
+    def unlock(self):
+        self._locked = False
+
+    @property
+    def locked(self) -> bool:
+        return self._locked
 
 
 class button(control):
@@ -391,7 +408,7 @@ class button(control):
         else:
             return self.content()
 
-    def __init__(self, content:Union[content_getter, str], on_press: Callable[[], NoReturn]):
+    def __init__(self, content: Union[content_getter, str], on_press: Callable[[], NoReturn]):
         super().__init__()
         if isinstance(content, str):
             self.content = lambda: content

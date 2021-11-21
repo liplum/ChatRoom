@@ -27,3 +27,4 @@
      11/17 : Auto-login
     (11/18): Badge of unread message on chat tab+
     -11/18-: Login tab
+     11/21 : Need Fix [When users use ":join" command to join a chatting room, it doesn't read the message record and will reset all the record when saving.]

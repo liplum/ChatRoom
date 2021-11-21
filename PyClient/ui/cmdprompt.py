@@ -28,7 +28,7 @@ class cmd_input(i_input):
             res = input()
         else:
             res = input(str)
-        if res in cmd_input_map:
+        if res.lower() in cmd_input_map:
             ch = cmd_input_map[res]
             self._input_list.append(ch)
             self.on_input(self, ch)

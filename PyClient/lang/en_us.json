@@ -1,4 +1,9 @@
 {
+  "langs": {
+    "zh_cn": "Simplified Chinese",
+    "zh_tw": "Traditional Chinese",
+    "en_us": "English(US)"
+  },
   "cmds": {
     "goto": {
       "para1": {
@@ -81,7 +86,7 @@
       },
       "account_unverified": "Your account \"{account}\" hasn't be authenticated on the server {ip} yet"
     },
-    "login_tab":{
+    "login_tab": {
       "name": "login",
       "labels": {
         "server_ip": "server ip",
@@ -112,7 +117,7 @@
     }
   },
   "controls": {
-    "ok":"OK",
+    "ok": "OK",
     "cancel": "Cancel"
   },
   "outputs": {

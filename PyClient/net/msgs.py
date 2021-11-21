@@ -1,4 +1,5 @@
 import i18n
+import ui.tab.chat
 import ui.windows as ws
 from core.shared import *
 from net.networks import msg, Context
@@ -42,7 +43,7 @@ class authentication_result(msg):
         win: ws.window = client.win
         if self.OK:
             tablist = win.tablist
-            tab = ws.find_best_incomplete_chat_tab(tablist, token, self.account)
+            tab = ui.tab.chat.find_best_incomplete_chat_tab(tablist, token, self.account)
             if tab:
                 if tab.user_info is None:
                     tab.user_info = uentity(token, self.account)

@@ -35,7 +35,7 @@ class uentity:
         return hash((self.server, self.uid, self.vcode))
 
     def __eq__(self, other):
-        if isinstance(other,uentity):
+        if isinstance(other, uentity):
             return self.server == other.server and self.uid == other.uid and self.vcode == other.vcode
         return False
 

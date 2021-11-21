@@ -1,9 +1,10 @@
 import os
+import traceback
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import IntEnum, unique
 from typing import Optional, NoReturn, List, Tuple
-import traceback
+
 import GLOBAL
 import i18n
 from core.filer import i_filer

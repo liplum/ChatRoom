@@ -1,8 +1,10 @@
+import ui.tabs
 from cmd import command
 from core.operations import *
 from core.settings import entity as settings_table
 from net.msgs import register_request
 from net.networks import CannotConnectError
+from ui.cmd_modes import Cmd_Context
 from ui.windows import *
 
 cmds = []
@@ -14,7 +16,7 @@ def add(*args) -> command:
     return cmd
 
 
-def _goto_tab(context, args: [str]):
+def _goto_tab(context: Cmd_Context, args: [str]):
     if len(args) != 1:
         raise CmdError(i18n.trans("cmds.goto.usage"))
     try:
@@ -31,7 +33,7 @@ def _goto_tab(context, args: [str]):
 cmd_goto_tab = add("goto", _goto_tab)
 
 
-def _register(context, args: [str]):
+def _register(context: Cmd_Context, args: [str]):
     argslen = len(args)
     network: i_network = context.network
     if argslen != 2 and argslen != 3:
@@ -65,10 +67,10 @@ def _help_show_usage(tab, name):
     tab.add_string(f"{name}: {description}\n   {usage}")
 
 
-def _help(context, args: [str]):
+def _help(context: Cmd_Context, args: [str]):
     argslen = len(args)
     manager: cmdmanager = context.cmd_manager
-    tab: tab = context.tab
+    tab: tab = ui.tabs.tab
     if argslen == 1:
         if args[0] == "all":
             for name, cmd in manager:
@@ -86,7 +88,7 @@ def _help(context, args: [str]):
 cmd_help = add("help", _help)
 
 
-def _con(context, args: [str]) -> server_token:
+def _con(context: Cmd_Context, args: [str]) -> server_token:
     argslen = len(args)
     if argslen != 1:
         raise WrongUsageError(i18n.trans("cmds.con.usage"), 0)
@@ -99,7 +101,7 @@ def _con(context, args: [str]) -> server_token:
     except CannotConnectError as cce:
         raise CmdError(
             i18n.trans("cmds.reg.cannot_connect_server", ip=server.ip, port=server.port))
-    tab = context.tab
+    tab = ui.tabs.tab
     has_attr = hasattr(tab, "connected") and hasattr(tab, "connect")
     if has_attr:
         connected = tab.connected
@@ -113,7 +115,7 @@ def _con(context, args: [str]) -> server_token:
 cmd_con = add("con", _con)
 
 
-def _join(context, args: [str]):
+def _join(context: Cmd_Context, args: [str]):
     # TODO:Complete join cmd
     argslen = len(args)
     if argslen == 2:  # 1:<server ip>:<port> 2:<chatting room id>
@@ -143,7 +145,7 @@ def _join(context, args: [str]):
 cmd_join = add("join", _join)
 
 
-def _close(context, args: [str]):
+def _close(context: Cmd_Context, args: [str]):
     argslen = len(args)
     tbl: tablist = context.tablist
     if argslen == 0:
@@ -164,7 +166,7 @@ def _close(context, args: [str]):
 cmd_close = add("close", _close)
 
 
-def _login(context, args: [str]):
+def _login(context: Cmd_Context, args: [str]):
     argslen = len(args)
     if argslen != 3 and argslen != 2:
         raise WrongUsageError(i18n.trans("cmds.close.usage"), 0)
@@ -184,7 +186,7 @@ def _login(context, args: [str]):
 cmd_login = add("login", _login)
 
 
-def _exec(context, args: [str]):
+def _exec(context: Cmd_Context, args: [str]):
     argslen = len(args)
     if argslen == 0:
         return
@@ -208,7 +210,7 @@ def _exec(context, args: [str]):
 cmd_exec = add("run", _exec)
 
 
-def _lang(context, args: [str]):
+def _lang(context: Cmd_Context, args: [str]):
     argslen = len(args)
     if argslen == 0:  # reload & easy
         try:
