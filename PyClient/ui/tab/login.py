@@ -1,6 +1,7 @@
 import GLOBAL
 from core import operations as op
 from core.shared import to_server_token, uentity
+from ui.control.textboxes import textbox
 from ui.panels import *
 from ui.tab.chat import chat_tab
 from ui.tab.shared import *
@@ -138,7 +139,7 @@ class login_tab2(tab):
         for i in range(self.container_row):
             buf.addtext("\t", end="")
             for j in range(self.container_column):
-                ct:control = self.container[i][j]
+                ct: control = self.container[i][j]
                 if ct:
                     ct.paint_on(buf)
                 buf.addtext("  ", end="")
@@ -206,24 +207,21 @@ class login_tab(tab):
         dialog_stack.orientation = horizontal
 
         def on_ok_pressed():
-            # self.login()
-            i18n.load("zh_cn")
-            self.client.win.reload()
+            self.login()
 
         def on_cancel_pressed():
             self.client.stop()
 
         ok = i18n_button("controls.ok", on_ok_pressed)
+        ok.margin = 3
         cancel = i18n_button("controls.cancel", on_cancel_pressed)
-
-        ok.margin = 2
-        cancel.margin = 1
+        cancel.margin = 3
 
         dialog_stack.add(ok)
         dialog_stack.add(cancel)
         main = stack()
-        self._main = main
-        self._main.on_content_changed.add(lambda _: self.on_content_changed(self))
+        self.main = main
+        self.main.on_content_changed.add(lambda _: self.on_content_changed(self))
         main.add(grid)
         main.add(dialog_stack)
         grid.elemt_interval_w = 7
@@ -231,6 +229,7 @@ class login_tab(tab):
         grid.left_margin = left_margin
         dialog_stack.left_margin = left_margin
         main.top_margin = 1
+        main.left_margin = 10
 
         main.switch_to_first_or_default_item()
 
@@ -253,15 +252,17 @@ class login_tab(tab):
         return i18n.trans("tabs.login_tab.name")
 
     def on_input(self, char: chars.char) -> Is_Consumed:
-        consumed = self._main.on_input(char)
+        consumed = self.main.on_input(char)
+        if consumed:
+            return Consumed
         if not consumed:
             if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
-                self._main.switch_to_first_or_default_item()
+                self.main.switch_to_first_or_default_item()
                 return Consumed
         return Not_Consumed
 
     def paint_on(self, buf: buffer):
-        self._main.paint_on(buf)
+        self.main.paint_on(buf)
 
     @classmethod
     def deserialize(cls, data: dict, client: "client", tablist: "tablist") -> "tab":
@@ -303,7 +304,4 @@ class login_tab(tab):
         return True
 
     def reload(self):
-        self._main.reload()
-
-
-add_tabtype("login_tab", login_tab)
+        self.main.reload()

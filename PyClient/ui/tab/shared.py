@@ -1,5 +1,8 @@
+from typing import NoReturn
+
 import i18n
-from ui.controls import *
+from ui.control.buttons import button
+from ui.control.labels import label
 from ui.ctrl import *
 
 T = TypeVar('T')

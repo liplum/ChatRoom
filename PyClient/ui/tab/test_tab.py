@@ -23,16 +23,16 @@ class test_tab(tab):
 
         self.stack.on_content_changed.add(lambda _: self.on_content_changed(self))
         self.stack.add(button(CGT(button_content_getter), _click_button))
-        self.stack.add(fix_text_label("Label A"))
+        self.stack.add(label("Label A"))
         self.account_tbox = xtextbox()
         self.account_tbox.space_placeholder = "_"
         account_stack = stack()
-        account_stack.add(fix_text_label("Account"))
+        account_stack.add(label("Account"))
         account_stack.add(self.account_tbox)
         account_stack.orientation = panels.horizontal
         self.stack.add(account_stack)
-        self.stack.add(fix_text_label("Test Label B"))
-        self.stack.add(fix_text_label("Test"))
+        self.stack.add(label("Test Label B"))
+        self.stack.add(label("Test"))
         self.input_box = xtextbox()
         self.input_box.space_placeholder = "_"
         self.stack.add(self.input_box)
@@ -74,6 +74,3 @@ class test_tab(tab):
         if not consumed:
             if keys.k_down == char:
                 self.stack.switch_to_first_or_default_item()
-
-
-add_tabtype("test_tab", test_tab)

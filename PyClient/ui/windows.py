@@ -1,7 +1,7 @@
 import utils
 from core.settings import entity as settings
 from ui.tab.chat import chat_tab
-from ui.tab.login import login_tab
+from ui.tab.main_menu import main_menu_tab
 from ui.tabs import *
 from utils import multiget, get
 
@@ -29,6 +29,10 @@ class window(iwindow):
         t = self.newtab(grid_tab)
         from ui.tab.test_tab import test_tab
         t = self.newtab(test_tab)
+        from ui.tab.main_menu import main_menu_tab
+        t = self.newtab(main_menu_tab)
+        from ui.tab.copyright import copyright_tab
+        t = self.newtab(copyright_tab)
         self.tablist.cur = t
         """
         if configs.RestoreTabWhenRestart:
@@ -74,7 +78,8 @@ class window(iwindow):
 
     def gen_default_tab(self):
         if self.tablist.tabs_count == 0:
-            t = self.newtab(login_tab)
+            t = self.newtab(main_menu_tab)
+            self.tablist.add(t)
 
     def newtab(self, tabtype: Union[Type[T], str]) -> T:
         if isinstance(tabtype, str):
@@ -87,7 +92,6 @@ class window(iwindow):
             t = tabtype(self.client, self.tablist)
         else:
             raise TypeError(tabtype, type(tabtype))
-        self.tablist.add(t)
         return t
 
     def new_chat_tab(self) -> chat_tab:

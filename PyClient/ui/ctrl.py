@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Callable
+from typing import Callable, Collection
 
 from ui.shared import *
 
 auto = "auto"
 PROP = TypeVar('PROP', str, int)
+unlimited = "unlimited"
 
 
 class control(notifiable, painter, inputable, reloadable, ABC):
@@ -14,8 +15,15 @@ class control(notifiable, painter, inputable, reloadable, ABC):
         self._focused = False
         self._width = auto
         self._height = auto
+        self._left_margin = 0
         self._on_prop_changed = event()
         self._on_exit_focus = event()
+        self._layout_changed = True
+        self.on_prop_changed.add(self._on_layout_changed)
+
+    def _on_layout_changed(self, self2, prop_name):
+        self.on_content_changed(self)
+        self._layout_changed = True
 
     @property
     def on_exit_focus(self) -> event:
@@ -129,6 +137,25 @@ class control(notifiable, painter, inputable, reloadable, ABC):
     def on_lost_focus(self):
         self._focused = False
 
+    def cache_layout(self):
+        pass
+
+    def reload(self):
+        self._layout_changed = True
+        self.cache_layout()
+
+    @property
+    def left_margin(self) -> int:
+        return self._left_margin
+
+    @left_margin.setter
+    def left_margin(self, value: int):
+        if value < 0:
+            return
+        if self._left_margin != value:
+            self._left_margin = value
+            self.on_prop_changed(self, "left_margin")
+
 
 class content_getter:
     def __init__(self, getter: Callable[[], str]):
@@ -146,3 +173,21 @@ CGT = content_getter
 
 def CGT_fix_text(text: str) -> content_getter:
     return content_getter(lambda: text)
+
+
+class multi_content_getter:
+    def __init__(self, getter: Callable[[], Collection[str]]):
+        self.getter = getter
+
+    def get(self) -> Collection[str]:
+        return self.getter()
+
+    def __call__(self, *args, **kwargs):
+        return self.getter()
+
+
+MCGT = multi_content_getter
+
+
+def MCGT_fix_text(texts: Collection[str]) -> multi_content_getter:
+    return multi_content_getter(lambda: texts)

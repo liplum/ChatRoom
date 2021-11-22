@@ -55,6 +55,3 @@ class grid_tab(tab):
         if not consumed:
             if keys.k_down == char:
                 self.grid.switch_to_first_or_default_item()
-
-
-add_tabtype("grid_tab", grid_tab)

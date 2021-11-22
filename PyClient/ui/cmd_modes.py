@@ -8,7 +8,6 @@ import states
 import utils
 from cmd import cmdmanager, analyze_cmd_args, compose_full_cmd, WrongUsageError, is_quoted, CmdNotFound, CmdError
 from ui import outputs as output
-from ui.shared import *
 from ui.tabs import *
 from ui.uistates import ui_state
 
@@ -34,7 +33,8 @@ def common_hotkey(char: chars.char, tab: tab, client: iclient, tablist: tablist,
     elif chars.c_x == char:
         tablist.remove_cur()
     elif chars.c_n == char:
-        win.new_chat_tab()
+        chat = win.new_chat_tab()
+        tablist.add(chat)
     else:
         return True
 
@@ -131,7 +131,7 @@ class cmd_mode(ui_state):
             return self.cmd_history[self.cmd_history_index]
 
     def on_en(self):
-        self.cmd_sm.enter(cmd_hotkey_mode)
+        self.cmd_sm.enter(self.hotkey_cmd_mode_type)
         self.client.mark_dirty()
         self.textbox.clear()
         self.cmd_manager: cmdmanager = self.client.cmd_manger
@@ -295,7 +295,7 @@ class cmd_long_mode(cmd_state):
                     self.autofilling_cur = next(self.autofilling_it)
                     tb.addtext(self.autofilling_cur)
         else:  # not enter and not tab
-            tb.append(char)  # normally,add this char into textbox
+            consumed = tb.on_input(char)  # normally,add this char into textbox
             if self.autofilling:  # if already entered auto-filling
                 # update candidate list
                 self.autofilling_all = cmd_manager.prompts(inputs)
@@ -307,7 +307,7 @@ class cmd_long_mode(cmd_state):
                     tb.addtext(self.autofilling_cur)
             else:
                 pass
-        return True
+        return Consumed
 
 
 class cmd_hotkey_mode(cmd_state):

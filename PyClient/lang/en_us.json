@@ -4,6 +4,20 @@
     "zh_tw": "Traditional Chinese",
     "en_us": "English(US)"
   },
+  "info": {
+    "software": {
+      "full_name": "ChattingRoom PyClient",
+      "name": "Chatting Room",
+      "powered_by": "Powered by|        {0}"
+    },
+    "copyright": {
+      "software": "ChattingRoom PyClient",
+      "name": "copyright",
+      "author": "Liplum",
+      "year": 2021,
+      "email": "Li_plum@outlook.com"
+    }
+  },
   "cmds": {
     "goto": {
       "para1": {
@@ -75,7 +89,7 @@
   },
   "tabs": {
     "chat_tab": {
-      "name": "chat tab",
+      "name": "Chat",
       "no_connection": "No Connection",
       "connected": "Connected: {ip}:{port}",
       "disconnected": "Disconnected",
@@ -87,13 +101,25 @@
       "account_unverified": "Your account \"{account}\" hasn't be authenticated on the server {ip} yet"
     },
     "login_tab": {
-      "name": "login",
+      "name": "Login",
       "labels": {
         "server_ip": "server ip",
         "server_port": "server port",
         "account": "account",
         "password": "password"
       }
+    },
+    "copyright_tab": {
+      "name": "Copyright",
+      "keys": {
+        "author": "Author",
+        "email": "E-mail",
+        "year": "Year",
+        "software_name": "Name"
+      }
+    },
+    "main_menu_tab": {
+      "name": "Main Menu"
     }
   },
   "users": {
@@ -118,7 +144,9 @@
   },
   "controls": {
     "ok": "OK",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "quit": "Quit",
+    "login": "Login"
   },
   "outputs": {
     "render": {

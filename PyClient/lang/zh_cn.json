@@ -4,6 +4,20 @@
     "zh_tw": "繁体中文",
     "en_us": "美式英语"
   },
+  "info": {
+    "software": {
+      "full_name": "聊天室 PyClient",
+      "name": "聊天室",
+      "powered_by": "由{0}|        提供技术支持"
+    },
+    "copyright": {
+      "software": "ChattingRoom PyClient",
+      "name": "copyright",
+      "author": "Liplum",
+      "year": 2021,
+      "email": "Li_plum@outlook.com"
+    }
+  },
   "cmds": {
     "goto": {
       "para1": {
@@ -94,7 +108,19 @@
         "account": "账号",
         "password": "密码"
       }
-    }
+    },
+    "copyright_tab": {
+      "name": "版权信息",
+      "keys": {
+        "author": "作者",
+        "email": "电子邮箱",
+        "year": "年份",
+        "software_name": "名称"
+      }
+    },
+          "main_menu_tab": {
+        "name": "主菜单"
+      }
   },
   "users": {
     "authentication": {
@@ -118,7 +144,9 @@
   },
   "controls": {
     "ok": "确认",
-    "cancel": "取消"
+    "cancel": "取消",
+    "quit": "退出",
+    "login": "登录"
   },
   "outputs": {
     "render": {

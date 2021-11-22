@@ -1,8 +1,17 @@
+from abc import ABCMeta
 from io import StringIO
 from typing import List, Optional, Iterable, Dict
 
 from ui.core import *
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
+
+tab_name2type: Dict[str, Type["tab"]] = {}
+tab_type2name: Dict[Type["tab"], str] = {}
+
+
+def add_tabtype(name: str, tabtype: Type["tab"]):
+    tab_name2type[name] = tabtype
+    tab_type2name[tabtype] = name
 
 
 class tablist(notifiable):
@@ -82,7 +91,7 @@ class tablist(notifiable):
         if self.cur is None:
             self.cur = tab
         tab.on_added()
-        tab.on_content_changed.add(lambda _: self.on_content_changed(self))
+        tab.on_content_changed.add(self.on_subtab_content_changed)
 
     def replace(self, old_tab: Union[int, "tab"], new_tab: "tab"):
         if isinstance(old_tab, int):
@@ -101,7 +110,9 @@ class tablist(notifiable):
             del self.tabs[pos]
 
         removed.on_removed()
+        removed.on_content_changed.remove(self.on_subtab_content_changed)
         new_tab.on_added()
+        new_tab.on_content_changed.add(self.on_subtab_content_changed)
         self.tabs.insert(pos, new_tab)
 
         self.on_tablist_changed(self, False, removed)
@@ -109,6 +120,9 @@ class tablist(notifiable):
 
         if self.cur is old_tab:
             self.cur = new_tab
+
+    def on_subtab_content_changed(self, subtab):
+        self.on_content_changed(self)
 
     def insert(self, index: int, new_tab: "tab"):
         self.tabs.insert(index, new_tab)
@@ -128,6 +142,7 @@ class tablist(notifiable):
 
         self.on_tablist_changed(self, False, removed)
         removed.on_removed()
+        removed.on_content_changed.remove(self.on_subtab_content_changed)
 
         if len(self.tabs) == 0:
             self.cur = None
@@ -137,9 +152,8 @@ class tablist(notifiable):
     def remove_cur(self):
         cur = self.cur
         if cur:
-            self.tabs.remove(self.cur)
+            self.tabs.remove(cur)
         self.on_tablist_changed(self, False, cur)
-        cur.on_removed()
 
         if len(self.tabs) == 0:
             self.cur = None
@@ -152,10 +166,10 @@ class tablist(notifiable):
 
     def goto(self, number: int):
         number = max(number, 0)
-        number = min(number, len(self.tabs) - 1)
+        number = min(number, self.tabs_count - 1)
         origin = self.cur
         target = self.tabs[number]
-        if origin == target:
+        if origin is target:
             return
         self.cur = target
         self.add_view_history(number)
@@ -199,7 +213,14 @@ class tablist(notifiable):
         return iter(self.tabs)
 
 
-class tab(notifiable, inputable, reloadable, ABC):
+class metatab(ABCMeta):
+
+    def __init__(cls, name, bases, dic):
+        super().__init__(name, bases, dic)
+        add_tabtype(cls.__qualname__, cls)
+
+
+class tab(notifiable, inputable, reloadable, metaclass=metatab):
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__()
         self.tablist: tablist = tablist
@@ -248,15 +269,6 @@ class tab(notifiable, inputable, reloadable, ABC):
 
     def __eq__(self, other):
         return id(self) == id(other)
-
-
-tab_name2type: Dict[str, Type[tab]] = {}
-tab_type2name: Dict[Type[tab], str] = {}
-
-
-def add_tabtype(name: str, tabtype: Type[tab]):
-    tab_name2type[name] = tabtype
-    tab_type2name[tabtype] = name
 
 
 class CannotRestoreTab(Exception):

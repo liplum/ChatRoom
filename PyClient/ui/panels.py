@@ -5,6 +5,11 @@ import utils
 from ui.ctrl import *
 
 CTRL = TypeVar('CTRL', covariant=True, bound=control)
+Alignment = str
+Horizontal_Alignment = str
+align_left = "align_left"
+align_right = "align_right"
+center = "center"
 
 
 class panel(control, ABC):
@@ -15,18 +20,10 @@ class panel(control, ABC):
         self._cur_focused: Optional[CTRL] = None
         self._on_elements_changed = event()
         self._on_focused_changed = event()
-        self._layout_changed = True
-        self._left_margin = 0
         self._top_margin = 0
-
-        self.on_prop_changed.add(self._on_layout_changed)
 
         self._on_elements_changed.add(lambda _, _1, _2: self.on_content_changed(self))
         self._on_focused_changed.add(lambda _, _1, _2: self.on_content_changed(self))
-
-    def _on_layout_changed(self, self2, prop_name):
-        self.on_content_changed(self)
-        self._layout_changed = True
 
     def _on_elemt_exit_focus(self, elemt) -> bool:
         """
@@ -38,9 +35,6 @@ class panel(control, ABC):
             self.cur_focused = None
             return True
         return False
-
-    def cache_layout(self):
-        pass
 
     def add(self, elemt: control) -> bool:
         if elemt and elemt not in self._elements:
@@ -100,6 +94,18 @@ class panel(control, ABC):
         pass
 
     @property
+    def top_margin(self) -> int:
+        return self._top_margin
+
+    @top_margin.setter
+    def top_margin(self, value: int):
+        if value < 0:
+            return
+        if self._top_margin != value:
+            self._top_margin = value
+            self.on_prop_changed(self, "top_margin")
+
+    @property
     def elements(self) -> Set[control]:
         return self._elements
 
@@ -129,35 +135,11 @@ class panel(control, ABC):
 
     @property
     def elemts_total_width(self):
-        return sum(elemt.width for elemt in self.elements)
+        return sum(elemt.render_width for elemt in self.elements)
 
     @property
     def elemts_total_height(self):
-        return sum(elemt.height for elemt in self.elements)
-
-    @property
-    def left_margin(self) -> int:
-        return self._left_margin
-
-    @left_margin.setter
-    def left_margin(self, value: int):
-        if value < 0:
-            return
-        if self._left_margin != value:
-            self._left_margin = value
-            self.on_prop_changed(self, "left_margin")
-
-    @property
-    def top_margin(self) -> int:
-        return self._top_margin
-
-    @top_margin.setter
-    def top_margin(self, value: int):
-        if value < 0:
-            return
-        if self._top_margin != value:
-            self._top_margin = value
-            self.on_prop_changed(self, "top_margin")
+        return sum(elemt.render_height for elemt in self.elements)
 
     def go_next_focusable(self) -> bool:
         return False
@@ -186,6 +168,7 @@ class panel(control, ABC):
         pass
 
     def reload(self):
+        self._layout_changed = True
         for c in self.elements:
             c.reload()
         self.cache_layout()
@@ -202,6 +185,11 @@ expend = "expend"
 
 class stack(panel):
     def cache_layout(self):
+        for c in self.elements:
+            c.cache_layout()
+
+        if not self._layout_changed:
+            return
         self._layout_changed = False
         if self.orientation == vertical:
             if self.elemt_interval == auto:
@@ -227,17 +215,30 @@ class stack(panel):
             if self.height != auto and h >= self.height and self.over_range == discard:
                 continue
             h += elemt.render_height
-            w += elemt.render_width
-            if i > 0:
+            w = max(elemt.render_width, w)
+            if 0 < i < self.elemt_count - 1:
                 if self.orientation == horizontal:
                     h += self._r_elemt_interval
                 else:
                     w += self._r_elemt_interval
 
-        self._r_width = w + self.left_margin
-        self._r_height = h + self.top_margin
+        self._r_width = w
+        self._r_height = h
+
+        if self.orientation == vertical:
+            for item in self._elements_stack:
+                item.left_margin = self.left_margin
+        else:
+            for i, e in enumerate(self._elements_stack):
+                if i == 0:
+                    e.left_margin = self.left_margin
+                else:
+                    e.left_margin = 0
 
     def paint_on(self, buf: buffer):
+        for c in self.elements:
+            c.cache_layout()
+
         if self._layout_changed:
             self.cache_layout()
 
@@ -251,12 +252,17 @@ class stack(panel):
                     h += self._r_elemt_interval
                 if self.height != auto and h >= self.height and self.over_range == discard:
                     break
-                if self.left_margin > 0:
-                    buf.addtext(utils.repeat(" ", self.left_margin), end="")
                 elemt: control
+                if elemt.render_height == 1:
+                    if self.horizontal_alignment == align_left:
+                        cur_left_margin = 0
+                    elif self.horizontal_alignment == center:
+                        cur_left_margin = (self.render_width - elemt.render_width) // 2
+                    else:  # align right
+                        cur_left_margin = self.render_width - elemt.render_width
+                    buf.addtext(utils.repeat(' ', cur_left_margin), end='')
                 elemt.paint_on(buf)
-                interval = utils.repeat("\n", self._r_elemt_interval)
-                buf.addtext(text=interval)
+                buf.addtext(utils.repeat("\n", self._r_elemt_interval))
         else:
             w = 0
             if self.top_margin > 0:
@@ -286,6 +292,7 @@ class stack(panel):
         self._cur_focused_index = None
         self._r_width = 0
         self._r_height = 0
+        self._horizontal_alignment = center
 
     @property
     def cur_focused_index(self) -> Optional[int]:
@@ -397,6 +404,28 @@ class stack(panel):
         self.cur_focused_index = None
         self.go_next_focusable()
 
+    @property
+    def left_margin(self) -> int:
+        return self._left_margin
+
+    @left_margin.setter
+    def left_margin(self, value: int):
+        if value < 0:
+            return
+        if self._left_margin != value:
+            self._left_margin = value
+            self.on_prop_changed(self, "left_margin")
+
+    @property
+    def horizontal_alignment(self) -> Horizontal_Alignment:
+        return self._horizontal_alignment
+
+    @horizontal_alignment.setter
+    def horizontal_alignment(self, value: Horizontal_Alignment):
+        if self._horizontal_alignment != value:
+            self._horizontal_alignment = value
+            self.on_prop_changed(self, "horizontal_alignment")
+
 
 class row:
     def __init__(self):
@@ -490,6 +519,9 @@ class grid(panel):
             self.rowlen, self.columnlen, lambda i, j: _unit(self.rows[i], self.columns[j]))
 
     def paint_on(self, buf: buffer):
+        for c in self.elements:
+            c.cache_layout()
+
         if self._layout_changed:
             self.cache_layout()
         if self.top_margin > 0:
@@ -513,6 +545,11 @@ class grid(panel):
             buf.addtext()
 
     def cache_layout(self):
+        for c in self.elements:
+            c.cache_layout()
+
+        if not self._layout_changed:
+            return
         self._layout_changed = False
 
         w = 0

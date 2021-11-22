@@ -213,7 +213,7 @@ cmd_exec = add("run", _exec)
 
 
 def _lang(context: Cmd_Context, args: [str]):
-    win:iwindow = context.win
+    win: iwindow = context.win
     argslen = len(args)
     if argslen == 0:  # reload & easy
         try:

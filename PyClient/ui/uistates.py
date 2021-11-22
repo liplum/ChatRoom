@@ -1,5 +1,5 @@
 from states import *
-from ui.controls import textbox
+from ui.control.textboxes import textbox
 from ui.core import iclient
 from ui.shared import *
 from ui.tabs import tablist

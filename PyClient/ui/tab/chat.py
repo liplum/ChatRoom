@@ -1,8 +1,9 @@
+import keys
+import utils
 from core.chats import imsgmager
 from core.settings import entity as settings
 from core.shared import server_token, roomid, uentity, to_server_token, userid
 from ui.cmd_modes import cmd_mode, cmd_hotkey_mode
-from ui.core import *
 from ui.k import kbinding
 from ui.tab.shared import *
 from ui.tabs import *
@@ -23,7 +24,7 @@ class chat_tab(tab):
         self.logger: "ilogger" = self.client.logger
         self.first_loaded = False
         self.focused = False
-        self._unread_number = 0
+        self._unread_msg_number = 0
 
         self._connected: Optional[server_token] = None
         self._joined: Optional[roomid] = None
@@ -47,19 +48,16 @@ class chat_tab(tab):
 
         self.sm = ui_smachine(state_pre=set_chat_tab, stype_pre=gen_state, allow_repeated_entry=False)
         self.sm.enter(cmd_mode)
-        self.textbox.on_append.add(lambda b, p, c: client.mark_dirty())
-        self.textbox.on_delete.add(lambda b, p, c: client.mark_dirty())
-        self.textbox.on_cursor_move.add(lambda b, f, c: client.mark_dirty())
-        self.textbox.on_list_replace.add(lambda b, f, c: client.mark_dirty())
+        self.textbox.on_content_changed.add(lambda _: client.mark_dirty())
 
     @property
-    def unread_number(self) -> int:
-        return self._unread_number
+    def unread_msg_number(self) -> int:
+        return self._unread_msg_number
 
-    @unread_number.setter
-    def unread_number(self, value: int):
-        if self._unread_number != value:
-            self._unread_number = value
+    @unread_msg_number.setter
+    def unread_msg_number(self, value: int):
+        if self._unread_msg_number != value:
+            self._unread_msg_number = value
             self.client.mark_dirty()
 
     def send_text(self):
@@ -171,8 +169,8 @@ class chat_tab(tab):
             badge = ""
             if self.user_info:
                 if self.user_info.verified:
-                    if self.unread_number > 0:
-                        badge = f"[{self.unread_number}]"
+                    if self.unread_msg_number > 0:
+                        badge = f"[{self.unread_msg_number}]"
                 else:
                     badge = f"[{i18n.trans('tabs.chat_tab.badge.unverified')}]"
             else:
@@ -191,7 +189,7 @@ class chat_tab(tab):
             time, uid, text = msg_unit
             self._add_msg(time, uid, text)
             if not self.focused:
-                self.unread_number += 1
+                self.unread_msg_number += 1
 
     def on_removed(self):
         self.msg_manager.on_received.remove(self._on_received_msg)
@@ -227,7 +225,7 @@ class chat_tab(tab):
 
     def on_focused(self):
         self.focused = True
-        self.unread_number = 0
+        self.unread_msg_number = 0
 
     def on_lost_focus(self):
         self.focused = False
@@ -253,9 +251,6 @@ class chat_tab(tab):
             return False
 
 
-add_tabtype("chat_tab", chat_tab)
-
-
 class chat_cmd_hotkey_mode(cmd_hotkey_mode):
     def __init__(self, mode: cmd_mode):
         super().__init__(mode)
@@ -278,7 +273,7 @@ class text_mode(ui_state):
         kbs = kbinding()
         self.kbs = kbs
 
-        kbs.on_any = lambda c: self.textbox.append(c)
+        kbs.on_any = lambda c: self.textbox.on_input(c)
         kbs.bind(keys.k_enter, lambda c: self.tab.send_text())
 
     def on_en(self):

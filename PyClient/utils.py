@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from io import StringIO
 from threading import RLock
-from typing import Dict, List, Tuple, Optional, TypeVar, Callable, Any
+from typing import Dict, List, Tuple, Optional, TypeVar, Callable, Any, NoReturn
 
 system_type = platform.system()
 
@@ -327,7 +327,16 @@ def fill(text: str, repeated: str, count: int, max_char_num: Optional[int] = Non
         return s.getvalue()
 
 
+def repeatIO(IO, repeated: str, times: int) -> NoReturn:
+    if times <= 0:
+        return
+    for i in range(times):
+        IO.write(repeated)
+
+
 def repeat(repeated: str, times: int) -> str:
+    if times <= 0:
+        return ''
     with StringIO() as s:
         for i in range(times):
             s.write(repeated)

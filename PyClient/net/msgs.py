@@ -55,6 +55,7 @@ class authentication_result(msg):
                 tab.join(12345)
                 tab.connect(token)
                 tab.user_info = uentity(token, self.account, self.vcode)
+                win.tablist.add(tab)
         else:
             win.add_string(tintedtxt(i18n.trans(
                 "users.authentication.failure", ip=token.ip, port=token.port, account=self.account

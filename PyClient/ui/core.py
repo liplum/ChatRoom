@@ -94,7 +94,7 @@ class iclient(ABC):
         raise NotImplementedError()
 
 
-class iwindow(inputable,reloadable):
+class iwindow(inputable, reloadable):
     def __init__(self, client: iclient):
         self.client = client
         self.displayer = self.client.displayer

@@ -28,3 +28,5 @@
     (11/18): Badge of unread message on chat tab+
     -11/18-: Login tab
      11/21 : Need Fix [When users use ":join" command to join a chatting room, it doesn't read the message record and will reset all the record when saving.]
+    [11/22]: Can't Fix [When user set the language to one which contains non-monospaced characters, the layout will be strange.]
+     11/22 : Implement textbox.cache_layout(self)
