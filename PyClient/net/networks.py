@@ -24,7 +24,7 @@ class msg(ABC):
         pass
 
 
-class i_channel:
+class ichannel:
     def __init__(self, name):
         self.name = name
         self._on_msg_received = event(cancelable=True)
@@ -57,11 +57,11 @@ class i_channel:
 Context = namedtuple("Context", ["client", "channel", "token", "network"])
 
 
-class channel(i_channel):
-    def __init__(self, network: "i_network", name):
+class channel(ichannel):
+    def __init__(self, network: "inetwork", name):
         super().__init__(name)
         self.network = network
-        self.logger: outputs.i_logger = network.logger
+        self.logger: outputs.ilogger = network.logger
         self.id2msgt_and_handler: Dict[str, Tuple[type, Callable[[msg, Tuple], None]]] = {}
         self.msg2id: Dict[type, str] = {}
 
@@ -103,7 +103,7 @@ class channel(i_channel):
             self.logger.error(f"[Channel<{self.name}>]Cannot find message type {msg_id}")
 
 
-class i_network(ABC):
+class inetwork(ABC):
     def __init__(self, client):
         self.client = client
 
@@ -127,11 +127,11 @@ class i_network(ABC):
         pass
 
     @abstractmethod
-    def new_channel(self, channel_name: str) -> i_channel:
+    def new_channel(self, channel_name: str) -> ichannel:
         pass
 
     @abstractmethod
-    def get_channel(self, name: str) -> i_channel:
+    def get_channel(self, name: str) -> ichannel:
         pass
 
     @property
@@ -153,7 +153,7 @@ class CannotConnectError(Exception):
         self.server = server
 
 
-class network(i_network):
+class network(inetwork):
 
     def is_connected(self, server: server_token):
         return server in self.sockets
@@ -235,7 +235,7 @@ class network(i_network):
             return False
 
     def init(self, container):
-        self.logger: outputs.i_logger = container.resolve(outputs.i_logger)
+        self.logger: outputs.ilogger = container.resolve(outputs.ilogger)
 
     def __receive_datapack(self, token: server_token, server_socket):
         while True:

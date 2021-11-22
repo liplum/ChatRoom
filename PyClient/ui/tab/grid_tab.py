@@ -1,6 +1,4 @@
-import keys
 from ui import panels as panels
-from ui.controls import button
 from ui.panels import gen_grid, column, stack
 from ui.tab.shared import *
 from ui.tabs import *
@@ -45,8 +43,8 @@ class grid_tab(tab):
         self.grid.top_margin = 3
         self.grid.switch_to_first_or_default_item()
 
-    def draw_on(self, buf: buffer):
-        self.grid.draw_on(buf)
+    def paint_on(self, buf: buffer):
+        self.grid.paint_on(buf)
 
     @property
     def title(self) -> str:

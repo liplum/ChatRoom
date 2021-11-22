@@ -11,7 +11,7 @@ from utils import fill_2d_array, get
 
 class login_tab2(tab):
 
-    def __init__(self, client: "client", tablist: tablist):
+    def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
         self.network: i_network = self.client.network
         self.container_row = 4
@@ -134,13 +134,13 @@ class login_tab2(tab):
             if f:
                 consumed = f.on_input(char)
 
-    def draw_on(self, buf: buffer):
+    def paint_on(self, buf: buffer):
         for i in range(self.container_row):
             buf.addtext("\t", end="")
             for j in range(self.container_column):
-                ct = self.container[i][j]
+                ct:control = self.container[i][j]
                 if ct:
-                    ct.draw_on(buf)
+                    ct.paint_on(buf)
                 buf.addtext("  ", end="")
             buf.addtext()
 
@@ -164,7 +164,7 @@ class login_tab2(tab):
 
 class login_tab(tab):
 
-    def __init__(self, client: "client", tablist: tablist):
+    def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
         self.network: i_network = self.client.network
         grid = gen_grid(4, [column(auto), column(15)])
@@ -206,7 +206,9 @@ class login_tab(tab):
         dialog_stack.orientation = horizontal
 
         def on_ok_pressed():
-            self.login()
+            # self.login()
+            i18n.load("zh_cn")
+            self.client.win.reload()
 
         def on_cancel_pressed():
             self.client.stop()
@@ -221,7 +223,7 @@ class login_tab(tab):
         dialog_stack.add(cancel)
         main = stack()
         self._main = main
-        self._main.on_content_changed.add(lambda _: self.client.mark_dirty())
+        self._main.on_content_changed.add(lambda _: self.on_content_changed(self))
         main.add(grid)
         main.add(dialog_stack)
         grid.elemt_interval_w = 7
@@ -250,14 +252,16 @@ class login_tab(tab):
     def title(self) -> str:
         return i18n.trans("tabs.login_tab.name")
 
-    def on_input(self, char: chars.char):
+    def on_input(self, char: chars.char) -> Is_Consumed:
         consumed = self._main.on_input(char)
         if not consumed:
             if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
                 self._main.switch_to_first_or_default_item()
+                return Consumed
+        return Not_Consumed
 
-    def draw_on(self, buf: buffer):
-        self._main.draw_on(buf)
+    def paint_on(self, buf: buffer):
+        self._main.paint_on(buf)
 
     @classmethod
     def deserialize(cls, data: dict, client: "client", tablist: "tablist") -> "tab":
@@ -297,6 +301,9 @@ class login_tab(tab):
     @classmethod
     def serializable(cls) -> bool:
         return True
+
+    def reload(self):
+        self._main.reload()
 
 
 add_tabtype("login_tab", login_tab)

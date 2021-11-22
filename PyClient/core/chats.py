@@ -7,7 +7,7 @@ import utils
 from core.filer import i_filer
 from core.shared import server_token, userid, roomid, StorageUnit
 from events import event
-from ui.outputs import i_logger
+from ui.outputs import ilogger
 from utils import compose, separate
 
 
@@ -156,7 +156,7 @@ class msgstorage:
             return snapshot[:end_pos + 1]
 
 
-class i_msgmager:
+class imsgmager:
     def load_lasted(self, server: server_token, room_id: roomid,
                     amount: int) -> List[StorageUnit]:
         pass
@@ -202,7 +202,7 @@ class i_msgfiler:
 class msgfiler(i_msgfiler):
 
     def init(self, container):
-        self.logger: i_logger = container.resolve(i_logger)
+        self.logger: ilogger = container.resolve(ilogger)
         self.filer: i_filer = container.resolve(i_filer)
 
     def __init__(self):
@@ -220,7 +220,7 @@ class msgfiler(i_msgfiler):
         return self.filer.get_file(f"/data/{server.ip}-{server.port}/{room_id}.rec")
 
 
-class msgmager(i_msgmager):
+class msgmager(imsgmager):
     def __init__(self):
         self.cache: Dict[Tuple[server_token, roomid], msgstorage] = {}
         self._lock = RLock()
@@ -228,7 +228,7 @@ class msgmager(i_msgmager):
 
     def init(self, container):
         self.filer: i_msgfiler = container.resolve(i_msgfiler)
-        self.logger: i_logger = container.resolve(i_logger)
+        self.logger: ilogger = container.resolve(ilogger)
 
     def get_storage(self, server: server_token, room_id: roomid) -> Optional[msgstorage]:
         if (server, room_id) in self.cache:

@@ -1,14 +1,14 @@
 import net.msgs as msgs
 from core.shared import *
-from net.networks import i_network
+from net.networks import inetwork
 
 
-def connect(network: i_network, server: server_token, strict: bool = False):
+def connect(network: inetwork, server: server_token, strict: bool = False):
     if not network.is_connected(server):
         network.connect(server, strict)
 
 
-def login(network: i_network, server: server_token, account: str, password: str):
+def login(network: inetwork, server: server_token, account: str, password: str):
     user = network.get_channel("User")
     msg = msgs.authentication_req()
     msg.account = account

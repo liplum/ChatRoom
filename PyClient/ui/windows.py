@@ -1,22 +1,20 @@
 import utils
 from core.settings import entity as settings
-from ui import outputs as output
 from ui.tab.chat import chat_tab
 from ui.tab.login import login_tab
 from ui.tabs import *
 from utils import multiget, get
 
 
-class window:
-    def __init__(self, client: "client", displayer: output.i_display):
-        self.client = client
-        self.displayer: output.i_display = displayer
+class window(iwindow):
+    def __init__(self, client: iclient):
+        super().__init__(client)
         self.tablist: tablist = tablist()
         self.screen_buffer: Optional[buffer] = None
         self.tablist.on_content_changed.add(lambda _: self.client.mark_dirty())
         self.tablist.on_curtab_changed.add(lambda li, n, t: self.client.mark_dirty())
         self.tablist.on_tablist_changed.add(lambda li, mode, t: self.client.mark_dirty())
-        self.network: "i_network" = self.client.network
+        self.network: "inetwork" = self.client.network
 
         def on_closed_last_tab(li: tablist, mode, t):
             if li.tabs_count == 0:
@@ -104,16 +102,22 @@ class window:
         self.tablist.draw_on(self.screen_buffer)
         curtab = self.tablist.cur
         if curtab:
-            curtab.draw_on(self.screen_buffer)
+            curtab.paint_on(self.screen_buffer)
 
         self.displayer.render(self.screen_buffer)
 
-    def on_input(self, char):
+    def on_input(self, char) -> Is_Consumed:
         curtab = self.tablist.cur
         if curtab:
-            curtab.on_input(char)
+            return curtab.on_input(char)
+        return Not_Consumed
 
     def add_string(self, string: str):
         curtab = self.tablist.cur
         if curtab:
             curtab.add_string(string)
+
+    def reload(self):
+        for t in self.tablist:
+            t.reload()
+        self.client.mark_dirty()

@@ -4,7 +4,7 @@ from time import sleep
 
 import psutil
 
-from ui.outputs import i_logger
+from ui.outputs import ilogger
 
 
 class pef_monitor:
@@ -15,7 +15,7 @@ class pef_monitor:
         self.process = psutil.Process(self.pid)
 
     def init(self, container: "container"):
-        self.logger: i_logger = container.resolve(i_logger)
+        self.logger: ilogger = container.resolve(ilogger)
         self.start()
 
     def start(self):

@@ -24,7 +24,7 @@ except:
     get_winsize = get_winsize_default
 
 
-class i_logger:
+class ilogger:
     def __init__(self):
         self._logfile: Optional[str] = None
 
@@ -84,7 +84,7 @@ def tintedtxt(text: str, fgcolor: Optional[CmdFgColor] = None, bkcolor: Optional
     return f"\033[0;{fg};{bk}m{text}\033[0m{end}"
 
 
-class cmd_logger(i_logger):
+class cmd_logger(ilogger):
 
     def __init__(self, output_to_cmd: bool = True):
         super().__init__()
@@ -138,7 +138,7 @@ class buffer:
         pass
 
 
-class i_display(ABC):
+class idisplay(ABC):
     @abstractmethod
     def render(self, buf: buffer) -> bool:
         pass
@@ -148,7 +148,7 @@ class i_display(ABC):
         pass
 
 
-class cmd_display(i_display):
+class cmd_display(idisplay):
     """
     It uses buffer to store all items used be rendered soon until call render(self)
     """
@@ -157,7 +157,7 @@ class cmd_display(i_display):
         pass
 
     def init(self, container: "container"):
-        self.logger: i_logger = container.resolve(i_logger)
+        self.logger: ilogger = container.resolve(ilogger)
 
     def text(self, buffer_list, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
              bkcolor: Optional[CmdBkColor] = None) -> NoReturn:

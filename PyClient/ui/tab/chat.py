@@ -1,27 +1,26 @@
-import keys
-import utils
-from core.chats import i_msgmager
+from core.chats import imsgmager
 from core.settings import entity as settings
 from core.shared import server_token, roomid, uentity, to_server_token, userid
 from ui.cmd_modes import cmd_mode, cmd_hotkey_mode
+from ui.core import *
 from ui.k import kbinding
-from ui.states import ui_state, ui_smachine
 from ui.tab.shared import *
 from ui.tabs import *
+from ui.uistates import ui_state, ui_smachine
 from ui.xtbox import xtextbox
 from utils import get, all_none
 
 
 class chat_tab(tab):
-    def __init__(self, client: "client", tablist: tablist):
+    def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
         self.textbox = xtextbox()
         self.history: List[str] = []
         self.max_display_line = 10
         self.fill_until_max = True
-        self.msg_manager: i_msgmager = self.client.msg_manager
-        self.network: "i_network" = self.client.network
-        self.logger: "i_logger" = self.client.logger
+        self.msg_manager: imsgmager = self.client.msg_manager
+        self.network: "inetwork" = self.client.network
+        self.logger: "ilogger" = self.client.logger
         self.first_loaded = False
         self.focused = False
         self._unread_number = 0
@@ -124,7 +123,7 @@ class chat_tab(tab):
                 self._add_msg(time, uid, text)
         self.first_loaded = True
 
-    def draw_on(self, buf: buffer):
+    def paint_on(self, buf: buffer):
         if not self.first_loaded:
             self.first_load()
 
@@ -268,8 +267,8 @@ class chat_cmd_hotkey_mode(cmd_hotkey_mode):
         if not consumed:
             if mode.client.key_enter_text == char:
                 mode.sm.enter(text_mode)
-                return True
-        return False
+                return Consumed
+        return Not_Consumed
 
 
 class text_mode(ui_state):
@@ -286,18 +285,20 @@ class text_mode(ui_state):
         self.client.mark_dirty()
         self.textbox.clear()
 
-    def draw_on(self, buf: buffer):
+    def paint_on(self, buf: buffer):
         tip = utils.fillto(f"{i18n.trans('modes.text_mode.name')}:", " ", 40)
         buf.addtext(text=tip, fgcolor=CmdFgColor.White,
                     bkcolor=CmdBkColor.Blue,
                     end='\n')
 
-    def on_input(self, char: chars.char):
+    def on_input(self, char: chars.char) -> Is_Consumed:
         c = self.client
         if c.key_quit_text_mode == char:
             self.sm.enter(cmd_mode)
+            return True
         elif True:
             self.kbs.trigger(char)
+            return True
 
 
 def find_best_incomplete_chat_tab(tablist: "tablist", server: server_token,

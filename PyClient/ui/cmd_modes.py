@@ -1,23 +1,19 @@
 import traceback
 from collections import namedtuple
-from io import StringIO
-from typing import List, Optional
 
 import GLOBAL
-import chars
 import i18n
 import keys
-import ui.states
+import states
 import utils
 from cmd import cmdmanager, analyze_cmd_args, compose_full_cmd, WrongUsageError, is_quoted, CmdNotFound, CmdError
 from ui import outputs as output
-from ui.outputs import buffer, CmdFgColor, CmdBkColor
-from ui.states import ui_state
+from ui.shared import *
+from ui.tabs import *
+from ui.uistates import ui_state
 
-Is_Consumed = bool
 
-
-def common_hotkey(char: chars.char, tab: "tab", client: "client", tablist: "tablist", win: "window"):
+def common_hotkey(char: chars.char, tab: tab, client: iclient, tablist: tablist, win: iwindow):
     """
 
     :param win:
@@ -79,7 +75,7 @@ def gen_cmd_error_text(cmd_name: str, args: List[str], full_cmd: str, pos: int, 
         return s.getvalue()
 
 
-class cmd_state(ui.states.state):
+class cmd_state(states.state):
     mode: "cmd_mode"
     sm: "cmd_smachine"
 
@@ -90,7 +86,7 @@ class cmd_state(ui.states.state):
         pass
 
 
-class cmd_smachine(ui.states.smachine):
+class cmd_smachine(states.smachine):
     def on_input(self, char: chars.char):
         if self.cur is not None:
             return self.cur.on_input(char)
@@ -140,7 +136,7 @@ class cmd_mode(ui_state):
         self.textbox.clear()
         self.cmd_manager: cmdmanager = self.client.cmd_manger
 
-    def draw_on(self, buf: buffer):
+    def paint_on(self, buf: buffer):
         head_text = f"{i18n.trans('modes.command_mode.name')}:"
         if GLOBAL.DEBUG:
             head_text = f"{i18n.trans('modes.command_mode.name')}:{self.cmd_history_index} {self.cmd_sm.cur}"
@@ -237,7 +233,8 @@ class cmd_long_mode(cmd_state):
             mode.cmd_manager.execute(contxt, cmd_name, args)
         except WrongUsageError as wu:
             with StringIO() as s:
-                s.write(output.tintedtxt(i18n.trans("modes.command_mode.cmd.wrong_usage"), fgcolor=CmdFgColor.Red,end=""))
+                s.write(
+                    output.tintedtxt(i18n.trans("modes.command_mode.cmd.wrong_usage"), fgcolor=CmdFgColor.Red, end=""))
                 s.write(':\n')
                 pos = wu.position
                 is_pos_quoted = is_quoted(pos + 1, quoted_indexes)
@@ -250,7 +247,8 @@ class cmd_long_mode(cmd_state):
             mode.tab.add_string(error_output)
         except CmdError as ce:
             with StringIO() as s:
-                s.write(output.tintedtxt(i18n.trans("modes.command_mode.cmd.cmd_error"), fgcolor=CmdFgColor.Red,end=""))
+                s.write(
+                    output.tintedtxt(i18n.trans("modes.command_mode.cmd.cmd_error"), fgcolor=CmdFgColor.Red, end=""))
                 s.write(':\n')
                 s.write(gen_cmd_error_text(cmd_name, args, full_cmd, -2, ce.msg))
                 mode.tab.add_string(s.getvalue())

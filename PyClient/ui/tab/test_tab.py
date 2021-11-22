@@ -1,7 +1,5 @@
 import GLOBAL
-import keys
 from ui import panels as panels
-from ui.controls import button, fix_text_label
 from ui.panels import stack
 from ui.tab.shared import *
 from ui.tabs import *
@@ -57,8 +55,8 @@ class test_tab(tab):
         self.stack.switch_to_first_or_default_item()
         self.stack.left_margin = 10
 
-    def draw_on(self, buf: buffer):
-        self.stack.draw_on(buf)
+    def paint_on(self, buf: buffer):
+        self.stack.paint_on(buf)
         if GLOBAL.DEBUG:
             stak = self.stack
             c = stak.cur_focused

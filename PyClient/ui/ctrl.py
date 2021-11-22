@@ -1,18 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import Callable, TypeVar
+from typing import Callable
 
-import chars
-from events import event
-from ui.notice import notified
-from ui.outputs import buffer
+from ui.shared import *
 
 auto = "auto"
 PROP = TypeVar('PROP', str, int)
 
-Is_Consumed = bool
 
-
-class control(notified, ABC):
+class control(notifiable, painter, inputable, reloadable, ABC):
     def __init__(self):
         super().__init__()
         self._in_container = False
@@ -101,9 +96,9 @@ class control(notified, ABC):
             self.on_prop_changed(self, "height")
 
     @abstractmethod
-    def draw_on(self, buf: buffer):
+    def paint_on(self, buf: buffer):
         """
-        Draw all content on the buffer
+        Paint all content on the buffer
         :param buf:screen buffer
         """
         pass
@@ -111,18 +106,6 @@ class control(notified, ABC):
     @property
     @abstractmethod
     def focusable(self) -> bool:
-        pass
-
-    @property
-    def is_focused(self) -> bool:
-        return False
-
-    def on_input(self, char: chars.char) -> Is_Consumed:
-        """
-
-        :param char:
-        :return:whether this control consumed the char
-        """
         pass
 
     @property

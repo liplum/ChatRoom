@@ -1,15 +1,13 @@
+import i18n
 import ui.tabs
-from cmd import command
+import ui.tabs as tabs
+from cmd import *
 from core.operations import *
 from core.settings import entity as settings_table
 from net.msgs import register_request
 from net.networks import CannotConnectError
 from ui.cmd_modes import Cmd_Context
 from ui.windows import *
-from cmd import *
-import i18n
-import ui.tab as xtabs
-import ui.tabs as tabs
 
 cmds = []
 
@@ -39,7 +37,7 @@ cmd_goto_tab = add("goto", _goto_tab)
 
 def _register(context: Cmd_Context, args: [str]):
     argslen = len(args)
-    network: i_network = context.network
+    network: inetwork = context.network
     if argslen != 2 and argslen != 3:
         raise CmdError(i18n.trans("cmds.reg.usage"))
     if argslen == 3:  # first is server
@@ -215,16 +213,19 @@ cmd_exec = add("run", _exec)
 
 
 def _lang(context: Cmd_Context, args: [str]):
+    win:iwindow = context.win
     argslen = len(args)
     if argslen == 0:  # reload & easy
         try:
             i18n.reload(strict=True)
+            win.reload()
         except i18n.LocfileLoadError as lle:
             raise WrongUsageError(i18n.trans("cmds.lang.cannot_reload"), 0)
     elif argslen == 1:
         if args[0] == "-s":  # reload & strict
             try:
                 i18n.reload(strict=True)
+                win.reload()
             except i18n.LocfileLoadError as lle:
                 raise WrongUsageError(i18n.trans("cmds.lang.cannot_reload_cause", cause=repr(lle.inner)), 0)
         else:  # load & easy
@@ -233,6 +234,7 @@ def _lang(context: Cmd_Context, args: [str]):
                 i18n.load(lang, strict=True)
                 settings = settings_table()
                 settings.set("Language", lang)
+                win.reload()
             except i18n.LocfileLoadError as lle:
                 raise WrongUsageError(i18n.trans("cmds.lang.cannot_load", lang=lang), 0)
     elif argslen == 2:
@@ -242,6 +244,7 @@ def _lang(context: Cmd_Context, args: [str]):
                 i18n.load(lang, strict=True)
                 settings = settings_table()
                 settings.set("Language", lang)
+                win.reload()
             except i18n.LocfileLoadError as lle:
                 raise WrongUsageError(i18n.trans("cmds.lang.cannot_load_cause", lang=lang, cause=repr(lle.inner)), 0)
         else:

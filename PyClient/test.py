@@ -473,7 +473,7 @@ def test_textbox():
         for i in range(10):
             buf = displayer.gen_buffer()
             tb.right()
-            tb.draw_on(buf)
+            tb.paint_on(buf)
             buf.addtext()
             displayer.render(buf)
             switch()

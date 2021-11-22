@@ -4,7 +4,8 @@ from typing import List, NoReturn, Union
 import keys
 import utils
 from ui.ctrl import *
-from ui.outputs import buffer, CmdBkColor, CmdFgColor
+from ui.outputs import CmdBkColor, CmdFgColor
+from ui.shared import *
 
 
 class label(control):
@@ -33,7 +34,7 @@ class label(control):
     def focusable(self) -> bool:
         return False
 
-    def draw_on(self, buf: buffer):
+    def paint_on(self, buf: buffer):
         content = self.content()
         if self.width_limited:
             if self.width < len(content):
@@ -55,12 +56,21 @@ class label(control):
         self._width = max(self._min_width, value)
         self.width_limited = True
 
+    def reload(self):
+        self.width = len(self.content())
+
+    def __repr__(self) -> str:
+        return f"<label {self.content()}>"
+
 
 def fix_text_label(text: str) -> label:
     return label(CGT_fix_text(text))
 
 
 class textbox(control):
+
+    def reload(self):
+        self.width = self.input_count + len(self.cursor_icon)
 
     @property
     def render_width(self) -> int:
@@ -118,7 +128,7 @@ class textbox(control):
     def inputs_count_limited(self, value: bool):
         self._inputs_count_limited = value
 
-    def draw_on(self, buf: buffer):
+    def paint_on(self, buf: buffer):
         bk = CmdBkColor.White if self.is_focused else None
         fg = CmdFgColor.Black if self.is_focused else None
         drawn = self.limited_distext
@@ -336,17 +346,17 @@ class textbox(control):
             self.on_gen_distext(self, [res])
             return displayed[0]
 
-    def append(self, char) -> bool:
+    def append(self, char: chars.char) -> bool:
         if self.locked:
-            return False
+            return Not_Consumed
         if self.inputs_count_limited:
             if self.input_count >= self.max_inputs_count:
-                return False
+                return Not_Consumed
         char = str(char)
         self._input_list.insert(self.cursor, char)
         self.on_append(self, self.cursor, char)
         self.cursor += 1
-        return True
+        return Consumed
 
     def addtext(self, text: str):
         """
@@ -393,9 +403,16 @@ class textbox(control):
     def locked(self) -> bool:
         return self._locked
 
+    def __repr__(self) -> str:
+        return f"<textbox {self.inputs}>"
+
 
 class button(control):
-    def draw_on(self, buf: buffer):
+
+    def reload(self):
+        r = self.limited_distext
+
+    def paint_on(self, buf: buffer):
         bk = CmdBkColor.White if self.is_focused else None
         fg = CmdFgColor.Black if self.is_focused else None
         distext = self.limited_distext if self.width_limited else self.distext
@@ -460,11 +477,11 @@ class button(control):
     def on_input(self, char: chars.char) -> Is_Consumed:
         if keys.k_enter == char:
             self.on_press_func()
-            return True
+            return Consumed
         elif chars.c_esc == char:
             self.on_exit_focus(self)
-            return True
-        return False
+            return Consumed
+        return Not_Consumed
 
     @property
     def margin(self) -> int:
@@ -509,3 +526,27 @@ class button(control):
     @property
     def focusable(self) -> bool:
         return True
+
+    def __repr__(self) -> str:
+        return f"<button {self.content()}>"
+
+
+Alignment = str
+Center = "center"
+AlignLeft = "align_left"
+AlignRight = "align_right"
+AlignTop = "align_top"
+AlignBottom = "align_bottom"
+
+
+class display_board(control):
+
+    def __init__(self, width: int, height: int):
+        super().__init__()
+
+    def paint_on(self, buf: buffer):
+        pass
+
+    @property
+    def focusable(self) -> bool:
+        return False

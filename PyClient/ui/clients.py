@@ -11,19 +11,17 @@ from core.chats import *
 from core.filer import i_filer, filer
 from core.operations import *
 from core.settings import entity as settings
-from events import event
 from net import networks
+from ui.core import iclient
 from ui.k import cmdkey
 from ui.windows import window
 from utils import lock
 
 
-class client:
+class client(iclient):
     def __init__(self):
-        self.container: ioc.container = ioc.container()
-        self._on_service_register = event()
-        self._on_cmd_register = event()
-        self._on_keymapping = event()
+        super().__init__()
+        self._container: ioc.container = ioc.container()
         self._running: bool = False
         self._display_lock: RLock = RLock()
         self._dirty = False
@@ -39,56 +37,23 @@ class client:
     def check_file_permission(self) -> bool:
         return os.access(self.root_path, os.F_OK & os.R_OK & os.W_OK)
 
-    @property
-    def on_service_register(self) -> event:
-        """
-        Para 1:client object
-
-
-        Para 2:container
-
-        :return: event(client,container)
-        """
-        return self._on_service_register
-
-    @property
-    def on_cmd_register(self) -> event:
-        """
-        Para 1:the manager of cmd
-
-        :return: event(client,cmdmanager)
-        """
-        return self._on_cmd_register
-
-    @property
-    def on_keymapping(self) -> event:
-        """
-        Para 1: client object
-
-
-        Para 1: key map
-
-        :return: event(client,cmdkey)
-        """
-        return self._on_keymapping
-
     def init(self) -> None:
         ct = self.container
         ct.register_instance(client, self)
-        ct.register_singleton(output.i_logger, output.cmd_logger)
-        ct.register_singleton(output.i_display, output.cmd_display)
-        ct.register_instance(i_network, networks.network(self))
+        ct.register_singleton(output.ilogger, output.cmd_logger)
+        ct.register_singleton(output.idisplay, output.cmd_display)
+        ct.register_instance(inetwork, networks.network(self))
         ct.register_singleton(cmdmanager, cmdmanager)
-        ct.register_singleton(i_msgmager, msgmager)
+        ct.register_singleton(imsgmager, msgmager)
         ct.register_singleton(i_msgfiler, msgfiler)
         ct.register_singleton(i_filer, filer)
 
         # services register event
         self.on_service_register(self, ct)
 
-        self.network: networks.network = ct.resolve(networks.i_network)
+        self._network: networks.network = ct.resolve(networks.inetwork)
         self.inpt: _input.i_input = ct.resolve(_input.i_input)
-        self.logger: output.i_logger = ct.resolve(output.i_logger)
+        self._logger: output.ilogger = ct.resolve(output.ilogger)
         self.logger.output_to_cmd = False
 
         if not self.check_file_permission():
@@ -96,10 +61,10 @@ class client:
 
         self.filer: i_filer = ct.resolve(i_filer)
         self.filer.root_path = self.root_path
-        self.display: output.i_display = ct.resolve(output.i_display)
+        self._displayer: output.idisplay = ct.resolve(output.idisplay)
         self.cmd_manger: cmdmanager = ct.resolve(cmdmanager)
         self.logger.msg("[Client]Service component initialized.")
-        self.msg_manager: i_msgmager = ct.resolve(i_msgmager)
+        self._msg_manager: imsgmager = ct.resolve(imsgmager)
 
         if GLOBAL.DEBUG:
             def on_msg_pre_analyzed(network, server_token, source, jobj):
@@ -107,7 +72,7 @@ class client:
 
             self.network.on_msg_pre_analyzed.add(on_msg_pre_analyzed)
 
-        self.win = window(self, self.display)
+        self._win = window(self)
         self._init_channels()
         self.on_cmd_register(self, self.cmd_manger)
 
@@ -236,3 +201,27 @@ class client:
 
     def add_text(self, text: str):
         self.win.add_text(text)
+
+    @property
+    def win(self) -> "window":
+        return self._win
+
+    @property
+    def container(self) -> "container":
+        return self._container
+
+    @property
+    def network(self) -> "inetwork":
+        return self._network
+
+    @property
+    def logger(self) -> "ilogger":
+        return self._logger
+
+    @property
+    def msg_manager(self) -> "imsgmager":
+        return self._msg_manager
+
+    @property
+    def displayer(self) -> "idisplay":
+        return self._displayer

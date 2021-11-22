@@ -92,7 +92,7 @@ class panel(control, ABC):
         return self._on_focused_changed
 
     @abstractmethod
-    def draw_on(self, buf: buffer):
+    def paint_on(self, buf: buffer):
         """
         Draw all content on the buffer
         :param buf:screen buffer
@@ -169,7 +169,7 @@ class panel(control, ABC):
         if self.cur_focused:
             consumed = self.cur_focused.on_input(char)
             if consumed:
-                return True
+                return Consumed
             else:
                 if keys.k_up == char:
                     return self.go_pre_focusable()
@@ -177,13 +177,18 @@ class panel(control, ABC):
                     return self.go_next_focusable()
                 elif chars.c_esc == char:
                     self.on_exit_focus(self)
-                    return True
-                return False
+                    return Consumed
+                return Not_Consumed
         else:
-            return False
+            return Not_Consumed
 
     def switch_to_first_or_default_item(self):
         pass
+
+    def reload(self):
+        for c in self.elements:
+            c.reload()
+        self.cache_layout()
 
 
 Orientation = str
@@ -232,7 +237,7 @@ class stack(panel):
         self._r_width = w + self.left_margin
         self._r_height = h + self.top_margin
 
-    def draw_on(self, buf: buffer):
+    def paint_on(self, buf: buffer):
         if self._layout_changed:
             self.cache_layout()
 
@@ -249,7 +254,7 @@ class stack(panel):
                 if self.left_margin > 0:
                     buf.addtext(utils.repeat(" ", self.left_margin), end="")
                 elemt: control
-                elemt.draw_on(buf)
+                elemt.paint_on(buf)
                 interval = utils.repeat("\n", self._r_elemt_interval)
                 buf.addtext(text=interval)
         else:
@@ -265,7 +270,7 @@ class stack(panel):
                 if self.left_margin > 0:
                     buf.addtext(utils.repeat(" ", self.left_margin), end="")
                 elemt: control
-                elemt.draw_on(buf)
+                elemt.paint_on(buf)
                 interval = utils.repeat(" ", self._r_elemt_interval)
                 buf.addtext(text=interval, end="")
         if not self.in_container:
@@ -484,7 +489,7 @@ class grid(panel):
         self._units: Units = utils.gen_2d_arrayX(
             self.rowlen, self.columnlen, lambda i, j: _unit(self.rows[i], self.columns[j]))
 
-    def draw_on(self, buf: buffer):
+    def paint_on(self, buf: buffer):
         if self._layout_changed:
             self.cache_layout()
         if self.top_margin > 0:
@@ -495,7 +500,7 @@ class grid(panel):
             for j in range(self.columnlen):
                 c = self._grid[i][j]
                 if c:
-                    c.draw_on(buf)
+                    c.paint_on(buf)
                     w = c.render_width
                     rest = self.columns[j].width - w
                     if rest > 0:
@@ -521,7 +526,7 @@ class grid(panel):
             for j, column in enumerate(self.columns):
                 try:
                     max_width = max(c.render_width for c in self.column_items(j) if c)
-                except:
+                except Exception as e:
                     max_width = column.width
                 column.width = max_width
                 w += max_width

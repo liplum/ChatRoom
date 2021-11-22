@@ -6,11 +6,11 @@ from typing import Optional, List, NoReturn
 import chars
 from ui.clients import client
 from ui.inputs import i_nbinput
-from ui.outputs import i_display, CmdFgColor, CmdBkColor, i_logger, buffer
+from ui.outputs import idisplay, CmdFgColor, CmdBkColor, ilogger, buffer
 from utils import lock
 
 
-class nbdispaly(i_display):
+class nbdispaly(idisplay):
 
     def gen_buffer(self) -> buffer:
         pass
@@ -41,7 +41,7 @@ class nbinput(i_nbinput):
 
     def init(self, container):
         self.client: client = container.resolve(client)
-        self.logger: i_logger = container.resolve(i_logger)
+        self.logger: ilogger = container.resolve(ilogger)
 
     def _listen_input(self):
         try:

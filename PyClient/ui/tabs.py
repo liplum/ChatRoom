@@ -1,72 +1,15 @@
-from abc import ABC, abstractmethod
 from io import StringIO
-from typing import List, Optional, Type, Iterable, Union, TypeVar, Dict
+from typing import List, Optional, Iterable, Dict
 
-import chars
-from events import event
-from ui.notice import notified
+from ui.core import *
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
 
-T = TypeVar('T')
-Is_Consumed = bool
 
-
-class tab(notified, ABC):
-    def __init__(self, client: "client", tablist: "tablist"):
-        super().__init__()
-        self.tablist = tablist
-        self.client = client
-
-    def on_input(self, char: chars.char) -> Is_Consumed:
-        return False
-
-    def draw_on(self, buf: buffer):
-        pass
-
-    @classmethod
-    def deserialize(cls, data: dict, client: "client", tablist: "tablist") -> "tab":
-        pass
-
-    @classmethod
-    def serialize(cls, self: "tab") -> dict:
-        pass
-
-    @classmethod
-    def serializable(cls) -> bool:
-        return False
-
-    @property
-    @abstractmethod
-    def title(self) -> str:
-        pass
-
-    def add_string(self, string: str):
-        pass
-
-    def on_added(self):
-        pass
-
-    def on_removed(self):
-        pass
-
-    def on_focused(self):
-        pass
-
-    def on_lost_focus(self):
-        pass
-
-    def __hash__(self) -> int:
-        return id(self)
-
-    def __eq__(self, other):
-        return id(self) == id(other)
-
-
-class tablist(notified):
+class tablist(notifiable):
     def __init__(self):
         super().__init__()
-        self.tabs: List[tab] = []
-        self._cur: Optional[tab] = None
+        self.tabs: List["tab"] = []
+        self._cur: Optional["tab"] = None
         self.cur_index = 0
         self.view_history = []
         self.max_view_history = 5
@@ -118,11 +61,11 @@ class tablist(notified):
         return len(self.tabs)
 
     @property
-    def cur(self) -> Optional[tab]:
+    def cur(self) -> Optional["tab"]:
         return self._cur
 
     @cur.setter
-    def cur(self, value: Optional[tab]):
+    def cur(self, value: Optional["tab"]):
         changed = self._cur is not value
         if changed:
             if self._cur:
@@ -251,6 +194,60 @@ class tablist(notified):
                         separator.write("┴")
             buf.addtext()
             buf.addtext(separator.getvalue())
+
+    def __iter__(self):
+        return iter(self.tabs)
+
+
+class tab(notifiable, inputable, reloadable, ABC):
+    def __init__(self, client: iclient, tablist: tablist):
+        super().__init__()
+        self.tablist: tablist = tablist
+        self.client: iclient = client
+
+    def on_input(self, char: chars.char) -> Is_Consumed:
+        return Not_Consumed
+
+    def paint_on(self, buf: buffer):
+        pass
+
+    @classmethod
+    def deserialize(cls, data: dict, client: iclient, tablist: tablist) -> "tab":
+        pass
+
+    @classmethod
+    def serialize(cls, self: "tab") -> dict:
+        pass
+
+    @classmethod
+    def serializable(cls) -> bool:
+        return False
+
+    @property
+    @abstractmethod
+    def title(self) -> str:
+        pass
+
+    def add_string(self, string: str):
+        pass
+
+    def on_added(self):
+        pass
+
+    def on_removed(self):
+        pass
+
+    def on_focused(self):
+        pass
+
+    def on_lost_focus(self):
+        pass
+
+    def __hash__(self) -> int:
+        return id(self)
+
+    def __eq__(self, other):
+        return id(self) == id(other)
 
 
 tab_name2type: Dict[str, Type[tab]] = {}

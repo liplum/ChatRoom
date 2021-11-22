@@ -1,8 +1,5 @@
 from typing import Callable, Optional, Union, TypeVar
 
-import chars
-from ui.outputs import buffer
-
 STATE = TypeVar('STATE')
 
 
@@ -49,30 +46,3 @@ class smachine:
 
     def back(self):
         self.enter(self.pre)
-
-
-class ui_state(state):
-    textbox: "textbox"
-    client: "client"
-    tablist: "tablist"
-    sm: "ui_smachine"
-
-    def __init__(self):
-        super().__init__()
-
-    def draw_on(self, buf: buffer):
-        pass
-
-    def on_input(self, char: chars.char):
-        pass
-
-
-class ui_smachine(smachine):
-
-    def draw_on(self, buf: buffer):
-        if self.cur is not None:
-            self.cur.draw_on(buf)
-
-    def on_input(self, char: chars.char):
-        if self.cur is not None:
-            return self.cur.on_input(char)
