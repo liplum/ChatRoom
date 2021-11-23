@@ -15,6 +15,7 @@ public class RegisterRequestMsgHandler : IMessageHandler<RegisterRequestMsg>
         }
         var server = context.Server;
         var userService = server.ServiceProvider.Reslove<IUserService>();
+        var logger = server.ServiceProvider.Reslove<ILogger>();
         var account = msg.Account;
         var password = msg.Password;
         RegisterResultMsg reply;
@@ -49,6 +50,15 @@ public class RegisterRequestMsgHandler : IMessageHandler<RegisterRequestMsg>
                     }
                 }
             }
+        }
+        switch (reply.Result)
+        {
+            case RegisterResult.Failed:
+                logger.SendTip($"[User][Register]User \"{account}\"'s register failed.");
+                break;
+            case RegisterResult.Succeed:
+                logger.SendTip($"[User][Register]User \"{account}\" successfully registered.");
+                break;
         }
         context.Channel.SendMessage(token, reply);
     }

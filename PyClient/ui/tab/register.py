@@ -11,7 +11,7 @@ class register_tab(tab):
         super().__init__(client, tablist)
         self.win = self.client.win
         self.last_tab: Optional[tab] = None
-        self.network: i_network = self.client.network
+        self.network: "inetwork" = self.client.network
         grid = gen_grid(5, [column(auto), column(15)])
         excepted_chars = {keys.k_enter, chars.c_tab_key}
         self.t_ip = xtextbox(excepted_chars=excepted_chars)
@@ -89,7 +89,7 @@ class register_tab(tab):
         account = self.t_account.inputs.strip()
         password = self.t_password.inputs.strip()
         password_again = self.t_password_again.inputs.strip()
-        if account == "" or password == "" or password_again:
+        if account == "" or password == "" or password_again == "":
             return
         if password != password_again:
             return
