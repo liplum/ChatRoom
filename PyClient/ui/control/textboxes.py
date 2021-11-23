@@ -102,8 +102,9 @@ class textbox(control):
         fg = CmdFgColor.Black if self.is_focused else None
         drawn = self.limited_distext
         if self.max_inputs_count != unlimited:
-            drawn = utils.fillto(drawn, self.space_placeholder, self.max_inputs_count)
-        elif len(drawn) < self.width:
+            max_render_width = min(self.max_inputs_count,self.render_width)
+            drawn = utils.fillto(drawn, self.space_placeholder, max_render_width)
+        elif len(drawn) < self.render_width:
             drawn = utils.fillto(drawn, self.space_placeholder, self.width)
         buf.addtext(drawn, end='', fgcolor=fg, bkcolor=bk)
 
@@ -244,7 +245,7 @@ class textbox(control):
     def limited_distext(self):
         if self.width == auto:
             return self.distext
-        w = self.width
+        w = self.render_width
         cursor_pos = self.cursor
         start = cursor_pos - w // 2  # may be negative
         end = cursor_pos + w // 2  # may be over length of all inputs

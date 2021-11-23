@@ -14,3 +14,11 @@ def login(network: inetwork, server: server_token, account: str, password: str):
     msg.account = account
     msg.password = password
     user.send(server, msg)
+
+
+def register(network: inetwork, server: server_token, account: str, password: str):
+    uc = network.get_channel("User")
+    msg = msgs.register_request()
+    msg.account = account
+    msg.password = pwd
+    uc.send(server, msg)

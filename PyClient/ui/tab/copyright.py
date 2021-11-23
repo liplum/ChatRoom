@@ -3,7 +3,8 @@ from ui.panels import stack
 from ui.tab.shared import *
 from ui.tabs import *
 from ui.themes import *
-
+from ui.cmd_modes import common_hotkey
+import keys
 """
 Copyright 2021 Liplum
 Software: ChattingRoom PyClient
@@ -38,8 +39,10 @@ class copyright_tab(tab):
 
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
+        self.win = self.client.win
         self._copyright_texts: List[str] = []
         self.gen_copyright_texts()
+        self.last_tab = None
         main = stack()
         self.main = main
         db = display_board(MCGT(lambda: self._copyright_texts), theme=rounded_rectangle)
@@ -47,7 +50,10 @@ class copyright_tab(tab):
         main.add(db)
 
         def quit_tab():
-            tablist.remove(self)
+            if self.last_tab:
+                tablist.replace(self, self.last_tab)
+            else:
+                tablist.remove(self)
 
         b = i18n_button("controls.ok", quit_tab)
         b.margin = 3
@@ -82,4 +88,11 @@ class copyright_tab(tab):
             if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
                 self._main.switch_to_first_or_default_item()
                 return Consumed
+            else:
+                consumed = not common_hotkey(char,self,self.client,self.tablist,self.win)
+                return consumed
         return Not_Consumed
+
+    def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
+        self.last_tab = last_tab
+        return False

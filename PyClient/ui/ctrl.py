@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Collection
+from typing import Callable, Collection, Dict, Optional
 
 from ui.shared import *
 
@@ -20,6 +20,7 @@ class control(notifiable, painter, inputable, reloadable, ABC):
         self._on_exit_focus = event()
         self._layout_changed = True
         self.on_prop_changed.add(self._on_layout_changed)
+        self._attach_prop: Dict[str, T] = {}
 
     def _on_layout_changed(self, self2, prop_name):
         self.on_content_changed(self)
@@ -155,6 +156,20 @@ class control(notifiable, painter, inputable, reloadable, ABC):
         if self._left_margin != value:
             self._left_margin = value
             self.on_prop_changed(self, "left_margin")
+
+    def prop(self, key: str, value: T) -> "control":
+        self._attach_prop[key] = value
+        return self
+
+    def gprop(self, key: str) -> Optional[T]:
+        if key in self._attach_prop:
+            return self._attach_prop[key]
+        return None
+
+    def delprop(self, key: str) -> "control":
+        if key in self._attach_prop:
+            del self._attach_prop[key]
+        return self
 
 
 class content_getter:

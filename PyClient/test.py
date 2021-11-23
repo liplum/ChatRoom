@@ -42,7 +42,8 @@ def win_test():
     # test_analyze_cmd_args()
     # test_generic()
     # test_traceback()
-    test_gen_2d_array()
+    #test_gen_2d_array()
+    test_i18n_folder()
 
 
 def linux_test():
@@ -57,6 +58,12 @@ if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
+
+def test_i18n_folder():
+    if __name__ == '__main__':
+        import i18n
+        l = i18n.all_languages()
+        print(l)
 
 
 def test_gen_2d_array():

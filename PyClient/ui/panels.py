@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Set, List, Iterator
+from typing import Tuple, Set, List, Iterator
 
 import keys
 import utils
@@ -13,6 +13,8 @@ center = "center"
 
 
 class panel(control, ABC):
+    No_Left_Margin: str = "panel.no_left_margin"
+
     def __init__(self):
         super().__init__()
         self._elements: Set[CTRL] = set()
@@ -55,6 +57,10 @@ class panel(control, ABC):
             elemt.on_exit_focus.remove(self._on_elemt_exit_focus)
             return True
         return False
+
+    def clear(self):
+        for elemt in list(self._elements):
+            self.remove(elemt)
 
     def _on_elemt_content_changed(self, elemt):
         self.on_content_changed(self)
@@ -155,7 +161,7 @@ class panel(control, ABC):
             else:
                 if keys.k_up == char:
                     return self.go_pre_focusable()
-                elif keys.k_down == char or keys.k_enter == char or chars.c_table:
+                elif keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
                     return self.go_next_focusable()
                 elif chars.c_esc == char:
                     self.on_exit_focus(self)
@@ -166,6 +172,9 @@ class panel(control, ABC):
 
     def switch_to_first_or_default_item(self):
         pass
+
+    def switch_to(self, elemt: control):
+        self.cur_focused = elemt
 
     def reload(self):
         self._layout_changed = True
@@ -184,6 +193,8 @@ expend = "expend"
 
 
 class stack(panel):
+    Horizontal_Alignment: str = "stack.horizontal_alignment"
+
     def cache_layout(self):
         for c in self.elements:
             c.cache_layout()
@@ -227,13 +238,21 @@ class stack(panel):
 
         if self.orientation == vertical:
             for item in self._elements_stack:
-                item.left_margin = self.left_margin
+                if item.gprop(panel.No_Left_Margin) is not True:
+                    item.left_margin = self.left_margin
         else:
             for i, e in enumerate(self._elements_stack):
-                if i == 0:
+                if i == 0 and e.gprop(panel.No_Left_Margin) is not True:
                     e.left_margin = self.left_margin
                 else:
                     e.left_margin = 0
+
+    def _get_final_horizontal_alignment(self, elemt: control) -> Alignment:
+        elemt_align = elemt.gprop(stack.Horizontal_Alignment)
+        if elemt_align is not None:
+            return elemt_align
+        else:
+            return self.horizontal_alignment
 
     def paint_on(self, buf: buffer):
         for c in self.elements:
@@ -254,9 +273,10 @@ class stack(panel):
                     break
                 elemt: control
                 if elemt.render_height == 1:
-                    if self.horizontal_alignment == align_left:
+                    halign = self._get_final_horizontal_alignment(elemt)
+                    if halign == align_left:
                         cur_left_margin = 0
-                    elif self.horizontal_alignment == center:
+                    elif halign == center:
                         cur_left_margin = (self.render_width - elemt.render_width) // 2
                     else:  # align right
                         cur_left_margin = self.render_width - elemt.render_width
@@ -311,6 +331,12 @@ class stack(panel):
                 self._cur_focused_index = value
                 self.cur_focused = self._elements_stack[value]
 
+    def switch_to(self, elemt: control):
+        if elemt.focusable:
+            for i, e in enumerate(self.elements):
+                if e == elemt:
+                    self.cur_focused_index = i
+
     @property
     def elemt_interval(self) -> PROP:
         return self._elemt_interval
@@ -364,6 +390,10 @@ class stack(panel):
                 return True
         return False
 
+    def insert(self, index, elemt: control):
+        self._elements_stack.insert(index, elemt)
+        return super().add(elemt)
+
     def add(self, elemt: control):
         self._elements_stack.append(elemt)
         return super().add(elemt)
@@ -380,7 +410,6 @@ class stack(panel):
             if self.cur_focused is None:
                 self.on_exit_focus(self)
                 self._is_selected = False
-            # self.cur_focused_index = None
             return True
         return False
 
@@ -612,6 +641,16 @@ class grid(panel):
                 if c:
                     c.width = self._units[i][j].width
 
+        for e in self.column_items(0):
+            if e and e.gprop(panel.No_Left_Margin) is not True:
+                e.left_margin = self.left_margin
+
+    def switch_to(self, elemt: control):
+        if elemt.focusable:
+            index = self.find(elemt)
+            if index:
+                self.cur_focused_index = index
+
     def row_items(self, row: int):
         for j in range(self.columnlen):
             yield self._grid[row][j]
@@ -705,6 +744,8 @@ class grid(panel):
                 index = self.find(elemt)
             if index:
                 i, j = index
+                if j == 0:
+                    elemt.left_margin = 0
                 self._grid[i][j] = None
                 return True
         return False

@@ -103,7 +103,7 @@ class window(iwindow):
     def update_screen(self):
         utils.clear_screen()
         self.prepare()
-        self.tablist.draw_on(self.screen_buffer)
+        self.tablist.paint_on(self.screen_buffer)
         curtab = self.tablist.cur
         if curtab:
             curtab.paint_on(self.screen_buffer)

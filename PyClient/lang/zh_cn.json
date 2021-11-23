@@ -2,7 +2,8 @@
   "langs": {
     "zh_cn": "简体中文",
     "zh_tw": "繁体中文",
-    "en_us": "美式英语"
+    "en_us": "English(US)",
+    "en_uk": "English"
   },
   "info": {
     "software": {
@@ -85,6 +86,10 @@
     "login": {
       "usage": "login [<IP地址>:<端口>] <账号> <密码>",
       "description": "登录服务器"
+    },
+    "main": {
+      "usage": "main",
+      "description": "打开主菜单"
     }
   },
   "tabs": {
@@ -118,9 +123,22 @@
         "software_name": "名称"
       }
     },
-          "main_menu_tab": {
-        "name": "主菜单"
+    "main_menu_tab": {
+      "name": "主菜单"
+    },
+    "language_tab": {
+      "name": "语言"
+    },
+    "register_tab": {
+      "name": "注册",
+      "labels": {
+        "server_ip": "服务器IP地址",
+        "server_port": "端口号",
+        "account": "账号",
+        "password": "密码",
+        "password_again": "再输入一次"
       }
+    }
   },
   "users": {
     "authentication": {
@@ -146,7 +164,11 @@
     "ok": "确认",
     "cancel": "取消",
     "quit": "退出",
-    "login": "登录"
+    "login": "登录",
+    "info": "信息",
+    "language": "语言",
+    "start": "开始",
+    "register": "注册"
   },
   "outputs": {
     "render": {

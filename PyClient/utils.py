@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from io import StringIO
 from threading import RLock
-from typing import Dict, List, Tuple, Optional, TypeVar, Callable, Any, NoReturn
+from typing import Dict, List, Tuple, Optional, TypeVar, Callable, Any, NoReturn, Collection
 
 system_type = platform.system()
 
@@ -341,6 +341,19 @@ def repeat(repeated: str, times: int) -> str:
         for i in range(times):
             s.write(repeated)
         return s.getvalue()
+
+
+def is_in(item, li: Collection, equals: Optional[Callable[[Any, Any], bool]] = None) -> bool:
+    if equals:
+        for i in li:
+            if equals(item, i) and equals(i, item):
+                return True
+        return False
+    else:
+        for i in li:
+            if item == i and i == item:
+                return True
+        return False
 
 
 def fillto(text: str, repeated: str, max_char_num: int) -> str:

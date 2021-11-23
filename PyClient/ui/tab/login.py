@@ -160,13 +160,11 @@ class login_tab2(tab):
         return i18n.trans("tabs.login_tab.name")
 
 
-# add_tabtype("login_tab", login_tab2)
-
-
 class login_tab(tab):
 
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
+        self.last_tab: Optional[tab] = None
         self.network: i_network = self.client.network
         grid = gen_grid(4, [column(auto), column(15)])
         excepted_chars = {keys.k_enter, chars.c_tab_key}
@@ -190,7 +188,7 @@ class login_tab(tab):
         self.t_account.width = 16
         self.t_password.width = 16
 
-        self.t_ip.max_inputs_count = 15
+        self.t_ip.max_inputs_count = 63
         self.t_port.max_inputs_count = 5
         self.t_account.max_inputs_count = 16
         self.t_password.max_inputs_count = 16
@@ -206,31 +204,29 @@ class login_tab(tab):
         dialog_stack = stack()
         dialog_stack.orientation = horizontal
 
-        def on_ok_pressed():
-            self.login()
-
         def on_cancel_pressed():
-            self.client.stop()
+            if self.last_tab:
+                tablist.replace(self, self.last_tab)
+            else:
+                tablist.remove(self)
 
-        ok = i18n_button("controls.ok", on_ok_pressed)
+        ok = i18n_button("controls.ok", self.login)
         ok.margin = 3
         cancel = i18n_button("controls.cancel", on_cancel_pressed)
         cancel.margin = 3
 
         dialog_stack.add(ok)
         dialog_stack.add(cancel)
+        dialog_stack.elemt_interval = 1
+
         main = stack()
         self.main = main
         self.main.on_content_changed.add(lambda _: self.on_content_changed(self))
         main.add(grid)
         main.add(dialog_stack)
         grid.elemt_interval_w = 7
-        left_margin = 9
-        grid.left_margin = left_margin
-        dialog_stack.left_margin = left_margin
         main.top_margin = 1
-        main.left_margin = 10
-
+        main.left_margin = 7
         main.switch_to_first_or_default_item()
 
     def login(self):
@@ -246,6 +242,10 @@ class login_tab(tab):
             chat.user_info = uentity(token, account)
             self.tablist.replace(self, chat)
             op.login(self.network, token, account, password)
+
+    def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
+        self.last_tab = last_tab
+        return False
 
     @property
     def title(self) -> str:

@@ -3,18 +3,22 @@ from io import StringIO
 from typing import List, Optional, Iterable, Dict
 
 from ui.core import *
-from ui.outputs import buffer, CmdBkColor, CmdFgColor
+from ui.outputs import buffer, CmdBkColor, CmdFgColor,CmdStyle
+from utils import is_in
 
-tab_name2type: Dict[str, Type["tab"]] = {}
-tab_type2name: Dict[Type["tab"], str] = {}
+tab_name2type: Dict[str, type] = {}
+tab_type2name: Dict[type, str] = {}
 
 
-def add_tabtype(name: str, tabtype: Type["tab"]):
+def _add_tabtype(name: str, tabtype: "metatab"):
     tab_name2type[name] = tabtype
     tab_type2name[tabtype] = name
 
 
-class tablist(notifiable):
+Need_Release_Resource = bool
+
+
+class tablist(notifiable, painter):
     def __init__(self):
         super().__init__()
         self.tabs: List["tab"] = []
@@ -26,10 +30,17 @@ class tablist(notifiable):
         self._on_tablist_changed = event()
 
     def unite_like_tabs(self):
-        no_duplicate = dict.fromkeys(self.tabs)
-        self.tabs = list(no_duplicate)
+        no_duplicate = []
+        for t in self.tabs:
+            if not is_in(t, no_duplicate, lambda a, b: a.equals(b)):
+                no_duplicate.append(t)
+
+        self.tabs = no_duplicate
         if self.cur:
-            self.cur_index = self.tabs.index(self._cur)
+            former = self.cur_index
+            self.cur_index = self.tabs.index(self.cur)
+            if self.cur_index != former:
+                self.on_curtab_changed(self, self.cur_index, self.cur)
 
     def it_all_tabs_is(self, tabtype: Type[T]) -> Iterable[T]:
         for t in self.tabs:
@@ -109,10 +120,12 @@ class tablist(notifiable):
                 return
             del self.tabs[pos]
 
-        removed.on_removed()
-        removed.on_content_changed.remove(self.on_subtab_content_changed)
         new_tab.on_added()
+        need_release_resource = new_tab.on_replaced(removed)
         new_tab.on_content_changed.add(self.on_subtab_content_changed)
+        if need_release_resource:
+            removed.on_removed()
+        removed.on_content_changed.remove(self.on_subtab_content_changed)
         self.tabs.insert(pos, new_tab)
 
         self.on_tablist_changed(self, False, removed)
@@ -180,12 +193,16 @@ class tablist(notifiable):
     def back(self):
         self.goto(self.cur_index - 1)
 
+    def clear(self):
+        for t in list(self.tabs):
+            self.remove(t)
+
     def add_view_history(self, number: int):
         self.view_history.append(number)
         if len(self.view_history) > self.max_view_history:
             self.view_history = self.view_history[-self.max_view_history:]
 
-    def draw_on(self, buf: buffer):
+    def paint_on(self, buf: buffer):
         tab_count = len(self.tabs)
         cur = self.cur
         with StringIO() as separator:
@@ -217,7 +234,7 @@ class metatab(ABCMeta):
 
     def __init__(cls, name, bases, dic):
         super().__init__(name, bases, dic)
-        add_tabtype(cls.__qualname__, cls)
+        _add_tabtype(cls.__qualname__, cls)
 
 
 class tab(notifiable, inputable, reloadable, metaclass=metatab):
@@ -258,17 +275,17 @@ class tab(notifiable, inputable, reloadable, metaclass=metatab):
     def on_removed(self):
         pass
 
+    def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
+        return True
+
     def on_focused(self):
         pass
 
     def on_lost_focus(self):
         pass
 
-    def __hash__(self) -> int:
-        return id(self)
-
-    def __eq__(self, other):
-        return id(self) == id(other)
+    def equals(self, tab: "tab"):
+        return id(self) == id(tab)
 
 
 class CannotRestoreTab(Exception):

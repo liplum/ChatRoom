@@ -4,7 +4,6 @@ import ui.tabs as tabs
 from cmd import *
 from core.operations import *
 from core.settings import entity as settings_table
-from net.msgs import register_request
 from net.networks import CannotConnectError
 from ui.cmd_modes import Cmd_Context
 from ui.windows import *
@@ -20,7 +19,7 @@ def add(*args) -> command:
 
 def _goto_tab(context: Cmd_Context, args: [str]):
     if len(args) != 1:
-        raise CmdError(i18n.trans("cmds.goto.usage"))
+        raise WrongUsageError(i18n.trans("cmds.goto.usage"), 0)
     try:
         tab_number = int(args[0])
     except:
@@ -39,7 +38,7 @@ def _register(context: Cmd_Context, args: [str]):
     argslen = len(args)
     network: inetwork = context.network
     if argslen != 2 and argslen != 3:
-        raise CmdError(i18n.trans("cmds.reg.usage"))
+        raise WrongUsageError(i18n.trans("cmds.reg.usage"), 0)
     if argslen == 3:  # first is server
         full_server = args[0:1]
         server = _con(context, full_server)
@@ -52,12 +51,7 @@ def _register(context: Cmd_Context, args: [str]):
             raise WrongUsageError(i18n.trans("cmds.reg.current_tab_is_unconnected"), 0)
         account = args[0]
         pwd = args[1]
-
-    uc = network.get_channel("User")
-    msg = register_request()
-    msg.account = account
-    msg.password = pwd
-    uc.send(server, msg)
+    register(network, server, account, pwd)
 
 
 cmd_register = add("reg", _register)
@@ -248,9 +242,22 @@ def _lang(context: Cmd_Context, args: [str]):
             except i18n.LocfileLoadError as lle:
                 raise WrongUsageError(i18n.trans("cmds.lang.cannot_load_cause", lang=lang, cause=repr(lle.inner)), 0)
         else:
-            raise CmdError(i18n.trans("cmds.lang.usage"))
+            raise WrongUsageError(i18n.trans("cmds.lang.usage"), 0)
     else:
-        raise CmdError(i18n.trans("cmds.lang.usage"))
+        raise WrongUsageError(i18n.trans("cmds.lang.usage"), 0)
 
 
 cmd_lang = add("lang", _lang)
+
+
+def _main(context: Cmd_Context, args: [str]):
+    win: iwindow = context.win
+    argslen = len(args)
+    if argslen != 0:
+        raise WrongUsageError(i18n.trans("cmds.main.usage"), 0)
+    main_menu = win.newtab('main_menu_tab')
+    tablist: tablist = context.tablist
+    tablist.add(main_menu)
+
+
+cmd_main = add("main", _main)

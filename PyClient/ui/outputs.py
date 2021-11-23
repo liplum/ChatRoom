@@ -2,7 +2,7 @@ import os
 import traceback
 from abc import ABC, abstractmethod
 from datetime import datetime
-from enum import IntEnum, unique
+from io import StringIO
 from typing import Optional, NoReturn, List, Tuple
 
 import GLOBAL
@@ -41,27 +41,42 @@ class ilogger:
         pass
 
 
-@unique
-class CmdFgColor(IntEnum):
-    Black = 30
-    Red = 31
-    Green = 32
-    Yellow = 33
-    Blue = 34
-    Violet = 35
-    Cyan = 36
-    White = 37
+CmdFgColorEnum = str
 
 
-class CmdBkColor(IntEnum):
-    Black = 40
-    Red = 41
-    Green = 42
-    Yellow = 43
-    Blue = 44
-    Violet = 45
-    Cyan = 46
-    White = 47
+class CmdFgColor:
+    Black = ';30'
+    Red = ';31'
+    Green = ';32'
+    Yellow = ';33'
+    Blue = ';34'
+    Violet = ';35'
+    Cyan = ';36'
+    White = ';37'
+
+
+CmdBkColorEnum = str
+
+
+class CmdBkColor:
+    Black = ';40'
+    Red = ';41'
+    Green = ';42'
+    Yellow = ';43'
+    Blue = ';44'
+    Violet = ';45'
+    Cyan = ';46'
+    White = ';47'
+
+
+CmdStyleEnum = str
+
+
+class CmdStyle:
+    Default = '0'
+    Bold = '1'
+    Underline = '4'
+    ReverseColor = '7'
 
 
 class AlertLevel:
@@ -71,17 +86,43 @@ class AlertLevel:
     Error = (CmdFgColor.Red, "Error")
 
 
-def tinted_print(text: str, fgcolor: Optional[CmdFgColor] = None, bkcolor: Optional[CmdBkColor] = None,
+def tinted_print(text: str, style: CmdStyleEnum = CmdStyle.Default, fgcolor: Optional[CmdFgColorEnum] = None,
+                 bkcolor: Optional[CmdBkColorEnum] = None,
                  end='\n') -> NoReturn:
-    fg = 0 if fgcolor is None else int(fgcolor)
-    bk = 0 if bkcolor is None else int(bkcolor)
-    print(f"\033[0;{fg};{bk}m{text}\033[0m", end=end)
+    print(tintedtxt(text, style, fgcolor, bkcolor, end), end="")
 
 
-def tintedtxt(text: str, fgcolor: Optional[CmdFgColor] = None, bkcolor: Optional[CmdBkColor] = None, end='\n') -> str:
-    fg = 0 if fgcolor is None else int(fgcolor)
-    bk = 0 if bkcolor is None else int(bkcolor)
-    return f"\033[0;{fg};{bk}m{text}\033[0m{end}"
+def tintedtxt(text: str, style: CmdStyleEnum = CmdStyle.Default, fgcolor: Optional[CmdFgColorEnum] = None,
+              bkcolor: Optional[CmdBkColorEnum] = None,
+              end='\n') -> str:
+    with StringIO() as s:
+        s.write("\033[")
+        s.write(style)
+        if fgcolor:
+            s.write(fgcolor)
+        if bkcolor:
+            s.write(bkcolor)
+        s.write('m')
+        s.write(text)
+        s.write("\033[0m")
+        s.write(end)
+        return s.getvalue()
+
+
+def tintedtxtIO(IO, text: str, style: CmdStyleEnum = CmdStyle.Default, fgcolor: Optional[CmdFgColorEnum] = None,
+                bkcolor: Optional[CmdBkColorEnum] = None,
+                end='\n') -> str:
+    IO.write("\033[")
+    IO.write(style)
+    if fgcolor:
+        IO.write(fgcolor)
+    if bkcolor:
+        IO.write(bkcolor)
+    IO.write('m')
+    IO.write(text)
+    IO.write("\033[0m")
+    IO.write(end)
+    return IO.getvalue()
 
 
 class cmd_logger(ilogger):
@@ -109,7 +150,7 @@ class cmd_logger(ilogger):
     def error(self, text: str) -> NoReturn:
         self.alert_print(text, AlertLevel.Error)
 
-    def alert_print(self, text: str, level: Tuple[CmdFgColor, str]) -> None:
+    def alert_print(self, text: str, level: Tuple[CmdFgColorEnum, str]) -> None:
         color, label = level
         time_stamp = datetime.now().strftime("%Y%m%d-%H:%M:%S")
         if GLOBAL.DEBUG:
@@ -123,8 +164,8 @@ class cmd_logger(ilogger):
 
 
 class buffer:
-    def addtext(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
-                bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
+    def addtext(self, text: str = "", style: CmdStyleEnum = CmdStyle.Default, fgcolor: Optional[CmdFgColorEnum] = None,
+                bkcolor: Optional[CmdBkColorEnum] = None, end: str = '\n') -> NoReturn:
         pass
 
     @property
@@ -159,12 +200,13 @@ class cmd_display(idisplay):
     def init(self, container: "container"):
         self.logger: ilogger = container.resolve(ilogger)
 
-    def text(self, buffer_list, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
-             bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
+    def text(self, buffer_list, text: str = "", style: CmdStyleEnum = CmdStyle.Default,
+             fgcolor: Optional[CmdFgColorEnum] = None,
+             bkcolor: Optional[CmdBkColorEnum] = None, end: str = '\n') -> NoReturn:
         if fgcolor is None and bkcolor is None:
             added_text = f"{text}{end}"
         else:
-            added_text = tintedtxt(text, fgcolor, bkcolor, end)
+            added_text = tintedtxt(text, style, fgcolor, bkcolor, end)
         buffer_list.append(added_text)
 
     def render(self, buf: buffer) -> bool:
@@ -186,9 +228,10 @@ class cmd_display(idisplay):
             self._width = width
             self._height = height
 
-        def addtext(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
-                    bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
-            self.displayer.text(self.render_list, text, end, fgcolor, bkcolor)
+        def addtext(self, text: str = "", style: CmdStyleEnum = CmdStyle.Default,
+                    fgcolor: Optional[CmdFgColorEnum] = None,
+                    bkcolor: Optional[CmdBkColorEnum] = None, end: str = '\n') -> NoReturn:
+            self.displayer.text(self.render_list, text, style, fgcolor, bkcolor, end)
 
         @property
         def width(self):

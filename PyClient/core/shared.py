@@ -41,7 +41,10 @@ class uentity:
 
 
 def to_server_token(full: str) -> Optional[server_token]:
-    server_info = full.split(":")
+    try:
+        server_info = full.split(":")
+    except:
+        return None
     argslen = len(server_info)
     if argslen == 1:
         return server_token(server_info[0], default_port)

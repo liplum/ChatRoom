@@ -1,8 +1,9 @@
 {
   "langs": {
-    "zh_cn": "Simplified Chinese",
-    "zh_tw": "Traditional Chinese",
-    "en_us": "English(US)"
+    "zh_cn": "简体中文",
+    "zh_tw": "繁体中文",
+    "en_us": "English(US)",
+    "en_uk": "English"
   },
   "info": {
     "software": {
@@ -80,11 +81,15 @@
       "para_invalid": {
         "not_number": "The first parameter given is not a expected integer but {0}",
         "over_range": "The number {0} is over range"
-      },
-      "login": {
-        "usage": "login [<server ip>:<port>] <account> <password>",
-        "description": "login a server"
       }
+    },
+    "login": {
+      "usage": "login [<server ip>:<port>] <account> <password>",
+      "description": "login a server"
+    },
+    "main": {
+      "usage": "main",
+      "description": "open main menu"
     }
   },
   "tabs": {
@@ -103,10 +108,10 @@
     "login_tab": {
       "name": "Login",
       "labels": {
-        "server_ip": "server ip",
-        "server_port": "server port",
-        "account": "account",
-        "password": "password"
+        "server_ip": "Server IP",
+        "server_port": "Server Port",
+        "account": "Account",
+        "password": "Password"
       }
     },
     "copyright_tab": {
@@ -118,8 +123,21 @@
         "software_name": "Name"
       }
     },
+    "register_tab": {
+      "name": "Register",
+      "labels": {
+        "server_ip": "Server IP",
+        "server_port": "Server Port",
+        "account": "Account",
+        "password": "Password",
+        "password_again": "Enter again"
+      }
+    },
     "main_menu_tab": {
       "name": "Main Menu"
+    },
+    "language_tab": {
+      "name": "Language"
     }
   },
   "users": {
@@ -146,7 +164,11 @@
     "ok": "OK",
     "cancel": "Cancel",
     "quit": "Quit",
-    "login": "Login"
+    "login": "Login",
+    "info": "Info",
+    "language": "Language",
+    "start": "Start",
+    "register": "Register"
   },
   "outputs": {
     "render": {

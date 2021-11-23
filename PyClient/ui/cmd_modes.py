@@ -31,10 +31,13 @@ def common_hotkey(char: chars.char, tab: tab, client: iclient, tablist: tablist,
     elif chars.c_d == char:
         tablist.next()
     elif chars.c_x == char:
-        tablist.remove_cur()
+        tablist.remove(tab)
     elif chars.c_n == char:
         chat = win.new_chat_tab()
         tablist.add(chat)
+    elif chars.c_m == char:
+        main_menu = win.newtab('main_menu_tab')
+        tablist.add(main_menu)
     else:
         return True
 
@@ -211,6 +214,43 @@ class cmd_mode(ui_state):
             self.cmd_sm.enter(self.hotkey_cmd_mode_type)
 
 
+def _error_style_text(text: str) -> str:
+    return output.tintedtxt(text, style=CmdStyle.Bold,
+                            fgcolor=CmdFgColor.Red, end="")
+
+
+def _tip_style_text(text: str) -> str:
+    return output.tintedtxt(text, fgcolor=CmdFgColor.Green, end="")
+
+
+def _error_style_i18n_text(key: str, *args, **kwargs) -> str:
+    return output.tintedtxt(i18n.trans(key, *args, **kwargs), style=CmdStyle.Bold,
+                            fgcolor=CmdFgColor.Red, end="")
+
+
+def _error_style_textX(IO, text: str) -> str:
+    return output.tintedtxtIO(IO, text, style=CmdStyle.Bold,
+                              fgcolor=CmdFgColor.Red, end="")
+
+
+def _tip_style_textX(IO, text: str) -> str:
+    return output.tintedtxtIO(IO, text, fgcolor=CmdFgColor.Green, end="")
+
+
+def _error_style_i18n_textX(IO, key: str, *args, **kwargs) -> str:
+    return output.tintedtxtIO(IO, i18n.trans(key, *args, **kwargs), style=CmdStyle.Bold,
+                              fgcolor=CmdFgColor.Red, end="")
+
+
+_EST = _error_style_text
+_TST = _tip_style_text
+_EST18 = _error_style_i18n_text
+
+_ESTX = _error_style_textX
+_TSTX = _tip_style_textX
+_EST18X = _error_style_i18n_textX
+
+
 class cmd_long_mode(cmd_state):
     def __init__(self, mode: cmd_mode):
         super().__init__(mode)
@@ -233,35 +273,32 @@ class cmd_long_mode(cmd_state):
             mode.cmd_manager.execute(contxt, cmd_name, args)
         except WrongUsageError as wu:
             with StringIO() as s:
-                s.write(
-                    output.tintedtxt(i18n.trans("modes.command_mode.cmd.wrong_usage"), fgcolor=CmdFgColor.Red, end=""))
+                _EST18X(s,"modes.command_mode.cmd.wrong_usage")
                 s.write(':\n')
                 pos = wu.position
                 is_pos_quoted = is_quoted(pos + 1, quoted_indexes)
-                s.write(gen_cmd_error_text(cmd_name, args, full_cmd, pos, wu.msg, is_pos_quoted))
+                s.write(gen_cmd_error_text(cmd_name, args, full_cmd, pos, _TST(wu.msg), is_pos_quoted))
                 mode.tab.add_string(s.getvalue())
         except CmdNotFound as cnt:
             error_output = gen_cmd_error_text(
                 cmd_name, args, full_cmd, -1,
-                i18n.trans("modes.command_mode.cmd.cannot_find", name=cmd_name))
+                _EST18("modes.command_mode.cmd.cannot_find", name=cmd_name))
             mode.tab.add_string(error_output)
         except CmdError as ce:
             with StringIO() as s:
-                s.write(
-                    output.tintedtxt(i18n.trans("modes.command_mode.cmd.cmd_error"), fgcolor=CmdFgColor.Red, end=""))
+                _EST18X(s,"modes.command_mode.cmd.cmd_error")
                 s.write(':\n')
-                s.write(gen_cmd_error_text(cmd_name, args, full_cmd, -2, ce.msg))
+                s.write(gen_cmd_error_text(cmd_name, args, full_cmd, -2, _TST(ce.msg)))
                 mode.tab.add_string(s.getvalue())
         except Exception as any_e:
             with StringIO() as s:
-                s.write(output.tintedtxt(i18n.trans("modes.command_mode.cmd.unknown_error"), fgcolor=CmdFgColor.Red))
+                _EST18X(s,"modes.command_mode.cmd.unknown_error")
                 s.write(':\n')
                 s.write(gen_cmd_error_text(
                     cmd_name, args, full_cmd, -2,
                     i18n.trans("modes.command_mode.cmd.not_support", name=cmd_name)))
                 mode.tab.add_string(s.getvalue())
-                if GLOBAL.DEBUG:
-                    mode.tab.logger.error(f"{any_e}\n{traceback.format_exc()}")
+                mode.tab.logger.error(f"{any_e}\n{traceback.format_exc()}")
 
         mode.cmd_history.append(full_cmd)
         mode.cmd_history_index = 0
@@ -275,7 +312,8 @@ class cmd_long_mode(cmd_state):
         if keys.k_enter == char:
             self.cmd_long_mode_execute_cmd()
         # auto filling
-        elif chars.c_table == char:
+        elif chars.c_tab_key == char:
+            return Not_Consumed
             # TODO:Complete Autofilling
             if mode.autofilling:  # press tab and already entered auto-filling mode
                 # to next candidate

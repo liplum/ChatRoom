@@ -10,7 +10,7 @@ from ui.tabs import *
 from ui.uistates import ui_state, ui_smachine
 from ui.xtbox import xtextbox
 from utils import get, all_none
-
+from core.shared import *
 
 class chat_tab(tab):
     def __init__(self, client: iclient, tablist: tablist):
@@ -216,8 +216,15 @@ class chat_tab(tab):
     def serialize(cls, self: "chat_tab") -> dict:
         if all_none(self.connected, self.joined, self.user_info):
             raise CannotStoreTab(self)
+        if self.connected:
+            if self.connected.port == default_port:
+                server = self.connected.ip
+            else:
+                server = f"{self.connected.ip}:{self.connected.port}"
+        else:
+            server = None
         d = {
-            "server": f"{self.connected.ip}:{self.connected.port}" if self.connected else None,
+            "server": server,
             "room_id": self.joined if self.joined else None,
             "account": self.user_info.uid if self.user_info else None
         }
@@ -240,13 +247,9 @@ class chat_tab(tab):
         a = f"-{self.user_info.uid}" if self.user_info else ""
         return f"<chat_tab{c}{j}{a}>"
 
-    def __hash__(self):
-        account = self.user_info.uid if self.user_info else None
-        return hash((self.connected, self.joined, account))
-
-    def __eq__(self, other):
-        if isinstance(other, chat_tab):
-            return self.connected == other.connected and self.joined == other.joined and self.user_info == other.user_info
+    def equals(self, tab: "tab")->bool:
+        if isinstance(tab, chat_tab):
+            return self.connected == tab.connected and self.joined == tab.joined and self.user_info == tab.user_info
         else:
             return False
 
