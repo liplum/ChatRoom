@@ -120,7 +120,7 @@ def _join(context: Cmd_Context, args: [str]):
         try:
             room_id = roomid(int(args[1]))
         except:
-            raise WrongUsageError(i18n.trans("cmds.con.para_invalid.room_id", args[1]), 1)
+            raise WrongUsageError(i18n.trans("cmds.join.para_invalid.room_id", args[1]), 1)
         tab: chat_tab = context.tab
         if tab.joined:
             raise CmdError(i18n.trans("cmds.con.already_joined", room_id))
@@ -132,7 +132,7 @@ def _join(context: Cmd_Context, args: [str]):
             raise WrongUsageError(i18n.trans("cmds.con.para_invalid.room_id", args[0]), 1)
         tab: chat_tab = context.tab
         if tab.joined:
-            raise CmdError(i18n.trans("cmds.con.already_joined", room_id))
+            raise CmdError(i18n.trans("cmds.join.already_joined", room_id))
         tab.join(room_id)
     else:
         raise WrongUsageError(i18n.trans("cmds.join.usage"), 0)

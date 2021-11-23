@@ -1,7 +1,7 @@
 import os
 
 
-class i_filer:
+class ifiler:
     def get_dir(self, dir_path: str) -> str:
         """
         Gets or generate a directory from the path.
@@ -27,7 +27,7 @@ class i_filer:
         pass
 
 
-class filer(i_filer):
+class filer(ifiler):
     def __init__(self):
         super().__init__()
         self._root_path = ""

@@ -4,7 +4,7 @@ from threading import RLock
 from typing import Tuple, List, Dict, Optional
 
 import utils
-from core.filer import i_filer
+from core.filer import ifiler
 from core.shared import server_token, userid, roomid, StorageUnit
 from events import event
 from ui.outputs import ilogger
@@ -191,7 +191,7 @@ class imsgmager:
         return event()
 
 
-class i_msgfiler:
+class imsgfiler:
     def save(self, server: server_token, room_id: roomid, storage: msgstorage):
         pass
 
@@ -199,11 +199,11 @@ class i_msgfiler:
         pass
 
 
-class msgfiler(i_msgfiler):
+class msgfiler(imsgfiler):
 
     def init(self, container):
         self.logger: ilogger = container.resolve(ilogger)
-        self.filer: i_filer = container.resolve(i_filer)
+        self.filer: ifiler = container.resolve(ifiler)
 
     def __init__(self):
         pass
@@ -227,7 +227,7 @@ class msgmager(imsgmager):
         self._on_received = event()
 
     def init(self, container):
-        self.filer: i_msgfiler = container.resolve(i_msgfiler)
+        self.filer: imsgfiler = container.resolve(imsgfiler)
         self.logger: ilogger = container.resolve(ilogger)
 
     def get_storage(self, server: server_token, room_id: roomid) -> Optional[msgstorage]:

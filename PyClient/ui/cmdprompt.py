@@ -1,6 +1,6 @@
 from chars import printable
 from keys import *
-from ui.inputs import i_input
+from ui.inputs import iinput
 
 cmd_input_map = {
     "#n": k_enter,
@@ -15,7 +15,7 @@ cmd_input_map = {
 }
 
 
-class cmd_input(i_input):
+class cmd_input(iinput):
     """
     If the on_input event is canceled, it'll abandon all remaining chars in input list
     """

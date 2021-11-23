@@ -71,17 +71,17 @@ from ioc import container
 
 
 def init_plugin(client, registry: container):
-    from ui.inputs import i_input
+    from ui.inputs import iinput
     if system_type == "Windows":
         from ui import nonblocks
-        registry.register_singleton(i_input, nonblocks.nbinput)
+        registry.register_singleton(iinput, nonblocks.nbinput)
     elif system_type == "Linux":
         from ui import linux
-        registry.register_singleton(i_input, linux.nbinput)
+        registry.register_singleton(iinput, linux.nbinput)
 
     if IDE:
         from ui.cmdprompt import cmd_input
-        registry.register_singleton(i_input, cmd_input)
+        registry.register_singleton(iinput, cmd_input)
 
     if GLOBAL.MONITOR:
         from pef.monitor import pef_monitor

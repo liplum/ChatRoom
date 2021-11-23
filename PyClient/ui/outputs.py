@@ -1,4 +1,5 @@
 import os
+import sys
 import traceback
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -7,7 +8,7 @@ from typing import Optional, NoReturn, List, Tuple
 
 import GLOBAL
 import i18n
-from core.filer import i_filer
+from core.filer import ifiler
 
 
 def get_winsize() -> Tuple[int, int]:
@@ -109,11 +110,12 @@ def tintedtxt(text: str, style: CmdStyleEnum = CmdStyle.Default, fgcolor: Option
         return s.getvalue()
 
 
-def tintedtxtIO(IO, text: str, style: CmdStyleEnum = CmdStyle.Default, fgcolor: Optional[CmdFgColorEnum] = None,
+def tintedtxtIO(IO, text: str, style: Optional[CmdStyleEnum] = None, fgcolor: Optional[CmdFgColorEnum] = None,
                 bkcolor: Optional[CmdBkColorEnum] = None,
                 end='\n') -> str:
     IO.write("\033[")
-    IO.write(style)
+    if style:
+        IO.write(style)
     if fgcolor:
         IO.write(fgcolor)
     if bkcolor:
@@ -132,7 +134,7 @@ class cmd_logger(ilogger):
         self.output_to_cmd = output_to_cmd
 
     def init(self, container):
-        self.filer = container.resolve(i_filer)
+        self.filer = container.resolve(ifiler)
 
     @property
     def logfile(self):
@@ -200,7 +202,8 @@ class cmd_display(idisplay):
     def init(self, container: "container"):
         self.logger: ilogger = container.resolve(ilogger)
 
-    def text(self, buffer_list, text: str = "", style: CmdStyleEnum = CmdStyle.Default,
+    @staticmethod
+    def text(buffer_list, text: str = "", style: CmdStyleEnum = CmdStyle.Default,
              fgcolor: Optional[CmdFgColorEnum] = None,
              bkcolor: Optional[CmdBkColorEnum] = None, end: str = '\n') -> NoReturn:
         if fgcolor is None and bkcolor is None:
@@ -208,6 +211,7 @@ class cmd_display(idisplay):
         else:
             added_text = tintedtxt(text, style, fgcolor, bkcolor, end)
         buffer_list.append(added_text)
+        return None
 
     def render(self, buf: buffer) -> bool:
         if isinstance(buf, cmd_display.cmd_buffer):
@@ -244,3 +248,46 @@ class cmd_display(idisplay):
     def gen_buffer(self) -> buffer:
         size = get_winsize()
         return cmd_display.cmd_buffer(self, size[0], size[1])
+
+
+class full_cmd_display(idisplay):
+    class buf(buffer):
+        def __init__(self, width: int, height: int):
+            super().__init__()
+            self.buffer = StringIO()
+            self._width = width
+            self._height = height
+
+        def addtext(self, text: str = "", style: Optional[CmdStyleEnum] = None,
+                    fgcolor: Optional[CmdFgColorEnum] = None,
+                    bkcolor: Optional[CmdBkColorEnum] = None, end: str = '\n') -> NoReturn:
+            buffer = self.buffer
+            if bkcolor is None and fgcolor is None and style is None:
+                buffer.write(text)
+                buffer.write(end)
+            else:
+                tintedtxtIO(buffer, text, style, fgcolor, bkcolor, end)
+
+        @property
+        def width(self):
+            return self, _width
+
+        @property
+        def height(self):
+            return self._height
+
+    def gen_buffer(self) -> buffer:
+        size = get_winsize()
+        return full_cmd_display.buf(size[0], size[1])
+
+    def render(self, buf: buffer) -> bool:
+        if isinstance(buf, full_cmd_display.buf):
+            try:
+                sys.stdout.write(buf.buffer.getvalue())
+            except:
+                print(i18n.trans("outputs.render.print_error"))
+                self.logger.error(f"[Output]Cannot print the text because \n{traceback.format_exc()}")
+            finally:
+                buf.buffer.close()
+            return True
+        return False

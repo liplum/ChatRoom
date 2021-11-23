@@ -86,7 +86,7 @@ class copyright_tab(tab):
         consumed = self.main.on_input(char)
         if not consumed:
             if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
-                self._main.switch_to_first_or_default_item()
+                self.main.switch_to_first_or_default_item()
                 return Consumed
             else:
                 consumed = not common_hotkey(char,self,self.client,self.tablist,self.win)

@@ -8,7 +8,7 @@ import ui.inputs as _input
 import ui.outputs as output
 from cmd import cmdmanager
 from core.chats import *
-from core.filer import i_filer, filer
+from core.filer import ifiler, filer
 from core.operations import *
 from core.settings import entity as settings
 from net import networks
@@ -41,25 +41,25 @@ class client(iclient):
         ct = self.container
         ct.register_instance(client, self)
         ct.register_singleton(output.ilogger, output.cmd_logger)
-        ct.register_singleton(output.idisplay, output.cmd_display)
+        ct.register_singleton(output.idisplay, output.full_cmd_display)
         ct.register_instance(inetwork, networks.network(self))
         ct.register_singleton(cmdmanager, cmdmanager)
         ct.register_singleton(imsgmager, msgmager)
-        ct.register_singleton(i_msgfiler, msgfiler)
-        ct.register_singleton(i_filer, filer)
+        ct.register_singleton(imsgfiler, msgfiler)
+        ct.register_singleton(ifiler, filer)
 
         # services register event
         self.on_service_register(self, ct)
 
         self._network: networks.network = ct.resolve(networks.inetwork)
-        self.inpt: _input.i_input = ct.resolve(_input.i_input)
+        self.inpt: _input.iinput = ct.resolve(_input.iinput)
         self._logger: output.ilogger = ct.resolve(output.ilogger)
         self.logger.output_to_cmd = False
 
         if not self.check_file_permission():
             self.root_path = ""
 
-        self.filer: i_filer = ct.resolve(i_filer)
+        self.filer: ifiler = ct.resolve(ifiler)
         self.filer.root_path = self.root_path
         self._displayer: output.idisplay = ct.resolve(output.idisplay)
         self.cmd_manger: cmdmanager = ct.resolve(cmdmanager)

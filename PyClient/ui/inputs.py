@@ -4,7 +4,7 @@ from chars import *
 from events import event
 
 
-class i_input:
+class iinput:
     def __init__(self):
         self._input_list: List[char] = []
         self._on_input = event(cancelable=True)
@@ -47,5 +47,5 @@ class i_input:
         pass
 
 
-class i_nbinput(i_input):
+class inbinput(iinput):
     pass

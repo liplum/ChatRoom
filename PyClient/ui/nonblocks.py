@@ -5,7 +5,7 @@ from typing import Optional, List, NoReturn
 
 import chars
 from ui.clients import client
-from ui.inputs import i_nbinput
+from ui.inputs import inbinput
 from ui.outputs import idisplay, CmdFgColor, CmdBkColor, ilogger, buffer
 from utils import lock
 
@@ -23,7 +23,7 @@ class nbdispaly(idisplay):
         msvcrt.putwch(text + end)
 
 
-class nbinput(i_nbinput):
+class nbinput(inbinput):
     """
     non-blocking input on windows
     """

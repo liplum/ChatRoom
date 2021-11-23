@@ -2,7 +2,7 @@ import keys
 import utils
 from core.chats import imsgmager
 from core.settings import entity as settings
-from core.shared import server_token, roomid, uentity, to_server_token, userid
+from core.shared import *
 from ui.cmd_modes import cmd_mode, cmd_hotkey_mode
 from ui.k import kbinding
 from ui.tab.shared import *
@@ -10,7 +10,7 @@ from ui.tabs import *
 from ui.uistates import ui_state, ui_smachine
 from ui.xtbox import xtextbox
 from utils import get, all_none
-from core.shared import *
+
 
 class chat_tab(tab):
     def __init__(self, client: iclient, tablist: tablist):
@@ -48,7 +48,7 @@ class chat_tab(tab):
 
         self.sm = ui_smachine(state_pre=set_chat_tab, stype_pre=gen_state, allow_repeated_entry=False)
         self.sm.enter(cmd_mode)
-        self.textbox.on_content_changed.add(lambda _: client.mark_dirty())
+        self.textbox.on_content_changed.add(lambda _: self.on_content_changed(self))
 
     @property
     def unread_msg_number(self) -> int:
@@ -77,23 +77,30 @@ class chat_tab(tab):
         return self._joined
 
     def join(self, value):
-        self._joined = value
-        self.client.mark_dirty()
+        if self._joined != value:
+            self._joined = value
+            self.on_content_changed(self)
+            self.first_load()
 
     @property
     def connected(self) -> Optional[server_token]:
         return self._connected
 
     def connect(self, server_token):
-        if not self.network.is_connected(server_token):
-            try:
-                self.network.connect(server_token, strict=True)
-            except:
-                self.logger.error(f"[Tab][{self}]Cannot connect the server {server_token}")
-                return
-        self._connected = server_token
-        self.client.mark_dirty()
+        if self.connected != server_token:
+            if not self.network.is_connected(server_token):
+                try:
+                    self.network.connect(server_token, strict=True)
+                except:
+                    self.logger.error(f"[Tab][{self}]Cannot connect the server {server_token}")
+                    return
+            self._connected = server_token
+            self.on_content_changed(self)
         # self.logger.error(f"[Tab][{self}]Cannot access a unconnected/disconnected server.")
+
+    def notify_authenticated(self):
+        self.first_load()
+        self.on_content_changed(self)
 
     @property
     def user_info(self) -> Optional[uentity]:
@@ -101,8 +108,9 @@ class chat_tab(tab):
 
     @user_info.setter
     def user_info(self, value: Optional[uentity]):
-        self._user_info = value
-        self.client.mark_dirty()
+        if self.user_info != value:
+            self._user_info = value
+            self.on_content_changed(self)
 
     @property
     def authenticated(self) -> bool:
@@ -114,12 +122,12 @@ class chat_tab(tab):
         self.history.append(f"{time.strftime(date_format)}\n  {uid}:  {text}")
 
     def first_load(self):
+        self.first_loaded = True
         self.history = []
         if self.connected and self.joined:
             li = self.msg_manager.load_until_today(self.connected, self.joined, self.max_display_line)
             for time, uid, text in li:
                 self._add_msg(time, uid, text)
-        self.first_loaded = True
 
     def paint_on(self, buf: buffer):
         if not self.first_loaded:
@@ -247,7 +255,7 @@ class chat_tab(tab):
         a = f"-{self.user_info.uid}" if self.user_info else ""
         return f"<chat_tab{c}{j}{a}>"
 
-    def equals(self, tab: "tab")->bool:
+    def equals(self, tab: "tab") -> bool:
         if isinstance(tab, chat_tab):
             return self.connected == tab.connected and self.joined == tab.joined and self.user_info == tab.user_info
         else:

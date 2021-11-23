@@ -7,11 +7,11 @@ from typing import List
 from select import select
 
 from linuxchars import *
-from ui.inputs import i_nbinput
+from ui.inputs import inbinput
 from utils import lock
 
 
-class nbinput(i_nbinput):
+class nbinput(inbinput):
     """
     non-blocking input on linux
     """
