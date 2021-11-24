@@ -9,7 +9,7 @@ def connect(network: inetwork, server: server_token, strict: bool = False):
 
 
 def login(network: inetwork, server: server_token, account: str, password: str):
-    connect(network,server)
+    connect(network, server)
     user = network.get_channel("User")
     msg = msgs.authentication_req()
     msg.account = account
@@ -18,7 +18,7 @@ def login(network: inetwork, server: server_token, account: str, password: str):
 
 
 def register(network: inetwork, server: server_token, account: str, password: str):
-    connect(network,server)
+    connect(network, server)
     uc = network.get_channel("User")
     msg = msgs.register_request()
     msg.account = account

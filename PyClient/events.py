@@ -1,12 +1,16 @@
 from typing import Iterable
 
+Is_Canceled = bool
+Canceled = True
+Not_Canceled = False
+
 
 class event:
     def __init__(self, cancelable=False):
         self.subscribers = []
         self.cancelable = cancelable
 
-    def __call__(self, sender, *args, **kwargs):
+    def __call__(self, sender, *args, **kwargs) -> Is_Canceled:
         """
         Raise the event
         :param sender: first para must be the sender
@@ -27,7 +31,7 @@ class event:
         self.subscribers.clear()
         return self
 
-    def invoke(self, sender, *args, **kwargs):
+    def invoke(self, sender, *args, **kwargs) -> Is_Canceled:
         """
         Raise the event
         :param sender: first para must be the sender
@@ -37,11 +41,11 @@ class event:
             for subscriber in self.subscribers:
                 canceled = subscriber(sender, *args, **kwargs)
                 if canceled:
-                    return True
+                    return Canceled
         else:
             for subscriber in self.subscribers:
                 subscriber(sender, *args, **kwargs)
-            return False
+        return Not_Canceled
 
     def __iadd__(self, other):
         if isinstance(other, Iterable):

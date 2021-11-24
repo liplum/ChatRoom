@@ -1,10 +1,10 @@
 import json
+import socket as s
 import traceback
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from functools import wraps
 from socket import socket, AF_INET, SOCK_STREAM
-import socket as s
 from threading import Thread, RLock
 from typing import Dict, Tuple, Callable, List
 
@@ -208,7 +208,7 @@ class network(inetwork):
             try:
                 self.logger.msg(f"[Network]Trying to connect {server} [{i + 1}]...")
                 ip = s.gethostbyname(server.ip)
-                token = ip,server.port
+                token = ip, server.port
                 skt.connect(token)
                 succeed = True
                 break

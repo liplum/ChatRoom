@@ -6,19 +6,24 @@ from ui.outputs import buffer
 from ui.themes import theme, vanilla
 
 
-class display_board(control):
+# TODO:Complete This
+class textblock(control):
     """
-    ┌────────┐
-    │  Text  │
-    └────────┘
+    ┌────────────────────────────────┐
+    │Beautiful is better than ugly.  │
+    │Explicit is better than         │
+    │implicit.Simple is better than  │
+    │complex.Complex is better than  │
+    │complicated...                  │
+    └────────────────────────────────┘
     """
 
-    def __init__(self, contents: ContentsGetter, theme: theme = vanilla):
+    def __init__(self, content: ContentGetter, theme: theme = vanilla):
         super().__init__()
-        if isinstance(contents, Collection):
-            self.contents = lambda: contents
+        if isinstance(content, str):
+            self.content = lambda: content
         else:
-            self.contents = contents
+            self.content = content
         self.theme = theme
         self._width = auto
         self._height = auto

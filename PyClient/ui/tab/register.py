@@ -1,9 +1,10 @@
 from core import operations as op
-from core.shared import to_server_token
+from ui.cmd_modes import common_hotkey
 from ui.panels import *
 from ui.tab.shared import *
 from ui.tabs import *
 from ui.xtbox import xtextbox
+from utils import get
 
 
 class register_tab(tab):
@@ -15,7 +16,7 @@ class register_tab(tab):
         grid = gen_grid(5, [column(auto), column(15)])
         excepted_chars = {keys.k_enter, chars.c_tab_key}
         self.t_ip = xtextbox(excepted_chars=excepted_chars)
-        self.t_port = xtextbox(excepted_chars=excepted_chars)
+        self.t_port = xtextbox(only_allowed_chars=number_keys)
         self.t_account = xtextbox(excepted_chars=excepted_chars)
         self.t_password = xtextbox(excepted_chars=excepted_chars)
         self.t_password_again = xtextbox(excepted_chars=excepted_chars)
@@ -96,7 +97,7 @@ class register_tab(tab):
         ip = self.t_ip.inputs.strip()
         port = self.t_port.inputs.strip()
         full = f"{ip}:{port}" if port != "" else ip
-        token = to_server_token(full)
+        token = server_token.by(full)
         if token:
             if self.last_tab:
                 self.tablist.replace(self, self.last_tab)
@@ -117,6 +118,9 @@ class register_tab(tab):
             if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
                 self.main.switch_to_first_or_default_item()
                 return Consumed
+            else:
+                consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
+                return consumed
         return Not_Consumed
 
     def paint_on(self, buf: buffer):
@@ -124,3 +128,47 @@ class register_tab(tab):
 
     def reload(self):
         self.main.reload()
+
+    @classmethod
+    def serialize(cls, self: "register_tab") -> dict:
+        ip = self.t_ip.inputs.strip()
+        port = self.t_port.inputs.strip()
+        account = self.t_account.inputs.strip()
+        password = self.t_password.inputs.strip()
+        password_again = self.t_password_again.inputs.strip()
+        if ip == "" and port == "" and account == "" and password == "" and password_again == "":
+            raise CannotStoreTab(self)
+        d = {
+            "ip": ip,
+            "port": port,
+            "account": account,
+            "password": password,
+            "password_again": password_again
+        }
+        return d
+
+    @classmethod
+    def deserialize(cls, data: dict, client: "client", tablist: "tablist") -> "tab":
+        ip = get(data, "ip")
+        port = get(data, "port")
+        account = get(data, "account")
+        password = get(data, "password")
+        password_again = get(data, "password_again")
+        if ip == "" and port == "" and account == "" and password == "" and password_again == "":
+            raise CannotRestoreTab(self)
+        t = register_tab(client, tablist)
+        t.t_ip.input_list = ip
+        t.t_port.input_list = port
+        t.t_account.input_list = account
+        t.t_password.input_list = password
+        t.t_password_again.input_list = password
+        t.t_ip.end()
+        t.t_port.end()
+        t.t_account.end()
+        t.t_password.end()
+        t.t_password_again.end()
+        return t
+
+    @classmethod
+    def serializable(cls) -> bool:
+        return True

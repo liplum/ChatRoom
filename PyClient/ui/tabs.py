@@ -3,7 +3,7 @@ from io import StringIO
 from typing import List, Optional, Iterable, Dict
 
 from ui.core import *
-from ui.outputs import buffer, CmdBkColor, CmdFgColor,CmdStyle
+from ui.outputs import buffer, CmdBkColor, CmdFgColor
 from utils import is_in
 
 tab_name2type: Dict[str, type] = {}
@@ -242,6 +242,7 @@ class tab(notifiable, inputable, reloadable, metaclass=metatab):
         super().__init__()
         self.tablist: tablist = tablist
         self.client: iclient = client
+        self._is_focused = False
 
     def on_input(self, char: chars.char) -> Is_Consumed:
         return Not_Consumed
@@ -279,10 +280,14 @@ class tab(notifiable, inputable, reloadable, metaclass=metatab):
         return True
 
     def on_focused(self):
-        pass
+        self._is_focused = True
 
     def on_lost_focus(self):
-        pass
+        self._is_focused = False
+
+    @property
+    def is_focused(self) -> bool:
+        return self._is_focused
 
     def equals(self, tab: "tab"):
         return id(self) == id(tab)

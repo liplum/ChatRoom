@@ -29,7 +29,7 @@ date_format = add("DateFormat", "%Y-%m-%d %H:%M:%S")
 
 auto_connection = addx("AutoConnection", [])
 
-auto_login = addx("AutoLogin", {})
+auto_login = addx("AutoLogin", [])
 
 last_opened_tabs = addx("LastOpenedTabs", {})
 

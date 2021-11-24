@@ -12,7 +12,7 @@ align_right = "align_right"
 center = "center"
 
 
-class panel(control, ABC):
+class panel(control):
     No_Left_Margin: str = "panel.no_left_margin"
 
     def __init__(self):
@@ -147,9 +147,11 @@ class panel(control, ABC):
     def elemts_total_height(self):
         return sum(elemt.render_height for elemt in self.elements)
 
+    @abstractmethod
     def go_next_focusable(self) -> bool:
         return False
 
+    @abstractmethod
     def go_pre_focusable(self) -> bool:
         return False
 
@@ -170,6 +172,7 @@ class panel(control, ABC):
         else:
             return Not_Consumed
 
+    @abstractmethod
     def switch_to_first_or_default_item(self):
         pass
 

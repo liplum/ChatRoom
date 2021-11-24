@@ -1,3 +1,4 @@
+from ui.cmd_modes import common_hotkey
 from ui.control.display_boards import display_board
 from ui.panels import *
 from ui.tab.copyright import copyright_tab
@@ -7,7 +8,7 @@ from ui.tab.register import register_tab
 from ui.tab.shared import *
 from ui.tabs import *
 from ui.themes import *
-from ui.cmd_modes import common_hotkey
+
 
 class main_menu_tab(tab):
 
@@ -111,7 +112,7 @@ class main_menu_tab(tab):
                 self.main.switch_to_first_or_default_item()
                 return Consumed
             else:
-                consumed = not common_hotkey(char,self,self.client,self.tablist,self.win)
+                consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
                 return consumed
         return Not_Consumed
 

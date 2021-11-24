@@ -1,5 +1,5 @@
 import i18n
-import ui.tab.chat
+import ui.tab.chat as chat
 import ui.windows as ws
 from core.shared import *
 from net.networks import msg, Context
@@ -43,12 +43,17 @@ class authentication_result(msg):
         win: ws.window = client.win
         if self.OK:
             tablist = win.tablist
-            tab = ui.tab.chat.find_best_incomplete_chat_tab(tablist, token, self.account)
+            tab = chat.find_best_incomplete_chat_tab(tablist, token, self.account)
             if tab:
                 if tab.user_info is None:
-                    tab.user_info = uentity(token, self.account)
-                info = tab.user_info
+                    info = uentity(token, self.account)
+                    tab.user_info = info
+                else:
+                    info = tab.user_info
+                if tab.connected is None:
+                    tab.connect(token)
                 info.vcode = self.vcode
+                tab.notify_authenticated()
             else:
                 tab = win.new_chat_tab()
                 # TODO:Change this
@@ -56,6 +61,7 @@ class authentication_result(msg):
                 tab.connect(token)
                 tab.user_info = uentity(token, self.account, self.vcode)
                 win.tablist.add(tab)
+                tab.notify_authenticated()
         else:
             win.add_string(tintedtxt(i18n.trans(
                 "users.authentication.failure", ip=token.ip, port=token.port, account=self.account
@@ -123,4 +129,4 @@ class chatting(msg):
     @staticmethod
     def handle(self: "chatting", context: Context):
         client, channel, token, network = context
-        client.receive_text(token, self.room_id, self.user_id, self.text, self.send_time)
+        client.msg_manager.receive(token, self.room_id, (self.send_time, self.user_id, self.text))

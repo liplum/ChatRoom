@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-from typing import TypeVar, Callable, Optional, Dict
+from typing import TypeVar, Callable, Optional, Dict, Any
 
 T = TypeVar('T')
 
@@ -14,26 +14,57 @@ else:
 
 
 class convertTo:
-    def convert(self, para: str) -> T:
+    def convert(self, para: Any) -> T:
         pass
 
-    def __call__(self, para: str) -> T:
+    def __call__(self, para: Any) -> T:
         return self.convert(para)
 
 
 class convertFrom:
-    def convert(self, para: T) -> str:
+    def convert(self, para: T) -> Any:
         pass
 
-    def __call__(self, para: T) -> str:
+    def __call__(self, para: T) -> Any:
         return self.convert(para)
 
 
+Config_Style = int
+
+
+class Style:
+    CheckBox = 0
+    Number = 1
+    AnyString = 2
+    List = 2
+
+
+class prop:
+    pass
+
+
+class prop_builder:
+    def __init__(self, config: "config"):
+        self.config = config
+        self._type = None
+
+    def type(self, t: Config_Style) -> "prop_builder":
+        self._type = t
+        return self
+
+    def build(self) -> "config":
+        return self.config
+
+
 class config:
-    def __init__(self, key: str, default: T, convert_to: Optional[Callable[[str], T]] = None,
-                 convert_from: Optional[Callable[[T], str]] = None):
-        self.key = key
+    def __init__(self, key: str, default: T, convert_to: Optional[Callable[[Any], T]] = None,
+                 convert_from: Optional[Callable[[T], Any]] = None, json_type: Optional[type] = None):
+        self.key: str = key
         self.default = default
+        if json_type is None:
+            json_type = type(default)
+        self.json_type: type = json_type
+        self.prop: Optional[prop] = None
         if convert_to is None:
             convert_to = type(default)
         self.convert_to = convert_to
@@ -41,8 +72,15 @@ class config:
             convert_from = str
         self.convert_from = convert_from
 
+    def customizable(self) -> prop_builder:
+        return prop_builder(self)
+
 
 _meta: Dict[str, config] = {}
+
+
+def all_meta() -> Dict[str, config]:
+    return _meta
 
 
 class settings:
@@ -99,8 +137,10 @@ def save(strict: bool = False):
         _final: Dict[str, str] = {}
         for k, v in _settings.all_settings.items():
             if k in _meta:
-                finalV = _meta[k].convert_from(v)
-                _final[k] = finalV
+                meta = _meta[k]
+                if isinstance(v, meta.json_type):
+                    finalV = meta.convert_from(v)
+                    _final[k] = finalV
             else:
                 _final[k] = v
         settings_text = json.dumps(_final, indent=2)
@@ -118,12 +158,14 @@ def load(strict: bool = False):
     try:
         with open(file, "r", encoding="utf-8") as f:
             settings_text = f.read()
-        cache: Dict[str, str] = json.loads(settings_text)
+        cache: Dict[str, Any] = json.loads(settings_text)
         for k, v in cache.items():
             if k in _meta:
                 try:
-                    finalv = _meta[k].convert_to(v)
-                    read.set(k, finalv)
+                    meta = _meta[k]
+                    if isinstance(v, meta.json_type):
+                        finalv = meta.convert_to(v)
+                        read.set(k, finalv)
                 except:
                     continue
             else:

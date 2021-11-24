@@ -1,6 +1,5 @@
 import json
 import traceback
-from functools import wraps
 
 import GLOBAL
 import ioc as ioc
@@ -15,7 +14,7 @@ from net import networks
 from ui.core import iclient
 from ui.k import cmdkey
 from ui.windows import window
-from utils import lock
+from utils import get
 
 
 class client(iclient):
@@ -39,7 +38,7 @@ class client(iclient):
 
     def init(self) -> None:
         ct = self.container
-        ct.register_instance(client, self)
+        ct.register_instance(iclient, self)
         ct.register_singleton(output.ilogger, output.cmd_logger)
         ct.register_singleton(output.idisplay, output.full_cmd_display)
         ct.register_instance(inetwork, networks.network(self))
@@ -124,10 +123,6 @@ class client(iclient):
     def connect(self, ip: str, port: int):
         self.network.connect(server_token(ip, port))
 
-    def receive_text(self, server: server_token, room_id: roomid, user_id: userid, text: str, time: datetime):
-        self.msg_manager.receive(server, room_id, (time, user_id, text))
-        self.mark_dirty()
-
     def send_text(self, user_info: uentity, room_id: roomid, text: str):
         msg = msgs.chatting()
         msg.room_id = room_id
@@ -140,20 +135,23 @@ class client(iclient):
     def auto_login(self):
         configs = settings()
         if configs.AutoLoginSwitch:
-            info: Dict[str, str] = configs.AutoLogin
-            for server_full, ap in info.items():
-                token = to_server_token(server_full)
-                if token:
-                    ap = ap.split()
-                    if len(ap) == 2:
-                        connect(self.network, token)
-                        login(self.network, token, ap[0], ap[1])
+            network = self.network
+            entries: List = configs.AutoLogin
+            for info in entries:
+                info: dict
+                server = get(info, "server")
+                token = server_token.by(server)
+                account = get(info, "account")
+                password = get(info, "password")
+                if utils.not_none(token, account, password):
+                    connect(network, token)
+                    login(network, token, account, password)
 
     def auto_connection(self):
         configs = settings()
         connections = configs.AutoConnection
         for server_full_str in connections:
-            token = to_server_token(server_full_str)
+            token = server_token.by(server_full_str)
             if token:
                 self.network.connect(token)
 
@@ -190,17 +188,12 @@ class client(iclient):
         self._running = False
 
     def render(self):
-        self.dlock(self.win.update_screen)()
+        with self._display_lock:
+            self.win.update_screen()
 
-    def dlock(self, func):
-        @wraps(func)
-        def inner(*args, **kwargs):
-            return lock(self._display_lock, func, *args, **kwargs)
-
-        return inner
-
-    def add_text(self, text: str):
-        self.win.add_text(text)
+    @property
+    def display_lock(self) -> RLock:
+        return self._display_lock
 
     @property
     def win(self) -> "window":

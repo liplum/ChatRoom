@@ -1,26 +1,12 @@
 import msvcrt
 import traceback
 from threading import Thread, RLock
-from typing import Optional, List, NoReturn
+from typing import Optional, List
 
 import chars
-from ui.clients import client
+from ui.core import iclient
 from ui.inputs import inbinput
-from ui.outputs import idisplay, CmdFgColor, CmdBkColor, ilogger, buffer
-from utils import lock
-
-
-class nbdispaly(idisplay):
-
-    def gen_buffer(self) -> buffer:
-        pass
-
-    def render(self, buf: buffer) -> bool:
-        pass
-
-    def display_text(self, text: str = "", end: str = '\n', fgcolor: Optional[CmdFgColor] = None,
-                     bkcolor: Optional[CmdBkColor] = None) -> NoReturn:
-        msvcrt.putwch(text + end)
+from ui.outputs import ilogger
 
 
 class nbinput(inbinput):
@@ -40,8 +26,9 @@ class nbinput(inbinput):
             self._lock = RLock()
 
     def init(self, container):
-        self.client: client = container.resolve(client)
+        self.client: iclient = container.resolve(iclient)
         self.logger: ilogger = container.resolve(ilogger)
+        self.display_lock = self.client.display_lock
 
     def _listen_input(self):
         try:
@@ -63,27 +50,25 @@ class nbinput(inbinput):
             self.client.stop()
 
     def input_new(self, char: chars.char):
-        self.client.dlock(self._input_new)(char)
+        with self.client.display_lock:
+            self._input_new(char)
 
     def _input_new(self, char: chars.char):
-        lock(self._lock, lambda: self._input_list.append(char))
+        with self._lock:
+            self._input_list.append(char)
         self.on_input(self, char)
 
     def consume_char(self) -> Optional[chars.char]:
-        def get_first() -> Optional[chars.char]:
+        with self._lock:
             if len(self._input_list) == 0:
                 return None
             first = self._input_list.pop(0)
             return first
-
-        return lock(self._lock, get_first)
 
     def get_input(self, tip: str = None):
         self.initialize()
 
     @property
     def input_list(self) -> List[chars.char]:
-        return lock(self._lock, self.__get_input_list)
-
-    def __get_input_list(self) -> List[chars.char]:
-        return super().input_list
+        with self._lock:
+            return self._input_list[:]

@@ -88,7 +88,7 @@ def _con(context: Cmd_Context, args: [str]) -> server_token:
     argslen = len(args)
     if argslen != 1:
         raise WrongUsageError(i18n.trans("cmds.con.usage"), 0)
-    server = to_server_token(args[0])
+    server = server_token.by(args[0])
     if server is None:
         raise WrongUsageError(i18n.trans("cmds.con.para1.invalid"), 0)
     network = context.network
@@ -123,13 +123,13 @@ def _join(context: Cmd_Context, args: [str]):
             raise WrongUsageError(i18n.trans("cmds.join.para_invalid.room_id", args[1]), 1)
         tab: chat_tab = context.tab
         if tab.joined:
-            raise CmdError(i18n.trans("cmds.con.already_joined", room_id))
+            raise CmdError(i18n.trans("cmds.join.already_joined", room_id))
         tab.join(room_id)
     elif argslen == 1:
         try:
             room_id = roomid(int(args[0]))
         except:
-            raise WrongUsageError(i18n.trans("cmds.con.para_invalid.room_id", args[0]), 1)
+            raise WrongUsageError(i18n.trans("cmds.join.para_invalid.room_id", args[0]), 1)
         tab: chat_tab = context.tab
         if tab.joined:
             raise CmdError(i18n.trans("cmds.join.already_joined", room_id))
@@ -165,7 +165,7 @@ cmd_close = add("close", _close)
 def _login(context: Cmd_Context, args: [str]):
     argslen = len(args)
     if argslen != 3 and argslen != 2:
-        raise WrongUsageError(i18n.trans("cmds.close.usage"), 0)
+        raise WrongUsageError(i18n.trans("cmds.login.usage"), 0)
 
     if argslen == 3:
         full_server = args[0:1]
@@ -174,7 +174,7 @@ def _login(context: Cmd_Context, args: [str]):
         tab: chat_tab = context.tab
         server = tab.connected
         if server is None:
-            raise WrongUsageError(i18n.trans("cmds.close.cur_tab_unconnected"), 0)
+            raise WrongUsageError(i18n.trans("cmds.login.cur_tab_unconnected"), 0)
 
     login(context.network, server, args[argslen - 2], args[argslen - 1])
 
@@ -182,7 +182,7 @@ def _login(context: Cmd_Context, args: [str]):
 cmd_login = add("login", _login)
 
 
-def _exec(context: Cmd_Context, args: [str]):
+def _run(context: Cmd_Context, args: [str]):
     argslen = len(args)
     if argslen == 0:
         return
@@ -203,7 +203,7 @@ def _exec(context: Cmd_Context, args: [str]):
         raise WrongUsageError(i18n.trans("cmds.run.execute_error", code=code, exception=e), 0)
 
 
-cmd_exec = add("run", _exec)
+cmd_exec = add("run", _run)
 
 
 def _lang(context: Cmd_Context, args: [str]):

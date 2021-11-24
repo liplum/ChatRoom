@@ -23,7 +23,6 @@ class chat_tab(tab):
         self.network: "inetwork" = self.client.network
         self.logger: "ilogger" = self.client.logger
         self.first_loaded = False
-        self.focused = False
         self._unread_msg_number = 0
 
         self._connected: Optional[server_token] = None
@@ -196,8 +195,9 @@ class chat_tab(tab):
         if server == self.connected and room_id == self.joined:
             time, uid, text = msg_unit
             self._add_msg(time, uid, text)
-            if not self.focused:
+            if not self.is_focused:
                 self.unread_msg_number += 1
+                self.on_content_changed(self)
 
     def on_removed(self):
         self.msg_manager.on_received.remove(self._on_received_msg)
@@ -207,7 +207,7 @@ class chat_tab(tab):
         server = get(data, "server")
         room_id = get(data, "room_id")
         account = get(data, "account")
-        server = to_server_token(server)
+        server = server_token.by(server)
         if all_none(server, room_id, account):
             raise CannotRestoreTab(chat_tab)
 
@@ -239,11 +239,8 @@ class chat_tab(tab):
         return d
 
     def on_focused(self):
-        self.focused = True
+        super().on_focused()
         self.unread_msg_number = 0
-
-    def on_lost_focus(self):
-        self.focused = False
 
     @classmethod
     def serializable(cls) -> bool:

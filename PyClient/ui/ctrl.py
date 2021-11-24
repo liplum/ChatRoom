@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Collection, Dict, Optional
+from typing import Callable, Collection, Dict, Optional, Union
 
 from ui.shared import *
 
@@ -206,3 +206,8 @@ MCGT = multi_content_getter
 
 def MCGT_fix_text(texts: Collection[str]) -> multi_content_getter:
     return multi_content_getter(lambda: texts)
+
+
+ContentGetter = Union[content_getter, str]
+
+ContentsGetter = Union[multi_content_getter, Collection[str]]

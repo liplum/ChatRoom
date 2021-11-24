@@ -1,4 +1,5 @@
 from core.settings import entity
+from ui.cmd_modes import common_hotkey
 from ui.panels import *
 from ui.tab.shared import *
 from ui.tabs import *
@@ -78,8 +79,23 @@ class language_tab(tab):
                 if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
                     self.main.switch_to_first_or_default_item()
                     return Consumed
+                else:
+                    consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
+                    return consumed
         return Not_Consumed
 
     def reload(self):
         if self.main:
             self.main.reload()
+
+    @classmethod
+    def deserialize(cls, data: dict, client: iclient, tablist: tablist) -> "tab":
+        return language_tab(client, tablist)
+
+    @classmethod
+    def serialize(cls, self: "tab") -> dict:
+        return {}
+
+    @classmethod
+    def serializable(cls) -> bool:
+        return True

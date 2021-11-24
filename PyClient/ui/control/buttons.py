@@ -1,9 +1,8 @@
-from typing import Union, Callable, NoReturn
+from typing import NoReturn
 
-import chars
 import keys
 import utils
-from ui.ctrl import control, auto, content_getter, PROP
+from ui.ctrl import *
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
 from ui.shared import Is_Consumed, Consumed, Not_Consumed
 
@@ -62,7 +61,7 @@ class button(control):
         else:
             return self.content()
 
-    def __init__(self, content: Union[content_getter, str], on_press: Callable[[], NoReturn]):
+    def __init__(self, content: ContentGetter, on_press: Callable[[], NoReturn]):
         super().__init__()
         if isinstance(content, str):
             self.content = lambda: content

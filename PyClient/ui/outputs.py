@@ -112,7 +112,7 @@ def tintedtxt(text: str, style: CmdStyleEnum = CmdStyle.Default, fgcolor: Option
 
 def tintedtxtIO(IO, text: str, style: Optional[CmdStyleEnum] = None, fgcolor: Optional[CmdFgColorEnum] = None,
                 bkcolor: Optional[CmdBkColorEnum] = None,
-                end='\n') -> str:
+                end='\n'):
     IO.write("\033[")
     if style:
         IO.write(style)
@@ -124,7 +124,6 @@ def tintedtxtIO(IO, text: str, style: Optional[CmdStyleEnum] = None, fgcolor: Op
     IO.write(text)
     IO.write("\033[0m")
     IO.write(end)
-    return IO.getvalue()
 
 
 class cmd_logger(ilogger):

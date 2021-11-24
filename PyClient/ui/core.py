@@ -1,4 +1,5 @@
 from abc import abstractmethod, ABC
+from threading import RLock
 from typing import Union, Type
 
 from ui.shared import *
@@ -91,6 +92,11 @@ class iclient(ABC):
     @property
     @abstractmethod
     def msg_manager(self) -> "imsgmager":
+        raise NotImplementedError()
+
+    @property
+    @abstractmethod
+    def display_lock(self) -> RLock:
         raise NotImplementedError()
 
 

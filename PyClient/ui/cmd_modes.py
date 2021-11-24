@@ -228,18 +228,18 @@ def _error_style_i18n_text(key: str, *args, **kwargs) -> str:
                             fgcolor=CmdFgColor.Red, end="")
 
 
-def _error_style_textX(IO, text: str) -> str:
-    return output.tintedtxtIO(IO, text, style=CmdStyle.Bold,
-                              fgcolor=CmdFgColor.Red, end="")
+def _error_style_textX(IO, text: str):
+    output.tintedtxtIO(IO, text, style=CmdStyle.Bold,
+                       fgcolor=CmdFgColor.Red, end="")
 
 
-def _tip_style_textX(IO, text: str) -> str:
-    return output.tintedtxtIO(IO, text, fgcolor=CmdFgColor.Green, end="")
+def _tip_style_textX(IO, text: str):
+    output.tintedtxtIO(IO, text, fgcolor=CmdFgColor.Green, end="")
 
 
-def _error_style_i18n_textX(IO, key: str, *args, **kwargs) -> str:
-    return output.tintedtxtIO(IO, i18n.trans(key, *args, **kwargs), style=CmdStyle.Bold,
-                              fgcolor=CmdFgColor.Red, end="")
+def _error_style_i18n_textX(IO, key: str, *args, **kwargs):
+    output.tintedtxtIO(IO, i18n.trans(key, *args, **kwargs), style=CmdStyle.Bold,
+                       fgcolor=CmdFgColor.Red, end="")
 
 
 _EST = _error_style_text
@@ -273,7 +273,7 @@ class cmd_long_mode(cmd_state):
             mode.cmd_manager.execute(contxt, cmd_name, args)
         except WrongUsageError as wu:
             with StringIO() as s:
-                _EST18X(s,"modes.command_mode.cmd.wrong_usage")
+                _EST18X(s, "modes.command_mode.cmd.wrong_usage")
                 s.write(':\n')
                 pos = wu.position
                 is_pos_quoted = is_quoted(pos + 1, quoted_indexes)
@@ -286,13 +286,13 @@ class cmd_long_mode(cmd_state):
             mode.tab.add_string(error_output)
         except CmdError as ce:
             with StringIO() as s:
-                _EST18X(s,"modes.command_mode.cmd.cmd_error")
+                _EST18X(s, "modes.command_mode.cmd.cmd_error")
                 s.write(':\n')
                 s.write(gen_cmd_error_text(cmd_name, args, full_cmd, -2, _TST(ce.msg)))
                 mode.tab.add_string(s.getvalue())
         except Exception as any_e:
             with StringIO() as s:
-                _EST18X(s,"modes.command_mode.cmd.unknown_error")
+                _EST18X(s, "modes.command_mode.cmd.unknown_error")
                 s.write(':\n')
                 s.write(gen_cmd_error_text(
                     cmd_name, args, full_cmd, -2,

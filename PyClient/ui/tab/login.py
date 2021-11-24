@@ -1,6 +1,7 @@
 import GLOBAL
 from core import operations as op
-from core.shared import to_server_token, uentity
+from core.shared import uentity
+from ui.cmd_modes import common_hotkey
 from ui.control.textboxes import textbox
 from ui.panels import *
 from ui.tab.chat import chat_tab
@@ -14,6 +15,7 @@ class login_tab2(tab):
 
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
+        self.win = self.client.win
         self.network: i_network = self.client.network
         self.container_row = 4
         self.container_column = 2
@@ -107,7 +109,7 @@ class login_tab2(tab):
         full = f"{ip}:{port}" if port != "" else ip
         account = self.t_account.inputs.strip()
         password = self.t_password.inputs.strip()
-        token = to_server_token(full)
+        token = server_token.by(full)
         if token:
             chat = chat_tab(self.client, self.tablist)
             chat.connect(token)
@@ -164,12 +166,13 @@ class login_tab(tab):
 
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
+        self.win = self.client.win
         self.last_tab: Optional[tab] = None
         self.network: i_network = self.client.network
         grid = gen_grid(4, [column(auto), column(15)])
         excepted_chars = {keys.k_enter, chars.c_tab_key}
         self.t_ip = xtextbox(excepted_chars=excepted_chars)
-        self.t_port = xtextbox(excepted_chars=excepted_chars)
+        self.t_port = xtextbox(only_allowed_chars=number_keys)
         self.t_account = xtextbox(excepted_chars=excepted_chars)
         self.t_password = xtextbox(excepted_chars=excepted_chars)
 
@@ -235,7 +238,7 @@ class login_tab(tab):
         full = f"{ip}:{port}" if port != "" else ip
         account = self.t_account.inputs.strip()
         password = self.t_password.inputs.strip()
-        token = to_server_token(full)
+        token = server_token.by(full)
         if token:
             chat = chat_tab(self.client, self.tablist)
             chat.connect(token)
@@ -259,6 +262,9 @@ class login_tab(tab):
             if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
                 self.main.switch_to_first_or_default_item()
                 return Consumed
+            else:
+                consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
+                return consumed
         return Not_Consumed
 
     def paint_on(self, buf: buffer):

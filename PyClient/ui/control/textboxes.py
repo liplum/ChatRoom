@@ -21,6 +21,7 @@ class textbox(control):
         self._on_delete = event()
         self._on_gen_distext = event()
         self._on_list_replace = event()
+        self._on_pre_append = event(cancelable=True)
         self._width = auto
         self._r_width = 0
         self._max_inputs_count = unlimited
@@ -102,7 +103,7 @@ class textbox(control):
         fg = CmdFgColor.Black if self.is_focused else None
         drawn = self.limited_distext
         if self.max_inputs_count != unlimited:
-            max_render_width = min(self.max_inputs_count,self.render_width)
+            max_render_width = min(self.max_inputs_count, self.render_width)
             drawn = utils.fillto(drawn, self.space_placeholder, max_render_width)
         elif len(drawn) < self.render_width:
             drawn = utils.fillto(drawn, self.space_placeholder, self.width)
@@ -145,6 +146,17 @@ class textbox(control):
         :return: event(textbox,int,int)
         """
         return self._on_cursor_move
+
+    @property
+    def on_pre_append(self) -> event:
+        """
+        Para 1:textbox object
+
+        Para 2:char appended
+
+        :return: event(textbox,str)
+        """
+        return self._on_pre_append
 
     @property
     def on_append(self) -> event:
@@ -300,6 +312,8 @@ class textbox(control):
             if self.input_count >= self.max_inputs_count:
                 return Not_Consumed
         char = str(char)
+        if self.on_pre_append(self, char):
+            return Not_Consumed
         self._input_list.insert(self.cursor, char)
         self.on_append(self, self.cursor, char)
         self.cursor += 1

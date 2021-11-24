@@ -1,12 +1,10 @@
-from typing import Union
-
 import utils
-from ui.ctrl import control, content_getter, PROP, auto
+from ui.ctrl import *
 from ui.outputs import buffer
 
 
 class label(control):
-    def __init__(self, content: Union[content_getter, str]):
+    def __init__(self, content: ContentGetter):
         super().__init__()
         if isinstance(content, str):
             self.content = lambda: content

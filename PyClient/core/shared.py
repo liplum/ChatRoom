@@ -40,7 +40,9 @@ class uentity:
         return False
 
 
-def to_server_token(full: str) -> Optional[server_token]:
+def to_server_token(full: Optional[str]) -> Optional[server_token]:
+    if full is None or full == "":
+        return None
     try:
         server_info = full.split(":")
     except:
@@ -57,3 +59,6 @@ def to_server_token(full: str) -> Optional[server_token]:
         return server_token(ip, port)
     else:
         return None
+
+
+server_token.by = to_server_token

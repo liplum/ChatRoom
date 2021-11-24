@@ -1,3 +1,5 @@
+import traceback
+
 import utils
 from core.settings import entity as settings
 from ui.tab.chat import chat_tab
@@ -9,6 +11,7 @@ from utils import multiget, get
 class window(iwindow):
     def __init__(self, client: iclient):
         super().__init__(client)
+        self.logger: "ilogger" = self.client.logger
         self.tablist: tablist = tablist()
         self.screen_buffer: Optional[buffer] = None
         self.tablist.on_content_changed.add(lambda _: self.client.mark_dirty())
@@ -53,9 +56,12 @@ class window(iwindow):
                     for entity in li:
                         try:
                             tab = tabtype.deserialize(entity, self.client, self.tablist)
-                        except:
+                        except CannotRestoreTab:
                             continue
-                        if tab:
+                        except  Exception as e:
+                            self.client.logger.warn(f"[Window]{e}\n{traceback.format_exc()}")
+                            continue
+                        if tab is not None:
                             self.tablist.add(tab)
         self.tablist.unite_like_tabs()
 
@@ -70,9 +76,12 @@ class window(iwindow):
                     li = multiget(last_opened, tab_type2name[tabtype])
                     try:
                         dic = tabtype.serialize(tab)
-                    except:
+                    except CannotStoreTab:
                         continue
-                    if dic:
+                    except  Exception as e:
+                        self.client.logger.warn(f"[Window]{e}\n{traceback.format_exc()}")
+                        continue
+                    if dic is not None:
                         li.append(dic)
         configs["LastOpenedTabs"] = last_opened
 
