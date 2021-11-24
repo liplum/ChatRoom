@@ -138,6 +138,9 @@
         "password": "密码",
         "password_again": "再输入一次"
       }
+    },
+    "settings_tab": {
+      "name": "设置"
     }
   },
   "users": {
@@ -168,11 +171,22 @@
     "info": "信息",
     "language": "语言",
     "start": "开始",
-    "register": "注册"
+    "register": "注册",
+    "settings": "设置",
+    "checkbox": {
+      "turn_on": "[启用]",
+      "turn_off": "[禁用]",
+      "null": "[  ]"
+    }
   },
   "outputs": {
     "render": {
       "print_error": "无法显示文本，或许是因为文字编码错误"
     }
+  },
+  "settings": {
+    "DateFormat": "日期格式",
+    "AutoLoginSwitch": "自动登录",
+    "RestoreTabWhenRestart": "重新打开上次未关闭的页面"
   }
 }

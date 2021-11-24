@@ -34,26 +34,9 @@ Config_Style = int
 
 class Style:
     CheckBox = 0
-    Number = 1
-    AnyString = 2
-    List = 2
-
-
-class prop:
-    pass
-
-
-class prop_builder:
-    def __init__(self, config: "config"):
-        self.config = config
-        self._type = None
-
-    def type(self, t: Config_Style) -> "prop_builder":
-        self._type = t
-        return self
-
-    def build(self) -> "config":
-        return self.config
+    OnlyNumber = 1
+    OnlyAlphabet = 2
+    AnyString = 3
 
 
 class config:
@@ -71,9 +54,6 @@ class config:
         if convert_from is None:
             convert_from = str
         self.convert_from = convert_from
-
-    def customizable(self) -> prop_builder:
-        return prop_builder(self)
 
 
 _meta: Dict[str, config] = {}

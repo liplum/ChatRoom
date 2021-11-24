@@ -1,6 +1,6 @@
 import GLOBAL
 from core import operations as op
-from core.shared import uentity
+from core.shared import *
 from ui.cmd_modes import common_hotkey
 from ui.control.textboxes import textbox
 from ui.panels import *
@@ -202,7 +202,6 @@ class login_tab(tab):
         self.t_password.space_placeholder = "_"
 
         self.t_port.input_list = "25000"
-        self.t_port.end()
 
         dialog_stack = stack()
         dialog_stack.orientation = horizontal
@@ -283,10 +282,6 @@ class login_tab(tab):
         t.t_port.input_list = port
         t.t_account.input_list = account
         t.t_password.input_list = password
-        t.t_ip.end()
-        t.t_port.end()
-        t.t_account.end()
-        t.t_password.end()
         return t
 
     @classmethod

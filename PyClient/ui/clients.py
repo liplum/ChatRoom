@@ -54,7 +54,9 @@ class client(iclient):
         self.inpt: _input.iinput = ct.resolve(_input.iinput)
         self._logger: output.ilogger = ct.resolve(output.ilogger)
         self.logger.output_to_cmd = False
-
+        if self.root_path is None:
+            dirpath, filepath = utils.get_executed_path()
+            self.root_path = dirpath
         if not self.check_file_permission():
             self.root_path = ""
 

@@ -44,3 +44,22 @@ def _builtin(left_top: str, right_top: str, left_bottom: str, right_bottom: str,
 vanilla: theme = _builtin('┌', '┐', '└', '┘', '─', '│')
 tube: theme = _builtin('╔', '╗', '╚', '╝', '═', '║')
 rounded_rectangle: theme = _builtin('╭', '╮', '╰', '╯', '─', '│')
+
+
+class check_theme:
+    def __init__(self, checked: str, unchecked: str, null: str):
+        self._checked = checked
+        self._unchecked = unchecked
+        self._null = null
+
+    @property
+    def checked(self):
+        return self._checked
+
+    @property
+    def unchecked(self):
+        return self._unchecked
+
+    @property
+    def null(self):
+        return self._null

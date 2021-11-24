@@ -52,7 +52,6 @@ class register_tab(tab):
         self.t_password_again.space_placeholder = "_"
 
         self.t_port.input_list = "25000"
-        self.t_port.end()
 
         dialog_stack = stack()
         dialog_stack.orientation = horizontal
@@ -162,11 +161,6 @@ class register_tab(tab):
         t.t_account.input_list = account
         t.t_password.input_list = password
         t.t_password_again.input_list = password
-        t.t_ip.end()
-        t.t_port.end()
-        t.t_account.end()
-        t.t_password.end()
-        t.t_password_again.end()
         return t
 
     @classmethod

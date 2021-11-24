@@ -364,3 +364,4 @@ FodyWeavers.xsd
 /PyClient/.idea
 /Server/Migrations
 *.code-workspace
+.idea/

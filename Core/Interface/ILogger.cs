@@ -5,6 +5,9 @@ public interface ILogger : IInjectable
 {
     public void Log([NotNull] WarnningLevel level, string message);
 
+    public void StartService();
+    public void StopService();
+
     public void SendMessage(string message)
     {
         Log(WarnningLevel.Message, message);

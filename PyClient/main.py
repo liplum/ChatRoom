@@ -47,13 +47,10 @@ import platform
 
 system_type = platform.system()
 
-dirpath, filepath = utils.get_executed_path()
-
 
 def main():
     from ui.clients import client
     _client = client()
-    _client.root_path = dirpath
     _client.on_service_register.add(init_plugin)
     _client.on_cmd_register.add(add_commands)
     _client.on_keymapping.add(mapkeys)

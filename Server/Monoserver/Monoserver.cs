@@ -63,6 +63,7 @@ public partial class Monoserver : IServer
     {
         _network = new Network(this);
         _container.RegisterSingleton<ILogger, CmdServerLogger>();
+        _container.RegisterSingleton<IResourceManager, ResourceManager>();
         _container.RegisterSingleton<IUserService, UserService>();
         _container.RegisterSingleton<IChattingRoomService, ChattingRoomService>();
         _container.RegisterSingleton<IDatabase, Database>();
@@ -76,6 +77,7 @@ public partial class Monoserver : IServer
 
         NetworkService = _container.Reslove<INetwork>();
         Logger = _container.Reslove<ILogger>();
+        Logger.StartService();
         Database = _container.Reslove<IDatabase>();
         Database.Connect();
     }

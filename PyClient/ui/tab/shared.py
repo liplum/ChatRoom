@@ -1,6 +1,7 @@
 from typing import NoReturn
 
 import i18n
+import ui.themes as themes
 from ui.control.buttons import button
 from ui.control.labels import label
 from ui.ctrl import *
@@ -30,3 +31,25 @@ alphabet_keys = frozenset({
 })
 
 number_alphabet_keys = number_keys | alphabet_keys
+
+
+class i18n_theme(themes.check_theme):
+    def __init__(self, checked_key: str, unchecked_key: str, null_key: str):
+        super().__init__(checked_key, unchecked_key, null_key)
+
+    @property
+    def checked(self):
+        return i18n.trans(self._checked)
+
+    @property
+    def unchecked(self):
+        return i18n.trans(self._unchecked)
+
+    @property
+    def null(self):
+        return i18n.trans(self._null)
+
+
+turn_on_off_check_theme = i18n_theme(
+    "controls.checkbox.turn_on", "controls.checkbox.turn_off", "controls.checkbox.null"
+)

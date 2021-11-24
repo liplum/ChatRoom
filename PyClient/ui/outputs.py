@@ -89,13 +89,13 @@ class AlertLevel:
 
 def tinted_print(text: str, style: CmdStyleEnum = CmdStyle.Default, fgcolor: Optional[CmdFgColorEnum] = None,
                  bkcolor: Optional[CmdBkColorEnum] = None,
-                 end='\n') -> NoReturn:
+                 end=None) -> NoReturn:
     print(tintedtxt(text, style, fgcolor, bkcolor, end), end="")
 
 
 def tintedtxt(text: str, style: CmdStyleEnum = CmdStyle.Default, fgcolor: Optional[CmdFgColorEnum] = None,
               bkcolor: Optional[CmdBkColorEnum] = None,
-              end='\n') -> str:
+              end=None) -> str:
     with StringIO() as s:
         s.write("\033[")
         s.write(style)
@@ -106,7 +106,8 @@ def tintedtxt(text: str, style: CmdStyleEnum = CmdStyle.Default, fgcolor: Option
         s.write('m')
         s.write(text)
         s.write("\033[0m")
-        s.write(end)
+        if end:
+            s.write(end)
         return s.getvalue()
 
 

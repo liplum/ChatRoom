@@ -213,8 +213,8 @@ class textbox(control):
         if self.max_inputs_count != unlimited:
             value = value[0:self.max_inputs_count]
         self._input_list = value
-        self.cursor = 0
         self.on_list_replace(self, former, self._input_list)
+        self.end()
 
     @property
     def inputs(self) -> str:

@@ -5,6 +5,7 @@ from ui.tab.copyright import copyright_tab
 from ui.tab.language import language_tab
 from ui.tab.login import login_tab
 from ui.tab.register import register_tab
+from ui.tab.settings import settings_tab
 from ui.tab.shared import *
 from ui.tabs import *
 from ui.themes import *
@@ -72,6 +73,15 @@ class main_menu_tab(tab):
         b_language.prop(panel.No_Left_Margin, True).prop(stack.Horizontal_Alignment, align_left)
         b_language.width = 10
         main.add(b_language)
+
+        def settings():
+            tab = self.win.newtab(settings_tab)
+            tablist.replace(self, tab)
+
+        b_settings = i18n_button("controls.settings", settings)
+        b_settings.prop(panel.No_Left_Margin, True).prop(stack.Horizontal_Alignment, align_left)
+        b_settings.width = 10
+        main.add(b_settings)
 
         main.left_margin = 10
         main.switch_to_first_or_default_item()

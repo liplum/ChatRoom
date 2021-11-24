@@ -138,6 +138,9 @@
     },
     "language_tab": {
       "name": "Language"
+    },
+    "settings_tab": {
+      "name": "Settings"
     }
   },
   "users": {
@@ -168,11 +171,22 @@
     "info": "Info",
     "language": "Language",
     "start": "Start",
-    "register": "Register"
+    "register": "Register",
+    "settings": "Settings",
+    "checkbox": {
+      "turn_on": "[Yes]",
+      "turn_off": "[No]",
+      "null": "[  ]"
+    }
   },
   "outputs": {
     "render": {
       "print_error": "Cannot print the text maybe because of encoding error"
     }
+  },
+  "settings": {
+    "DateFormat": "Date format",
+    "AutoLoginSwitch": "Auto login",
+    "RestoreTabWhenRestart": "Reopen last unclosed"
   }
 }

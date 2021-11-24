@@ -6,8 +6,9 @@ import i18n
 import keys
 import states
 import utils
-from cmd import cmdmanager, analyze_cmd_args, compose_full_cmd, WrongUsageError, is_quoted, CmdNotFound, CmdError
+from cmd import *
 from ui import outputs as output
+from ui.outputs import buffer, CmdBkColor, CmdFgColor, CmdStyle
 from ui.tabs import *
 from ui.uistates import ui_state
 
