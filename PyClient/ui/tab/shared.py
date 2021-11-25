@@ -1,10 +1,10 @@
-from typing import NoReturn
+import random
 
-import i18n
 import ui.themes as themes
 from ui.control.buttons import button
 from ui.control.labels import label
 from ui.ctrl import *
+from ui.outputs import *
 
 T = TypeVar('T')
 CTRL = TypeVar('CTRL', bound=control)
@@ -53,3 +53,56 @@ class i18n_theme(themes.check_theme):
 turn_on_off_check_theme = i18n_theme(
     "controls.checkbox.turn_on", "controls.checkbox.turn_off", "controls.checkbox.null"
 )
+
+
+def tinted_theme(theme: themes.theme) -> themes.theme:
+    t = theme.copy()
+    t.left_top = tintedtxt(t.left_top, fgcolor=CmdFgColor.Blue)
+    t.right_top = tintedtxt(t.right_top, fgcolor=CmdFgColor.Blue)
+    t.left_bottom = tintedtxt(t.left_bottom, fgcolor=CmdFgColor.Blue)
+    t.right_bottom = tintedtxt(t.right_bottom, fgcolor=CmdFgColor.Blue)
+    t.horizontal = tintedtxt(t.horizontal, fgcolor=CmdFgColor.Red)
+    t.vertical = tintedtxt(t.vertical, fgcolor=CmdFgColor.Green)
+    return t
+
+
+colorful_rounded_rectangle = tinted_theme(themes.rounded_rectangle)
+colorful_tube = tinted_theme(themes.tube)
+
+
+def random_fgcolor() -> CmdFgColorEnum:
+    return random.choice(CmdFgColors)
+
+
+def random_bkcolor() -> CmdBkColorEnum:
+    return random.choice(CmdBkColors)
+
+
+class chaos_theme(themes.packed_theme):
+
+    @property
+    def left_top(self) -> str:
+        return tintedtxt(self._left_top, fgcolor=random_fgcolor())
+
+    @property
+    def right_top(self) -> str:
+        return tintedtxt(self._right_top, fgcolor=random_fgcolor())
+
+    @property
+    def left_bottom(self) -> str:
+        return tintedtxt(self._left_bottom, fgcolor=random_fgcolor())
+
+    @property
+    def right_bottom(self) -> str:
+        return tintedtxt(self._right_bottom, fgcolor=random_fgcolor())
+
+    @property
+    def horizontal(self) -> str:
+        return tintedtxt(self._horizontal, fgcolor=random_fgcolor())
+
+    @property
+    def vertical(self) -> str:
+        return tintedtxt(self._vertical, fgcolor=random_fgcolor())
+
+
+chaos_tube = themes.copy_packed_theme(themes.tube, chaos_theme)

@@ -9,7 +9,8 @@
     "software": {
       "full_name": "聊天室 PyClient",
       "name": "聊天室",
-      "powered_by": "由{0}|        提供技术支持"
+      "powered_by": "由{0}|        提供技术支持",
+      "author": "By Liplum   "
     },
     "copyright": {
       "software": "ChattingRoom PyClient",
@@ -177,7 +178,8 @@
       "turn_on": "[启用]",
       "turn_off": "[禁用]",
       "null": "[  ]"
-    }
+    },
+    "save": "保存"
   },
   "outputs": {
     "render": {
@@ -187,6 +189,7 @@
   "settings": {
     "DateFormat": "日期格式",
     "AutoLoginSwitch": "自动登录",
-    "RestoreTabWhenRestart": "重新打开上次未关闭的页面"
+    "RestoreTabWhenRestart": "重新打开上次未关闭的页面",
+    "ColorfulMainMenu": "是彩色！！！"
   }
 }

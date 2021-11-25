@@ -50,7 +50,7 @@ auto_login = addx("AutoLogin", [])
 
 last_opened_tabs = addx("LastOpenedTabs", {})
 
-restore_tab_when_restart = addx("RestoreTabWhenRestart", True)
+restore_tab_when_restart = addx("RestoreTabWhenRestart", False)
 restore_tab_when_restart.customizable().style(Style.CheckBox).notice(
     _directly_set(restore_tab_when_restart)
 ).build()
@@ -58,4 +58,9 @@ restore_tab_when_restart.customizable().style(Style.CheckBox).notice(
 auto_login_switch = addx("AutoLoginSwitch", False)
 auto_login_switch.customizable().style(Style.CheckBox).notice(
     _directly_set(auto_login_switch)
+).build()
+
+colorful_main_menu = addx("ColorfulMainMenu", False)
+colorful_main_menu.customizable().style(Style.CheckBox).notice(
+    _directly_set(colorful_main_menu)
 ).build()

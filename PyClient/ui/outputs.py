@@ -56,6 +56,9 @@ class CmdFgColor:
     White = ';37'
 
 
+CmdFgColors = (CmdFgColor.Black, CmdFgColor.Red, CmdFgColor.Green, CmdFgColor.Yellow, CmdFgColor.Blue,
+               CmdFgColor.Violet, CmdFgColor.Cyan, CmdFgColor.White)
+
 CmdBkColorEnum = str
 
 
@@ -70,6 +73,9 @@ class CmdBkColor:
     White = ';47'
 
 
+CmdBkColors = (CmdBkColor.Black, CmdBkColor.Red, CmdBkColor.Green, CmdBkColor.Yellow, CmdBkColor.Blue,
+               CmdBkColor.Violet, CmdBkColor.Cyan, CmdBkColor.White)
+
 CmdStyleEnum = str
 
 
@@ -78,6 +84,9 @@ class CmdStyle:
     Bold = '1'
     Underline = '4'
     ReverseColor = '7'
+
+
+CmdStyles = (CmdStyle.Default, CmdStyle.Bold, CmdStyle.Underline, CmdStyle.ReverseColor)
 
 
 class AlertLevel:
@@ -97,23 +106,13 @@ def tintedtxt(text: str, style: CmdStyleEnum = CmdStyle.Default, fgcolor: Option
               bkcolor: Optional[CmdBkColorEnum] = None,
               end=None) -> str:
     with StringIO() as s:
-        s.write("\033[")
-        s.write(style)
-        if fgcolor:
-            s.write(fgcolor)
-        if bkcolor:
-            s.write(bkcolor)
-        s.write('m')
-        s.write(text)
-        s.write("\033[0m")
-        if end:
-            s.write(end)
+        tintedtxtIO(s, text, style, fgcolor, bkcolor, end)
         return s.getvalue()
 
 
 def tintedtxtIO(IO, text: str, style: Optional[CmdStyleEnum] = None, fgcolor: Optional[CmdFgColorEnum] = None,
                 bkcolor: Optional[CmdBkColorEnum] = None,
-                end='\n'):
+                end=None):
     IO.write("\033[")
     if style:
         IO.write(style)
@@ -124,7 +123,8 @@ def tintedtxtIO(IO, text: str, style: Optional[CmdStyleEnum] = None, fgcolor: Op
     IO.write('m')
     IO.write(text)
     IO.write("\033[0m")
-    IO.write(end)
+    if end:
+        IO.write(end)
 
 
 class cmd_logger(ilogger):

@@ -1,9 +1,14 @@
 from io import StringIO
+from typing import Iterable
 
 import utils
 from ui.ctrl import *
 from ui.outputs import buffer
 from ui.themes import theme, vanilla
+from ui.control.display_boards import horizontal_lineIO
+Word = str
+Words = Iterable[str]
+WordsGetter = Callable[[], Words]
 
 
 # TODO:Complete This
@@ -18,91 +23,64 @@ class textblock(control):
     └────────────────────────────────┘
     """
 
-    def __init__(self, content: ContentGetter, theme: theme = vanilla):
+    def __init__(self, contents: WordsGetter, theme: theme = vanilla):
         super().__init__()
-        if isinstance(content, str):
-            self.content = lambda: content
+        if isinstance(contents, str):
+            self.contents = lambda: contents
         else:
-            self.content = content
+            self.contents = contents
         self.theme = theme
         self._width = auto
         self._height = auto
         self._r_width = 0
         self._r_height = 0
-        self._horizontal_margin = 0
-        self._vertical_margin = 0
 
     def paint_on(self, buf: buffer):
         if self._layout_changed:
             self.cache_layout()
-        if self.render_width == 0 or self.render_height == 0:
+        render_width = self.render_width
+        if render_width == 0 or self.render_height == 0:
             return
         with StringIO() as s:
             contents = self.contents()
             theme = self.theme
+            left_top = theme.left_top
+            left_bottom = theme.left_bottom
+            right_top = theme.right_top
+            right_bottom = theme.right_bottom
+            horizontal = theme.horizontal
+            vertical = theme.vertical
             start = 0
             end = self.render_height - 1
+            render_height = self.render_height
+
+
             for i in range(self.render_height):
-                if self.left_margin > 0:
-                    utils.repeatIO(s, ' ', self.left_margin)
-                if i == start:
-                    self.horizontal_lineIO(s, theme.left_top, theme.right_top, theme.horizontal)
+                utils.repeatIO(s, ' ', self.left_margin)
+                if i == start:  # first line-- a horizontal line
+                    horizontal_lineIO(s, render_width, left_top, right_top, horizontal)
                     s.write('\n')
-                elif i == end:
-                    self.horizontal_lineIO(s, theme.left_bottom, theme.right_bottom, theme.horizontal)
+                elif i == end:  # last line -- a horizontal line
+                    horizontal_lineIO(s, render_width, left_bottom, right_bottom, horizontal)
                     s.write('\n')
-                elif 0 <= i - self._vertical_margin - 1 < len(contents):
+                else:  # content in the middle
                     index = i - self._vertical_margin - 1
                     content = contents[index]
                     content_len = len(content)
-                    if content_len >= self.render_width - 2:
-                        content = content[0:self.render_width - 2]
-                        s.write(theme.vertical)
+                    if content_len >= render_width - 2:
+                        content = content[0:render_width - 2]
+                        s.write(vertical)
                         s.write(content)
-                        s.write(theme.vertical)
+                        s.write(vertical)
                     else:
-                        s.write(theme.vertical)
-                        cur_hor_margin = (self.render_width - content_len - 2) // 2
-                        utils.repeatIO(s, ' ', cur_hor_margin)
+                        s.write(vertical)
                         s.write(content)
-                        utils.repeatIO(s, ' ', cur_hor_margin)
-                        missing = self.render_width - 1 - (content_len + 1 + cur_hor_margin * 2)
-                        if missing > 0:
-                            utils.repeatIO(s, ' ', missing)
-                        s.write(theme.vertical)
+                        rest = render_width - 2 - content_len
+                        utils.repeatIO(s, ' ', rest)
+                        s.write(vertical)
                     s.write('\n')
-                else:
-                    s.write(theme.vertical)
-                    utils.repeatIO(s, ' ', self.render_width - 2)
-                    s.write(theme.vertical)
-                    s.write('\n')
+
             buf.addtext(s.getvalue(), end='')
-
-    def horizontal_line(self, left: str, right: str, horizontal) -> str:
-        width = self.render_width
-        start = 0
-        end = width - 1
-        with StringIO() as s:
-            for i in range(width):
-                if i == start:
-                    s.write(left)
-                elif i == end:
-                    s.write(right)
-                else:
-                    s.write(horizontal)
-            return s.getvalue()
-
-    def horizontal_lineIO(self, IO, left: str, right: str, horizontal):
-        width = self.render_width
-        start = 0
-        end = width - 1
-        for i in range(width):
-            if i == start:
-                IO.write(left)
-            elif i == end:
-                IO.write(right)
-            else:
-                IO.write(horizontal)
 
     @property
     def focusable(self) -> bool:

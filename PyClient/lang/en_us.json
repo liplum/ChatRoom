@@ -9,7 +9,8 @@
     "software": {
       "full_name": "ChattingRoom PyClient",
       "name": "Chatting Room",
-      "powered_by": "Powered by|        {0}"
+      "powered_by": "Powered by|        {0}",
+      "author": "By Liplum   "
     },
     "copyright": {
       "software": "ChattingRoom PyClient",
@@ -188,6 +189,7 @@
   "settings": {
     "DateFormat": "Date format",
     "AutoLoginSwitch": "Auto login",
-    "RestoreTabWhenRestart": "Reopen last unclosed"
+    "RestoreTabWhenRestart": "Reopen last unclosed",
+    "ColorfulMainMenu": "COLORFUL!!!"
   }
 }

@@ -1,5 +1,6 @@
+from core.settings import entity
 from ui.cmd_modes import common_hotkey
-from ui.control.display_boards import display_board
+from ui.control.display_boards import display_board, DCenter, DRight
 from ui.panels import *
 from ui.tab.copyright import copyright_tab
 from ui.tab.language import language_tab
@@ -17,7 +18,23 @@ class main_menu_tab(tab):
         super().__init__(client, tablist)
         self._title_texts = []
         main = stack()
-        db = display_board(MCGT(lambda: self._title_texts), theme=tube)
+
+        class _db_alignments:
+            def __getitem__(self, item: int):
+                if item == 3:
+                    return DRight
+                else:
+                    return DCenter
+
+        db_alignments = _db_alignments()
+
+        def db_color():
+            if entity().ColorfulMainMenu:
+                return chaos_tube
+            else:
+                return tube
+
+        db = display_board(MCGT(lambda: self._title_texts), lambda: db_alignments, theme=db_color)
         main.add(db)
         self.main = main
         self.main.on_content_changed.add(lambda _: self.on_content_changed(self))
@@ -103,7 +120,7 @@ class main_menu_tab(tab):
             i18n.trans("info.software.name"),
             powered_by_a,
             powered_by_b,
-            i18n.trans('info.copyright.author')
+            i18n.trans('info.software.author')
         ]
         self._title_texts = l
 
