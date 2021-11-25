@@ -8,7 +8,7 @@ import states
 import utils
 from cmd import *
 from ui import outputs as output
-from ui.outputs import buffer, CmdBkColor, CmdFgColor, CmdStyle
+from ui.outputs import CmdStyle
 from ui.tabs import *
 from ui.uistates import ui_state
 

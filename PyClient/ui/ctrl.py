@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Collection, Dict, Optional, Union, Any,Tuple
+from typing import Callable, Collection, Dict, Optional, Union, Any, Tuple
 
+from GLOBAL import StringIO
 from ui.shared import *
 
 auto = "auto"
@@ -61,11 +62,12 @@ class control(notifiable, painter, inputable, reloadable, ABC):
         How it works depends on the subclass's implementation
         :param value: PROP
         """
-        if value != auto and value < 0:
-            value = 0
-        if self._width != value:
-            self._width = value
-            self.on_prop_changed(self, "width")
+        if self.width != value:
+            if value == auto:
+                self._width = auto
+            else:
+                self._width = max(0, value)
+                self.on_prop_changed(self, "width")
 
     @property
     def render_height(self) -> int:
@@ -98,11 +100,12 @@ class control(notifiable, painter, inputable, reloadable, ABC):
         How it works depends on the subclass's implementation
         :param value: int(height)
         """
-        if value != auto and value < 0:
-            value = 0
-        if self._height != value:
-            self._height = value
-            self.on_prop_changed(self, "height")
+        if self.height != value:
+            if value == auto:
+                self._height = auto
+            else:
+                self._height = max(0, value)
+                self.on_prop_changed(self, "height")
 
     @abstractmethod
     def paint_on(self, buf: buffer):
@@ -170,6 +173,39 @@ class control(notifiable, painter, inputable, reloadable, ABC):
         if key in self._attach_prop:
             del self._attach_prop[key]
         return self
+
+
+class text_control(control, ABC):
+
+    def __init__(self):
+        super().__init__()
+        self._on_render_char: Optional[Callable[[str], str]] = None
+
+    @property
+    def on_render_char(self):
+        return self._on_render_char
+
+    @on_render_char.setter
+    def on_render_char(self, value: Optional[Callable[[str], str]]):
+        self._on_render_char = value
+
+    def _render_chars(self, text: str):
+        func = self.on_render_char
+        if func:
+            with StringIO as s:
+                for char in text:
+                    s.write(func(char))
+                return s.getvalue()
+        else:
+            return text
+
+    def _render_charsIO(self, IO, text: str):
+        func = self.on_render_char
+        if func:
+            for char in text:
+                IO.write(func(char))
+        else:
+            IO.write(text)
 
 
 class content_getter:

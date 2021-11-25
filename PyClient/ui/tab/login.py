@@ -1,4 +1,3 @@
-import GLOBAL
 from core import operations as op
 from core.shared import *
 from ui.cmd_modes import common_hotkey

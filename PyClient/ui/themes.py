@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Tuple, Callable,Union
+from typing import Tuple, Callable, Union
 
 builtin_themes = set()
 
@@ -36,7 +36,8 @@ class theme:
 
 
 theme_getter = Callable[[], theme]
-ThemeGetter = Union[theme_getter,theme]
+ThemeGetter = Union[theme_getter, theme]
+
 
 def _builtin(left_top: str, right_top: str, left_bottom: str, right_bottom: str, horizontal: str,
              vertical: str) -> theme:
@@ -44,8 +45,10 @@ def _builtin(left_top: str, right_top: str, left_bottom: str, right_bottom: str,
     builtin_themes.add(t)
     return t
 
+
 def is_theme(obj):
-    return isinstance(obj,theme) or isinstance(obj,packed_theme)
+    return isinstance(obj, theme) or isinstance(obj, packed_theme)
+
 
 vanilla: theme = _builtin('┌', '┐', '└', '┘', '─', '│')
 tube: theme = _builtin('╔', '╗', '╚', '╝', '═', '║')

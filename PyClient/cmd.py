@@ -1,6 +1,6 @@
-from io import StringIO
 from typing import Dict, List, Callable, Tuple
 
+from GLOBAL import StringIO
 from autofill import prompt
 
 

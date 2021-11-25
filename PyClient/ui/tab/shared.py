@@ -71,11 +71,15 @@ colorful_tube = tinted_theme(themes.tube)
 
 
 def random_fgcolor() -> CmdFgColorEnum:
-    return random.choice(CmdFgColors)
+    return random.choice(CmdFgColorsWithoutBlack)
 
 
 def random_bkcolor() -> CmdBkColorEnum:
-    return random.choice(CmdBkColors)
+    return random.choice(CmdBkColorsWithoutBlack)
+
+
+def random_style() -> CmdStyleEnum:
+    return random.choice(CmdStyles)
 
 
 class chaos_theme(themes.packed_theme):
@@ -106,3 +110,14 @@ class chaos_theme(themes.packed_theme):
 
 
 chaos_tube = themes.copy_packed_theme(themes.tube, chaos_theme)
+
+
+def colorize(text: str) -> str:
+    with StringIO() as s:
+        for char in text:
+            tintedtxtIO(s, char, fgcolor=random_fgcolor())
+        return s.getvalue()
+
+
+def colorize_char(text: str) -> str:
+    return tintedtxt(text, fgcolor=random_fgcolor())

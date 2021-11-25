@@ -1,18 +1,21 @@
-from io import StringIO
+import math
+from collections import deque
 from typing import Iterable
 
 import utils
+from ui.control.display_boards import horizontal_lineIO
 from ui.ctrl import *
 from ui.outputs import buffer
 from ui.themes import theme, vanilla
-from ui.control.display_boards import horizontal_lineIO
+
 Word = str
 Words = Iterable[str]
-WordsGetter = Callable[[], Words]
+words_getter = Callable[[], Words]
+WordsGetter = Union[Words, words_getter]
 
 
 # TODO:Complete This
-class textblock(control):
+class textblock(text_control):
     """
     ┌────────────────────────────────┐
     │Beautiful is better than ugly.  │
@@ -23,12 +26,12 @@ class textblock(control):
     └────────────────────────────────┘
     """
 
-    def __init__(self, contents: WordsGetter, theme: theme = vanilla):
+    def __init__(self, words: WordsGetter, theme: theme = vanilla):
         super().__init__()
-        if isinstance(contents, str):
-            self.contents = lambda: contents
+        if isinstance(words, Iterable):
+            self.words = lambda: words
         else:
-            self.contents = contents
+            self.words = words
         self.theme = theme
         self._width = auto
         self._height = auto
@@ -39,65 +42,66 @@ class textblock(control):
         if self._layout_changed:
             self.cache_layout()
         render_width = self.render_width
-        if render_width == 0 or self.render_height == 0:
+        render_height = self.render_height
+        if render_width == 0 or render_height == 0:
             return
         with StringIO() as s:
-            contents = self.contents()
+            words = deque(self.words())
             theme = self.theme
-            left_top = theme.left_top
-            left_bottom = theme.left_bottom
-            right_top = theme.right_top
-            right_bottom = theme.right_bottom
-            horizontal = theme.horizontal
-            vertical = theme.vertical
-            start = 0
-            end = self.render_height - 1
-            render_height = self.render_height
-
-
-            for i in range(self.render_height):
+            utils.repeatIO(s, ' ', self.left_margin)
+            horizontal_lineIO(s, render_width, theme.left_top, theme.right_top, theme.horizontal)
+            if render_height == 1:
+                buf.addtext(s.getvalue(), end='')
+                return
+            if render_height == 2:
                 utils.repeatIO(s, ' ', self.left_margin)
-                if i == start:  # first line-- a horizontal line
-                    horizontal_lineIO(s, render_width, left_top, right_top, horizontal)
+                horizontal_lineIO(s, render_width, theme.left_bottom, theme.right_bottom, theme.horizontal)
+                buf.addtext(s.getvalue(), end='')
+                return
+
+            cur_pos = 0
+            text_area_width = render_width - 2
+            s.write('\n')
+
+            def write_word(word: Word) -> bool:
+                nonlocal cur_pos
+                word_len = len(word)
+                rest_len = text_area_width - cur_pos
+                if rest_len >= word_len:
+                    self._render_charsIO(s, word)
+                    cur_pos += word_len
+                    return True
+                else:
+                    utils.repeatIO(s, ' ', rest_len)
+                    cur_pos += rest_len
+                    return False
+
+            while len(words) > 0:
+                cur = words.popleft()
+                if cur_pos == text_area_width:
+                    s.write(theme.vertical)
                     s.write('\n')
-                elif i == end:  # last line -- a horizontal line
-                    horizontal_lineIO(s, render_width, left_bottom, right_bottom, horizontal)
-                    s.write('\n')
-                else:  # content in the middle
-                    index = i - self._vertical_margin - 1
-                    content = contents[index]
-                    content_len = len(content)
-                    if content_len >= render_width - 2:
-                        content = content[0:render_width - 2]
-                        s.write(vertical)
-                        s.write(content)
-                        s.write(vertical)
-                    else:
-                        s.write(vertical)
-                        s.write(content)
-                        rest = render_width - 2 - content_len
-                        utils.repeatIO(s, ' ', rest)
-                        s.write(vertical)
-                    s.write('\n')
+                    cur_pos = 0
+                if cur_pos == 0:
+                    utils.repeatIO(s, ' ', self.left_margin)
+                    s.write(theme.vertical)
+                used = write_word(cur)
+                if not used:
+                    words.appendleft(cur)
+
+            rest_len = text_area_width - cur_pos
+            utils.repeatIO(s, ' ', rest_len)
+            s.write(theme.vertical)
+
+            s.write('\n')
+            utils.repeatIO(s, ' ', self.left_margin)
+            horizontal_lineIO(s, render_width, theme.left_bottom, theme.right_bottom, theme.horizontal)
 
             buf.addtext(s.getvalue(), end='')
 
     @property
     def focusable(self) -> bool:
         return False
-
-    @property
-    def width(self) -> PROP:
-        return self._width
-
-    @width.setter
-    def width(self, value: PROP):
-        if self.width != value:
-            if value == auto:
-                self._width = auto
-            else:
-                self._width = max(0, value)
-            self.on_prop_changed(self, "width")
 
     @property
     def render_height(self) -> int:
@@ -107,48 +111,27 @@ class textblock(control):
     def render_width(self) -> int:
         return self._r_width
 
-    @property
-    def height(self) -> PROP:
-        return self._height
-
-    @height.setter
-    def height(self, value: PROP):
-        if self._height != value:
-            if value == auto:
-                self._height = auto
-            else:
-                self._height = max(0, value)
-            self.on_prop_changed(self, "height")
-
     def cache_layout(self):
         if not self._layout_changed:
             return
         self._layout_changed = False
-        contents = self.contents()
-        if self.width == auto:
-            max_width = max(len(t) for t in contents)
-            self._r_width = max_width + 2
-            self._horizontal_margin = 0
-        else:
-            self._r_width = self.width
-            max_width = max(len(t) for t in contents)
-            difference = self.width - (max_width + 2)
-            if difference >= 0:
-                self._horizontal_margin = difference // 2
-            else:
-                self._horizontal_margin = 0
+        sum_len = 0
+        max_width = 0
+        for word in self.words():
+            word_len = len(word)
+            sum_len += word_len
+            max_width = max(max_width, word_len)
+        a = math.sqrt(sum_len) / 7
 
-        contentlen = len(contents)
+        if self.width == auto:
+            self._r_width = max(round(a * 30), 2 + max_width)
+        else:
+            self._r_width = max(self.width, 2 + max_width)
+
         if self.height == auto:
-            self._r_height = len(contents) + 2
-            self._vertical_margin = 0
+            self._r_height = round(a * 11)
         else:
             self._r_height = self.height
-            difference = self.height - (contentlen + 2)
-            if difference >= 0:
-                self._vertical_margin = difference // 2
-            else:
-                self._vertical_margin = 0
 
     def notify_content_changed(self):
         self.on_content_changed(self)

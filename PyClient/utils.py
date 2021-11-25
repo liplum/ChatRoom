@@ -1,4 +1,5 @@
 import calendar
+import math
 import os
 import platform
 import sys
@@ -15,6 +16,14 @@ clear_screen = None
 T = TypeVar('T')
 TK = TypeVar('TK')
 TV = TypeVar('TV')
+
+
+def nearest_prefect_square(num: int) -> int:
+    return round(math.sqrt(num)) ** 2
+
+
+def nearest_int_square_root(num: int) -> int:
+    return round(math.sqrt(num))
 
 
 def fill_2d_array(row: int, column: int, filler: Optional[T] = 0) -> List[List[Any]]:

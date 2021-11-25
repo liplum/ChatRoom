@@ -1,7 +1,7 @@
 from abc import ABCMeta
-from io import StringIO
 from typing import List, Optional, Iterable, Dict
 
+from GLOBAL import StringIO
 from ui.core import *
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
 from utils import is_in
@@ -54,7 +54,6 @@ class tablist(notifiable, painter):
                 self.cur_index = self.tabs.index(cur)
             except:
                 pass
-
 
     @property
     def tabs_count(self) -> int:

@@ -1,8 +1,8 @@
-from io import StringIO
 from typing import Optional, Iterable, List
 
 import chars
 import utils
+from GLOBAL import StringIO
 from events import event
 from ui.ctrl import control, auto, unlimited, PROP
 from ui.outputs import buffer, CmdBkColor, CmdFgColor

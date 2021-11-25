@@ -1,4 +1,3 @@
-import GLOBAL
 from ui import panels as panels
 from ui.panels import stack
 from ui.tab.shared import *

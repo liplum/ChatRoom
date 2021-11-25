@@ -112,7 +112,9 @@ class button(control):
 
     @height.setter
     def height(self, value: int):
-        pass
+        if value != auto:
+            value = 1
+        self._height = value
 
     @property
     def focusable(self) -> bool:

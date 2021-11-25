@@ -1,5 +1,3 @@
-from io import StringIO
-
 import keys
 import utils
 from ui.ctrl import *

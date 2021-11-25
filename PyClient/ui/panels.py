@@ -1,4 +1,4 @@
-from typing import Tuple, Set, List, Iterator
+from typing import Set, List, Iterator
 
 import keys
 import utils

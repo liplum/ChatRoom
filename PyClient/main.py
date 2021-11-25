@@ -4,6 +4,15 @@ import GLOBAL
 import utils
 from utils import get_at
 
+LOGO = (
+    "  ______ _                    _             ",
+    " / _____) |          _   _   (_)            ",
+    "| /     | | _   ____| |_| |_  _ ____   ____ ",
+    "| |     | || \ / _  |  _)  _)| |  _ \ / _  |",
+    "| \_____| | | ( ( | | |_| |__| | | | ( ( | |",
+    " \______)_| |_|\_||_|\___)___)_|_| |_|\_|| |",
+    "                                     (_____|",
+)
 IDE = False
 args = sys.argv
 if get_at(args, -1) == "-debug":
@@ -42,6 +51,40 @@ if get_at(args, 1) == "-login":
 
 if IDE:
     utils.clear_screen = lambda: None
+
+if GLOBAL.DEBUG:
+    class FakeStringIO:
+        def __init__(self):
+            self.text = ""
+
+        def write(self, s: str):
+            self.text += s
+
+        def getvalue(self) -> str:
+            return self.text
+
+        def close(self):
+            return
+
+        @staticmethod
+        def writable() -> bool:
+            return True
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+        def __repr__(self):
+            return self.text
+
+
+    GLOBAL.StringIO = FakeStringIO
+else:
+    import io
+
+    GLOBAL.StringIO = io.StringIO
 
 import platform
 

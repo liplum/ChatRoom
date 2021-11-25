@@ -1,10 +1,7 @@
-from io import StringIO
-
-import ui.themes as themes
 import utils
 from ui.ctrl import *
 from ui.outputs import buffer
-from ui.themes import vanilla, ThemeGetter,is_theme
+from ui.themes import vanilla, ThemeGetter, is_theme
 
 Display_alignment = int
 DCenter = 0
@@ -44,7 +41,7 @@ def horizontal_lineIO(IO, width: int, left: str, right: str, horizontal: str):
     IO.write(right)
 
 
-class display_board(control):
+class display_board(text_control):
     """
     ┌────────┐
     │  Text  │
@@ -96,7 +93,7 @@ class display_board(control):
                     if content_len >= render_width - 2:
                         content = content[0:render_width - 2]
                         s.write(theme.vertical)
-                        s.write(content)
+                        self._render_charsIO(s, content)
                         s.write(theme.vertical)
                     else:
                         s.write(theme.vertical)
@@ -104,18 +101,18 @@ class display_board(control):
                         if alignment == DCenter:
                             cur_hor_margin = (render_width - content_len - 2) // 2
                             utils.repeatIO(s, ' ', cur_hor_margin)
-                            s.write(content)
+                            self._render_charsIO(s, content)
                             utils.repeatIO(s, ' ', cur_hor_margin)
                             missing = render_width - 1 - (content_len + 1 + cur_hor_margin * 2)
                             utils.repeatIO(s, ' ', missing)
                         elif alignment == DLeft:
-                            s.write(content)
+                            self._render_charsIO(s, content)
                             rest = render_width - 2 - content_len
                             utils.repeatIO(s, ' ', rest)
                         else:
                             rest = render_width - 2 - content_len
                             utils.repeatIO(s, ' ', rest)
-                            s.write(content)
+                            self._render_charsIO(s, content)
                         s.write(theme.vertical)
                     s.write('\n')
                 else:  # blank line
@@ -128,38 +125,12 @@ class display_board(control):
         return False
 
     @property
-    def width(self) -> PROP:
-        return self._width
-
-    @width.setter
-    def width(self, value: PROP):
-        if self.width != value:
-            if value == auto:
-                self._width = auto
-            else:
-                self._width = max(0, value)
-            self.on_prop_changed(self, "width")
-
-    @property
     def render_height(self) -> int:
         return self._r_height
 
     @property
     def render_width(self) -> int:
         return self._r_width
-
-    @property
-    def height(self) -> PROP:
-        return self._height
-
-    @height.setter
-    def height(self, value: PROP):
-        if self._height != value:
-            if value == auto:
-                self._height = auto
-            else:
-                self._height = max(0, value)
-            self.on_prop_changed(self, "height")
 
     def cache_layout(self):
         if not self._layout_changed:

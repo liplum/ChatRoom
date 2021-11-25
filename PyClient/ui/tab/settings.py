@@ -63,20 +63,17 @@ class settings_tab(tab):
         self.win = self.client.win
         self.last_tab = None
         self.ctrl2on_save = {}
-        # settings = gen_grid(4, [column(30), column(10)])
         main = stack()
         main.on_content_changed.add(lambda _: self.on_content_changed(self))
         main.left_margin = 3
         self.main = main
-        # settings[0, 0] = i18n_label("settings.RestoreTabWhenRestart")
-        # settings[0, 1] = checkbox(True, theme=turn_on_off_check_theme)
-        # settings.elemt_interval_w = 4
-        # main.add(settings)
         main.switch_to_first_or_default_item()
         save = i18n_button("controls.save", self.save_configs)
+        save.width = 10
         self.b_save = save
 
         cancel = i18n_button("controls.cancel", self.quit_tab)
+        cancel.width = 10
         self.b_cancel = cancel
         save_cancel = stack()
         save_cancel.orientation = horizontal

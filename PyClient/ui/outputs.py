@@ -3,11 +3,11 @@ import sys
 import traceback
 from abc import ABC, abstractmethod
 from datetime import datetime
-from io import StringIO
 from typing import Optional, NoReturn, List, Tuple
 
 import GLOBAL
 import i18n
+from GLOBAL import StringIO
 from core.filer import ifiler
 
 
@@ -59,6 +59,9 @@ class CmdFgColor:
 CmdFgColors = (CmdFgColor.Black, CmdFgColor.Red, CmdFgColor.Green, CmdFgColor.Yellow, CmdFgColor.Blue,
                CmdFgColor.Violet, CmdFgColor.Cyan, CmdFgColor.White)
 
+CmdFgColorsWithoutBlack = (CmdFgColor.Red, CmdFgColor.Green, CmdFgColor.Yellow, CmdFgColor.Blue,
+                           CmdFgColor.Violet, CmdFgColor.Cyan, CmdFgColor.White)
+
 CmdBkColorEnum = str
 
 
@@ -75,6 +78,9 @@ class CmdBkColor:
 
 CmdBkColors = (CmdBkColor.Black, CmdBkColor.Red, CmdBkColor.Green, CmdBkColor.Yellow, CmdBkColor.Blue,
                CmdBkColor.Violet, CmdBkColor.Cyan, CmdBkColor.White)
+
+CmdBkColorsWithoutBlack = (CmdBkColor.Red, CmdBkColor.Green, CmdBkColor.Yellow, CmdBkColor.Blue,
+                           CmdBkColor.Violet, CmdBkColor.Cyan, CmdBkColor.White)
 
 CmdStyleEnum = str
 

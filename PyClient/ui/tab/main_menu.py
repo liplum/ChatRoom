@@ -11,6 +11,22 @@ from ui.tab.shared import *
 from ui.tabs import *
 from ui.themes import *
 
+LOGO = (
+    "  ______ _                    _             ",
+    " / _____) |          _   _   (_)            ",
+    "| /     | | _   ____| |_| |_  _ ____   ____ ",
+    "| |     | || \ / _  |  _)  _)| |  _ \ / _  |",
+    "| \_____| | | ( ( | | |_| |__| | | | ( ( | |",
+    " \______)_| |_|\_||_|\___)___)_|_| |_|\_|| |",
+    "                                     (_____|",
+)
+
+
+def _get_theme_tube(): return tube
+
+
+def _get_theme_chaos_tube(): return chaos_tube
+
 
 class main_menu_tab(tab):
 
@@ -21,24 +37,19 @@ class main_menu_tab(tab):
 
         class _db_alignments:
             def __getitem__(self, item: int):
-                if item == 3:
+                if item == 7:
                     return DRight
                 else:
                     return DCenter
 
         db_alignments = _db_alignments()
 
-        def db_color():
-            if entity().ColorfulMainMenu:
-                return chaos_tube
-            else:
-                return tube
-
-        db = display_board(MCGT(lambda: self._title_texts), lambda: db_alignments, theme=db_color)
+        db = display_board(MCGT(lambda: self._title_texts), lambda: db_alignments, theme=_get_theme_tube)
+        self.db = db
         main.add(db)
         self.main = main
         self.main.on_content_changed.add(lambda _: self.on_content_changed(self))
-        db.width = 40
+        db.width = 60
         db.height = auto
         self.win = self.client.win
 
@@ -72,6 +83,18 @@ class main_menu_tab(tab):
         b_quit = i18n_button("controls.quit", quit_app)
         main.add(b_quit)
         b_quit.width = 10
+        """
+        For testing
+        text = ["Hello,", "my ", "name ", "is ", "plum.", "Hello,", "my ", "name ", "is ", "plum.", "is ", "plum.",
+                "Hello,", "my ", "name ", "is ", "plum.", "is ", "plum.", "Hello,", "my ", "name ", "is ", "plum.",
+                "is ", "plum.", "Hello,", "my ", "name ", "is ", "plum."]
+
+        text="Hello,my name is plum.Hello,my name is plum."
+        text = ["Hello,", "my ", "name ", "is ", "plum.", "Hello,", "my ", "name ", "is"]
+        block = textblock(text)
+        block.width = 40
+        main.add(block)
+        """
 
         def show_info():
             tab = self.win.newtab(copyright_tab)
@@ -111,17 +134,8 @@ class main_menu_tab(tab):
         return i18n.trans("tabs.main_menu_tab.name")
 
     def gen_title_texts(self):
-        powered_by = i18n.trans("info.software.powered_by", "Python")
-        try:
-            powered_by_a, powered_by_b = powered_by.split('|')
-        except:
-            powered_by_a, powered_by_b = "", ""
-        l: List[str] = [
-            i18n.trans("info.software.name"),
-            powered_by_a,
-            powered_by_b,
-            i18n.trans('info.software.author')
-        ]
+        l: List[str] = list(LOGO)
+        l.append(i18n.trans('info.software.author'))
         self._title_texts = l
 
     def on_added(self):
@@ -146,3 +160,13 @@ class main_menu_tab(tab):
     def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
         self.main.switch_to_first_or_default_item()
         return True
+
+    def on_focused(self):
+        configs = entity()
+
+        if configs.ColorfulMainMenu:
+            self.db.theme = _get_theme_chaos_tube
+            self.db.on_render_char = colorize_char
+        else:
+            self.db.theme = _get_theme_tube
+            self.db.on_render_char = None
