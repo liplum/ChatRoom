@@ -38,7 +38,7 @@ class tablist(notifiable, painter):
         self.tabs = no_duplicate
         if self.cur:
             former = self.cur_index
-            self.cur_index = self.tabs.index(self.cur)
+            self._reset_index()
             if self.cur_index != former:
                 self.on_curtab_changed(self, self.cur_index, self.cur)
 
@@ -46,6 +46,15 @@ class tablist(notifiable, painter):
         for t in self.tabs:
             if isinstance(t, tabtype):
                 yield t
+
+    def _reset_index(self):
+        cur = self.cur
+        if cur:
+            try:
+                self.cur_index = self.tabs.index(cur)
+            except:
+                pass
+
 
     @property
     def tabs_count(self) -> int:
@@ -92,7 +101,7 @@ class tablist(notifiable, painter):
                 self._cur.on_lost_focus()
             self._cur = value
             if self._cur:
-                self.cur_index = self.tabs.index(self._cur)
+                self._reset_index()
                 self._cur.on_focused()
             self.on_curtab_changed(self, self.cur_index, tab)
 

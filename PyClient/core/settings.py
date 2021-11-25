@@ -1,7 +1,9 @@
 import json
 import os
 import sys
-from typing import TypeVar, Callable, Optional, Dict, Any
+from typing import TypeVar, Callable, Optional, Dict, Any, NoReturn
+
+from utils import not_none
 
 T = TypeVar('T')
 
@@ -37,6 +39,41 @@ class Style:
     OnlyNumber = 1
     OnlyAlphabet = 2
     AnyString = 3
+    OnlyNumber_Alphabet = 4
+
+
+New_Value = Any
+New_Value_Callback = Callable[["settings", New_Value], NoReturn]
+
+
+class prop:
+    def __init__(self, style: Config_Style, new_value_callback: New_Value_Callback):
+        self.style: Config_Style = style
+        self.new_value_callback: New_Value_Callback = new_value_callback
+
+
+class prop_builder:
+    def __init__(self, config: "config"):
+        self.config = config
+        self._new_value_callback = None
+
+    def style(self, style: Config_Style) -> "prop_builder":
+        if style is None:
+            raise ValueError(style)
+        self._control_style = style
+        return self
+
+    def notice(self, callback: New_Value_Callback) -> "prop_builder":
+        if callback is None:
+            raise ValueError(callback)
+        self._new_value_callback = callback
+        return self
+
+    def build(self) -> "config":
+        if not_none(self._new_value_callback, self._control_style):
+            self.config.prop = prop(self._control_style, self._new_value_callback)
+            return self.config
+        raise BuildError(self.config)
 
 
 class config:
@@ -44,6 +81,7 @@ class config:
                  convert_from: Optional[Callable[[T], Any]] = None, json_type: Optional[type] = None):
         self.key: str = key
         self.default = default
+        self._is_customizable = False
         if json_type is None:
             json_type = type(default)
         self.json_type: type = json_type
@@ -55,12 +93,36 @@ class config:
             convert_from = str
         self.convert_from = convert_from
 
+    def customizable(self) -> prop_builder:
+        self._is_customizable = True
+        return prop_builder(self)
+
+    @property
+    def is_customizable(self) -> bool:
+        return self._is_customizable
+
+
+class ValueInvalidError(Exception):
+    def __init__(self, msg: str):
+        super().__init__()
+        self.msg = msg
+
+
+class BuildError(Exception):
+
+    def __init__(self, config: config) -> None:
+        super().__init__(config.key)
+
 
 _meta: Dict[str, config] = {}
 
 
 def all_meta() -> Dict[str, config]:
     return _meta
+
+
+def all_customizable() -> Dict[str, config]:
+    return {key: config for key, config in _meta.items() if config.is_customizable}
 
 
 class settings:

@@ -27,7 +27,9 @@ class checkbox(control):
             if self.left_margin > 0:
                 utils.repeatIO(s, " ", self.left_margin)
             s.write(self.cur_render_icon)
-            buf.addtext(tintedtxt(s.getvalue(), fgcolor=CmdFgColor.Black, bkcolor=CmdBkColor.White), end="")
+            bk = CmdBkColor.White if self.is_focused else None
+            fg = CmdFgColor.Black if self.is_focused else None
+            buf.addtext(tintedtxt(s.getvalue(), fgcolor=fg, bkcolor=bk), end="")
 
     @property
     def checked(self) -> Optional[bool]:

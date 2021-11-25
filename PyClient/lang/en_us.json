@@ -177,7 +177,8 @@
       "turn_on": "[Yes]",
       "turn_off": "[No]",
       "null": "[  ]"
-    }
+    },
+    "save": "Save"
   },
   "outputs": {
     "render": {
