@@ -12,6 +12,8 @@ from ui.outputs import CmdStyle
 from ui.tabs import *
 from ui.uistates import ui_state
 
+_main_menu_tab_name = "main_menu_tab"
+
 
 def common_hotkey(char: chars.char, tab: tab, client: iclient, tablist: tablist, win: iwindow):
     """
@@ -24,7 +26,10 @@ def common_hotkey(char: chars.char, tab: tab, client: iclient, tablist: tablist,
     :return: (True | None) Whether the char wasn't consumed
     """
     if chars.c_q == char:
-        client.stop()
+        t = utils.get(tab_name2type, _main_menu_tab_name)
+        if t and not isinstance(tablist.cur, t):
+            main_menu = win.newtab(_main_menu_tab_name)
+            tablist.replace(tab, main_menu)
     elif chars.c_a == char:
         tablist.back()
     elif chars.c_s == char:
@@ -37,7 +42,7 @@ def common_hotkey(char: chars.char, tab: tab, client: iclient, tablist: tablist,
         chat = win.new_chat_tab()
         tablist.add(chat)
     elif chars.c_m == char:
-        main_menu = win.newtab('main_menu_tab')
+        main_menu = win.newtab(_main_menu_tab_name)
         tablist.add(main_menu)
     else:
         return True

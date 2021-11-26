@@ -3,9 +3,9 @@ from typing import NoReturn
 import keys
 import utils
 from ui.ctrl import *
-from ui.outputs import buffer, CmdBkColor, CmdFgColor
+from ui.outputs import buffer, CmdBkColor, CmdFgColor,tintedtxtIO
 from ui.shared import Is_Consumed, Consumed, Not_Consumed
-
+from GLOBAL import StringIO
 
 class button(control):
 
@@ -33,39 +33,41 @@ class button(control):
     def paint_on(self, buf: buffer):
         if self._layout_changed:
             self.cache_layout()
-        if self.left_margin > 0:
-            buf.addtext(utils.repeat(' ', self.left_margin), end='')
-        bk = CmdBkColor.White if self.is_focused else None
-        fg = CmdFgColor.Black if self.is_focused else None
-        distext = self.distext
-        distext = utils.fillto(distext, " ", self.render_width)
-        buf.addtext(distext, end='', fgcolor=fg, bkcolor=bk)
+        with StringIO() as s:
+            utils.repeatIO(s,' ', self.left_margin)
+            bk = CmdBkColor.White if self.is_focused else None
+            fg = CmdFgColor.Black if self.is_focused else None
+            tintedtxtIO(s,self.distext,fgcolor=fg, bkcolor=bk)
+            buf.addtext(s.getvalue(), end='')
 
     @property
-    def distext(self) -> str:
-        content = self.content()
-        content_len = len(content)
-        render_width = self.render_width
-        is_odd = content_len % 2 == 1
-        margin = self.margin
-        if margin > 0:
-            if self.is_focused:
-                left_margin = utils.repeat(" ", margin)
-                if is_odd:
-                    right_margin = utils.repeat(" ", margin - 1)
+    def distext(self) ->str:
+        with StringIO() as s:
+            content = self.content()
+            content_len = len(content)
+            render_width = self.render_width
+            is_odd = content_len % 2 == 1
+            margin = self.margin
+            if margin > 0:
+                if self.is_focused:
+                    utils.repeatIO(s," ", margin)
+                    s.write(content)
+                    if is_odd:
+                        utils.repeatIO(s," ", margin - 1)
+                    else:
+                        utils.repeatIO(s," ", margin)
                 else:
-                    right_margin = left_margin
-                return f"{left_margin}{content}{right_margin}"
+                    s.write('[')
+                    utils.repeatIO(s, " ", margin - 1)
+                    s.write(content)
+                    if is_odd:
+                        utils.repeatIO(s, " ", margin - 2)
+                    else:
+                        utils.repeatIO(s, " ", margin - 1)
+                    s.write(']')
             else:
-                left_margin = utils.repeat(" ", margin - 1)
-                if is_odd:
-                    right_margin = utils.repeat(" ", margin - 2)
-                else:
-                    right_margin = left_margin
-                return f"[{left_margin}{content}{right_margin}]"
-
-        else:
-            return content[0:render_width]
+                s.write(content[0:render_width])
+            return s.getvalue()
 
     def __init__(self, content: ContentGetter, on_press: Callable[[], NoReturn]):
         super().__init__()
