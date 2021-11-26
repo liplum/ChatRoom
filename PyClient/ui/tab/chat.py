@@ -198,7 +198,7 @@ class chat_tab(tab):
             self._add_msg(time, uid, text)
             if not self.is_focused:
                 self.unread_msg_number += 1
-                self.on_content_changed(self)
+        self.on_content_changed(self)
 
     def on_removed(self):
         self.msg_manager.on_received.remove(self._on_received_msg)

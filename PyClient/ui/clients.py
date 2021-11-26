@@ -168,14 +168,12 @@ class client(iclient):
             self.auto_login()
             self.win.gen_default_tab()
             while self._running:
+                # self.tps.delay()
                 if self.need_update:
                     if not self._running:
                         break
                     self.render()
-                    self._clear_dirty()
-                    continue
                 self.inpt.get_input()
-                # self.tps.delay()
         except Exception as e:
             self.logger.error(f"[Client]{e}\n{traceback.format_exc()}")
             self.stop()
@@ -192,6 +190,7 @@ class client(iclient):
 
     def render(self):
         with self._display_lock:
+            self._clear_dirty()
             self.win.update_screen()
 
     @property
