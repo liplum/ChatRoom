@@ -54,6 +54,22 @@ turn_on_off_check_theme = i18n_theme(
     "controls.checkbox.turn_on", "controls.checkbox.turn_off", "controls.checkbox.null"
 )
 
+_word_separator_key = "controls.textblock.word_separator"
+
+
+def split_textblock_words(key: str) -> List[str]:
+    word_separator = i18n.trans(_word_separator_key)
+    if word_separator == _word_separator_key:
+        word_separator = ""
+    text = i18n.trans(key)
+    if word_separator == "":
+        return [text]
+    else:
+        try:
+            return text.split(word_separator)
+        except:
+            return [text]
+
 
 def tinted_theme(theme: themes.theme) -> themes.theme:
     t = theme.copy()

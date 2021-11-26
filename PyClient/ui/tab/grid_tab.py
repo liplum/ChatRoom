@@ -50,8 +50,9 @@ class grid_tab(tab):
     def title(self) -> str:
         return "grid tab"
 
-    def on_input(self, char: chars.char):
+    def on_input(self, char: chars.char) -> Generator:
         consumed = self.grid.on_input(char)
         if not consumed:
             if keys.k_down == char:
                 self.grid.switch_to_first_or_default_item()
+        yield Finished

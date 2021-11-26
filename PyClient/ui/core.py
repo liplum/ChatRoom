@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 from threading import RLock
-from typing import Union, Type
+from typing import Union, Type, NoReturn, Any, Optional
 
 from ui.shared import *
 
@@ -127,4 +127,12 @@ class iwindow(inputable, reloadable):
 
     @abstractmethod
     def gen_default_tab(self):
+        pass
+
+    @abstractmethod
+    def popup(self, popup: "base_popup") -> NoReturn:
+        pass
+
+    @abstractmethod
+    def retrieve_popup(self, popup: "base_popup") -> Optional[Any]:
         pass

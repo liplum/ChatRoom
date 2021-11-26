@@ -125,7 +125,8 @@
       }
     },
     "main_menu_tab": {
-      "name": "主菜单"
+      "name": "主菜单",
+      "quit_tip": "你确定要退出吗，任何未保存的内容，都将被丢弃。"
     },
     "language_tab": {
       "name": "语言"
@@ -179,6 +180,12 @@
       "turn_off": "[禁用]",
       "null": "[  ]"
     },
+    "textblock": {
+      "word_separator": ""
+    },
+    "error": "错误",
+    "tip": "提示",
+    "warning": "警告",
     "save": "保存"
   },
   "outputs": {

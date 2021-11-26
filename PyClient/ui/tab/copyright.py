@@ -40,7 +40,6 @@ class copyright_tab(tab):
 
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
-        self.win = self.client.win
         self._copyright_texts: List[str] = []
         self.gen_copyright_texts()
         self.last_tab = None
@@ -83,16 +82,17 @@ class copyright_tab(tab):
     def reload(self):
         self.gen_copyright_texts()
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> Generator:
         consumed = self.main.on_input(char)
         if not consumed:
             if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
                 self.main.switch_to_first_or_default_item()
-                return Consumed
+                yield Finished
             else:
                 consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
-                return consumed
-        return Not_Consumed
+                yield Finished
+        else:
+            yield Finished
 
     def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
         self.last_tab = last_tab

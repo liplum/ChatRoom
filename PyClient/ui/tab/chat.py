@@ -167,8 +167,9 @@ class chat_tab(tab):
         else:
             return utils.compose(displayed, connector="\n")
 
-    def on_input(self, char):
+    def on_input(self, char) -> Generator:
         self.sm.on_input(char)
+        yield Finished
 
     @property
     def title(self) -> str:

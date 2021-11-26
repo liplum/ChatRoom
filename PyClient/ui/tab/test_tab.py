@@ -68,8 +68,9 @@ class test_tab(tab):
     def title(self) -> str:
         return "Test"
 
-    def on_input(self, char: chars.char):
+    def on_input(self, char: chars.char) -> Generator:
         consumed = self.stack.on_input(char)
         if not consumed:
             if keys.k_down == char:
                 self.stack.switch_to_first_or_default_item()
+        yield Finished

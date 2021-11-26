@@ -244,9 +244,9 @@ def MCGT_fix_text(texts: Collection[str]) -> multi_content_getter:
     return multi_content_getter(lambda: texts)
 
 
-ContentGetter = Union[content_getter, str]
+ContentGetter = Union[Callable[[], str], content_getter, str]
 
-ContentsGetter = Union[multi_content_getter, Collection[str]]
+ContentsGetter = Union[Callable[[], Collection[str]], multi_content_getter, Collection[str]]
 
 
 class multi_contentX_getter:

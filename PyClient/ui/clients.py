@@ -23,7 +23,7 @@ class client(iclient):
         self._container: ioc.container = ioc.container()
         self._running: bool = False
         self._display_lock: RLock = RLock()
-        self._dirty = False
+        self._dirty = True
         self.cmdkeys = []
         self.key_quit_text_mode = self.key(cmdkey())
         self.key_enter_text = self.key(cmdkey())
@@ -80,7 +80,7 @@ class client(iclient):
         def on_input(inpt, char):
             ch = inpt.consume_char()
             if ch is char:
-                return self.win.on_input(ch)
+                self.win.on_input(ch)
             else:
                 self.logger.error(f"[Client]Input event provides a wrong char '{ch} -> {char}'.")
 
@@ -167,14 +167,15 @@ class client(iclient):
             self.win.start()
             self.auto_login()
             self.win.gen_default_tab()
-            self.render()
             while self._running:
+                if self.need_update:
+                    if not self._running:
+                        break
+                    self.render()
+                    self._clear_dirty()
+                    continue
                 self.inpt.get_input()
                 # self.tps.delay()
-                if not self.need_update:
-                    continue
-                self._clear_dirty()
-                self.render()
         except Exception as e:
             self.logger.error(f"[Client]{e}\n{traceback.format_exc()}")
             self.stop()

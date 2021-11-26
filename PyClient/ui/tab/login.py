@@ -14,7 +14,6 @@ class login_tab2(tab):
 
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
-        self.win = self.client.win
         self.network: i_network = self.client.network
         self.container_row = 4
         self.container_column = 2
@@ -116,7 +115,7 @@ class login_tab2(tab):
             self.tablist.replace(self, chat)
             op.login(self.network, token, account, password)
 
-    def on_input(self, char: chars.char):
+    def on_input(self, char: chars.char) -> Generator:
         if keys.k_up == char:
             self.textbox_index -= 1
         elif keys.k_down == char or chars.c_table == char:
@@ -135,6 +134,7 @@ class login_tab2(tab):
             consumed = False
             if f:
                 consumed = f.on_input(char)
+        yield Finished
 
     def paint_on(self, buf: buffer):
         for i in range(self.container_row):
@@ -165,7 +165,6 @@ class login_tab(tab):
 
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
-        self.win = self.client.win
         self.last_tab: Optional[tab] = None
         self.network: i_network = self.client.network
         grid = gen_grid(4, [column(auto), column(15)])
@@ -252,18 +251,14 @@ class login_tab(tab):
     def title(self) -> str:
         return i18n.trans("tabs.login_tab.name")
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> Generator:
         consumed = self.main.on_input(char)
-        if consumed:
-            return Consumed
         if not consumed:
             if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
                 self.main.switch_to_first_or_default_item()
-                return Consumed
             else:
                 consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
-                return consumed
-        return Not_Consumed
+        yield Finished
 
     def paint_on(self, buf: buffer):
         self.main.paint_on(buf)

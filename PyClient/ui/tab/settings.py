@@ -60,7 +60,6 @@ class settings_tab(tab):
 
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
-        self.win = self.client.win
         self.last_tab = None
         self.ctrl2on_save = {}
         main = stack()
@@ -118,18 +117,14 @@ class settings_tab(tab):
     def paint_on(self, buf: buffer):
         self.main.paint_on(buf)
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> Generator:
         consumed = self.main.on_input(char)
-        if consumed:
-            return Consumed
         if not consumed:
             if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
                 self.main.switch_to_first_or_default_item()
-                return Consumed
             else:
                 consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
-                return consumed
-        return Not_Consumed
+        yield Finished
 
     def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
         self.last_tab = last_tab

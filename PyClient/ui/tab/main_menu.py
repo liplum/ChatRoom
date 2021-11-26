@@ -5,6 +5,7 @@ from ui.panels import *
 from ui.tab.copyright import copyright_tab
 from ui.tab.language import language_tab
 from ui.tab.login import login_tab
+from ui.tab.popups import ok_cancel_popup
 from ui.tab.register import register_tab
 from ui.tab.settings import settings_tab
 from ui.tab.shared import *
@@ -43,6 +44,8 @@ class main_menu_tab(tab):
                     return DCenter
 
         db_alignments = _db_alignments()
+        main_button_width = 14
+        secondary_button_width = 14
 
         db = display_board(MCGT(lambda: self._title_texts), lambda: db_alignments, theme=_get_theme_tube)
         self.db = db
@@ -51,7 +54,6 @@ class main_menu_tab(tab):
         self.main.on_content_changed.add(lambda _: self.on_content_changed(self))
         db.width = 60
         db.height = auto
-        self.win = self.client.win
 
         def start():
             tab = self.win.new_chat_tab()
@@ -59,7 +61,7 @@ class main_menu_tab(tab):
 
         b_start = i18n_button("controls.start", start)
         main.add(b_start)
-        b_start.width = 10
+        b_start.width = main_button_width
 
         def login():
             tab = self.win.newtab(login_tab)
@@ -67,7 +69,7 @@ class main_menu_tab(tab):
 
         b_login = i18n_button("controls.login", login)
         main.add(b_login)
-        b_login.width = 10
+        b_login.width = main_button_width
 
         def register():
             tab = self.win.newtab(register_tab)
@@ -75,26 +77,15 @@ class main_menu_tab(tab):
 
         b_register = i18n_button("controls.register", register)
         main.add(b_register)
-        b_register.width = 10
+        b_register.width = main_button_width
+        self._on_quited = False
 
         def quit_app():
-            client.stop()
+            self._on_quited = True
 
         b_quit = i18n_button("controls.quit", quit_app)
         main.add(b_quit)
-        b_quit.width = 10
-        """
-        For testing
-        text = ["Hello,", "my ", "name ", "is ", "plum.", "Hello,", "my ", "name ", "is ", "plum.", "is ", "plum.",
-                "Hello,", "my ", "name ", "is ", "plum.", "is ", "plum.", "Hello,", "my ", "name ", "is ", "plum.",
-                "is ", "plum.", "Hello,", "my ", "name ", "is ", "plum."]
-
-        text="Hello,my name is plum.Hello,my name is plum."
-        text = ["Hello,", "my ", "name ", "is ", "plum.", "Hello,", "my ", "name ", "is"]
-        block = textblock(text)
-        block.width = 40
-        main.add(block)
-        """
+        b_quit.width = main_button_width
 
         def show_info():
             tab = self.win.newtab(copyright_tab)
@@ -102,7 +93,7 @@ class main_menu_tab(tab):
 
         b_info = i18n_button("controls.info", show_info)
         b_info.prop(panel.No_Left_Margin, True).prop(stack.Horizontal_Alignment, align_left)
-        b_info.width = 10
+        b_info.width = secondary_button_width
         main.add(b_info)
 
         def language():
@@ -111,7 +102,7 @@ class main_menu_tab(tab):
 
         b_language = i18n_button("controls.language", language)
         b_language.prop(panel.No_Left_Margin, True).prop(stack.Horizontal_Alignment, align_left)
-        b_language.width = 10
+        b_language.width = secondary_button_width
         main.add(b_language)
 
         def settings():
@@ -120,7 +111,7 @@ class main_menu_tab(tab):
 
         b_settings = i18n_button("controls.settings", settings)
         b_settings.prop(panel.No_Left_Margin, True).prop(stack.Horizontal_Alignment, align_left)
-        b_settings.width = 10
+        b_settings.width = secondary_button_width
         main.add(b_settings)
 
         main.left_margin = 10
@@ -146,16 +137,25 @@ class main_menu_tab(tab):
         self.gen_title_texts()
         self.main.reload()
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> Generator:
         consumed = self.main.on_input(char)
         if not consumed:
             if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
                 self.main.switch_to_first_or_default_item()
-                return Consumed
             else:
                 consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
-                return consumed
-        return Not_Consumed
+        if self._on_quited:
+            p = self.new_popup(ok_cancel_popup)
+            p.words = split_textblock_words("tabs.main_menu_tab.quit_tip")
+            p.title_getter = lambda: i18n.trans("controls.warning")
+            yield Suspend
+            v = self.win.retrieve_popup(p)
+            if v is True:
+                self.client.stop()
+            self._on_quited = False
+            yield Finished
+        else:
+            yield Finished
 
     def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
         self.main.switch_to_first_or_default_item()

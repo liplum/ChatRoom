@@ -11,7 +11,6 @@ class language_tab(tab):
         super().__init__(client, tablist)
         self.main: Optional[control] = None
         self.last_tab = None
-        self.win = self.client.win
 
         def on_quit():
             if self.last_tab:
@@ -72,17 +71,15 @@ class language_tab(tab):
         if self.main:
             self.main.paint_on(buf)
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> Generator:
         if self.main:
             consumed = self.main.on_input(char)
             if not consumed:
                 if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
                     self.main.switch_to_first_or_default_item()
-                    return Consumed
                 else:
                     consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
-                    return consumed
-        return Not_Consumed
+        yield Finished
 
     def reload(self):
         if self.main:

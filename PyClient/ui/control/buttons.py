@@ -18,15 +18,17 @@ class button(control):
             return
         self._layout_changed = False
         content = self.content()
-        if self.width != auto:
-            self._r_width = self.width
-            rest = self.width + 2 - len(content)
-            if rest <= 0:
+        content_len = len(content)
+        width = self.width
+        if width != auto:
+            self._r_width = width
+            rest = width - content_len
+            if rest <= 1:
                 self.margin = 0
             else:
-                self.margin = rest // 2
+                self.margin = (rest + 1) // 2
         else:
-            self._r_width = len(content) + 2 * self.margin
+            self._r_width = content_len + 2 * self.margin
 
     def paint_on(self, buf: buffer):
         if self._layout_changed:
@@ -41,25 +43,29 @@ class button(control):
 
     @property
     def distext(self) -> str:
-        if self.margin > 0:
+        content = self.content()
+        content_len = len(content)
+        render_width = self.render_width
+        is_odd = content_len % 2 == 1
+        margin = self.margin
+        if margin > 0:
             if self.is_focused:
-                margin = utils.repeat(" ", self.margin)
-                if self.margin * 2 + 2 < self.render_width:
-                    head = " "
+                left_margin = utils.repeat(" ", margin)
+                if is_odd:
+                    right_margin = utils.repeat(" ", margin - 1)
                 else:
-                    head = ""
-                res = f"{head}{margin}{self.content()}{margin}"
-                return utils.fillto(res, " ", self.render_width)
+                    right_margin = left_margin
+                return f"{left_margin}{content}{right_margin}"
             else:
-                margin = utils.repeat(" ", self.margin - 1)
-                if self.margin * 2 + 2 < self.render_width:
-                    head = "[ "
+                left_margin = utils.repeat(" ", margin - 1)
+                if is_odd:
+                    right_margin = utils.repeat(" ", margin - 2)
                 else:
-                    head = "["
-                return f"{head}{margin}{self.content()}{margin}]"
+                    right_margin = left_margin
+                return f"[{left_margin}{content}{right_margin}]"
 
         else:
-            return self.content()
+            return content[0:render_width]
 
     def __init__(self, content: ContentGetter, on_press: Callable[[], NoReturn]):
         super().__init__()

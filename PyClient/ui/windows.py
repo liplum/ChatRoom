@@ -1,14 +1,21 @@
 import traceback
+from collections import deque
+from typing import Tuple
 
 import utils
 from core.settings import entity as settings
 from ui.tab.chat import chat_tab
 from ui.tab.main_menu import main_menu_tab
 from ui.tabs import *
+from ui.tabs import Suspend
 from utils import multiget, get
+
+Focusable = Union[base_popup, tab]
+CallStackItem = Tuple[Generator, Focusable]
 
 
 class window(iwindow):
+
     def __init__(self, client: iclient):
         super().__init__(client)
         self.logger: "ilogger" = self.client.logger
@@ -18,6 +25,9 @@ class window(iwindow):
         self.tablist.on_curtab_changed.add(lambda li, n, t: self.client.mark_dirty())
         self.tablist.on_tablist_changed.add(lambda li, mode, t: self.client.mark_dirty())
         self.network: "inetwork" = self.client.network
+        self.popups: deque[base_popup] = deque()
+        self.popup_return_values: Dict[base_popup, Any] = {}
+        self.call_stack: deque[CallStackItem] = deque()
 
         def on_closed_last_tab(li: tablist, mode, t):
             if li.tabs_count == 0:
@@ -113,17 +123,63 @@ class window(iwindow):
         utils.clear_screen()
         self.prepare()
         self.tablist.paint_on(self.screen_buffer)
-        curtab = self.tablist.cur
-        if curtab:
-            curtab.paint_on(self.screen_buffer)
+        cur_painter = self.cur_painter
+        if cur_painter:
+            cur_painter.paint_on(self.screen_buffer)
 
         self.displayer.render(self.screen_buffer)
 
-    def on_input(self, char) -> Is_Consumed:
-        curtab = self.tablist.cur
-        if curtab:
-            return curtab.on_input(char)
-        return Not_Consumed
+    def on_input(self, char):
+        if len(self.popups) > 0:
+            p = self.popups[0]
+            it = p.on_input(char)
+            self.step(it, p)
+            if not p.returned:
+                return
+        cur_item = self.cur_stack_item
+        if cur_item:
+            it, cur = cur_item
+            self.call_stack.pop()
+            self.step(it, cur)
+        else:
+            cur_focused = self.cur_focused
+            if cur_focused:
+                if not isinstance(cur_focused, base_popup):
+                    it = cur_focused.on_input(char)
+                    self.step(it, cur_focused)
+
+    def _on_popup_returned(self, popup: base_popup):
+        self.popup_return_values[popup] = popup.return_value
+        self.popups.popleft()
+        self.client.mark_dirty()
+
+    @property
+    def cur_painter(self):
+        if len(self.popups) > 0:
+            return self.popups[0]
+        else:
+            cur_item = self.cur_stack_item
+            if cur_item:
+                it, cur = cur_item
+                return cur
+            else:
+                cur_tab = self.tablist.cur
+                return cur_tab
+
+    @property
+    def cur_focused(self) -> Optional[Focusable]:
+        if len(self.popups) > 0:
+            return self.popups[0]
+        else:
+            cur_tab = self.tablist.cur
+            return cur_tab
+
+    @property
+    def cur_stack_item(self) -> Optional[CallStackItem]:
+        if len(self.call_stack) > 0:
+            return self.call_stack[0]
+        else:
+            return None
 
     def add_string(self, string: str):
         curtab = self.tablist.cur
@@ -134,3 +190,32 @@ class window(iwindow):
         for t in self.tablist:
             t.reload()
         self.client.mark_dirty()
+
+    def popup(self, popup: "base_popup") -> NoReturn:
+        self.popups.append(popup)
+        popup.on_content_changed.add(lambda _: self.client.mark_dirty())
+        popup.on_returned.add(self._on_popup_returned)
+        self.client.mark_dirty()
+
+    def retrieve_popup(self, popup: "base_popup") -> Optional[Any]:
+        if popup in self.popup_return_values:
+            value = self.popup_return_values[popup]
+            del self.popup_return_values[popup]
+            return value
+        else:
+            return None
+
+    def step(self, it: Generator, focusable: Focusable):
+        while True:
+            try:
+                rv = next(it)
+            except StopIteration:
+                break
+            except Exception as e:
+                raise e
+            if rv == Suspend:
+                self.call_stack.append((it, focusable))
+                break
+            elif isinstance(rv, Generator):
+                self.step(rv, focusable)
+                break

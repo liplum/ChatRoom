@@ -135,7 +135,8 @@
       }
     },
     "main_menu_tab": {
-      "name": "Main Menu"
+      "name": "Main Menu",
+      "quit_tip": "Do| you| want| to |leave? |Anything| unsaved| will| be| abandoned."
     },
     "language_tab": {
       "name": "Language"
@@ -179,6 +180,12 @@
       "turn_off": "[No]",
       "null": "[  ]"
     },
+    "textblock": {
+      "word_separator": "|"
+    },
+    "error": "Error",
+    "tip": "Tip",
+    "warning": "Warning",
     "save": "Save"
   },
   "outputs": {

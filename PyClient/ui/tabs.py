@@ -1,5 +1,5 @@
 from abc import ABCMeta
-from typing import List, Optional, Iterable, Dict
+from typing import List, Iterable, Dict, Generator, Callable
 
 from GLOBAL import StringIO
 from ui.core import *
@@ -16,6 +16,9 @@ def _add_tabtype(name: str, tabtype: "metatab"):
 
 
 Need_Release_Resource = bool
+
+Suspend = -1
+Finished = 0
 
 
 class tablist(notifiable, painter):
@@ -245,15 +248,15 @@ class metatab(ABCMeta):
         _add_tabtype(cls.__qualname__, cls)
 
 
-class tab(notifiable, inputable, reloadable, metaclass=metatab):
+class tab(notifiable, reloadable, metaclass=metatab):
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__()
         self.tablist: tablist = tablist
         self.client: iclient = client
         self._is_focused = False
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
-        return Not_Consumed
+    def on_input(self, char: chars.char) -> Generator:
+        yield Finished
 
     def paint_on(self, buf: buffer):
         pass
@@ -300,6 +303,15 @@ class tab(notifiable, inputable, reloadable, metaclass=metatab):
     def equals(self, tab: "tab"):
         return id(self) == id(tab)
 
+    def new_popup(self, popup_type: Type[T], *args, **kwargs) -> T:
+        p = popup_type(self.client, self.tablist, *args, **kwargs)
+        self.win.popup(p)
+        return p
+
+    @property
+    def win(self) -> iwindow:
+        return self.client.win
+
 
 class CannotRestoreTab(Exception):
     def __init__(self, tabtype: Type[tab]):
@@ -317,3 +329,53 @@ class TabTypeNotFound(Exception):
     def __init__(self, tab_name: str):
         super().__init__()
         self.tab_name = tab_name
+
+
+class base_popup(tab, ABC):
+    def __init__(self, client: iclient, tablist: tablist):
+        super().__init__(client, tablist)
+        self._return_value: Optional[Any] = None
+        self._returned = False
+        self._on_returned = event()
+        self._title_getter: Optional[Callable[[], str]] = None
+
+    @property
+    def on_returned(self) -> event:
+        """
+        Para 1:base_popup object
+
+        :return: event(base_popup)
+        """
+        return self._on_returned
+
+    def _Return(self, value: Optional[Any]):
+        self._return_value = value
+        self._returned = True
+        self._on_returned(self)
+
+    @property
+    def return_value(self) -> Optional[Any]:
+        return self._return_value
+
+    @property
+    def returned(self) -> bool:
+        return self._returned
+
+    @property
+    def title(self) -> str:
+        return self.get_title()
+
+    @property
+    def title_getter(self) -> Optional[Callable[[], str]]:
+        return self._title_getter
+
+    @title_getter.setter
+    def title_getter(self, value: Optional[Callable[[], str]]):
+        self._title_getter = value
+
+    def get_title(self) -> str:
+        getter = self.title_getter
+        if getter:
+            return getter()
+        else:
+            return ""
