@@ -1,11 +1,9 @@
 ﻿global using System.Diagnostics.CodeAnalysis;
 global using ChattingRoom.Core;
+global using ChattingRoom.Core.DB.Models;
 global using ChattingRoom.Core.Messages;
 global using ChattingRoom.Core.Users;
 global using ChattingRoom.Core.Utils;
-global using ChatRoom = ChattingRoom.Core.DB.Models.ChattingRoom;
-global using Membership = ChattingRoom.Core.DB.Models.Membership;
-global using User = ChattingRoom.Core.DB.Models.User;
 global using IServiceProvider = ChattingRoom.Core.IServiceProvider;
 using System.Collections.Concurrent;
 using ChattingRoom.Core.Networks;
@@ -20,7 +18,7 @@ namespace ChattingRoom.Server;
 public partial class Monoserver : IServer
 {
 #nullable disable
-    private readonly ChatRoom _chatingRoom = new() { ChattingRoomID = 12345 };
+    private readonly ChatRoom _chatingRoom = new() { ChatRoomID = 12345 };
     private readonly ServiceContainer _container = new()
     {
         HotReload = false
@@ -65,7 +63,7 @@ public partial class Monoserver : IServer
         _container.RegisterSingleton<ILogger, CmdServerLogger>();
         _container.RegisterSingleton<IResourceManager, ResourceManager>();
         _container.RegisterSingleton<IUserService, UserService>();
-        _container.RegisterSingleton<IChattingRoomService, ChattingRoomService>();
+        _container.RegisterSingleton<IChatRoomService, ChatRoomService>();
         _container.RegisterSingleton<IDatabase, Database>();
 
         _container.RegisterInstance<INetwork, Network>(_network);
@@ -127,41 +125,28 @@ public partial class Monoserver : IServer
         {
             throw new NetworkServiceException();
         }
-
-        NetworkService.OnClientConnected += token =>
-        {
-            AddScheduledTask(async () =>
-            {
-                Logger!.SendMessage($"{token.IpAddress} is connected and will be sent msg 10s soon.");
-                await Task.Delay(10000);
-                Chatting!.SendMessage(token, new ChattingMsg()
-                {
-                    ChattingRoomID = 12345,
-                    Account = "System",
-                    SendTime = DateTime.UtcNow,
-                    ChattingText = "Hello user, welcome to the chatting room!"
-                });
-                Logger.SendMessage($"{token.IpAddress} was sent a msg from system.");
-            });
-        }
-        !;
     }
 
     private void InitUserChannel()
     {
         User = NetworkService.New("User");
-        User.RegisterMessage(() => new AuthenticationReqMsg(), () => new AuthenticationMsgHandler());
-        User.RegisterMessage(() => new AuthenticationResultMsg());
-        User.RegisterMessage(() => new RegisterResultMsg());
-        User.RegisterMessage(() => new RegisterRequestMsg(), () => new RegisterRequestMsgHandler());
+        User.RegisterMessage<AuthenticationReqMsg, AuthenticationMsgHandler>();
+        User.RegisterMessage<AuthenticationResultMsg>();
+        User.RegisterMessage<RegisterRequestMsg, RegisterRequestMsgHandler>();
+        User.RegisterMessage<RegisterResultMsg>();
+        User.RegisterMessage<JoinRoomRequestMsg, JoinRoomRequestMsgHandler>();
+        User.RegisterMessage<JoinRoomResultMsg>();
+        User.RegisterMessage<CreateRoomReqMsg, CreateRoomReqMsgHandler>();
+        User.RegisterMessage<CreateRoomResultMsg>();
+        User.RegisterMessage<JoinedRoomsInfoMsg>();
 
         Chatting = NetworkService.New("Chatting");
-        Chatting.RegisterMessage(() => new ChattingMsg(), () => new ChattingMsgHandler());
+        Chatting.RegisterMessage<ChattingMsg, ChattingMsgHandler>();
     }
 
     public ChatRoom? GetChattingRoomBy(int chattingRoomID)
     {
-        return _chatingRoom.ChattingRoomID == chattingRoomID ? _chatingRoom : null;
+        return _chatingRoom.ChatRoomID == chattingRoomID ? _chatingRoom : null;
     }
 }
 

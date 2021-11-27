@@ -8,13 +8,49 @@ public class Database : IDatabase
 #nullable disable
     private CtrContext db;
 #nullable enable
-    public DbSet<User> UserTable => db.Users;
+    public DbSet<User> UserTable
+    {
+        get
+        {
+            lock (_dblock)
+            {
+                return db.Users;
+            }
+        }
+    }
 
-    public DbSet<ChatRoom> ChattingRoomTable => db.ChattingRooms;
+    public DbSet<ChatRoom> ChatRoomTable
+    {
+        get
+        {
+            lock (_dblock)
+            {
+                return db.ChatRooms;
+            }
+        }
+    }
 
-    public DbSet<Membership> MembershipTable => db.Memberships;
+    public DbSet<Membership> MembershipTable
+    {
+        get
+        {
+            lock (_dblock)
+            {
+                return db.Memberships;
+            }
+        }
+    }
 
-    public DbContext Context => db;
+    public DbContext Context
+    {
+        get
+        {
+            lock (_dblock)
+            {
+                return db;
+            }
+        }
+    }
 
     public void Connect()
     {

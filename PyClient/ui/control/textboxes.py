@@ -4,12 +4,12 @@ import chars
 import utils
 from GLOBAL import StringIO
 from events import event
-from ui.ctrl import control, auto, unlimited, PROP
+from ui.ctrl import auto, unlimited, PROP, text_control
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
 from ui.shared import Is_Consumed, Not_Consumed, Consumed
 
 
-class textbox(control):
+class textbox(text_control):
 
     def __init__(self, cursor_icon: str = "^", init: Optional[Iterable[str]] = None):
         super().__init__()
@@ -107,7 +107,7 @@ class textbox(control):
             drawn = utils.fillto(drawn, self.space_placeholder, max_render_width)
         elif len(drawn) < self.render_width:
             drawn = utils.fillto(drawn, self.space_placeholder, self.width)
-        buf.addtext(drawn, end='', fgcolor=fg, bkcolor=bk)
+        buf.addtext(self._render_chars(drawn), end='', fgcolor=fg, bkcolor=bk)
 
     def on_input(self, char: chars.char) -> Is_Consumed:
         return self.append(str(char))

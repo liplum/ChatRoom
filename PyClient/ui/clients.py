@@ -10,12 +10,12 @@ from core.chats import *
 from core.filer import ifiler, filer
 from core.operations import *
 from core.settings import entity as settings
-from net import networks
+import net.networks as net
 from ui.core import iclient
 from ui.k import cmdkey
 from ui.windows import window
 from utils import get
-
+from core.rooms import iroom_manager,room_manager
 
 class client(iclient):
     def __init__(self):
@@ -41,16 +41,17 @@ class client(iclient):
         ct.register_instance(iclient, self)
         ct.register_singleton(output.ilogger, output.cmd_logger)
         ct.register_singleton(output.idisplay, output.full_cmd_display)
-        ct.register_instance(inetwork, networks.network(self))
+        ct.register_instance(inetwork, net.network(self))
         ct.register_singleton(cmdmanager, cmdmanager)
         ct.register_singleton(imsgmager, msgmager)
         ct.register_singleton(imsgfiler, msgfiler)
         ct.register_singleton(ifiler, filer)
+        ct.register_singleton(iroom_manager, room_manager)
 
         # services register event
         self.on_service_register(self, ct)
 
-        self._network: networks.network = ct.resolve(networks.inetwork)
+        self._network: net.inetwork = ct.resolve(net.inetwork)
         self.inpt: _input.iinput = ct.resolve(_input.iinput)
         self._logger: output.ilogger = ct.resolve(output.ilogger)
         self.logger.output_to_cmd = False
@@ -69,7 +70,7 @@ class client(iclient):
 
         if GLOBAL.DEBUG:
             def on_msg_pre_analyzed(network, server_token, source, jobj):
-                self.logger.msg(json.dumps(jobj, indent=2))
+                self.logger.msg(json.dumps(jobj, indent=2,ensure_ascii=False))
 
             self.network.on_msg_pre_analyzed.add(on_msg_pre_analyzed)
 
@@ -98,12 +99,7 @@ class client(iclient):
     def _init_channels(self):
         self.channel_user = self.network.new_channel("User")
         self.channel_chatting = self.network.new_channel("Chatting")
-
-        self.channel_chatting.register(msgs.chatting)
-        self.channel_user.register(msgs.register_request)
-        self.channel_user.register(msgs.register_result)
-        self.channel_user.register(msgs.authentication_req)
-        self.channel_user.register(msgs.authentication_result)
+        self.network.auto_register()
 
     @property
     def need_update(self):
@@ -124,15 +120,6 @@ class client(iclient):
 
     def connect(self, ip: str, port: int):
         self.network.connect(server_token(ip, port))
-
-    def send_text(self, user_info: uentity, room_id: roomid, text: str):
-        msg = msgs.chatting()
-        msg.room_id = room_id
-        msg.send_time = datetime.utcnow()
-        msg.text = text
-        msg.vcode = user_info.vcode
-        msg.user_id = user_info.uid
-        self.channel_chatting.send(user_info.server, msg)
 
     def auto_login(self):
         configs = settings()

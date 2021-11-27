@@ -1,6 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Room = ChattingRoom.Core.DB.Models.ChattingRoom;
 
 namespace ChattingRoom.Server.DB;
 #nullable disable
@@ -10,7 +9,7 @@ public class CtrContext : DbContext
     {
         get; set;
     }
-    public DbSet<Room> ChattingRooms
+    public DbSet<ChatRoom> ChatRooms
     {
         get; set;
     }
@@ -42,14 +41,14 @@ public class CtrContext : DbContext
     {
         base.OnModelCreating(b);
         b.Entity<Membership>()
-            .HasKey(m => new { m.UserAccount, m.ChattingRoomID });
+            .HasKey(m => new { m.UserAccount, m.ChatRoomID });
         b.Entity<Membership>()
             .HasOne(m => m.User)
             .WithMany(user => user.Joined)
             .HasForeignKey(m => m.UserAccount);
         b.Entity<Membership>()
-            .HasOne(m => m.ChattingRoom)
+            .HasOne(m => m.ChatRoom)
             .WithMany(room => room.Members)
-            .HasForeignKey(m => m.ChattingRoomID);
+            .HasForeignKey(m => m.ChatRoomID);
     }
 }

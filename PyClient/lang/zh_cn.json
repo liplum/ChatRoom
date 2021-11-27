@@ -52,7 +52,7 @@
       "already_connected": "当前标签页已经连接了另一个服务器{ip}:{port}"
     },
     "run": {
-      "usage": "！仅调试！ exec \"<代码>\" or exec -f <文件路径>",
+      "usage": "exec \"<代码>\" or exec -f <文件路径>",
       "execute_error": "无法执行代码{code}，因为{exception}",
       "cannot_read_file": "无法从文件\"{path}\"中读取代码",
       "description": "运行自定义代码"
@@ -86,11 +86,17 @@
     },
     "login": {
       "usage": "login [<IP地址>:<端口>] <账号> <密码>",
-      "description": "登录服务器"
+      "description": "登录服务器",
+      "cur_tab_unconnected": "当前标签页还未连接到任何服务器"
     },
     "main": {
       "usage": "main",
       "description": "打开主菜单"
+    },
+    "reload": {
+      "usage": "reload or reload <模块名称>",
+      "description": "重新加载一个或多个模块",
+      "no_such_module": "没有{module}模块"
     }
   },
   "tabs": {
@@ -113,7 +119,9 @@
         "server_port": "端口号",
         "account": "账号",
         "password": "密码"
-      }
+      },
+      "login_tip":"正在登录中，请耐心等待……",
+      "logging": "登陆中……."
     },
     "copyright_tab": {
       "name": "版权信息",
@@ -124,13 +132,6 @@
         "software_name": "名称"
       }
     },
-    "main_menu_tab": {
-      "name": "主菜单",
-      "quit_tip": "你确定要退出吗，任何未保存的内容，都将被丢弃。"
-    },
-    "language_tab": {
-      "name": "语言"
-    },
     "register_tab": {
       "name": "注册",
       "labels": {
@@ -140,6 +141,13 @@
         "password": "密码",
         "password_again": "再输入一次"
       }
+    },
+    "main_menu_tab": {
+      "name": "主菜单",
+      "quit_tip": "你确定要退出吗，任何未保存的内容，都将被丢弃。"
+    },
+    "language_tab": {
+      "name": "语言"
     },
     "settings_tab": {
       "name": "设置"

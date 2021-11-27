@@ -52,7 +52,7 @@ if get_at(args, 1) == "-login":
 if IDE:
     utils.clear_screen = lambda: None
 
-if GLOBAL.DEBUG:
+if IDE:
     class FakeStringIO:
         def __init__(self):
             self.text = ""

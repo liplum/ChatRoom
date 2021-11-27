@@ -14,7 +14,7 @@ class cmdbase:
 
 class command(cmdbase):
     def __init__(self, name: str, handler: Callable = None):
-        self.name = name
+        self.name = name.lower()
         self.handler = handler
 
     def match(self, text: str) -> bool:

@@ -7,7 +7,7 @@ from ui.outputs import buffer, CmdBkColor, CmdFgColor,tintedtxtIO
 from ui.shared import Is_Consumed, Consumed, Not_Consumed
 from GLOBAL import StringIO
 
-class button(control):
+class button(text_control):
 
     def reload(self):
         self._layout_changed = True
@@ -51,20 +51,20 @@ class button(control):
             if margin > 0:
                 if self.is_focused:
                     utils.repeatIO(s," ", margin)
-                    s.write(content)
+                    self._render_charsIO(s,content)
                     if is_odd:
                         utils.repeatIO(s," ", margin - 1)
                     else:
                         utils.repeatIO(s," ", margin)
                 else:
-                    s.write('[')
+                    self._render_charsIO(s,'[')
                     utils.repeatIO(s, " ", margin - 1)
-                    s.write(content)
+                    self._render_charsIO(s,content)
                     if is_odd:
                         utils.repeatIO(s, " ", margin - 2)
                     else:
                         utils.repeatIO(s, " ", margin - 1)
-                    s.write(']')
+                    self._render_charsIO(s,']')
             else:
                 s.write(content[0:render_width])
             return s.getvalue()
@@ -134,7 +134,3 @@ class button(control):
     @property
     def render_width(self) -> int:
         return self._r_width
-
-    def notify_content_changed(self):
-        self.on_content_changed(self)
-        self._layout_changed = True

@@ -14,16 +14,31 @@ StorageUnit = Tuple[datetime, userid, str]
 
 default_port = 25000
 
+member = namedtuple("member", ["account", "nick_name"])
+
 
 class chat_room:
-    def __init__(self, info: sr_info):
+    def __init__(self, info: sr_info, name: str):
         self.info = info
-        self.members: List[userid] = []
+        self.name = name
+        self.members: List[member] = []
+
+    def __hash__(self):
+        return hash(self.info)
+
+    def __eq__(self, other):
+        if isinstance(other, chat_room):
+            return self.info == other.info
+        return False
+
+    def __repr__(self) -> str:
+        info = self.info
+        return f"chat_room({repr(self.info)},\"{self.name}\")"
 
 
 class uentity:
-    def __init__(self, server: server_token, uid: userid, vcode: Optional[int] = None):
-        self.uid = uid
+    def __init__(self, server: server_token, account: userid, vcode: Optional[int] = None):
+        self.account = account
         self.server = server
         self.vcode: Optional[int] = vcode
 
@@ -32,11 +47,11 @@ class uentity:
         return self.vcode is not None
 
     def __hash__(self):
-        return hash((self.server, self.uid, self.vcode))
+        return hash((self.server, self.account, self.vcode))
 
     def __eq__(self, other):
         if isinstance(other, uentity):
-            return self.server == other.server and self.uid == other.uid and self.vcode == other.vcode
+            return self.server == other.server and self.account == other.account and self.vcode == other.vcode
         return False
 
 

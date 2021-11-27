@@ -132,7 +132,3 @@ class textblock(text_control):
             self._r_height = round(a * 11)
         else:
             self._r_height = self.height
-
-    def notify_content_changed(self):
-        self.on_content_changed(self)
-        self._layout_changed = True

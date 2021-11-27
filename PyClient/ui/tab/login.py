@@ -4,6 +4,7 @@ from ui.cmd_modes import common_hotkey
 from ui.control.textboxes import textbox
 from ui.panels import *
 from ui.tab.chat import chat_tab
+from ui.tab.popups import cancel_popup_gen
 from ui.tab.shared import *
 from ui.tabs import *
 from ui.xtbox import xtextbox
@@ -210,7 +211,12 @@ class login_tab(tab):
             else:
                 tablist.remove(self)
 
-        ok = i18n_button("controls.ok", self.login)
+        self._login_pressed = False
+
+        def on_login_pressed():
+            self._login_pressed = True
+
+        ok = i18n_button("controls.ok", on_login_pressed)
         ok.margin = 3
         cancel = i18n_button("controls.cancel", on_cancel_pressed)
         cancel.margin = 3
@@ -258,7 +264,17 @@ class login_tab(tab):
                 self.main.switch_to_first_or_default_item()
             else:
                 consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
-        yield Finished
+        if self._login_pressed:
+            self.login()
+            tip = split_textblock_words("tabs.login_tab.login_tip")
+            p = self.new_popup(cancel_popup_gen(tip, lambda: i18n.trans("tabs.login_tab.logging")))
+            yield Suspend
+            v = self.win.retrieve_popup(p)
+            if v is False:
+                pass
+            yield Finished
+        else:
+            yield Finished
 
     def paint_on(self, buf: buffer):
         self.main.paint_on(buf)

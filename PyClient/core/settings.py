@@ -185,7 +185,7 @@ def save(strict: bool = False):
                     _final[k] = finalV
             else:
                 _final[k] = v
-        settings_text = json.dumps(_final, indent=2)
+        settings_text = json.dumps(_final, indent=2, ensure_ascii=False)
         with open(file, "w", encoding="utf-8") as f:
             f.write(settings_text)
     except Exception as e:

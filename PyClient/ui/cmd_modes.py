@@ -26,10 +26,16 @@ def common_hotkey(char: chars.char, tab: tab, client: iclient, tablist: tablist,
     :return: (True | None) Whether the char wasn't consumed
     """
     if chars.c_q == char:
-        t = utils.get(tab_name2type, _main_menu_tab_name)
-        if t and not isinstance(tablist.cur, t):
-            main_menu = win.newtab(_main_menu_tab_name)
-            tablist.replace(tab, main_menu)
+        main_menu_type = utils.get(tab_name2type, _main_menu_tab_name)
+        if main_menu_type:
+            if not isinstance(tab, main_menu_type):
+                main_menu_i = tablist.find_first(lambda t: isinstance(t, main_menu_type))
+                if main_menu_i:
+                    _, i = main_menu_i
+                    tablist.goto(i)
+                else:
+                    main_menu = win.newtab(_main_menu_tab_name)
+                    tablist.replace(tab, main_menu)
     elif chars.c_a == char:
         tablist.back()
     elif chars.c_s == char:
@@ -109,15 +115,21 @@ class cmd_mode(ui_state):
         self.last_cmd_history: Optional[str] = None
         self.long_cmd_mode_type: Type[cmd_long_mode] = cmd_long_mode
         self.hotkey_cmd_mode_type: Type[cmd_hotkey_mode] = cmd_hotkey_mode
+        self.max_cmd_history: int = 10
 
         def gen_state(statetype: type) -> cmd_state:
             if issubclass(statetype, cmd_state):
                 s = statetype(self)
                 return s
             else:
-                return statetype()
+                return statetype(self)
 
         self.cmd_sm = cmd_smachine(stype_pre=gen_state, allow_repeated_entry=False)
+
+    def add_cmd_history(self, cmd: str):
+        self.cmd_history.append(cmd)
+        if len(self.cmd_history) > self.max_cmd_history:
+            self.cmd_history = self.cmd_history[0:self.max_cmd_history]
 
     @property
     def cmd_history_index(self) -> int:
@@ -176,7 +188,10 @@ class cmd_mode(ui_state):
                 self.textbox.input_list = cur_his
                 self.last_cmd_history = cur_his
                 self.textbox.end()
+            else:
+                self.last_cmd_history = None
         else:
+            self.last_cmd_history = None
             self.textbox.clear()
 
     def on_input(self, char: chars.char):
@@ -191,7 +206,7 @@ class cmd_mode(ui_state):
         if keys.k_up == char:
             up_or_down = -1
         elif keys.k_down == char:
-            up_or_down = -1
+            up_or_down = 1
         else:
             up_or_down = 0
             self.cmd_history_index = 0
@@ -205,7 +220,7 @@ class cmd_mode(ui_state):
             self.cmd_history_index += up_or_down
             self._show_cmd_history()
             if saved:
-                self.cmd_history.append(cur_content)
+                self.add_cmd_history(cur_content)
                 self.cmd_history_index -= 1
             return
         # switch mode and input
@@ -276,7 +291,7 @@ class cmd_long_mode(cmd_state):
         cmd_name = cmd_args[0][1:]
         contxt: Cmd_Context = mode.gen_context()
         try:
-            mode.cmd_manager.execute(contxt, cmd_name, args)
+            mode.cmd_manager.execute(contxt, cmd_name.lower(), args)
         except WrongUsageError as wu:
             with StringIO() as s:
                 _EST18X(s, "modes.command_mode.cmd.wrong_usage")
@@ -306,7 +321,7 @@ class cmd_long_mode(cmd_state):
                 mode.tab.add_string(s.getvalue())
                 mode.tab.logger.error(f"{any_e}\n{traceback.format_exc()}")
 
-        mode.cmd_history.append(full_cmd)
+        mode.add_cmd_history(full_cmd)
         mode.cmd_history_index = 0
         tb.clear()
 

@@ -62,7 +62,3 @@ class label(control):
     @property
     def render_width(self) -> int:
         return self._r_width
-
-    def notify_content_changed(self):
-        self.on_content_changed(self)
-        self._layout_changed = True

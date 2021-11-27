@@ -189,7 +189,7 @@ class text_control(control, ABC):
     def on_render_char(self, value: Optional[Callable[[str], str]]):
         self._on_render_char = value
 
-    def _render_chars(self, text: str):
+    def _render_chars(self, text: str)->str:
         func = self.on_render_char
         if func:
             with StringIO as s:
@@ -207,6 +207,9 @@ class text_control(control, ABC):
         else:
             IO.write(text)
 
+    def notify_content_changed(self):
+        self.on_content_changed(self)
+        self._layout_changed = True
 
 class content_getter:
     def __init__(self, getter: Callable[[], str]):

@@ -7,8 +7,8 @@ public class ChattingMsgHandler : IMessageHandler<ChattingMsg>
     public void Handle([NotNull] ChattingMsg msg, MessageContext context)
     {
         var server = context.Server;
-        var ctrService = server.ServiceProvider.Reslove<IChattingRoomService>();
-        var room = ctrService.ByID(msg.ChattingRoomID);
+        var ctrService = server.ServiceProvider.Reslove<IChatRoomService>();
+        var room = ctrService.ByID(msg.ChatRoomID);
         if (room is null)
         {
             return;
@@ -19,6 +19,6 @@ public class ChattingMsgHandler : IMessageHandler<ChattingMsg>
         {
             return;
         }
-        ctrService.ReceviceNewText(room, user, msg.ChattingText, msg.SendTime);
+        ctrService.ReceviceNewText(room, user, msg.Text, msg.SendTime);
     }
 }

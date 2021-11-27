@@ -1,3 +1,4 @@
+import core.operations as op
 import keys
 import utils
 from core.chats import imsgmager
@@ -57,16 +58,17 @@ class chat_tab(tab):
     def unread_msg_number(self, value: int):
         if self._unread_msg_number != value:
             self._unread_msg_number = value
-            self.client.mark_dirty()
+            self.on_content_changed(self)
 
     def send_text(self):
         info = self.user_info
         if self.connected and self.joined and info:
             if info.verified:
                 inputs = self.textbox.inputs
-                self.client.send_text(info, self.joined, inputs)
+                op.send_text(self.network, self.user_info, self.joined, inputs)
             else:
-                self.add_string(i18n.trans("tabs.chat_tab.account_unverified", account=info.uid, ip=self.connected.ip))
+                self.add_string(
+                    i18n.trans("tabs.chat_tab.account_unverified", account=info.account, ip=self.connected.ip))
         else:
             self.logger.error(f"[Tab][{self}]Haven't connected a server yet.")
         self.textbox.clear()
@@ -193,12 +195,13 @@ class chat_tab(tab):
         self.msg_manager.on_received.add(self._on_received_msg)
 
     def _on_received_msg(self, manager, server, room_id, msg_unit):
+        if self.is_focused:
+            self.on_content_changed(self)
         if server == self.connected and room_id == self.joined:
             time, uid, text = msg_unit
             self._add_msg(time, uid, text)
             if not self.is_focused:
                 self.unread_msg_number += 1
-        self.on_content_changed(self)
 
     def on_removed(self):
         self.msg_manager.on_received.remove(self._on_received_msg)
@@ -235,7 +238,7 @@ class chat_tab(tab):
         d = {
             "server": server,
             "room_id": self.joined if self.joined else None,
-            "account": self.user_info.uid if self.user_info else None
+            "account": self.user_info.account if self.user_info else None
         }
         return d
 
@@ -250,7 +253,7 @@ class chat_tab(tab):
     def __str__(self) -> str:
         c = f" {self.connected.ip}:{self.connected.port}" if self.connected else ""
         j = f"-{self.joined}" if self.joined else ""
-        a = f"-{self.user_info.uid}" if self.user_info else ""
+        a = f"-{self.user_info.account}" if self.user_info else ""
         return f"<chat_tab{c}{j}{a}>"
 
     def equals(self, tab: "tab") -> bool:
@@ -276,6 +279,7 @@ class chat_cmd_hotkey_mode(cmd_hotkey_mode):
 
 
 class text_mode(ui_state):
+    tab: chat_tab
 
     def __init__(self):
         super().__init__()
@@ -305,18 +309,16 @@ class text_mode(ui_state):
             return True
 
 
-def find_best_incomplete_chat_tab(tablist: "tablist", server: server_token,
-                                  account: userid) -> Optional["chat_tab"]:
-    possible = []
+def find_best_incomplete(tablist: "tablist", server: server_token,
+                         account: userid, room: Optional[roomid]) -> Optional["chat_tab"]:
     for t in tablist.it_all_tabs_is(chat_tab):
         if t.authenticated:
             continue
         ts = t.connected
-        ta = t.user_info.uid if t.user_info else None
-        if (ts and ts != server) or (ta and ta != account):
+        ta = t.user_info.account if t.user_info else None
+        tr = t.joined
+        if (ts and ts != server) or (ta and ta != account) or (tr and tr != room):
             continue
         else:
-            possible.append(t)
-    if len(possible) == 0:
-        return None
-    return possible[0]
+            return t
+    return None

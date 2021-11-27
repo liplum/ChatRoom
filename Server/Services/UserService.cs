@@ -1,4 +1,5 @@
-﻿using ChattingRoom.Core.Networks;
+﻿using System.Collections.Concurrent;
+using ChattingRoom.Core.Networks;
 using ChattingRoom.Core.Users.Securities;
 
 namespace ChattingRoom.Server.Interfaces;
@@ -14,8 +15,8 @@ public class UserService : IUserService
         get; set;
     }
 #nullable enable
-    private Dictionary<string, UserEntity> OnlineUsers { get; init; } = new();
-    private Dictionary<NetworkToken, UserEntity> OnlineUsers_Token2Entity { get; init; } = new();
+    private ConcurrentDictionary<string, UserEntity> OnlineUsers { get; init; } = new();
+    private ConcurrentDictionary<NetworkToken, UserEntity> OnlineUsers_Token2Entity { get; init; } = new();
 
     public void RegisterUser(string account, string clear_password, DateTime registerTime)
     {
@@ -58,15 +59,7 @@ public class UserService : IUserService
     {
         DB = serviceProvider.Reslove<IDatabase>();
         Network = serviceProvider.Reslove<INetwork>();
-        Network.OnClientDisconnected += token =>
-        {
-            if (OnlineUsers_Token2Entity.TryGetValue(token, out var entity))
-            {
-                OnlineUsers_Token2Entity.Remove(token);
-                OnlineUsers.Remove(entity.Info.Account);
-            }
-        }
-        !;
+        Network.OnClientDisconnected += (token => Offline(token))!;
     }
 
     public bool NameNotOccupied(string account)
@@ -90,7 +83,7 @@ public class UserService : IUserService
         return false;
     }
 
-    public bool VerifyAndOnline(NetworkToken clientToken, string account, string clear_password, [MaybeNullWhen(false)] out IUserEntity entity)
+    public bool VerifyAndOnline(NetworkToken clientToken, DateTime loginTime, string account, string clear_password, [MaybeNullWhen(false)] out IUserEntity entity)
     {
         UserEntity? res = null;
 
@@ -101,6 +94,7 @@ public class UserService : IUserService
             {
                 Info = target,
                 UserService = this,
+                Token = clientToken,
                 VerificationCode = Random.Shared.Next()
             };
         }
@@ -116,6 +110,8 @@ public class UserService : IUserService
             entity = res;
             OnlineUsers[account] = res;
             OnlineUsers_Token2Entity[clientToken] = res;
+            res.Info.LastLoginTime = loginTime;
+            DB.SaveChange();
             return true;
         }
         else
@@ -134,7 +130,7 @@ public class UserService : IUserService
         return null;
     }
 
-    public bool Online(string account, NetworkToken clientToken)
+    public bool Online(string account, DateTime loginTime, NetworkToken clientToken)
     {
         if (OnlineUsers.ContainsKey(account))
         {
@@ -147,10 +143,12 @@ public class UserService : IUserService
             {
                 Info = target,
                 UserService = this,
+                Token = clientToken,
                 VerificationCode = Random.Shared.Next()
             };
             OnlineUsers[account] = entity;
             OnlineUsers_Token2Entity[clientToken] = entity;
+            target.LastLoginTime = loginTime;
             return true;
         }
         return false;
@@ -160,8 +158,18 @@ public class UserService : IUserService
     {
         if (OnlineUsers.TryGetValue(account, out var entity))
         {
-            OnlineUsers_Token2Entity.Remove(entity.Token);
-            OnlineUsers.Remove(account);
+            OnlineUsers_Token2Entity.TryRemove(entity.Token, out _);
+            OnlineUsers.TryRemove(account, out _);
+            return true;
+        }
+        return false;
+    }
+    public bool Offline(NetworkToken token)
+    {
+        if (OnlineUsers_Token2Entity.TryGetValue(token, out var entity))
+        {
+            OnlineUsers.TryRemove(entity.Account, out _);
+            OnlineUsers_Token2Entity.TryRemove(entity.Token, out _);
             return true;
         }
         return false;
@@ -193,6 +201,8 @@ public class UserService : IUserService
         {
             get; set;
         }
+        public string Account => Info.Account;
+
 #nullable enable
         public bool IsOnline => UserService.OnlineUsers_Token2Entity.ContainsKey(Token);
 

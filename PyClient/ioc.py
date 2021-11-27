@@ -1,8 +1,9 @@
 from enum import Enum, unique, auto
 from inspect import signature
 
-from typing import Dict, Any, Union
+from typing import Dict, Any, Union,TypeVar,Type
 
+In= TypeVar('In')
 
 @unique
 class RegisterType(Enum):
@@ -24,7 +25,7 @@ class container:
         self.type2item: Dict[type, item] = {}
         self.name2item: Dict[str, item] = {}
 
-    def resolve(self, in_type: Union[type, str]):
+    def resolve(self, in_type: Union[Type[In], str])->In:
         if isinstance(in_type, type):
             if in_type not in self.type2item:
                 raise ServiceNotRegistered(str(in_type))

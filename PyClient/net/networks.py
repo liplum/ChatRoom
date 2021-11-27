@@ -1,7 +1,7 @@
 import json
 import socket as s
 import traceback
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, ABCMeta
 from collections import namedtuple
 from functools import wraps
 from socket import socket, AF_INET, SOCK_STREAM
@@ -14,8 +14,26 @@ from events import event
 from ui import outputs
 from utils import get, not_none
 
+msg_name2type: Dict[str, type] = {}
+msg_type2name: Dict[type, str] = {}
 
-class msg(ABC):
+
+def _add_msgtype(name: str, msgtype: "metamsg"):
+    msg_name2type[name] = msgtype
+    msg_type2name[msgtype] = name
+
+
+class metamsg(ABCMeta):
+    def __init__(cls, name, bases, dic):
+        super().__init__(name, bases, dic)
+        if hasattr(cls, "name"):
+            n = cls.name
+        else:
+            n = name
+        _add_msgtype(n, cls)
+
+
+class msg(metaclass=metamsg):
     @abstractmethod
     def read(self, json):
         pass
@@ -107,6 +125,30 @@ class channel(ichannel):
 class inetwork(ABC):
     def __init__(self, client):
         self.client = client
+        self._on_connected = event()
+        self._on_disconnected = event()
+
+    @property
+    def on_connected(self) -> event:
+        """
+        Para 1:inetwork object
+
+        Para 2:server info
+
+        :return: event(inetwork,server_token)
+        """
+        return self._on_connected
+
+    @property
+    def on_disconnected(self) -> event:
+        """
+        Para 1:inetwork object
+
+        Para 2:server info
+
+        :return: event(inetwork,server_token)
+        """
+        return self._on_disconnected
 
     @abstractmethod
     def connect(self, server: server_token, strict: bool = False) -> bool:
@@ -138,6 +180,9 @@ class inetwork(ABC):
     @property
     @abstractmethod
     def connected_servers(self) -> List[server_token]:
+        pass
+
+    def auto_register(self):
         pass
 
 
@@ -225,6 +270,7 @@ class network(inetwork):
         listen.daemon = True
         self.lock(self._add_socket)(server, skt, listen)
         listen.start()
+        self.on_connected(self,server)
         return True
 
     def _add_socket(self, server: server_token, skt: socket, listen: Thread) -> None:
@@ -252,12 +298,14 @@ class network(inetwork):
             _json = json.loads(json_text)
             self.on_msg_pre_analyzed(self, token, json_text, _json)
             self.__analyse(_json, token)
+        self.disconnect(token)
 
     def disconnect(self, server: server_token):
         if server in self.sockets:
             sk, t = self.sockets[server]
             sk.close()
             self.lock(self._del_socket)(server)
+            self.on_connected(self, server)
 
     def __analyse(self, _json: Dict, server: server_token):
         channel_name = get(_json, "ChannelName")
@@ -295,6 +343,12 @@ class network(inetwork):
         c = channel(self, channel_name)
         self.channels[channel_name] = c
         return c
+
+    def auto_register(self):
+        for name, channel in self.channels.items():
+            for msgtype in msg_type2name.keys():
+                if hasattr(msgtype, "channel") and msgtype.channel == name:
+                    channel.register(msgtype)
 
     def lock(self, func):
         @wraps(func)

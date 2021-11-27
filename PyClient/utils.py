@@ -5,9 +5,11 @@ import platform
 import sys
 import time
 from datetime import datetime
+from importlib import reload
 from io import StringIO
 from threading import RLock
-from typing import Dict, List, Tuple, Optional, TypeVar, Callable, Any, NoReturn, Collection
+from types import ModuleType
+from typing import Dict, List, Tuple, Optional, TypeVar, Callable, Any, NoReturn, Collection, Iterable
 
 system_type = platform.system()
 
@@ -16,6 +18,42 @@ clear_screen = None
 T = TypeVar('T')
 TK = TypeVar('TK')
 TV = TypeVar('TV')
+
+
+def it_all_modules() -> Iterable[Tuple[str, ModuleType]]:
+    for name, val in sys.modules.items():
+        if isinstance(val, ModuleType):
+            yield val.__name__, val
+
+
+def all_modules() -> List[Tuple[str, ModuleType]]:
+    return [t for t in it_all_modules()]
+
+
+def get_module_by(name: str) -> Optional[ModuleType]:
+    g = sys.modules
+    if name in g:
+        m = g[name]
+        if isinstance(m,ModuleType):
+            return m
+    return None
+
+
+def reload_module(module_name: str) -> bool:
+    m = get_module_by(module_name)
+    if m:
+        reload(m)
+        return True
+    else:
+        return False
+
+
+def reload_all_modules():
+    for name, module in all_modules():
+        try:
+            reload(module)
+        except:
+            pass
 
 
 def nearest_prefect_square(num: int) -> int:

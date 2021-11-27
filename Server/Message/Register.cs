@@ -22,41 +22,41 @@ public class RegisterRequestMsgHandler : IMessageHandler<RegisterRequestMsg>
 
         if (!Account.IsValid(account))
         {
-            reply = new(RegisterResult.Failed, FailureCause.InvaildAccount);
+            reply = new(Result.Failed, FailureCause.InvaildAccount);
         }
         else//Account is valid
         {
             var isOccupied = !userService.NameNotOccupied(account);
             if (isOccupied)
             {
-                reply = new(RegisterResult.Failed, FailureCause.AccountOccupied);
+                reply = new(Result.Failed, FailureCause.AccountOccupied);
             }
             else//Account is not occupied
             {
                 if (password is null)
                 {
-                    reply = new(RegisterResult.NoFinalResult);
+                    reply = new(Result.NoFinalResult);
                 }
                 else
                 {
                     if (Password.IsValid(password))
                     {
                         userService.RegisterUser(account, password, DateTime.UtcNow);
-                        reply = new(RegisterResult.Succeed);
+                        reply = new(Result.Succeed);
                     }
                     else
                     {
-                        reply = new(RegisterResult.Failed, FailureCause.InvaildPassword);
+                        reply = new(Result.Failed, FailureCause.InvaildPassword);
                     }
                 }
             }
         }
-        switch (reply.Result)
+        switch (reply.Res)
         {
-            case RegisterResult.Failed:
+            case Result.Failed:
                 logger.SendTip($"[User][Register]User \"{account}\"'s register failed.");
                 break;
-            case RegisterResult.Succeed:
+            case Result.Succeed:
                 logger.SendTip($"[User][Register]User \"{account}\" successfully registered.");
                 break;
         }

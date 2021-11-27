@@ -1,6 +1,5 @@
 import traceback
 from collections import deque
-from typing import Tuple
 
 import utils
 from core.settings import entity as settings
@@ -19,7 +18,7 @@ class window(iwindow):
     def __init__(self, client: iclient):
         super().__init__(client)
         self.logger: "ilogger" = self.client.logger
-        self.tablist: tablist = tablist()
+        self._tablist: tablist = tablist()
         self.screen_buffer: Optional[buffer] = None
         self.tablist.on_content_changed.add(lambda _: self.client.mark_dirty())
         self.tablist.on_curtab_changed.add(lambda li, n, t: self.client.mark_dirty())
@@ -37,17 +36,6 @@ class window(iwindow):
 
     def start(self):
         configs = settings()
-        """
-        from ui.tab.grid_tab import grid_tab
-        t = self.newtab(grid_tab)
-        from ui.tab.test_tab import test_tab
-        t = self.newtab(test_tab)
-        from ui.tab.main_menu import main_menu_tab
-        t = self.newtab(main_menu_tab)
-        from ui.tab.copyright import copyright_tab
-        t = self.newtab(copyright_tab)
-        self.tablist.cur = t
-        """
         if configs.RestoreTabWhenRestart:
             self.restore_last_time_tabs()
 
@@ -68,7 +56,7 @@ class window(iwindow):
                             tab = tabtype.deserialize(entity, self.client, self.tablist)
                         except CannotRestoreTab:
                             continue
-                        except  Exception as e:
+                        except Exception as e:
                             self.client.logger.warn(f"[Window]{e}\n{traceback.format_exc()}")
                             continue
                         if tab is not None:
@@ -88,7 +76,7 @@ class window(iwindow):
                         dic = tabtype.serialize(tab)
                     except CannotStoreTab:
                         continue
-                    except  Exception as e:
+                    except Exception as e:
                         self.client.logger.warn(f"[Window]{e}\n{traceback.format_exc()}")
                         continue
                     if dic is not None:
@@ -132,6 +120,7 @@ class window(iwindow):
     def on_input(self, char):
         if len(self.popups) > 0:
             p = self.popups[0]
+            p.on_focused()
             it = p.on_input(char)
             self.step(it, p)
             if not p.returned:
@@ -151,6 +140,8 @@ class window(iwindow):
     def _on_popup_returned(self, popup: base_popup):
         self.popup_return_values[popup] = popup.return_value
         self.popups.popleft()
+        popup.on_lost_focus()
+        popup.on_removed()
         self.client.mark_dirty()
 
     @property
@@ -195,6 +186,7 @@ class window(iwindow):
         self.popups.append(popup)
         popup.on_content_changed.add(lambda _: self.client.mark_dirty())
         popup.on_returned.add(self._on_popup_returned)
+        popup.on_added()
         self.client.mark_dirty()
 
     def retrieve_popup(self, popup: "base_popup") -> Optional[Any]:
@@ -219,3 +211,7 @@ class window(iwindow):
             elif isinstance(rv, Generator):
                 self.step(rv, focusable)
                 break
+
+    @property
+    def tablist(self) -> "tablist":
+        return self._tablist

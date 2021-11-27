@@ -29,7 +29,7 @@ def _verify_date_format(settings: settings, v: str):
         datetime.now().strftime(v)
     except:
         raise ValueInvalidError(v)
-    settings.set("DateFormat", v)
+    settings["DateFormat"] = v
 
 
 def _directly_set(config: config):

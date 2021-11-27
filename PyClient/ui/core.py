@@ -136,3 +136,8 @@ class iwindow(inputable, reloadable):
     @abstractmethod
     def retrieve_popup(self, popup: "base_popup") -> Optional[Any]:
         pass
+
+    @property
+    @abstractmethod
+    def tablist(self) -> "tablist":
+        pass

@@ -8,15 +8,22 @@ public class UserInfoMsg : IMessage
     {
         get; set;
     }
-#nullable enable
-    public string? NickName
+    public string NickName
     {
         get; set;
     }
+
+    public object[] JoinedChattingRooms
+    {
+        get; set;
+    }
+#nullable enable
+
     public void Deserialize(dynamic json)
     {
         Account = json.Account;
         NickName = json.NickName;
+        JoinedChattingRooms = json.AllJoined;
     }
 
     public void Serialize(dynamic json)
@@ -26,6 +33,7 @@ public class UserInfoMsg : IMessage
         {
             json.NickName = NickName;
         }
+        json.AllJoined = JoinedChattingRooms;
     }
 }
 

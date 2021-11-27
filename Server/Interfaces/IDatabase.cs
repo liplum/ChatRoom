@@ -18,7 +18,7 @@ public interface IDatabase : IInjectable
     {
         get;
     }
-    public DbSet<ChatRoom> ChattingRoomTable
+    public DbSet<ChatRoom> ChatRoomTable
     {
         get;
     }

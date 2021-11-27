@@ -1,9 +1,10 @@
+import GLOBAL
+import core.operations as op
 import i18n
-import ui.tabs
 import ui.tabs as tabs
 from cmd import *
-from core.operations import *
 from core.settings import entity as settings_table
+from core.shared import *
 from net.networks import CannotConnectError
 from ui.cmd_modes import Cmd_Context
 from ui.windows import *
@@ -19,7 +20,7 @@ def add(*args) -> command:
 
 def _goto_tab(context: Cmd_Context, args: [str]):
     if len(args) != 1:
-        raise WrongUsageError(i18n.trans("cmds.goto.usage"), 0)
+        raise WrongUsageError(i18n.trans("cmds.goto.usage"), -1)
     try:
         tab_number = int(args[0])
     except:
@@ -38,7 +39,7 @@ def _register(context: Cmd_Context, args: [str]):
     argslen = len(args)
     network: inetwork = context.network
     if argslen != 2 and argslen != 3:
-        raise WrongUsageError(i18n.trans("cmds.reg.usage"), 0)
+        raise WrongUsageError(i18n.trans("cmds.reg.usage"), -1)
     if argslen == 3:  # first is server
         full_server = args[0:1]
         server = _con(context, full_server)
@@ -51,7 +52,7 @@ def _register(context: Cmd_Context, args: [str]):
             raise WrongUsageError(i18n.trans("cmds.reg.current_tab_is_unconnected"), 0)
         account = args[0]
         pwd = args[1]
-    register(network, server, account, pwd)
+    op.register(network, server, account, pwd)
 
 
 cmd_register = add("reg", _register)
@@ -87,17 +88,17 @@ cmd_help = add("help", _help)
 def _con(context: Cmd_Context, args: [str]) -> server_token:
     argslen = len(args)
     if argslen != 1:
-        raise WrongUsageError(i18n.trans("cmds.con.usage"), 0)
+        raise WrongUsageError(i18n.trans("cmds.con.usage"), -1)
     server = server_token.by(args[0])
     if server is None:
         raise WrongUsageError(i18n.trans("cmds.con.para1.invalid"), 0)
     network = context.network
     try:
-        connect(network, server, strict=True)
+        op.connect(network, server, strict=True)
     except CannotConnectError as cce:
         raise CmdError(
             i18n.trans("cmds.reg.cannot_connect_server", ip=server.ip, port=server.port))
-    tab = ui.tabs.tab
+    tab = context.tab
     has_attr = hasattr(tab, "connected") and hasattr(tab, "connect")
     if has_attr:
         connected = tab.connected
@@ -135,10 +136,35 @@ def _join(context: Cmd_Context, args: [str]):
             raise CmdError(i18n.trans("cmds.join.already_joined", room_id))
         tab.join(room_id)
     else:
-        raise WrongUsageError(i18n.trans("cmds.join.usage"), 0)
+        raise WrongUsageError(i18n.trans("cmds.join.usage"), -1)
 
 
 cmd_join = add("join", _join)
+
+
+def _join_room(context: Cmd_Context, args: [str]):
+    argslen = len(args)
+    network = context.network
+    if argslen == 2:  # 1:<server ip>:<port> 2:<chatting room id>
+        token = server_token.by(args[0:1])
+        try:
+            room_id = roomid(int(args[1]))
+        except:
+            raise WrongUsageError(i18n.trans("cmds.join.para_invalid.room_id", args[1]), 1)
+        tab: chat_tab = context.tab
+        op.join(network, tab.user_info, room_id)
+    elif argslen == 1:
+        try:
+            room_id = roomid(int(args[0]))
+        except:
+            raise WrongUsageError(i18n.trans("cmds.join.para_invalid.room_id", args[0]), 1)
+        tab: chat_tab = context.tab
+        op.join(network, tab.user_info, room_id)
+    else:
+        raise WrongUsageError(i18n.trans("cmds.join.usage"), -1)
+
+
+cmd_join_room = add("jr", _join_room)
 
 
 def _close(context: Cmd_Context, args: [str]):
@@ -156,7 +182,7 @@ def _close(context: Cmd_Context, args: [str]):
         else:
             raise WrongUsageError(i18n.trans("cmds.close.para_invalid.over_range", tab_number), 0)
     else:
-        raise WrongUsageError(i18n.trans("cmds.close.usage"), 0)
+        raise WrongUsageError(i18n.trans("cmds.close.usage"), -1)
 
 
 cmd_close = add("close", _close)
@@ -165,7 +191,7 @@ cmd_close = add("close", _close)
 def _login(context: Cmd_Context, args: [str]):
     argslen = len(args)
     if argslen != 3 and argslen != 2:
-        raise WrongUsageError(i18n.trans("cmds.login.usage"), 0)
+        raise WrongUsageError(i18n.trans("cmds.login.usage"), -1)
 
     if argslen == 3:
         full_server = args[0:1]
@@ -176,34 +202,10 @@ def _login(context: Cmd_Context, args: [str]):
         if server is None:
             raise WrongUsageError(i18n.trans("cmds.login.cur_tab_unconnected"), 0)
 
-    login(context.network, server, args[argslen - 2], args[argslen - 1])
+    op.login(context.network, server, args[argslen - 2], args[argslen - 1])
 
 
 cmd_login = add("login", _login)
-
-
-def _run(context: Cmd_Context, args: [str]):
-    argslen = len(args)
-    if argslen == 0:
-        return
-    if argslen == 1:
-        code = args[0]
-    elif argslen == 2 and args[0] == "-f":
-        path = args[1]
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                code = f.read()
-        except:
-            raise WrongUsageError(i18n.trans("cmds.run.cannot_read_file", path=path), 0)
-    else:
-        raise CmdError(i18n.trans("cmds.run.usage"))
-    try:
-        exec(code)
-    except Exception as e:
-        raise WrongUsageError(i18n.trans("cmds.run.execute_error", code=code, exception=e), 0)
-
-
-cmd_exec = add("run", _run)
 
 
 def _lang(context: Cmd_Context, args: [str]):
@@ -227,7 +229,7 @@ def _lang(context: Cmd_Context, args: [str]):
             try:
                 i18n.load(lang, strict=True)
                 settings = settings_table()
-                settings.set("Language", lang)
+                settings["Language"] = lang
                 win.reload()
             except i18n.LocfileLoadError as lle:
                 raise WrongUsageError(i18n.trans("cmds.lang.cannot_load", lang=lang), 0)
@@ -237,27 +239,84 @@ def _lang(context: Cmd_Context, args: [str]):
             try:
                 i18n.load(lang, strict=True)
                 settings = settings_table()
-                settings.set("Language", lang)
+                settings["Language"] = lang
                 win.reload()
             except i18n.LocfileLoadError as lle:
                 raise WrongUsageError(i18n.trans("cmds.lang.cannot_load_cause", lang=lang, cause=repr(lle.inner)), 0)
         else:
             raise WrongUsageError(i18n.trans("cmds.lang.usage"), 0)
     else:
-        raise WrongUsageError(i18n.trans("cmds.lang.usage"), 0)
+        raise WrongUsageError(i18n.trans("cmds.lang.usage"), -1)
 
 
 cmd_lang = add("lang", _lang)
+
+
+def _croom(context: Cmd_Context, args: [str]):
+    network = context.network
+    argslen = len(args)
+    if argslen != 1:
+        raise WrongUsageError(i18n.trans("cmds.croom.usage"), -1)
+    tab: chat_tab = context.tab
+    server = tab.connected
+    if server is None:
+        raise WrongUsageError(i18n.trans("cmds.croom.cur_tab_unconnected"), 0)
+    room_name = args[0]
+    op.create_room(network, tab.user_info, room_name)
+
+
+cmd_croom = add("croom", _croom)
 
 
 def _main(context: Cmd_Context, args: [str]):
     win: iwindow = context.win
     argslen = len(args)
     if argslen != 0:
-        raise WrongUsageError(i18n.trans("cmds.main.usage"), 0)
+        raise WrongUsageError(i18n.trans("cmds.main.usage"), -1)
     main_menu = win.newtab('main_menu_tab')
     tablist: tablist = context.tablist
     tablist.add(main_menu)
 
 
 cmd_main = add("main", _main)
+
+if GLOBAL.DEBUG:
+
+    def _run(context: Cmd_Context, args: [str]):
+        argslen = len(args)
+        if argslen == 0:
+            return
+        if argslen == 1:
+            code = args[0]
+        elif argslen == 2 and args[0] == "-f":
+            path = args[1]
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    code = f.read()
+            except:
+                raise WrongUsageError(i18n.trans("cmds.run.cannot_read_file", path=path), 0)
+        else:
+            raise WrongUsageError(i18n.trans("cmds.run.usage"), -1)
+        try:
+            exec(code)
+        except Exception as e:
+            raise WrongUsageError(i18n.trans("cmds.run.execute_error", code=code, exception=e), 0)
+
+
+    cmd_run = add("run", _run)
+
+
+    def _reload(context: Cmd_Context, args: [str]):
+        argslen = len(args)
+        if argslen == 0:
+            utils.reload_all_modules()
+        elif argslen == 1:
+            module_name = args[0]
+            found = utils.reload_module(module_name)
+            if not found:
+                raise WrongUsageError(i18n.trans("cmds.reload.no_such_module", module=module_name), 0)
+        else:
+            raise WrongUsageError(i18n.trans("cmds.reload.usage"), -1)
+
+
+    cmd_reload = add("reload", _reload)

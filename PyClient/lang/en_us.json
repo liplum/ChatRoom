@@ -52,7 +52,7 @@
       "already_connected": "Current tab has already connected another server {ip}:{port}"
     },
     "run": {
-      "usage": "!Only Debug! run \"<code>\" or exec -f <file path>",
+      "usage": "run \"<code>\" or exec -f <file path>",
       "execute_error": "Can't execute code {code} because {exception}",
       "cannot_read_file": "Can't read codes from file \"{path}\"",
       "description": "run custom code"
@@ -86,11 +86,17 @@
     },
     "login": {
       "usage": "login [<server ip>:<port>] <account> <password>",
-      "description": "login a server"
+      "description": "login a server",
+      "cur_tab_unconnected": "Current tab hasn't connected any server yet"
     },
     "main": {
       "usage": "main",
       "description": "open main menu"
+    },
+    "reload": {
+      "usage": "reload or reload <module name>",
+      "description": "reload a module or all modules",
+      "no_such_module": "No such module {module}"
     }
   },
   "tabs": {
@@ -113,7 +119,9 @@
         "server_port": "Server Port",
         "account": "Account",
         "password": "Password"
-      }
+      },
+      "login_tip": "Logging| in,| please| wait| patiently...",
+      "logging": "Logging..."
     },
     "copyright_tab": {
       "name": "Copyright",

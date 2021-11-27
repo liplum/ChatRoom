@@ -47,6 +47,14 @@ public interface IMessageChannel
     {
         RegisterMessage(typeof(Msg), msgGetter, null, msgID);
     }
+    public virtual void RegisterMessage<Msg, Handler>(string? msgID = null) where Msg : class, IMessage, new() where Handler : class, IMessageHandler<Msg>, new()
+    {
+        RegisterMessage(typeof(Msg), () => new Msg(), () => new Handler(), msgID);
+    }
+    public virtual void RegisterMessage<Msg>(string? msgID = null) where Msg : class, IMessage, new()
+    {
+        RegisterMessage(typeof(Msg), () => new Msg(), null, msgID);
+    }
 
     public string ChannelName
     {

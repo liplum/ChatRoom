@@ -39,8 +39,20 @@ public class User
         get; set;
     } = new();
 
-    [DefaultValue(true)]
+    [Required, DefaultValue(true)]
     public bool IsActive
+    {
+        get; set;
+    }
+
+    [Required, DefaultValue(0)]
+    public int CreatedRoomCount
+    {
+        get; set;
+    }
+
+    [Required, DefaultValue(0)]
+    public int JoinedRoomCount
     {
         get; set;
     }

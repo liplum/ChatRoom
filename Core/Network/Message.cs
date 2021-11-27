@@ -11,8 +11,8 @@ public enum Direction
     ServerToClient, ClientToServer
 }
 
-[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-public sealed class MsgAttribute : Attribute
+[AttributeUsage(AttributeTargets.Class, Inherited = true, AllowMultiple = false)]
+public class MsgAttribute : Attribute
 {
     public string? ID
     {

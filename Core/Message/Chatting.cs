@@ -6,17 +6,12 @@ namespace ChattingRoom.Core.Messages;
 [Msg("Chatting", Direction.ClientToServer, Direction.ServerToClient)]
 public class ChattingMsg : IMessage
 {
-    public ChattingMsg()
-    {
-
-    }
-
 #nullable disable
     public string Account
     {
         get; set;
     }
-    public string ChattingText
+    public string Text
     {
         get; set;
     }
@@ -26,7 +21,7 @@ public class ChattingMsg : IMessage
         get; set;
     }
 
-    public int ChattingRoomID
+    public int ChatRoomID
     {
         get; set;
     }
@@ -39,19 +34,19 @@ public class ChattingMsg : IMessage
 #nullable enable
     public void Deserialize(dynamic json)
     {
-        ChattingText = json.Text;
+        Text = json.Text;
         Account = json.Account;
         long timestamp = json.TimeStamp;
         SendTime = timestamp.ToUnixDatetime();
-        ChattingRoomID = json.ChattingRoomID;
+        ChatRoomID = json.ChatRoomID;
         VerificationCode = json.VCode;
     }
 
     public void Serialize(dynamic json)
     {
         json.Account = Account;
-        json.Text = ChattingText;
-        json.ChattingRoomID = ChattingRoomID;
+        json.Text = Text;
+        json.ChatRoomID = ChatRoomID;
         json.TimeStamp = new DateTimeOffset(SendTime).ToUnixTimeSeconds();
         json.VCode = VerificationCode;
     }

@@ -1,5 +1,5 @@
 from abc import ABCMeta
-from typing import List, Iterable, Dict, Generator, Callable
+from typing import List, Iterable, Dict, Generator, Callable, Tuple
 
 from GLOBAL import StringIO
 from ui.core import *
@@ -31,36 +31,51 @@ class tablist(notifiable, painter):
         self.max_view_history = 5
         self._on_curtab_changed = event()
         self._on_tablist_changed = event()
+        self._lock = RLock()
 
     def unite_like_tabs(self):
-        no_duplicate = []
-        for t in self.tabs:
-            if not is_in(t, no_duplicate, lambda a, b: a.equals(b)):
-                no_duplicate.append(t)
+        with self._lock:
+            no_duplicate = []
+            for t in self.tabs:
+                if not is_in(t, no_duplicate, lambda a, b: a.equals(b)):
+                    no_duplicate.append(t)
 
-        self.tabs = no_duplicate
-        if self.cur:
-            former = self.cur_index
-            self._reset_index()
-            if self.cur_index != former:
-                self.on_curtab_changed(self, self.cur_index, self.cur)
+            self.tabs = no_duplicate
+            if self.cur:
+                former = self.cur_index
+                self._reset_index()
+                if self.cur_index != former:
+                    self.on_curtab_changed(self, self.cur_index, self.cur)
 
     def it_all_tabs_is(self, tabtype: Type[T]) -> Iterable[T]:
-        for t in self.tabs:
-            if isinstance(t, tabtype):
-                yield t
+        with self._lock:
+            return (t for t in self.tabs if isinstance(t, tabtype))
+
+    def find_first(self, predicate: Callable[["tab"], bool]) -> Optional[Tuple["tab", int]]:
+        with self._lock:
+            i = 0
+            for t in self.tabs:
+                try:
+                    if predicate(t):
+                        return t, i
+                except:
+                    pass
+                i += 1
+            return None
 
     def _reset_index(self):
-        cur = self.cur
-        if cur:
-            try:
-                self.cur_index = self.tabs.index(cur)
-            except:
-                pass
+        with self._lock:
+            cur = self.cur
+            if cur:
+                try:
+                    self.cur_index = self.tabs.index(cur)
+                except:
+                    pass
 
     @property
     def tabs_count(self) -> int:
-        return len(self.tabs)
+        with self._lock:
+            return len(self.tabs)
 
     @property
     def on_curtab_changed(self) -> event:
@@ -89,163 +104,180 @@ class tablist(notifiable, painter):
         return self._on_tablist_changed
 
     def __len__(self) -> int:
-        return len(self.tabs)
+        with self._lock:
+            return len(self.tabs)
 
     @property
     def cur(self) -> Optional["tab"]:
-        return self._cur
+        with self._lock:
+            return self._cur
 
     @cur.setter
     def cur(self, value: Optional["tab"]):
-        changed = self._cur is not value
-        if changed:
-            if self._cur:
-                self._cur.on_lost_focus()
-            self._cur = value
-            if self._cur:
-                self._reset_index()
-                self._cur.on_focused()
-            self.on_curtab_changed(self, self.cur_index, tab)
+        with self._lock:
+            changed = self._cur is not value
+            if changed:
+                if self._cur:
+                    self._cur.on_lost_focus()
+                self._cur = value
+                if self._cur:
+                    self._reset_index()
+                    self._cur.on_focused()
+                self.on_curtab_changed(self, self.cur_index, tab)
 
     def add(self, tab: "tab"):
-        self.tabs.append(tab)
-        self.on_tablist_changed(self, True, tab)
-        if self.cur is None:
-            self.cur = tab
-        tab.on_added()
-        tab.on_content_changed.add(self.on_subtab_content_changed)
+        with self._lock:
+            self.tabs.append(tab)
+            self.on_tablist_changed(self, True, tab)
+            if self.cur is None:
+                self.cur = tab
+            tab.on_added()
+            tab.on_content_changed.add(self.on_subtab_content_changed)
 
     def replace(self, old_tab: Union[int, "tab"], new_tab: "tab"):
-        if isinstance(old_tab, int):
-            if 0 <= old_tab < len(self.tabs):
-                removed = self.tabs[old_tab]
-                del self.tabs[old_tab]
-                pos = old_tab
-            else:
-                return
-        elif isinstance(old_tab, tab):
-            removed = old_tab
-            try:
-                pos = self.tabs.index(removed)
-            except:
-                return
-            del self.tabs[pos]
+        with self._lock:
+            if isinstance(old_tab, int):
+                if 0 <= old_tab < len(self.tabs):
+                    removed = self.tabs[old_tab]
+                    del self.tabs[old_tab]
+                    pos = old_tab
+                else:
+                    return
+            elif isinstance(old_tab, tab):
+                removed = old_tab
+                try:
+                    pos = self.tabs.index(removed)
+                except:
+                    return
+                del self.tabs[pos]
 
-        new_tab.on_added()
-        need_release_resource = new_tab.on_replaced(removed)
-        new_tab.on_content_changed.add(self.on_subtab_content_changed)
-        if need_release_resource:
-            removed.on_removed()
-        removed.on_content_changed.remove(self.on_subtab_content_changed)
-        self.tabs.insert(pos, new_tab)
+            new_tab.on_added()
+            need_release_resource = new_tab.on_replaced(removed)
+            new_tab.on_content_changed.add(self.on_subtab_content_changed)
+            if need_release_resource:
+                removed.on_removed()
+            removed.on_content_changed.remove(self.on_subtab_content_changed)
+            self.tabs.insert(pos, new_tab)
 
-        self.on_tablist_changed(self, False, removed)
-        self.on_tablist_changed(self, True, new_tab)
+            self.on_tablist_changed(self, False, removed)
+            self.on_tablist_changed(self, True, new_tab)
 
-        if self.cur is old_tab:
-            self.cur = new_tab
+            if self.cur is old_tab:
+                self.cur = new_tab
 
     def on_subtab_content_changed(self, subtab):
-        self.on_content_changed(self)
+        with self._lock:
+            self.on_content_changed(self)
 
     def insert(self, index: int, new_tab: "tab"):
-        self.tabs.insert(index, new_tab)
-        self.on_tablist_changed(self, True, new_tab)
+        with self._lock:
+            self.tabs.insert(index, new_tab)
+            self.on_tablist_changed(self, True, new_tab)
 
     def remove(self, item: Union[int, "tab"]):
-        if isinstance(item, int):
-            if 0 <= item < len(self.tabs):
-                removed = self.tabs[item]
-                del self.tabs[item]
-        elif isinstance(item, tab):
-            removed = item
-            try:
-                self.tabs.remove(removed)
-            except:
-                return
+        with self._lock:
+            if isinstance(item, int):
+                if 0 <= item < len(self.tabs):
+                    removed = self.tabs[item]
+                    del self.tabs[item]
+            elif isinstance(item, tab):
+                removed = item
+                try:
+                    self.tabs.remove(removed)
+                except:
+                    return
 
-        self.on_tablist_changed(self, False, removed)
-        removed.on_removed()
-        removed.on_content_changed.remove(self.on_subtab_content_changed)
+            self.on_tablist_changed(self, False, removed)
+            removed.on_removed()
+            removed.on_content_changed.remove(self.on_subtab_content_changed)
 
-        if len(self.tabs) == 0:
-            self.cur = None
-        else:
-            self.goto(self.cur_index)
+            if len(self.tabs) == 0:
+                self.cur = None
+            else:
+                self.goto(self.cur_index)
 
     def remove_cur(self):
-        cur = self.cur
-        if cur:
-            self.tabs.remove(cur)
-        self.on_tablist_changed(self, False, cur)
+        with self._lock:
+            cur = self.cur
+            if cur:
+                self.tabs.remove(cur)
+            self.on_tablist_changed(self, False, cur)
 
-        if len(self.tabs) == 0:
-            self.cur = None
-        else:
-            self.goto(self.cur_index)
+            if len(self.tabs) == 0:
+                self.cur = None
+            else:
+                self.goto(self.cur_index)
 
     def switch(self):
-        if len(self.view_history) >= 2:
-            self.goto(self.view_history[-2])
+        with self._lock:
+            if len(self.view_history) >= 2:
+                self.goto(self.view_history[-2])
 
     def goto(self, number: int):
-        number = max(number, 0)
-        number = min(number, self.tabs_count - 1)
-        origin = self.cur
-        target = self.tabs[number]
-        if origin is target:
-            return
-        self.cur = target
-        self.add_view_history(number)
+        with self._lock:
+            number = max(number, 0)
+            number = min(number, self.tabs_count - 1)
+            origin = self.cur
+            target = self.tabs[number]
+            if origin is target:
+                return
+            self.cur = target
+            self.add_view_history(number)
 
     def next(self):
-        self.goto(self.cur_index + 1)
+        with self._lock:
+            self.goto(self.cur_index + 1)
 
     def back(self):
-        self.goto(self.cur_index - 1)
+        with self._lock:
+            self.goto(self.cur_index - 1)
 
     def clear(self):
-        for t in list(self.tabs):
-            self.remove(t)
+        with self._lock:
+            for t in list(self.tabs):
+                self.remove(t)
 
     def add_view_history(self, number: int):
-        self.view_history.append(number)
-        if len(self.view_history) > self.max_view_history:
-            self.view_history = self.view_history[-self.max_view_history:]
+        with self._lock:
+            self.view_history.append(number)
+            if len(self.view_history) > self.max_view_history:
+                self.view_history = self.view_history[-self.max_view_history:]
 
     def paint_on(self, buf: buffer):
-        tab_count = len(self.tabs)
-        cur = self.cur
-        with StringIO() as separator:
-            for i, t in enumerate(self.tabs):
-                bk = CmdBkColor.Yellow if t is cur else CmdBkColor.Green
-                fg = CmdFgColor.Black if t is cur else CmdFgColor.Violet
-                title = t.title
-                displayed_title = f" {title} "
-                buf.addtext(displayed_title, fgcolor=fg, bkcolor=bk, end='')
-                repeated = " " if t is cur else "─"
-                second_line = repeated * len(displayed_title)
-                separator.write(second_line)
-                if i + 1 < tab_count:
-                    buf.addtext("│", end='')
-                    if t is cur:
-                        separator.write("└")
-                    elif i + 1 < tab_count and self.tabs[i + 1] is cur:
-                        separator.write("┘")
-                    else:
-                        separator.write("┴")
-            buf.addtext()
-            buf.addtext(separator.getvalue())
+        with self._lock:
+            tab_count = len(self.tabs)
+            cur = self.cur
+            with StringIO() as separator:
+                for i, t in enumerate(self.tabs):
+                    bk = CmdBkColor.Yellow if t is cur else CmdBkColor.Green
+                    fg = CmdFgColor.Black if t is cur else CmdFgColor.Violet
+                    title = t.title
+                    displayed_title = f" {title} "
+                    buf.addtext(displayed_title, fgcolor=fg, bkcolor=bk, end='')
+                    repeated = " " if t is cur else "─"
+                    second_line = repeated * len(displayed_title)
+                    separator.write(second_line)
+                    if i + 1 < tab_count:
+                        buf.addtext("│", end='')
+                        if t is cur:
+                            separator.write("└")
+                        elif i + 1 < tab_count and self.tabs[i + 1] is cur:
+                            separator.write("┘")
+                        else:
+                            separator.write("┴")
+                buf.addtext()
+                buf.addtext(separator.getvalue())
 
     def __iter__(self):
-        return iter(self.tabs)
+        with self._lock:
+            return iter(self.tabs)
 
 
 class metatab(ABCMeta):
 
     def __init__(cls, name, bases, dic):
         super().__init__(name, bases, dic)
-        _add_tabtype(cls.__qualname__, cls)
+        _add_tabtype(name, cls)
 
 
 class tab(notifiable, reloadable, metaclass=metatab):
@@ -331,6 +363,9 @@ class TabTypeNotFound(Exception):
         self.tab_name = tab_name
 
 
+TitleGetter = Optional[Callable[[], str]]
+
+
 class base_popup(tab, ABC):
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
@@ -366,11 +401,11 @@ class base_popup(tab, ABC):
         return self.get_title()
 
     @property
-    def title_getter(self) -> Optional[Callable[[], str]]:
+    def title_getter(self) -> TitleGetter:
         return self._title_getter
 
     @title_getter.setter
-    def title_getter(self, value: Optional[Callable[[], str]]):
+    def title_getter(self, value: TitleGetter):
         self._title_getter = value
 
     def get_title(self) -> str:

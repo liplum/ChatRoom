@@ -1,5 +1,4 @@
-from typing import Callable
-from typing import Set
+from typing import Callable,Optional,Set
 
 import chars
 from events import event
@@ -11,19 +10,19 @@ class kbinding:
         self.bindings = {}
         self._on_any = None
 
-    def bind(self, ch: chars.char, func: Callable[[chars.char], bool]):
+    def bind(self, ch: chars.char, func: Callable[[chars.char], Optional[bool]]):
         self.bindings[ch] = func
 
     @property
-    def on_any(self) -> Callable[[chars.char], bool]:
+    def on_any(self) -> Callable[[chars.char], Optional[bool]]:
         return self._on_any
 
     @on_any.setter
-    def on_any(self, func: Callable[[chars.char], bool]):
+    def on_any(self, func: Callable[[chars.char], Optional[bool]]):
         self._on_any = func
 
-    def trigger(self, ch: chars.char) -> bool:
-        func: Callable[[chars.char], bool] = get(self.bindings, ch)
+    def trigger(self, ch: chars.char) -> Optional[bool]:
+        func: Callable[[chars.char], Optional[bool]] = get(self.bindings, ch)
         if func is not None:
             return func(ch)
         if self.on_any is not None:

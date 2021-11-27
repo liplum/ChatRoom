@@ -3,41 +3,33 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ChattingRoom.Core.DB.Models;
 #nullable disable
-[DefaultValue(None)]
-public enum MemberType
+public class ChatRoom
 {
-    None, Member, Owner, Admin
-}
-
-public class Membership
-{
+    [Key]
     public int ChatRoomID
     {
         get; set;
     }
-
-    public string UserAccount
+    [Required, MaxLength(16)]
+    public string Name
     {
         get; set;
     }
 
-    public User User
+    public List<Membership> Members
     {
         get; set;
-    }
+    } = new();
 
-    public MemberType Type
-    {
-        get; set;
-    }
-
-    public ChatRoom ChatRoom
-    {
-        get; set;
-    }
 
     [Required, DefaultValue(true)]
     public bool IsActive
+    {
+        get; set;
+    }
+
+    [Required, DefaultValue(0)]
+    public int MemberCount
     {
         get; set;
     }

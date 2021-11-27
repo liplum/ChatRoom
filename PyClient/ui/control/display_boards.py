@@ -161,7 +161,3 @@ class display_board(text_control):
                 self._vertical_margin = difference // 2
             else:
                 self._vertical_margin = 0
-
-    def notify_content_changed(self):
-        self.on_content_changed(self)
-        self._layout_changed = True

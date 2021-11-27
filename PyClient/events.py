@@ -7,7 +7,7 @@ Not_Canceled = False
 
 class event:
     def __init__(self, cancelable=False):
-        self.subscribers = []
+        self.subscribers = set()
         self.cancelable = cancelable
 
     def __call__(self, sender, *args, **kwargs) -> Is_Canceled:
@@ -20,7 +20,7 @@ class event:
 
     def add(self, *args) -> "event":
         for subscriber in args:
-            self.subscribers.append(subscriber)
+            self.subscribers.add(subscriber)
         return self
 
     def remove(self, subscriber) -> "event":

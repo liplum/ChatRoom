@@ -32,7 +32,7 @@ public class RegisterRequestMsg : IMessage
 [Msg("RegisterResult", Direction.ServerToClient)]
 public class RegisterResultMsg : IMessage
 {
-    public enum RegisterResult
+    public enum Result
     {
         Failed = -1,
         NoFinalResult = 0,
@@ -48,7 +48,7 @@ public class RegisterResultMsg : IMessage
     }
 
 #nullable disable
-    public RegisterResult Result
+    public Result Res
     {
         get; set;
     }
@@ -64,9 +64,9 @@ public class RegisterResultMsg : IMessage
 
     }
 
-    public RegisterResultMsg(RegisterResult result, [AllowNull] FailureCause? failureCause = null)
+    public RegisterResultMsg(Result result, [AllowNull] FailureCause? failureCause = null)
     {
-        Result = result;
+        Res = result;
         Cause = failureCause;
     }
 
@@ -76,8 +76,8 @@ public class RegisterResultMsg : IMessage
         int? cause = json.Cause;
         if (result.HasValue)
         {
-            Result = (RegisterResult)result.Value;
-            if (Result == RegisterResult.Failed && cause.HasValue)
+            Res = (Result)result.Value;
+            if (Res == Result.Failed && cause.HasValue)
             {
                 Cause = (FailureCause)cause;
             }
@@ -86,7 +86,7 @@ public class RegisterResultMsg : IMessage
 
     public void Serialize(dynamic json)
     {
-        json.Result = (int)Result;
+        json.Result = (int)Res;
         if (Cause.HasValue)
         {
             json.Cause = (int)Cause.Value;
