@@ -57,11 +57,11 @@ turn_on_off_check_theme = i18n_theme(
 _word_separator_key = "controls.textblock.word_separator"
 
 
-def split_textblock_words(key: str) -> List[str]:
+def split_textblock_words(key: str,*args,**kwargs) -> List[str]:
     word_separator = i18n.trans(_word_separator_key)
     if word_separator == _word_separator_key:
         word_separator = ""
-    text = i18n.trans(key)
+    text = i18n.trans(key,*args,**kwargs)
     if word_separator == "":
         return [text]
     else:

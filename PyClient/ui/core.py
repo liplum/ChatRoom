@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 from threading import RLock
-from typing import Union, Type, NoReturn, Any, Optional
+from typing import Union, Type, NoReturn, Any, Optional, Callable
 
 from ui.shared import *
 
@@ -140,4 +140,11 @@ class iwindow(inputable, reloadable):
     @property
     @abstractmethod
     def tablist(self) -> "tablist":
+        pass
+
+    def add_string(self, string: str):
+        pass
+
+    @abstractmethod
+    def find_first_popup(self, predicate: Callable[["base_popup"], bool])->Optional["base_popup"]:
         pass

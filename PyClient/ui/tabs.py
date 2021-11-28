@@ -1,5 +1,5 @@
 from abc import ABCMeta
-from typing import List, Iterable, Dict, Generator, Callable, Tuple
+from typing import List, Iterable, Dict, Generator, Tuple
 
 from GLOBAL import StringIO
 from ui.core import *
@@ -336,9 +336,7 @@ class tab(notifiable, reloadable, metaclass=metatab):
         return id(self) == id(tab)
 
     def new_popup(self, popup_type: Type[T], *args, **kwargs) -> T:
-        p = popup_type(self.client, self.tablist, *args, **kwargs)
-        self.win.popup(p)
-        return p
+        return popup_type(self.client, self.tablist, *args, **kwargs)
 
     @property
     def win(self) -> iwindow:
@@ -373,6 +371,7 @@ class base_popup(tab, ABC):
         self._returned = False
         self._on_returned = event()
         self._title_getter: Optional[Callable[[], str]] = None
+        self._need_refresh_instant = False
 
     @property
     def on_returned(self) -> event:
@@ -414,3 +413,11 @@ class base_popup(tab, ABC):
             return getter()
         else:
             return ""
+
+    @property
+    def need_refresh_instant(self) -> bool:
+        return self._need_refresh_instant
+
+    @need_refresh_instant.setter
+    def need_refresh_instant(self, value: bool):
+        self._need_refresh_instant = value

@@ -20,7 +20,7 @@ public class UserService : IUserService
 
     public void RegisterUser(string account, string clear_password, DateTime registerTime)
     {
-        var encryptedPwd = MD5.Convert(clear_password);
+        var encryptedPwd = clear_password.Encrypted();
         DB.UserTable.Add(new()
         {
             Account = account,

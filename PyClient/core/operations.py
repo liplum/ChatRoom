@@ -47,7 +47,7 @@ def create_room(network: inetwork, userinfo:uentity, room_name:str):
     uc.send(server, msg)
 
 def send_text(network: inetwork,user_info: uentity, room_id: roomid, text: str):
-    server = userinfo.server
+    server = user_info.server
     connect(network, server)
     chatting = network.get_channel("Chatting")
     msg = msgs.chatting()

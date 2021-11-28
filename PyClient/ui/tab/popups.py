@@ -4,7 +4,7 @@ from ui.tab.shared import *
 from ui.tabs import *
 
 _button_width = 8
-_info_width = 60
+_info_width = 50
 _main_left_margin = 10
 
 
@@ -112,6 +112,19 @@ class ok_cancel_popup(text_popup):
 
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
+        button_stack = stack()
+        button_stack.orientation = horizontal
+
+        b_ok = i18n_button("controls.ok", self._on_ok)
+        b_ok.width = _button_width
+        button_stack.add(b_ok)
+
+        b_cancel = i18n_button("controls.cancel", self._on_cancel)
+        b_cancel.width = _button_width
+        button_stack.add(b_cancel)
+
+        button_stack.width = 20
+        self.button_stack = button_stack
 
     def on_added(self):
         m = stack()
@@ -127,20 +140,7 @@ class ok_cancel_popup(text_popup):
         info.width = _info_width
         m.add(info)
 
-        button_stack = stack()
-        button_stack.orientation = horizontal
-
-        b_ok = i18n_button("controls.ok", self._on_ok)
-        b_ok.width = _button_width
-        button_stack.add(b_ok)
-
-        b_cancel = i18n_button("controls.cancel", self._on_cancel)
-        b_cancel.width = _button_width
-        button_stack.add(b_cancel)
-
-        button_stack.width = 20
-
-        m.add(button_stack)
+        m.add(self.button_stack)
         m.left_margin = _main_left_margin
         m.switch_to_first_or_default_item()
 
@@ -150,10 +150,16 @@ class ok_cancel_popup(text_popup):
     def _on_cancel(self):
         self._Return(False)
 
+
+OnStateChanged = Optional[Callable[[Any], NoReturn]]
+
+
 class waiting_popup(text_popup):
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
         self._tag: Optional[Any] = None
+        self._on_state_changed: OnStateChanged = None
+        self._state = None
 
     def on_added(self):
         m = stack()
@@ -179,6 +185,35 @@ class waiting_popup(text_popup):
     def _on_press(self):
         self._Return(False)
 
+    def notify(self, value: Optional[Any] = None):
+        self.need_refresh_instant = True
+        self._Return(value)
+
     @property
     def tag(self) -> Optional[Any]:
         return self._tag
+
+    @tag.setter
+    def tag(self, value: Optional[Any]):
+        if self._tag != value:
+            self._tag = value
+
+    @property
+    def state(self) -> Any:
+        return self._state
+
+    @state.setter
+    def state(self, value: Any):
+        if self._state != value:
+            self._state = value
+            if self.on_state_changed:
+                self.on_state_changed(value)
+
+    @property
+    def on_state_changed(self) -> OnStateChanged:
+        return self._on_state_changed
+
+    @on_state_changed.setter
+    def on_state_changed(self, value: OnStateChanged):
+        if self._on_state_changed != value:
+            self._on_state_changed = value

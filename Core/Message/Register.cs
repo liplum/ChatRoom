@@ -42,12 +42,17 @@ public class RegisterResultMsg : IMessage
     public enum FailureCause
     {
         AccountOccupied = 0,
-        InvaildAccount = 1,
-        InvaildPassword = 2,
+        InvalidAccount = 1,
+        InvalidPassword = 2,
         Forbidden = 3,
     }
 
 #nullable disable
+    public string Account
+    {
+        get; set;
+    }
+
     public Result Res
     {
         get; set;
@@ -64,28 +69,19 @@ public class RegisterResultMsg : IMessage
 
     }
 
-    public RegisterResultMsg(Result result, [AllowNull] FailureCause? failureCause = null)
-    {
-        Res = result;
-        Cause = failureCause;
-    }
-
     public void Deserialize(dynamic json)
     {
-        int? result = json.Result;
-        int? cause = json.Cause;
-        if (result.HasValue)
+        Account = json.Account;
+        Res = (Result)json.Result;
+        if (Res == Result.Failed)
         {
-            Res = (Result)result.Value;
-            if (Res == Result.Failed && cause.HasValue)
-            {
-                Cause = (FailureCause)cause;
-            }
+            Cause = (FailureCause)json.Cause;
         }
     }
 
     public void Serialize(dynamic json)
     {
+        json.Account = Account;
         json.Result = (int)Res;
         if (Cause.HasValue)
         {

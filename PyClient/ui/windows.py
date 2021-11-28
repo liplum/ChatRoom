@@ -139,10 +139,17 @@ class window(iwindow):
 
     def _on_popup_returned(self, popup: base_popup):
         self.popup_return_values[popup] = popup.return_value
-        self.popups.popleft()
+        self.popups.remove(popup)
         popup.on_lost_focus()
         popup.on_removed()
-        self.client.mark_dirty()
+        if popup.need_refresh_instant:
+            cur_item = self.cur_stack_item
+            if cur_item:
+                it, cur = cur_item
+                self.call_stack.pop()
+                self.step(it, cur)
+        else:
+            self.client.mark_dirty()
 
     @property
     def cur_painter(self):
@@ -215,3 +222,12 @@ class window(iwindow):
     @property
     def tablist(self) -> "tablist":
         return self._tablist
+
+    def find_first_popup(self, predicate: Callable[["base_popup"], bool])->Optional["base_popup"]:
+        for p in self.popups:
+            try:
+                if predicate(p):
+                    return p
+            except:
+                pass
+        return None

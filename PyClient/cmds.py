@@ -24,12 +24,14 @@ def _goto_tab(context: Cmd_Context, args: [str]):
     try:
         tab_number = int(args[0])
     except:
-        raise WrongUsageError(i18n.trans("cmds.goto.para1.not_number", args[0]), 0)
+        raise WrongUsageError(i18n.trans("cmds.$tabs$.not_number", args[0]), 0)
     tbl: tablist = context.tablist
-    if 0 <= tab_number < len(tbl):
-        tbl.goto(tab_number)
+    start = 1
+    end = len(tbl)
+    if start - 1 <= tab_number <= end - 1:
+        tbl.goto(tab_number - 1)
     else:
-        raise WrongUsageError(i18n.trans("cmds.goto.para1.over_range", tab_number), 0)
+        raise WrongUsageError(i18n.trans("cmds.$tabs$.over_range", wrong=tab_number, start=start, end=end), 0)
 
 
 cmd_goto_tab = add("goto", _goto_tab)
@@ -49,7 +51,7 @@ def _register(context: Cmd_Context, args: [str]):
         tab: chat_tab = context.tab
         server = tab.connected
         if not server:
-            raise WrongUsageError(i18n.trans("cmds.reg.current_tab_is_unconnected"), 0)
+            raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unconnected"), 0)
         account = args[0]
         pwd = args[1]
     op.register(network, server, account, pwd)
@@ -85,25 +87,37 @@ def _help(context: Cmd_Context, args: [str]):
 cmd_help = add("help", _help)
 
 
+def _con_shared(network, token):
+    """
+    connect a server
+    :param network: inetwork
+    :param token: server_token
+    :exception  WrongUsageError("cmds.$common$.invalid_server_token")
+    :exception  CmdError("cmds.$common$.cannot_connect_server")
+    """
+    if token:
+        try:
+            op.connect(network, token, strict=True)
+        except CannotConnectError as cce:
+            raise CmdError(
+                i18n.trans("cmds.$common$.cannot_connect_server", ip=token.ip, port=token.port))
+    else:
+        raise WrongUsageError(i18n.trans("cmds.$common$.invalid_server_token"), 0)
+
+
 def _con(context: Cmd_Context, args: [str]) -> server_token:
     argslen = len(args)
     if argslen != 1:
         raise WrongUsageError(i18n.trans("cmds.con.usage"), -1)
     server = server_token.by(args[0])
-    if server is None:
-        raise WrongUsageError(i18n.trans("cmds.con.para1.invalid"), 0)
-    network = context.network
-    try:
-        op.connect(network, server, strict=True)
-    except CannotConnectError as cce:
-        raise CmdError(
-            i18n.trans("cmds.reg.cannot_connect_server", ip=server.ip, port=server.port))
+    _con_shared(context.network, server)
     tab = context.tab
     has_attr = hasattr(tab, "connected") and hasattr(tab, "connect")
     if has_attr:
         connected = tab.connected
         if connected and connected != server:
-            raise WrongUsageError(i18n.trans("cmds.con.already_connected", ip=connected.ip, port=connected.port), 0)
+            raise WrongUsageError(i18n.trans("cmds.$common$.already_connected", ip=connected.ip, port=connected.port),
+                                  0)
         else:
             tab.connect(server)
     return server
@@ -115,13 +129,14 @@ cmd_con = add("con", _con)
 def _join(context: Cmd_Context, args: [str]):
     # TODO:Complete join cmd
     argslen = len(args)
+    network = context.network
     if argslen == 2:  # 1:<server ip>:<port> 2:<chatting room id>
-        full_server = args[0:1]
-        _con(context, full_server)
+        server = server_token.by(args[0])
+        _con_shared(network, server)
         try:
             room_id = roomid(int(args[1]))
         except:
-            raise WrongUsageError(i18n.trans("cmds.join.para_invalid.room_id", args[1]), 1)
+            raise WrongUsageError(i18n.trans("cmds.$common$.invalid_room_id", args[1]), 1)
         tab: chat_tab = context.tab
         if tab.joined:
             raise CmdError(i18n.trans("cmds.join.already_joined", room_id))
@@ -130,8 +145,10 @@ def _join(context: Cmd_Context, args: [str]):
         try:
             room_id = roomid(int(args[0]))
         except:
-            raise WrongUsageError(i18n.trans("cmds.join.para_invalid.room_id", args[0]), 1)
+            raise WrongUsageError(i18n.trans("cmds.$common$.invalid_room_id", args[0]), 1)
         tab: chat_tab = context.tab
+        if tab.connected is None:
+            raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unconnected"), -1)
         if tab.joined:
             raise CmdError(i18n.trans("cmds.join.already_joined", room_id))
         tab.join(room_id)
@@ -142,29 +159,25 @@ def _join(context: Cmd_Context, args: [str]):
 cmd_join = add("join", _join)
 
 
-def _join_room(context: Cmd_Context, args: [str]):
+def _jroom_room(context: Cmd_Context, args: [str]):
     argslen = len(args)
     network = context.network
-    if argslen == 2:  # 1:<server ip>:<port> 2:<chatting room id>
-        token = server_token.by(args[0:1])
-        try:
-            room_id = roomid(int(args[1]))
-        except:
-            raise WrongUsageError(i18n.trans("cmds.join.para_invalid.room_id", args[1]), 1)
+    if argslen == 1:
         tab: chat_tab = context.tab
-        op.join(network, tab.user_info, room_id)
-    elif argslen == 1:
+        if tab.connected is None:
+            raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unconnected"), 0)
+        if tab.user_info is None or not tab.user_info.verified:
+            raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unauthenticated"), 0)
         try:
             room_id = roomid(int(args[0]))
         except:
-            raise WrongUsageError(i18n.trans("cmds.join.para_invalid.room_id", args[0]), 1)
-        tab: chat_tab = context.tab
+            raise WrongUsageError(i18n.trans("cmds.$common$.invalid_room_id", args[0]), 1)
         op.join(network, tab.user_info, room_id)
     else:
-        raise WrongUsageError(i18n.trans("cmds.join.usage"), -1)
+        raise WrongUsageError(i18n.trans("cmds.jroom.usage"), -1)
 
 
-cmd_join_room = add("jr", _join_room)
+cmd_jroom = add("jroom", _jroom_room)
 
 
 def _close(context: Cmd_Context, args: [str]):
@@ -176,11 +189,13 @@ def _close(context: Cmd_Context, args: [str]):
         try:
             tab_number = int(args[0])
         except:
-            raise WrongUsageError(i18n.trans("cmds.close.para_invalid.not_number", args[0]), 0)
-        if 0 <= tab_number < len(tbl):
-            tbl.remove(tab_number)
+            raise WrongUsageError(i18n.trans("cmds.$tabs$.not_number", args[0]), 0)
+        start = 1
+        end = len(tbl)
+        if start - 1 <= tab_number <= end - 1:
+            tbl.remove(tab_number - 1)
         else:
-            raise WrongUsageError(i18n.trans("cmds.close.para_invalid.over_range", tab_number), 0)
+            raise WrongUsageError(i18n.trans("cmds.$tabs$.over_range", wrong=tab_number, start=start, end=end), 0)
     else:
         raise WrongUsageError(i18n.trans("cmds.close.usage"), -1)
 
@@ -190,17 +205,17 @@ cmd_close = add("close", _close)
 
 def _login(context: Cmd_Context, args: [str]):
     argslen = len(args)
+    network = context.network
     if argslen != 3 and argslen != 2:
         raise WrongUsageError(i18n.trans("cmds.login.usage"), -1)
-
     if argslen == 3:
-        full_server = args[0:1]
-        server = _con(context, full_server)
+        server = server_token.by(args[0])
+        _con_shared(network, server)
     elif argslen == 2:
         tab: chat_tab = context.tab
         server = tab.connected
         if server is None:
-            raise WrongUsageError(i18n.trans("cmds.login.cur_tab_unconnected"), 0)
+            raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unconnected"), 0)
 
     op.login(context.network, server, args[argslen - 2], args[argslen - 1])
 
@@ -260,7 +275,9 @@ def _croom(context: Cmd_Context, args: [str]):
     tab: chat_tab = context.tab
     server = tab.connected
     if server is None:
-        raise WrongUsageError(i18n.trans("cmds.croom.cur_tab_unconnected"), 0)
+        raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unconnected"), 0)
+    if tab.user_info is None or not tab.user_info.verified:
+        raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unauthenticated"), 0)
     room_name = args[0]
     op.create_room(network, tab.user_info, room_name)
 

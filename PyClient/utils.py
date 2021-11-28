@@ -19,6 +19,22 @@ T = TypeVar('T')
 TK = TypeVar('TK')
 TV = TypeVar('TV')
 
+def all_file(folder) -> Iterable[str]:
+    for root, ds, fs in os.walk(folder):
+        for f in fs:
+            yield f
+
+
+def all_file_with_extension(folder, extension: str) -> Iterable[Tuple[str, str]]:
+    """
+    :return: (file name without extension , file name)
+    """
+    for root, ds, fs in os.walk(folder):
+        for f in fs:
+            n, e = os.path.splitext(f)
+            if e == extension:
+                yield n, f
+
 
 def it_all_modules() -> Iterable[Tuple[str, ModuleType]]:
     for name, val in sys.modules.items():

@@ -7,6 +7,7 @@ from typing import Optional
 from events import event
 
 _cache: Dict[str, str] = {}
+_l2_cache: Dict[str, str] = {}
 
 _dirpath, _filepath = os.path.split(os.path.abspath(sys.argv[0]))
 
@@ -51,7 +52,8 @@ def all_languages() -> List[Language_ID]:
 
 
 def reload(strict: bool = False):
-    global _cache, cur_lang
+    global _cache, cur_lang, _l2_cache
+    _l2_cache = {}
     file = f"{lang_folder}/{cur_lang}.json"
     try:
         with open(file, "r", encoding="utf-8") as f:
@@ -65,7 +67,8 @@ def reload(strict: bool = False):
 
 
 def load(lang: Optional[str] = None, strict: bool = False):
-    global _cache, cur_lang
+    global _cache, cur_lang, _l2_cache
+    _l2_cache = {}
     if lang is None:
         lang = cur_lang
     lang = lang.lower()
@@ -91,16 +94,21 @@ class LocfileLoadError(Exception):
 
 
 def trans(key: str, *args, **kwargs):
-    parts = key.split(".")
-    cur = _cache
-    try:
-        for part in parts:
-            cur = cur[part]
-        if isinstance(cur, dict):
-            return key
+    if key in _l2_cache:
+        return _l2_cache[key].format(*args, **kwargs)
+    else:
+        parts = key.split(".")
+        cur = _cache
         try:
-            return cur.format(*args, **kwargs)
+            for part in parts:
+                cur = cur[part]
+            if isinstance(cur, dict):
+                return key
+            try:
+                res = cur.format(*args, **kwargs)
+                _l2_cache[key] = cur
+                return res
+            except:
+                return cur
         except:
-            return cur
-    except:
-        return key
+            return key

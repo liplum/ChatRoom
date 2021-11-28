@@ -1,9 +1,9 @@
 import core.operations as op
 import keys
-import utils
 from core.chats import imsgmager
 from core.settings import entity as settings
 from core.shared import *
+from core.shared import server_token, userid, roomid, uentity
 from ui.cmd_modes import cmd_mode, cmd_hotkey_mode
 from ui.k import kbinding
 from ui.tab.shared import *
@@ -11,7 +11,7 @@ from ui.tabs import *
 from ui.uistates import ui_state, ui_smachine
 from ui.xtbox import xtextbox
 from utils import get, all_none
-
+from core.rooms import iroom_manager
 
 class chat_tab(tab):
     def __init__(self, client: iclient, tablist: tablist):
@@ -25,11 +25,11 @@ class chat_tab(tab):
         self.logger: "ilogger" = self.client.logger
         self.first_loaded = False
         self._unread_msg_number = 0
-
+        self.room_manager:iroom_manager =self.client.container.resolve(iroom_manager)
         self._connected: Optional[server_token] = None
         self._joined: Optional[roomid] = None
         self._user_info: Optional[uentity] = None
-
+        self._chat_room:Optional[chat_room] = None
         def set_chat_tab(state: ui_state) -> None:
             state.client = self.client
             state.textbox = self.textbox
@@ -80,6 +80,8 @@ class chat_tab(tab):
     def join(self, value):
         if self._joined != value:
             self._joined = value
+            if value is not None and self.connected:
+                self._chat_room = self.room_manager.find_room_by_id(self.connected,value)
             self.on_content_changed(self)
             self.first_load()
 
@@ -185,7 +187,8 @@ class chat_tab(tab):
                     badge = f"[{i18n.trans('tabs.chat_tab.badge.unverified')}]"
             else:
                 badge = f"[{i18n.trans('tabs.chat_tab.badge.unlogin')}]"
-            return f"{badge}{str(self.joined)}"
+            room_name = self._chat_room.name if self._chat_room else self.joined
+            return f"{badge}{str(room_name)}"
         return i18n.trans("tabs.chat_tab.name")
 
     def add_string(self, string: str):
@@ -310,9 +313,9 @@ class text_mode(ui_state):
 
 
 def find_best_incomplete(tablist: "tablist", server: server_token,
-                         account: userid, room: Optional[roomid]) -> Optional["chat_tab"]:
+                         account: userid, room: Optional[roomid],vcode :Optional[int]) -> Optional["chat_tab"]:
     for t in tablist.it_all_tabs_is(chat_tab):
-        if t.authenticated:
+        if t.authenticated and t.user_info.vcode != vcode:
             continue
         ts = t.connected
         ta = t.user_info.account if t.user_info else None
@@ -322,3 +325,18 @@ def find_best_incomplete(tablist: "tablist", server: server_token,
         else:
             return t
     return None
+
+
+def fill_or_add_chat_tab(win: iwindow, tab: Optional[chat_tab], token: server_token, account: userid,
+                         room_id: Optional[roomid], vcode: int) -> chat_tab:
+    if tab:
+        tab.user_info = uentity(token, account, vcode)
+    else:
+        tab = win.new_chat_tab()
+        tab.user_info = uentity(token, account, vcode)
+        win.tablist.add(tab)
+    tab.connect(token)
+    if room_id:
+        tab.join(room_id)
+    tab.notify_authenticated()
+    return tab

@@ -21,21 +21,24 @@
     }
   },
   "cmds": {
+    "$common$": {
+      "cur_tab_unconnected": "Current tab hasn't connected any server yet",
+      "invalid_server_token": "The format of server's ip and port is wrong. Correct example: 127.0.0.1:5000",
+      "cannot_connect_server": "Can't connect the server {ip}:{port}",
+      "already_connected": "Current tab has already connected another server {ip}:{port}",
+      "invalid_room_id": "Room ID requires a integer not {0}",
+      "cur_tab_unauthenticated": "You haven't log-in on current tab yet"
+    },
+    "$tabs$": {
+      "not_number": "The first parameter given is not a expected integer but {0}",
+      "over_range": "The number {wrong} is over range of {start}~{end}"
+    },
     "goto": {
-      "para1": {
-        "not_number": "The first parameter given is not a expected integer but {0}",
-        "over_range": "The number {0} is over range"
-      },
       "usage": "goto <number>",
       "description": "switch to the target tab"
     },
     "reg": {
       "usage": "reg [<server ip>:<port>] <account> <password>",
-      "para1": {
-        "invalid": "eg: 127.0.0.1:25000"
-      },
-      "current_tab_is_unconnected": "Current tab hasn't connected any server",
-      "cannot_connect_server": "Can't connect the server {ip}:{port}",
       "description": "sign-up"
     },
     "help": {
@@ -45,11 +48,7 @@
     },
     "con": {
       "usage": "con <server ip>:<port>",
-      "description": "connect a server on current tab",
-      "para1": {
-        "invalid": "The format of server's ip and port is wrong. eg: 127.0.0.1:5000"
-      },
-      "already_connected": "Current tab has already connected another server {ip}:{port}"
+      "description": "connect a server on current tab"
     },
     "run": {
       "usage": "run \"<code>\" or exec -f <file path>",
@@ -68,26 +67,15 @@
     "join": {
       "usage": "join [<server ip>:<port>] <chatting room id>",
       "description": "join a chatting room on current tab",
-      "para_invalid": {
-        "server": "The format of server's ip or port is wrong. Correct example: 127.0.0.1:25000",
-        "room_id": "Room ID requires a integer not {0}"
-      },
-      "cur_tab_unconnected": "Current tab hasn't connected any server yet",
-      "cannot_connect_server": "Can't connect the server {ip}:{port}",
       "already_joined": "Current tab has already joined another chatting room {id}"
     },
     "close": {
       "usage": "close or close <number>",
-      "description": "close a tab",
-      "para_invalid": {
-        "not_number": "The first parameter given is not a expected integer but {0}",
-        "over_range": "The number {0} is over range"
-      }
+      "description": "close a tab"
     },
     "login": {
       "usage": "login [<server ip>:<port>] <account> <password>",
-      "description": "login a server",
-      "cur_tab_unconnected": "Current tab hasn't connected any server yet"
+      "description": "login a server"
     },
     "main": {
       "usage": "main",
@@ -97,9 +85,35 @@
       "usage": "reload or reload <module name>",
       "description": "reload a module or all modules",
       "no_such_module": "No such module {module}"
+    },
+    "croom": {
+      "usage": "croom \"<room name>\"(surround \" if space exists)",
+      "description": "create a new chat room"
+    },
+    "jroom": {
+      "usage": "jroom <room id>",
+      "description": "join a chat room with your account which is on current tab"
     }
   },
   "tabs": {
+    "$shared$": {
+      "labels": {
+        "server_ip": "Server Address",
+        "server_port": "Server Port",
+        "account": "Account",
+        "password": "Password",
+        "password_again": "Enter again"
+      }
+    },
+    "$account$": {
+      "error_tip": {
+        "ip": "The| format| of| Server| Address| was| wrong.",
+        "token": "The| format| of| server's| address| and| port| is| wrong.",
+        "account": "Account| only| allows| 3-16| letters,| numbers| or| underline| (0-9,a-z,A-Z,_).",
+        "password": "Password| must| contain| at| least| 8| characters:| at| least| 1| number| and| both| lower| and| uppercase| letters.",
+        "password_again": "Password| and| confirm| password| don't| match."
+      }
+    },
     "chat_tab": {
       "name": "Chat",
       "no_connection": "No Connection",
@@ -114,14 +128,10 @@
     },
     "login_tab": {
       "name": "Login",
-      "labels": {
-        "server_ip": "Server IP",
-        "server_port": "Server Port",
-        "account": "Account",
-        "password": "Password"
-      },
       "login_tip": "Logging| in,| please| wait| patiently...",
-      "logging": "Logging..."
+      "logging": "Logging...",
+      "failed": "Authentication Failed",
+      "failed_tip": "Account| or| password| was| wrong."
     },
     "copyright_tab": {
       "name": "Copyright",
@@ -134,12 +144,14 @@
     },
     "register_tab": {
       "name": "Register",
-      "labels": {
-        "server_ip": "Server IP",
-        "server_port": "Server Port",
-        "account": "Account",
-        "password": "Password",
-        "password_again": "Enter again"
+      "register_tip": "Registering,| please| wait| patiently...",
+      "registering": "Registering...",
+      "succeed_tip": "Account| {account}| was| registered| successfully| on| {ip}:{port}.",
+      "failed_tip": {
+        "account_occupied": "The| account| {account}| has| been| already| occupied| on| {ip}:{port}.",
+        "invalid_account": "The| account| {account}| is| invalid| on| {ip}:{port}.",
+        "invalid_password": "The| password| is| invalid| on| {ip}:{port}.",
+        "forbidden": "Your| register| application| has| been| refused| by| {ip}:{port}."
       }
     },
     "main_menu_tab": {
@@ -155,7 +167,16 @@
   },
   "users": {
     "authentication": {
-      "failure": "Authentication of \"{account}\" on {ip}:{port} failed"
+      "failed": "Authentication of \"{account}\" on {ip}:{port} failed"
+    },
+    "register": {
+      "succeed": "Account {account} was registered successfully on {ip}:{port}.",
+      "failed": {
+        "account_occupied": "The account {account} has been already occupied on {ip}:{port}.",
+        "invalid_account": "The account {account} is invalid on {ip}:{port}.",
+        "invalid_password": "The password is invalid on {ip}:{port}.",
+        "forbidden": "Your register application has been refused by {ip}:{port}."
+      }
     }
   },
   "modes": {
@@ -194,7 +215,9 @@
     "error": "Error",
     "tip": "Tip",
     "warning": "Warning",
-    "save": "Save"
+    "save": "Save",
+    "failed": "Failed",
+    "succeed": "Succeed"
   },
   "outputs": {
     "render": {

@@ -124,7 +124,7 @@ public class ChatRoomService : IChatRoomService
         };
         room.Members.Add(membership);
         user.Joined.Add(membership);
-        user.JoinedRoomCount++;
+        user.CreatedRoomCount++;
         DB.ChatRoomTable.Add(room);
         DB.MembershipTable.Add(membership);
         DB.SaveChange();

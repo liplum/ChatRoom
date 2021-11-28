@@ -7,6 +7,7 @@ from typing import Optional, NoReturn, List, Tuple
 
 import GLOBAL
 import i18n
+import utils
 from GLOBAL import StringIO
 from core.filer import ifiler
 
@@ -138,13 +139,32 @@ class cmd_logger(ilogger):
     def __init__(self, output_to_cmd: bool = True):
         super().__init__()
         self.output_to_cmd = output_to_cmd
+        self.removed = False
 
     def init(self, container):
         self.filer = container.resolve(ifiler)
 
+    def delete_outdated(self):
+        self.removed = True
+        log_folder = self.filer.get_dir("log")
+        now = datetime.now()
+        all_log_files = [f"{log_folder}/{t[1]}" for t in utils.all_file_with_extension(log_folder, ".log")]
+        need_removed = []
+        for log_file in all_log_files:
+            timestamp = os.path.getctime(log_file)
+            create_time = datetime.fromtimestamp(timestamp)
+            delta = now - create_time
+            if delta.days > 7:
+                need_removed.append(log_file)
+        for file in need_removed:
+            try:
+                os.remove(file)
+            except Exception as e:
+                self.error(f"[Log]Can't delete out-dated log file {file}")
+
     @property
     def logfile(self):
-        return self.filer.get_file(f"/log/{datetime.today().strftime('%Y%m%d')}.log")
+        return self.filer.get_file(f"log/{datetime.today().strftime('%Y%m%d')}.log")
 
     def msg(self, text: str) -> NoReturn:
         self.alert_print(text, AlertLevel.Msg)
@@ -159,6 +179,8 @@ class cmd_logger(ilogger):
         self.alert_print(text, AlertLevel.Error)
 
     def alert_print(self, text: str, level: Tuple[CmdFgColorEnum, str]) -> None:
+        if not self.removed:
+            self.delete_outdated()
         color, label = level
         time_stamp = datetime.now().strftime("%Y%m%d-%H:%M:%S")
         if GLOBAL.DEBUG:

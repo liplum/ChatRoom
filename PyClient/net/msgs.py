@@ -3,7 +3,11 @@ from core.rooms import iroom_manager
 from core.shared import *
 from net.networks import msg, Context
 from ui.core import *
+from ui.outputs import CmdFgColor, tintedtxt
+from ui.tab.chat import fill_or_add_chat_tab
+from ui.tab.popups import waiting_popup, base_popup
 from utils import get, not_none, to_seconds
+import i18n
 
 k_Account = "Account"
 k_Password = "Password"
@@ -16,20 +20,7 @@ k_VCode = "VCode"
 k_OK = "OK"
 k_Result = "Result"
 k_AllJoined = "AllJoined"
-
-
-def _fill_or_add_chat_tab(win: iwindow, tab: Optional[chat.chat_tab], token: server_token, account: userid,
-                          room_id: roomid, vcode: int) -> chat.chat_tab:
-    if tab:
-        tab.user_info = uentity(token, account, vcode)
-    else:
-        tab = win.new_chat_tab()
-        tab.user_info = uentity(token, account, vcode)
-        win.tablist.add(tab)
-    tab.connect(token)
-    tab.join(room_id)
-    tab.notify_authenticated()
-    return tab
+k_Cause = "Cause"
 
 
 class authentication_req(msg):
@@ -65,17 +56,28 @@ class authentication_result(msg):
     def handle(self: "authentication_result", context: Context):
         client, channel, token, network = context
         win: iwindow = client.win
-        # TODO:Change This
-        """
+
+        def find_waiting_popup(p: base_popup):
+            if isinstance(p, waiting_popup):
+                return p.tag[0] == "login" and p.tag[1] == token and p.tag[2] == self.account
+            return False
+
         if self.OK:
-            tablist = win.tablist
-            tab = chat.find_best_incomplete(tablist, token, self.account, None)
-            _fill_or_add_chat_tab(win, tab, token, self.account, 12345, self.vcode)
+            popup: waiting_popup = win.find_first_popup(find_waiting_popup)
+            if popup:
+                popup.notify(self.vcode)
+            else:
+                tablist = win.tablist
+                tab = chat.find_best_incomplete(tablist, token, self.account, None, self.vcode)
+                fill_or_add_chat_tab(win, tab, token, self.account, None, self.vcode)
         else:
-            win.add_string(tintedtxt(i18n.trans(
-                "users.authentication.failure", ip=token.ip, port=token.port, account=self.account
-            ), fgcolor=CmdFgColor.Red))
-        """
+            popup: waiting_popup = win.find_first_popup(find_waiting_popup)
+            if popup:
+                popup.state = "failed".lower()
+            else:
+                win.add_string(tintedtxt(i18n.trans(
+                    "users.authentication.failed", ip=token.ip, port=token.port, account=self.account
+                ), fgcolor=CmdFgColor.Red))
 
 
 class register_request(msg):
@@ -94,16 +96,68 @@ class register_request(msg):
 class register_result(msg):
     name = "RegisterResult"
     channel = "User"
+    Failed = -1
+    NoFinalResult = 0
+    Succeed = 1
+
+    AccountOccupied = 0
+    InvalidAccount = 1
+    InvalidPassword = 2
+    Forbidden = 3
+    causes = {
+        AccountOccupied: "account_occupied",
+        InvalidAccount: "invalid_account",
+        InvalidPassword: "invalid_password",
+        Forbidden: "forbidden"
+    }
 
     def read(self, json):
-        pass
+        self.account = get(json, k_Account)
+        self.result = get(json, k_Result)
+        if self.result == register_result.Failed:
+            self.cause = get(json, k_Cause)
 
     def write(self, json):
-        pass
+        json[k_Account] = self.account
+        json[k_Result] = self.result
+        if self.result == register_result.Failed:
+            json[k_Cause] = self.cause
+
+    @staticmethod
+    def map(failure_code) -> Optional[str]:
+        if failure_code in register_result.causes:
+            return register_result.causes[failure_code]
+        else:
+            return None
 
     @staticmethod
     def handle(self: "register_result", context: Context):
-        pass
+        client, channel, token, network = context
+        win: iwindow = client.win
+
+        def find_waiting_popup(p: base_popup):
+            if isinstance(p, waiting_popup):
+                return p.tag[0] == "register" and p.tag[1] == token and p.tag[2] == self.account
+            return False
+
+        if self.result == register_result.Succeed:
+            popup: waiting_popup = win.find_first_popup(find_waiting_popup)
+            if popup:
+                popup.state = "succeed".lower()
+            else:
+                win.add_string(tintedtxt(i18n.trans(
+                    "users.register.succeed", ip=token.ip, port=token.port, account=self.account
+                ), fgcolor=CmdFgColor.Green))
+        else:
+            popup: waiting_popup = win.find_first_popup(find_waiting_popup)
+            if popup:
+                popup.state = self.cause
+            else:
+                reason = register_result.map(self.cause)
+                if reason:
+                    win.add_string(tintedtxt(i18n.trans(
+                        f"users.register.failed.{reason}", ip=token.ip, port=token.port, account=self.account
+                    ), fgcolor=CmdFgColor.Red))
 
 
 class chatting(msg):
@@ -248,8 +302,8 @@ class joined_rooms_info(msg):
             room_id = room.info.room_id
             is_new = manager.add_room(token, room)
             if is_new:
-                tab = chat.find_best_incomplete(tablist, token, account, room_id)
-                _fill_or_add_chat_tab(win, tab, token, self.account, room_id, self.vcode)
+                tab = chat.find_best_incomplete(tablist, token, account, room_id, self.vcode)
+                fill_or_add_chat_tab(win, tab, token, self.account, room_id, self.vcode)
             else:
                 def predicate(t: "tab"):
                     if isinstance(t, chat.chat_tab):
@@ -258,9 +312,8 @@ class joined_rooms_info(msg):
 
                 tab_i = tablist.find_first(predicate)
                 if tab_i:
-                    t,i = tab_i
+                    t, i = tab_i
                     t.user_info.vcode = self.vcode
                 else:
-                    tab = chat.find_best_incomplete(tablist, token, account, room_id)
-                    _fill_or_add_chat_tab(win, tab, token, self.account, room_id, self.vcode)
-
+                    tab = chat.find_best_incomplete(tablist, token, account, room_id, self.vcode)
+                    fill_or_add_chat_tab(win, tab, token, self.account, room_id, self.vcode)

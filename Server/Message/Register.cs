@@ -18,35 +18,41 @@ public class RegisterRequestMsgHandler : IMessageHandler<RegisterRequestMsg>
         var logger = server.ServiceProvider.Reslove<ILogger>();
         var account = msg.Account;
         var password = msg.Password;
-        RegisterResultMsg reply;
+        RegisterResultMsg reply = new()
+        {
+            Account = account
+        };
 
         if (!Account.IsValid(account))
         {
-            reply = new(Result.Failed, FailureCause.InvaildAccount);
+            reply.Res = Result.Failed;
+            reply.Cause = FailureCause.InvalidAccount;
         }
         else//Account is valid
         {
             var isOccupied = !userService.NameNotOccupied(account);
             if (isOccupied)
             {
-                reply = new(Result.Failed, FailureCause.AccountOccupied);
+                reply.Res = Result.Failed;
+                reply.Cause = FailureCause.AccountOccupied;
             }
             else//Account is not occupied
             {
                 if (password is null)
                 {
-                    reply = new(Result.NoFinalResult);
+                    reply.Res = Result.NoFinalResult;
                 }
                 else
                 {
                     if (Password.IsValid(password))
                     {
                         userService.RegisterUser(account, password, DateTime.UtcNow);
-                        reply = new(Result.Succeed);
+                        reply.Res = Result.Succeed;
                     }
                     else
                     {
-                        reply = new(Result.Failed, FailureCause.InvaildPassword);
+                        reply.Res = Result.Failed;
+                        reply.Cause = FailureCause.InvalidPassword;
                     }
                 }
             }

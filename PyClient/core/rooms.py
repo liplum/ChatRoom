@@ -23,6 +23,10 @@ class iroom_manager(ABC):
     def find_room(self, server: server_token, predicate: Callable[[chat_room], bool]) -> Optional[chat_room]:
         raise NotImplemented()
 
+    @abstractmethod
+    def find_room_by_id(self, server: server_token, room_id: roomid) -> Optional[chat_room]:
+        raise NotImplemented()
+
 
 class room_manager(iroom_manager):
 
@@ -67,4 +71,13 @@ class room_manager(iroom_manager):
             rooms = self.rooms[server]
             for r in rooms:
                 if predicate(r):
+                    return r
+
+    def find_room_by_id(self, server: server_token, room_id: roomid) -> Optional[chat_room]:
+        if server not in self.rooms:
+            return None
+        else:
+            rooms = self.rooms[server]
+            for r in rooms:
+                if r.info.room_id == room_id:
                     return r

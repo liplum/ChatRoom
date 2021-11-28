@@ -1,10 +1,11 @@
+import core.verify as verify
 from core import operations as op
 from core.shared import *
 from ui.cmd_modes import common_hotkey
 from ui.control.textboxes import textbox
 from ui.panels import *
-from ui.tab.chat import chat_tab
-from ui.tab.popups import cancel_popup_gen
+from ui.tab.chat import chat_tab, fill_or_add_chat_tab
+from ui.tab.popups import waiting_popup, ok_popup_gen
 from ui.tab.shared import *
 from ui.tabs import *
 from ui.xtbox import xtextbox
@@ -175,10 +176,10 @@ class login_tab(tab):
         self.t_account = xtextbox(excepted_chars=excepted_chars)
         self.t_password = xtextbox(excepted_chars=excepted_chars)
 
-        grid[0, 0] = i18n_label("tabs.login_tab.labels.server_ip")
-        grid[1, 0] = i18n_label("tabs.login_tab.labels.server_port")
-        grid[2, 0] = i18n_label("tabs.login_tab.labels.account")
-        grid[3, 0] = i18n_label("tabs.login_tab.labels.password")
+        grid[0, 0] = i18n_label("tabs.$shared$.labels.server_ip")
+        grid[1, 0] = i18n_label("tabs.$shared$.labels.server_port")
+        grid[2, 0] = i18n_label("tabs.$shared$.labels.account")
+        grid[3, 0] = i18n_label("tabs.$shared$.labels.password")
 
         grid[0, 1] = self.t_ip
         grid[1, 1] = self.t_port
@@ -235,19 +236,26 @@ class login_tab(tab):
         main.left_margin = 7
         main.switch_to_first_or_default_item()
 
-    def login(self):
+    def login(self) -> Union[Tuple[server_token, str], str]:
         ip = self.t_ip.inputs.strip()
+        if not verify.ip(ip):
+            return "ip"
         port = self.t_port.inputs.strip()
         full = f"{ip}:{port}" if port != "" else ip
-        account = self.t_account.inputs.strip()
-        password = self.t_password.inputs.strip()
         token = server_token.by(full)
-        if token:
-            chat = chat_tab(self.client, self.tablist)
-            chat.connect(token)
-            chat.user_info = uentity(token, account)
-            self.tablist.replace(self, chat)
-            op.login(self.network, token, account, password)
+        if token is None:
+            return "token"
+        account = self.t_account.inputs.strip()
+        if not verify.account(account):
+            return "account"
+        password = self.t_password.inputs.strip()
+        if not verify.password(password):
+            return "password"
+        chat = chat_tab(self.client, self.tablist)
+        chat.connect(token)
+        chat.user_info = uentity(token, account)
+        op.login(self.network, token, account, password)
+        return token, account
 
     def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
         self.last_tab = last_tab
@@ -265,14 +273,48 @@ class login_tab(tab):
             else:
                 consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
         if self._login_pressed:
-            self.login()
-            tip = split_textblock_words("tabs.login_tab.login_tip")
-            p = self.new_popup(cancel_popup_gen(tip, lambda: i18n.trans("tabs.login_tab.logging")))
-            yield Suspend
-            v = self.win.retrieve_popup(p)
-            if v is False:
-                pass
-            yield Finished
+            self._login_pressed = False
+            result = self.login()
+            if isinstance(result, tuple):
+                token, account = result
+                tip = split_textblock_words("tabs.login_tab.login_tip")
+                p = self.new_popup(waiting_popup)
+                p.title_getter = lambda: i18n.trans("tabs.login_tab.logging")
+                p.words = tip
+                p.tag = "login", token, account
+
+                def on_p_state_changed(state):
+                    if state == "failed".lower():
+                        p.title_getter = lambda: i18n.trans("tabs.login_tab.failed")
+                        tip = split_textblock_words("tabs.login_tab.failed_tip")
+                        p.words = tip
+                        p.reload()
+
+                p.on_state_changed = on_p_state_changed
+                self.win.popup(p)
+                yield Suspend
+                v = self.win.retrieve_popup(p)
+                if v is not None:
+                    if v is False:
+                        pass
+                    else:
+                        vcode = v
+                        t_i = self.tablist.find_first(
+                            lambda t: isinstance(t, chat_tab) and t.connected == token and t.user_info.verified and
+                            t.user_info.account == account)
+                        if t_i is None:
+                            fill_or_add_chat_tab(self.win, None, token, account, None, vcode)
+                        self.tablist.remove(self)
+                yield Finished
+            elif isinstance(result, str):
+                error = result
+                tip = split_textblock_words(f"tabs.$account$.error_tip.{error}")
+                p = self.new_popup(ok_popup_gen(tip, lambda: i18n.trans("controls.error")))
+                self.win.popup(p)
+                yield Suspend
+                yield Finished
+            else:
+                yield Finished
         else:
             yield Finished
 

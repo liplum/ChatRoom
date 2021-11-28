@@ -21,21 +21,24 @@
     }
   },
   "cmds": {
+    "$common$": {
+      "cur_tab_unconnected": "当前标签页还未连接到任何服务器",
+      "invalid_server_token": "服务器地址或端口的格式错误，正确示例: 127.0.0.1:25000",
+      "cannot_connect_server": "无法连接到服务器{ip}:{port}",
+      "already_connected": "当前标签页已经连接了另一个服务器{ip}:{port}",
+      "invalid_room_id": "聊天室ID需要一个整数，而不是{0}",
+      "cur_tab_unauthenticated": "你还未在当前标签页上登录过"
+    },
+    "$tabs$": {
+      "not_number": "给定的第一个参数不是预期的整数，而是{0}",
+      "over_range": "数字{wrong}超出了{start}~{end}的范围"
+    },
     "goto": {
-      "para1": {
-        "not_number": "给定的第一个参数不是预期的整数，而是{0}",
-        "over_range": "数字{0}超出范围"
-      },
       "usage": "goto <整数>",
       "description": "切换到目标标签页"
     },
     "reg": {
-      "usage": "reg [<IP地址>:<端口>] <账号> <密码>",
-      "para1": {
-        "invalid": "示例：127.0.0.1:5000"
-      },
-      "current_tab_is_unconnected": "当前标签页还未连接到任何服务器",
-      "cannot_connect_server": "无法连接到服务器{ip}:{port}",
+      "usage": "reg [<服务器地址>:<端口>] <账号> <密码>",
       "description": "注册"
     },
     "help": {
@@ -44,12 +47,8 @@
       "description": "展示命令的用法和说明"
     },
     "con": {
-      "usage": "con <IP地址>:<端口>",
-      "description": "在当前标签页上连接到服务器",
-      "para1": {
-        "invalid": "服务器IP地址或端口的格式错误，正确示例: 127.0.0.1:25000"
-      },
-      "already_connected": "当前标签页已经连接了另一个服务器{ip}:{port}"
+      "usage": "con <服务器地址>:<端口>",
+      "description": "在当前标签页上连接到服务器"
     },
     "run": {
       "usage": "exec \"<代码>\" or exec -f <文件路径>",
@@ -66,28 +65,17 @@
       "description": "更改当前应用的语言"
     },
     "join": {
-      "usage": "join [<IP地址>:<端口>] <聊天室ID>",
+      "usage": "join [<服务器地址>:<端口>] <聊天室ID>",
       "description": "在当前聊天框内加入一个聊天室",
-      "para_invalid": {
-        "server": "服务器IP地址或端口的格式错误，正确示例: 127.0.0.1:25000",
-        "room_id": "聊天室ID需要一个整数，而不是{0}"
-      },
-      "cur_tab_unconnected": "当前标签页还未连接到任何服务器",
-      "cannot_connect_server": "无法连接服务器{ip}:{port}",
       "already_joined": "当前标签页已经加入了另一个聊天室{id}"
     },
     "close": {
       "usage": "close 或者 close <整数>",
-      "description": "关闭一个窗口",
-      "para_invalid": {
-        "not_number": "给定的第一个参数不是预期的整数，而是{0}",
-        "over_range": "数字{0}超出范围"
-      }
+      "description": "关闭一个窗口"
     },
     "login": {
-      "usage": "login [<IP地址>:<端口>] <账号> <密码>",
-      "description": "登录服务器",
-      "cur_tab_unconnected": "当前标签页还未连接到任何服务器"
+      "usage": "login [<服务器地址>:<端口>] <账号> <密码>",
+      "description": "登录服务器"
     },
     "main": {
       "usage": "main",
@@ -97,9 +85,35 @@
       "usage": "reload or reload <模块名称>",
       "description": "重新加载一个或多个模块",
       "no_such_module": "没有{module}模块"
+    },
+    "croom": {
+      "usage": "croom \"<聊天室名称>\"(如果有空格，请用 \" 包围)",
+      "description": "创建一个新的聊天室"
+    },
+    "jroom": {
+      "usage": "jroom <聊天室ID>",
+      "description": "用你当前标签页上的账号加入一个聊天室"
     }
   },
   "tabs": {
+    "$shared$": {
+      "labels": {
+        "server_ip": "服务器地址",
+        "server_port": "端口号",
+        "account": "账号",
+        "password": "密码",
+        "password_again": "再输入一次"
+      }
+    },
+    "$account$": {
+      "error_tip": {
+        "ip": "服务器地址格式错误。",
+        "token": "服务器地址或端口的格式错误，正确示例: 127.0.0.1:25000.",
+        "account": "账号只允许3-16个英文字母、数字或下划线(0-9,a-z,A-Z,_).",
+        "password": "密码必须包含至少8个字符:至少1个数字、1个大写字母和1个小写英文字母(0-9,a-z,A-Z).",
+        "password_again": "两次密码输入不一致."
+      }
+    },
     "chat_tab": {
       "name": "聊天框",
       "no_connection": "无连接",
@@ -114,14 +128,10 @@
     },
     "login_tab": {
       "name": "登录",
-      "labels": {
-        "server_ip": "服务器IP地址",
-        "server_port": "端口号",
-        "account": "账号",
-        "password": "密码"
-      },
-      "login_tip":"正在登录中，请耐心等待……",
-      "logging": "登陆中……."
+      "login_tip": "正在登录中，请耐心等待……",
+      "logging": "登陆中…….",
+      "failed": "身份验证失败",
+      "failed_tip": "账号或密码错误."
     },
     "copyright_tab": {
       "name": "版权信息",
@@ -134,17 +144,19 @@
     },
     "register_tab": {
       "name": "注册",
-      "labels": {
-        "server_ip": "服务器IP地址",
-        "server_port": "端口号",
-        "account": "账号",
-        "password": "密码",
-        "password_again": "再输入一次"
+      "register_tip": "注册中，请耐心等待……",
+      "registering": "注册中……",
+      "succeed_tip": "账号{account}成功在{ip}:{port}上注册.",
+      "failed_tip": {
+        "account_occupied": "此账号{account}在{ip}:{port}上已被占用.",
+        "invalid_account": "此账号{account}在{ip}:{port}上不符合要求.",
+        "invalid_password": "此密码在{ip}:{port}上不符合要求.",
+        "forbidden": "你的注册申请被{ip}:{port}拒绝."
       }
     },
     "main_menu_tab": {
       "name": "主菜单",
-      "quit_tip": "你确定要退出吗，任何未保存的内容，都将被丢弃。"
+      "quit_tip": "你确定要退出吗，任何未保存的内容都将被丢弃。"
     },
     "language_tab": {
       "name": "语言"
@@ -156,6 +168,15 @@
   "users": {
     "authentication": {
       "failure": "在服务器{ip}:{port}上账号\"{account}\"的身份验证失败"
+    },
+    "register": {
+      "succeed": "账号{account}成功在{ip}:{port}上注册.",
+      "failed": {
+        "account_occupied": "此账号{account}在{ip}:{port}上已被占用.",
+        "invalid_account": "此账号{account}在{ip}:{port}上不符合要求.",
+        "invalid_password": "此密码在{ip}:{port}上不符合要求.",
+        "forbidden": "你的注册申请被{ip}:{port}拒绝.."
+      }
     }
   },
   "modes": {
@@ -194,7 +215,9 @@
     "error": "错误",
     "tip": "提示",
     "warning": "警告",
-    "save": "保存"
+    "save": "保存",
+    "failed": "失败",
+    "succeed": "成功"
   },
   "outputs": {
     "render": {
