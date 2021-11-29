@@ -1,6 +1,7 @@
 import core.operations as op
 import keys
 from core.chats import imsgmager
+from core.rooms import iroom_manager
 from core.settings import entity as settings
 from core.shared import *
 from core.shared import server_token, userid, roomid, uentity
@@ -11,7 +12,7 @@ from ui.tabs import *
 from ui.uistates import ui_state, ui_smachine
 from ui.xtbox import xtextbox
 from utils import get, all_none
-from core.rooms import iroom_manager
+
 
 class chat_tab(tab):
     def __init__(self, client: iclient, tablist: tablist):
@@ -25,11 +26,12 @@ class chat_tab(tab):
         self.logger: "ilogger" = self.client.logger
         self.first_loaded = False
         self._unread_msg_number = 0
-        self.room_manager:iroom_manager =self.client.container.resolve(iroom_manager)
+        self.room_manager: iroom_manager = self.client.container.resolve(iroom_manager)
         self._connected: Optional[server_token] = None
         self._joined: Optional[roomid] = None
         self._user_info: Optional[uentity] = None
-        self._chat_room:Optional[chat_room] = None
+        self._chat_room: Optional[chat_room] = None
+
         def set_chat_tab(state: ui_state) -> None:
             state.client = self.client
             state.textbox = self.textbox
@@ -81,7 +83,7 @@ class chat_tab(tab):
         if self._joined != value:
             self._joined = value
             if value is not None and self.connected:
-                self._chat_room = self.room_manager.find_room_by_id(self.connected,value)
+                self._chat_room = self.room_manager.find_room_by_id(self.connected, value)
             self.on_content_changed(self)
             self.first_load()
 
@@ -313,7 +315,7 @@ class text_mode(ui_state):
 
 
 def find_best_incomplete(tablist: "tablist", server: server_token,
-                         account: userid, room: Optional[roomid],vcode :Optional[int]) -> Optional["chat_tab"]:
+                         account: userid, room: Optional[roomid], vcode: Optional[int]) -> Optional["chat_tab"]:
     for t in tablist.it_all_tabs_is(chat_tab):
         if t.authenticated and t.user_info.vcode != vcode:
             continue

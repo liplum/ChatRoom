@@ -188,7 +188,7 @@ class cmd_mode(ui_state):
                 self.textbox.input_list = cur_his
                 self.last_cmd_history = cur_his
                 self.textbox.end()
-            else:
+            elif self.cmd_history_index != -len(self.cmd_history):
                 self.last_cmd_history = None
         else:
             self.last_cmd_history = None
