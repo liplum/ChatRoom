@@ -65,6 +65,9 @@ class control(char):
     def is_printable(self) -> bool:
         return False
 
+    def __str__(self):
+        return ""
+
 
 class f(char):
     def __init__(self, keycode_2: int):
@@ -72,6 +75,9 @@ class f(char):
 
     def is_printable(self) -> bool:
         return False
+
+    def __str__(self):
+        return ""
 
 
 def is_key(char: Union[str, bytes, bytearray], key: Union[str, bytes]):

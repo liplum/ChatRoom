@@ -40,6 +40,7 @@ class Style:
     OnlyAlphabet = 2
     AnyString = 3
     OnlyNumber_Alphabet = 4
+    NumericUpDown = 5
 
 
 New_Value = Any
@@ -148,6 +149,7 @@ class settings:
 
     def set(self, key: str, value: T):
         self.all_settings[key] = value
+        self.__dict__[key] = value
 
     def __getitem__(self, item):
         return self.get(item)

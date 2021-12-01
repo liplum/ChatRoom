@@ -64,3 +64,8 @@ colorful_main_menu = addx("ColorfulMainMenu", False)
 colorful_main_menu.customizable().style(Style.CheckBox).notice(
     _directly_set(colorful_main_menu)
 ).build()
+
+max_chat_line = addx("MaxChatLine", 16)
+max_chat_line.customizable().style(Style.OnlyNumber).notice(
+    _directly_set(max_chat_line)
+).build()

@@ -241,12 +241,12 @@ class textbox(text_control):
         self.cursor = 0
         return True
 
-    def left(self) -> bool:
-        self.cursor -= 1
+    def left(self, unit: int = 1) -> bool:
+        self.cursor -= abs(unit)
         return True
 
-    def right(self) -> bool:
-        self.cursor += 1
+    def right(self, unit: int = 1) -> bool:
+        self.cursor += abs(unit)
         return True
 
     def end(self) -> bool:
@@ -274,6 +274,7 @@ class textbox(text_control):
 
         with StringIO() as s:
             cur = start
+            # TODO:Use itertools.islice
             for char in self._input_list[start:end]:
                 if cur == cursor_pos and self.show_cursor:
                     s.write(self.cursor_icon)
@@ -312,6 +313,8 @@ class textbox(text_control):
             if self.input_count >= self.max_inputs_count:
                 return Not_Consumed
         char = str(char)
+        if char == "":
+            return Not_Consumed
         if self.on_pre_append(self, char):
             return Not_Consumed
         self._input_list.insert(self.cursor, char)

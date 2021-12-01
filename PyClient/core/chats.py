@@ -80,7 +80,7 @@ class msgstorage:
             lines = save.readlines()
             for line in lines:
                 line = line.rstrip()
-                items = separate(line, '|', 2, allow_emptychar=False)
+                items = separate(line, '|', 2, allow_emptychar=True)
                 if len(items) == 3:
                     time, uid, content = items
                     try:
@@ -169,7 +169,7 @@ class imsgmager:
         pass
 
     def load_until_today(self, server: server_token, room_id: roomid,
-                         amount: int) -> List[StorageUnit]:
+                         number_limit: Optional[int] = None) -> List[StorageUnit]:
         pass
 
     def save_all(self):
@@ -271,11 +271,12 @@ class msgmager(imsgmager):
             storage.store(msg_unit)
         self.on_received(self, server, room_id, msg_unit)
 
-    def load_until_today(self, server: server_token, room_id: roomid, amount: int) -> List[StorageUnit]:
+    def load_until_today(self, server: server_token, room_id: roomid,
+                         number_limit: Optional[int] = None) -> List[StorageUnit]:
         with self._lock:
             storage = self.get_storage(server, room_id)
             if storage:
-                return storage.retrieve_until(end=datetime.now(), number_limit=amount)
+                return storage.retrieve_until(end=datetime.now(), number_limit=number_limit)
             else:
                 self.logger.error(f"[MsgManager]Cannot load msg storage from {room_id}")
 

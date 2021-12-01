@@ -46,6 +46,9 @@ class linux_control(char):
     def is_printable(self) -> bool:
         return False
 
+    def __str__(self):
+        return ""
+
 
 lc = linux_control
 

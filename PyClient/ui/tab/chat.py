@@ -1,8 +1,10 @@
+from itertools import islice
+
 import core.operations as op
 import keys
 from core.chats import imsgmager
 from core.rooms import iroom_manager
-from core.settings import entity as settings
+from core.settings import settings, entity
 from core.shared import *
 from core.shared import server_token, userid, roomid, uentity
 from ui.cmd_modes import cmd_mode, cmd_hotkey_mode
@@ -14,13 +16,188 @@ from ui.xtbox import xtextbox
 from utils import get, all_none
 
 
+class item(ABC):
+    @abstractmethod
+    def distexts(self, configs: settings) -> Collection[str]:
+        pass
+
+    @property
+    def height(self) -> int:
+        return 1
+
+
+class chat_item(item):
+    def __init__(self, time: datetime, account: userid, text: str):
+        super().__init__()
+        self.time: datetime = time
+        self.account: userid = account
+        self.text: str = text
+
+    def distexts(self, configs: settings) -> Collection[str]:
+        date_format = configs.DateFormat
+        return f"{self.time.strftime(date_format)}", f"  {self.account}:  {self.text}"
+
+    @property
+    def height(self) -> int:
+        return 2
+
+    def __repr__(self):
+        configs = entity()
+        date_format = configs.DateFormat
+        return f"{self.time.strftime(date_format)}\n  {self.account}:  {self.text}"
+
+
+class plain_item(item):
+    def __init__(self, text: str):
+        super().__init__()
+        self.text = text
+
+    def distexts(self, configs: settings) -> Collection[str]:
+        return self.text,
+
+    def __repr__(self):
+        return self.text
+
+
+_empty_tuple = ()
+
+
+def _return_empty_tuple():
+    return _empty_tuple
+
+
+_empty_dict = {}
+
+
+def _return_empty_dict():
+    return _empty_dict
+
+
+class i18n_item(item):
+    def __init__(self, key: str, args: Callable[[], tuple] = _return_empty_tuple,
+                 kwargs: Callable[[], dict] = _return_empty_dict):
+        super().__init__()
+        self.key = key
+        self.args = args
+        self.kwargs = kwargs
+
+    def distexts(self, configs: settings) -> Collection[str]:
+        return i18n.trans(self.key, *self.args(), **self.kwargs()),
+
+    def __repr__(self):
+        return i18n.trans(self.key, *self.args(), **self.kwargs())
+
+
+TotalHeightUntilNow = int
+
+
+class history_viewer(notifiable, painter):
+    def __init__(self, max_height: int = 10, fill_until_max: bool = False):
+        super().__init__()
+        self.item_history: List[Tuple[item, TotalHeightUntilNow]] = []
+        self.max_height = max_height
+        self.total_height = 0
+        self.fill_until_max = fill_until_max
+        self._start = 0
+
+    def add(self, item: item):
+        self.total_height += item.height
+        self.item_history.append((item, self.total_height))
+        if self.total_height > self.max_height:
+            self.scroll_down()
+
+    def scroll_up(self, unit: int = 1):
+        self.start -= abs(unit)
+
+    def scroll_down(self, unit: int = 1):
+        if len(self.item_history) > 0:
+            cur, curh = self.item_history[self.start]
+            d = self.total_height - curh
+            if d >= self.max_height:
+                self.start += abs(unit)
+
+    def page_up(self):
+        self.start -= self.max_height
+
+    def page_down(self):
+        res = self.start + self.max_height
+        final = min(res, len(self.item_history) - self.reversed_displayable_item_count)
+        self.start = final
+
+    def paint_on(self, buf: buffer):
+        configs = entity()
+        maxh = self.max_height
+        totalh = self.total_height
+        render_slidebar = totalh > maxh
+        with StringIO() as s:
+            if render_slidebar:
+                th = 0
+                percent = maxh / totalh
+                bar_height = max(int(maxh * percent), 0)
+                cur, curh = self.item_history[self.start]
+                bar_start = int(maxh * curh / totalh)
+                bar_end = bar_start + bar_height
+                index = 0
+                for i, h in islice(self.item_history, self.start, None):
+                    if th >= maxh:
+                        break
+                    for text in i.distexts(configs):
+                        if th >= maxh:
+                            break
+                        th += 1
+                        index += 1
+                        if bar_start < index <= bar_end + 1:
+                            s.write('█')
+                        else:
+                            s.write(' ')
+                        s.write(text)
+                        s.write('\n')
+            else:
+                for i, h in self.item_history:
+                    for text in i.distexts(configs):
+                        s.write(text)
+                        s.write('\n')
+                if self.fill_until_max:
+                    rest = maxh - totalh
+                    utils.repeatIO(s, '\n', rest)
+            buf.addtext(s.getvalue())
+
+    def clear(self):
+        self.item_history = []
+
+    @property
+    def reversed_displayable_item_count(self):
+        i = 0
+        curh = 0
+        maxh = self.max_height
+        for item, h in reversed(self.item_history):
+            if curh >= maxh:
+                return i
+            curh += item.height
+            i += 1
+        return i
+
+    @property
+    def start(self) -> int:
+        return self._start
+
+    @start.setter
+    def start(self, value: int):
+        value = max(value, 0)
+        value = min(value, len(self.item_history) - 1)
+        if self._start != value:
+            self._start = value
+            self.on_content_changed(self)
+
+
 class chat_tab(tab):
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
         self.textbox = xtextbox()
-        self.history: List[str] = []
-        self.max_display_line = 10
+        self.max_display_height = 10
         self.fill_until_max = True
+        self.history: history_viewer = history_viewer(self.max_display_height, self.fill_until_max)
+        self.history.on_content_changed.add(lambda _: self.on_content_changed(self))
         self.msg_manager: imsgmager = self.client.msg_manager
         self.network: "inetwork" = self.client.network
         self.logger: "ilogger" = self.client.logger
@@ -85,7 +262,7 @@ class chat_tab(tab):
             if value is not None and self.connected:
                 self._chat_room = self.room_manager.find_room_by_id(self.connected, value)
             self.on_content_changed(self)
-            self.first_load()
+            self.first_loaded = False
 
     @property
     def connected(self) -> Optional[server_token]:
@@ -101,10 +278,12 @@ class chat_tab(tab):
                     return
             self._connected = server_token
             self.on_content_changed(self)
+            self.first_loaded = False
         # self.logger.error(f"[Tab][{self}]Cannot access a unconnected/disconnected server.")
 
     def notify_authenticated(self):
-        self.first_load()
+        if not self.first_loaded:
+            self.first_load()
         self.on_content_changed(self)
 
     @property
@@ -116,21 +295,33 @@ class chat_tab(tab):
         if self.user_info != value:
             self._user_info = value
             self.on_content_changed(self)
+            self.first_loaded = False
 
     @property
     def authenticated(self) -> bool:
         return self.connected and self.user_info and self.user_info.verified
 
     def _add_msg(self, time, uid, text):
-        configs = settings()
-        date_format = configs.DateFormat
-        self.history.append(f"{time.strftime(date_format)}\n  {uid}:  {text}")
+        t = chat_item(time, uid, text)
+        self.history.add(t)
+
+    def scroll_up(self, unit: int = 1):
+        self.history.scroll_up(unit)
+
+    def scroll_down(self, unit: int = 1):
+        self.history.scroll_down(unit)
+
+    def page_up(self):
+        self.history.page_up()
+
+    def page_down(self):
+        self.history.page_down()
 
     def first_load(self):
         self.first_loaded = True
-        self.history = []
+        self.history.clear()
         if self.connected and self.joined:
-            li = self.msg_manager.load_until_today(self.connected, self.joined, self.max_display_line)
+            li = self.msg_manager.load_until_today(self.connected, self.joined, None)
             for time, uid, text in li:
                 self._add_msg(time, uid, text)
 
@@ -139,8 +330,8 @@ class chat_tab(tab):
             self.first_load()
 
         self.render_connection_info(buf)
-        buf.addtext(self.distext)
-        self.sm.draw_on(buf)
+        self.history.paint_on(buf)
+        self.sm.paint_on(buf)
         buf.addtext(self.textbox.distext)
 
     def render_connection_info(self, buf: buffer):
@@ -157,18 +348,18 @@ class chat_tab(tab):
 
     @property
     def distext(self) -> str:
-        if len(self.history) < self.max_display_line:
+        if len(self.history) < self.max_display_height:
             displayed = self.history
             have_rest = True
         else:
-            displayed = self.history[-self.max_display_line:]
+            displayed = self.history[-self.max_display_height:]
             have_rest = False
 
         if have_rest and self.fill_until_max:
             with StringIO() as s:
                 s.write(utils.compose(displayed, connector="\n"))
                 displayed_len = len(displayed)
-                s.write(utils.fill("", "\n", self.max_display_line - displayed_len))
+                s.write(utils.fill("", "\n", self.max_display_height - displayed_len))
                 return s.getvalue()
         else:
             return utils.compose(displayed, connector="\n")
@@ -194,14 +385,17 @@ class chat_tab(tab):
         return i18n.trans("tabs.chat_tab.name")
 
     def add_string(self, string: str):
-        self.history.append(string)
+        text = plain_item(string)
+        self.history.add(text)
 
     def on_added(self):
         self.msg_manager.on_received.add(self._on_received_msg)
 
     def _on_received_msg(self, manager, server, room_id, msg_unit):
+        """
         if self.is_focused:
             self.on_content_changed(self)
+        """
         if server == self.connected and room_id == self.joined:
             time, uid, text = msg_unit
             self._add_msg(time, uid, text)
@@ -290,7 +484,10 @@ class text_mode(ui_state):
         super().__init__()
         kbs = kbinding()
         self.kbs = kbs
-
+        kbs.bind(keys.k_up, lambda c: self.tab.scroll_up())
+        kbs.bind(keys.k_down, lambda c: self.tab.scroll_down())
+        kbs.bind(keys.k_pgup, lambda c: self.tab.page_up())
+        kbs.bind(keys.k_pgdown, lambda c: self.tab.page_down())
         kbs.on_any = lambda c: self.textbox.on_input(c)
         kbs.bind(keys.k_enter, lambda c: self.tab.send_text())
 

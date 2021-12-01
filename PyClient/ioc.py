@@ -1,9 +1,10 @@
 from enum import Enum, unique, auto
 from inspect import signature
 
-from typing import Dict, Any, Union,TypeVar,Type
+from typing import Dict, Any, Union, TypeVar, Type, Optional
 
-In= TypeVar('In')
+In = TypeVar('In')
+
 
 @unique
 class RegisterType(Enum):
@@ -13,11 +14,12 @@ class RegisterType(Enum):
 
 
 class item:
-    def __init__(self, _type):
-        self.in_type = _type
-        self.register_type = None
+    def __init__(self, in_type: type, out_type: Optional[type] = None):
+        self.in_type: type = in_type
+        self.register_type: RegisterType = RegisterType.Singleton
         self.instance = None
-        self.out_type = None
+        self.out_type: Optional[type] = out_type
+        self.injected: bool = False
 
 
 class container:
@@ -25,7 +27,7 @@ class container:
         self.type2item: Dict[type, item] = {}
         self.name2item: Dict[str, item] = {}
 
-    def resolve(self, in_type: Union[Type[In], str])->In:
+    def resolve(self, in_type: Union[Type[In], str]) -> In:
         if isinstance(in_type, type):
             if in_type not in self.type2item:
                 raise ServiceNotRegistered(str(in_type))
@@ -45,7 +47,8 @@ class container:
             res = _item.instance
         elif register_type == RegisterType.Transient:
             res = _item.out_type()
-        self.__inject(res)
+        if not _item.injected:
+            self.__inject(res)
         return res
 
     def __inject(self, obj: Any):

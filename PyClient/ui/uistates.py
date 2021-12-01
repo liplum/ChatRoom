@@ -5,9 +5,9 @@ from ui.shared import *
 from ui.tabs import tablist
 
 
-class ui_smachine(smachine, inputable):
+class ui_smachine(smachine,painter, inputable):
 
-    def draw_on(self, buf: buffer):
+    def paint_on(self, buf: buffer):
         if self.cur is not None:
             self.cur.paint_on(buf)
 
