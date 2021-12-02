@@ -1,6 +1,8 @@
 import json
 import os
 import sys
+from collections import defaultdict
+from enum import auto, Enum
 from typing import TypeVar, Callable, Optional, Dict, Any, NoReturn
 
 from utils import not_none
@@ -31,48 +33,60 @@ class convertFrom:
         return self.convert(para)
 
 
-Config_Style = int
+class Style(Enum):
+    CheckBox = auto()
+    OnlyNumber = auto()
+    OnlyAlphabet = auto()
+    AnyString = auto()
+    OnlyNumberAlphabet = auto()
+    NumericUpDown = auto()
 
 
-class Style:
-    CheckBox = 0
-    OnlyNumber = 1
-    OnlyAlphabet = 2
-    AnyString = 3
-    OnlyNumber_Alphabet = 4
-    NumericUpDown = 5
+NewValue = Any
+NewValueCallback = Callable[["settings", NewValue], NoReturn]
 
 
-New_Value = Any
-New_Value_Callback = Callable[["settings", New_Value], NoReturn]
+def _return_none():
+    return None
 
 
 class prop:
-    def __init__(self, style: Config_Style, new_value_callback: New_Value_Callback):
-        self.style: Config_Style = style
-        self.new_value_callback: New_Value_Callback = new_value_callback
+    def __init__(self, style: Style, new_value_callback: NewValueCallback, extra_data: Any):
+        self.style: Style = style
+        self.new_value_callback: NewValueCallback = new_value_callback
+        self.extra_data = extra_data
 
 
 class prop_builder:
     def __init__(self, config: "config"):
         self.config = config
         self._new_value_callback = None
+        self._extra_data = None
 
-    def style(self, style: Config_Style) -> "prop_builder":
+    def style(self, style: Style) -> "prop_builder":
         if style is None:
             raise ValueError(style)
         self._control_style = style
         return self
 
-    def notice(self, callback: New_Value_Callback) -> "prop_builder":
+    def notice(self, callback: NewValueCallback) -> "prop_builder":
         if callback is None:
             raise ValueError(callback)
         self._new_value_callback = callback
         return self
 
+    def extra(self, data: Any) -> "prop_builder":
+        if data is None:
+            raise ValueError(data)
+        if isinstance(data, dict):
+            data = defaultdict(_return_none, data)
+        self._extra_data = data
+        return self
+
     def build(self) -> "config":
         if not_none(self._new_value_callback, self._control_style):
-            self.config.prop = prop(self._control_style, self._new_value_callback)
+            self.config.prop = prop(self._control_style, self._new_value_callback, self._extra_data)
+            self.config._is_customizable = True
             return self.config
         raise BuildError(self.config)
 
@@ -95,7 +109,6 @@ class config:
         self.convert_from = convert_from
 
     def customizable(self) -> prop_builder:
-        self._is_customizable = True
         return prop_builder(self)
 
     @property

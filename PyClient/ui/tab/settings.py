@@ -1,59 +1,32 @@
 from core.settings import *
 from ui.cmd_modes import common_hotkey
 from ui.control.checkboxes import checkbox
+from ui.control.numeric_up_downs import numeric_up_down
 from ui.control.textboxes import textbox
 from ui.panels import *
 from ui.tab.shared import *
 from ui.tabs import *
 from ui.xtbox import xtextbox
 
+OnSave = Callable[[], NoReturn]
+Ctrl_OnSave = Tuple[control, OnSave]
+OnSaveGen = Callable[[config, settings], Ctrl_OnSave]
 
-def config_control(tab: "settings_tab", config: config, settings: settings) -> Tuple[control, Callable[[], NoReturn]]:
+_style2control: Dict[Style, OnSaveGen] = {}
+
+
+def _add_control(style: Style, gen: Callable[[config, settings], Ctrl_OnSave]):
+    _style2control[style] = gen
+
+
+def config_control(tab: "settings_tab", config: config, settings: settings) -> Ctrl_OnSave:
     if not config.is_customizable:
         raise ValueError(config.key)
-    prop = config.prop
-    style = prop.style
-    init_value = settings[config.key]
-    if style == Style.CheckBox:
-        c = checkbox(init_value, theme=turn_on_off_check_theme)
-
-        def on_checkbox_save():
-            checked = c.checked
-            if checked is not None:
-                try:
-                    prop.new_value_callback(settings, checked)
-                except ValueInvalidError as vie:
-                    pass
-
-        return c, on_checkbox_save
+    style = config.prop.style
+    if style in _style2control:
+        return _style2control[style](config, settings)
     else:
-        def gen_on_textbox_save(tbox: textbox):
-            def on_textbox_save():
-                inputs = tbox.inputs
-                try:
-                    prop.new_value_callback(settings, inputs)
-                except ValueInvalidError as vie:
-                    pass
-
-            return on_textbox_save
-    if style == Style.AnyString:
-        c = xtextbox()
-        c.input_list = init_value
-        return c, gen_on_textbox_save(c)
-    elif style == Style.OnlyNumber:
-        c = xtextbox(only_allowed_chars=number_keys)
-        c.input_list = init_value
-        return c, gen_on_textbox_save(c)
-    elif style == Style.OnlyAlphabet:
-        c = xtextbox(only_allowed_chars=alphabet_keys)
-        c.input_list = init_value
-        return c, gen_on_textbox_save(c)
-    elif style == Style.OnlyAlphabet:
-        c = xtextbox(only_allowed_chars=number_alphabet_keys)
-        c.input_list = init_value
-        return c, gen_on_textbox_save(c)
-    else:
-        raise ValueError(config.key)
+        raise KeyError(config.key)
 
 
 class settings_tab(tab):
@@ -129,3 +102,99 @@ class settings_tab(tab):
     def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
         self.last_tab = last_tab
         return False
+
+
+def _Style_CheckBox(config: config, settings: settings) -> Ctrl_OnSave:
+    prop = config.prop
+    init_value = settings[config.key]
+    c = checkbox(init_value, theme=turn_on_off_check_theme)
+
+    def on_checkbox_save():
+        checked = c.checked
+        if checked is not None:
+            try:
+                prop.new_value_callback(settings, checked)
+            except ValueInvalidError as vie:
+                pass
+
+    return c, on_checkbox_save
+
+
+_add_control(Style.CheckBox, _Style_CheckBox)
+
+
+def _gen_on_textbox_save(config: config, settings: settings, prop: prop, tbox: textbox):
+    def on_textbox_save():
+        inputs = tbox.inputs
+        final = config.convert_to(inputs)
+        try:
+            prop.new_value_callback(settings, final)
+        except ValueInvalidError as vie:
+            pass
+
+    return on_textbox_save
+
+
+def _Style_AnyString(config: config, settings: settings) -> Ctrl_OnSave:
+    prop = config.prop
+    init_value = settings[config.key]
+    c = xtextbox()
+    c.input_list = init_value
+    return c, _gen_on_textbox_save(config, settings, prop, c)
+
+
+_add_control(Style.AnyString, _Style_AnyString)
+
+
+def _Style_OnlyNumber(config: config, settings: settings) -> Ctrl_OnSave:
+    prop = config.prop
+    init_value = settings[config.key]
+    c = xtextbox(only_allowed_chars=number_keys)
+    c.input_list = str(init_value)
+    return c, _gen_on_textbox_save(config, settings, prop, c)
+
+
+_add_control(Style.OnlyNumber, _Style_OnlyNumber)
+
+
+def _Style_OnlyAlphabet(config: config, settings: settings) -> Ctrl_OnSave:
+    prop = config.prop
+    init_value = settings[config.key]
+    c = xtextbox(only_allowed_chars=alphabet_keys)
+    c.input_list = init_value
+    return c, _gen_on_textbox_save(config, settings, prop, c)
+
+
+_add_control(Style.OnlyAlphabet, _Style_OnlyAlphabet)
+
+
+def _Style_OnlyNumberAlphabet(config: config, settings: settings) -> Ctrl_OnSave:
+    prop = config.prop
+    init_value = settings[config.key]
+    c = xtextbox(only_allowed_chars=number_alphabet_keys)
+    c.input_list = init_value
+    return c, _gen_on_textbox_save(config, settings, prop, c)
+
+
+_add_control(Style.OnlyNumberAlphabet, _Style_OnlyNumberAlphabet)
+
+
+def _Style_NumericUpDown(config: config, settings: settings) -> Ctrl_OnSave:
+    prop = config.prop
+    init_value = settings[config.key]
+    d = prop.extra_data
+    c = numeric_up_down(d["min"], d["max"])
+    c.number = init_value
+
+    def on_numeric_up_down_save():
+        number = c.number
+        if number is not None:
+            try:
+                prop.new_value_callback(settings, number)
+            except ValueInvalidError as vie:
+                pass
+
+    return c, on_numeric_up_down_save
+
+
+_add_control(Style.NumericUpDown, _Style_NumericUpDown)

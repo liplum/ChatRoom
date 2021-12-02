@@ -21,6 +21,12 @@ class label(control):
     def height(self) -> int:
         return 1
 
+    @height.setter
+    def height(self, value: int):
+        if value != auto:
+            value = 1
+        self._height = value
+
     @property
     def focusable(self) -> bool:
         return False

@@ -228,6 +228,7 @@
     "DateFormat": "日期格式",
     "AutoLoginSwitch": "自动登录",
     "RestoreTabWhenRestart": "重新打开上次未关闭的页面",
-    "ColorfulMainMenu": "是彩色！！！"
-  }
+    "ColorfulMainMenu": "是彩色！！！",
+     "MaxChatLine": "最大聊天显示行数"
+ }
 }

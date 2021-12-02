@@ -194,7 +194,8 @@ class chat_tab(tab):
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
         self.textbox = xtextbox()
-        self.max_display_height = 10
+        configs = entity()
+        self.max_display_height = configs.MaxChatLine
         self.fill_until_max = True
         self.history: history_viewer = history_viewer(self.max_display_height, self.fill_until_max)
         self.history.on_content_changed.add(lambda _: self.on_content_changed(self))

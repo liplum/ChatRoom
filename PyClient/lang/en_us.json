@@ -228,6 +228,7 @@
     "DateFormat": "Date format",
     "AutoLoginSwitch": "Auto login",
     "RestoreTabWhenRestart": "Reopen last unclosed",
-    "ColorfulMainMenu": "COLORFUUUUUL!!!"
+    "ColorfulMainMenu": "COLORFUUUUUL!!!",
+    "MaxChatLine": "Max message line"
   }
 }

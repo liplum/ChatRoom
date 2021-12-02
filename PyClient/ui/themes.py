@@ -119,3 +119,17 @@ class check_theme:
     @property
     def null(self):
         return self._null
+
+
+class plus_minus_theme:
+    def __init__(self, minus: str, plus: str):
+        self._minus = minus[0]
+        self._plus = plus[0]
+
+    @property
+    def plus(self) -> str:
+        return self._plus
+
+    @property
+    def minus(self) -> str:
+        return self._minus
