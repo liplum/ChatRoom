@@ -49,9 +49,9 @@ class ichannel:
         self._on_msg_received = event(cancelable=True)
 
     @property
-    def on_msg_received(self):
+    def on_msg_received(self) -> event:
         """
-        Para 1:network object
+        Para 1:ichannel object
 
         Para 2:msg object
 
@@ -59,7 +59,7 @@ class ichannel:
 
         Cancelable:If yes,it will stop any more handle on this msg
 
-        :return: event(i_channel,msg,callable[msg,"context tuple"])
+        :return: event(ichannel,msg,Callable[msg,"context tuple"])
         """
         return self._on_msg_received
 
@@ -270,7 +270,7 @@ class network(inetwork):
         listen.daemon = True
         self.lock(self._add_socket)(server, skt, listen)
         listen.start()
-        self.on_connected(self,server)
+        self.on_connected(self, server)
         return True
 
     def _add_socket(self, server: server_token, skt: socket, listen: Thread) -> None:

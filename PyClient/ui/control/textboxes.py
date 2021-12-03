@@ -6,7 +6,7 @@ from GLOBAL import StringIO
 from events import event
 from ui.ctrl import auto, unlimited, PROP, text_control
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
-from ui.shared import Is_Consumed, Not_Consumed, Consumed
+from ui.shared import IsConsumed, NotConsumed, Consumed
 
 
 class textbox(text_control):
@@ -109,7 +109,7 @@ class textbox(text_control):
             drawn = utils.fillto(drawn, self.space_placeholder, self.width)
         buf.addtext(self._render_chars(drawn), end='', fgcolor=fg, bkcolor=bk)
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> IsConsumed:
         return self.append(str(char))
 
     @property
@@ -306,17 +306,17 @@ class textbox(text_control):
             self.on_gen_distext(self, [res])
             return displayed[0]
 
-    def append(self, char: str) -> Is_Consumed:
+    def append(self, char: str) -> IsConsumed:
         if self.locked:
-            return Not_Consumed
+            return NotConsumed
         if self.max_inputs_count != unlimited:
             if self.input_count >= self.max_inputs_count:
-                return Not_Consumed
+                return NotConsumed
         char = str(char)
         if char == "":
-            return Not_Consumed
+            return NotConsumed
         if self.on_pre_append(self, char):
-            return Not_Consumed
+            return NotConsumed
         self._input_list.insert(self.cursor, char)
         self.on_append(self, self.cursor, char)
         self.cursor += 1

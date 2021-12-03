@@ -223,7 +223,7 @@ class window(iwindow):
     def tablist(self) -> "tablist":
         return self._tablist
 
-    def find_first_popup(self, predicate: Callable[["base_popup"], bool])->Optional["base_popup"]:
+    def find_first_popup(self, predicate: Callable[["base_popup"], bool]) -> Optional["base_popup"]:
         for p in self.popups:
             try:
                 if predicate(p):

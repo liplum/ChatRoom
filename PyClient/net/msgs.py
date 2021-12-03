@@ -1,3 +1,4 @@
+import i18n
 import ui.tab.chat as chat
 from core.rooms import iroom_manager
 from core.shared import *
@@ -7,7 +8,6 @@ from ui.outputs import CmdFgColor, tintedtxt
 from ui.tab.chat import fill_or_add_chat_tab
 from ui.tab.popups import waiting_popup, base_popup
 from utils import get, not_none, to_seconds
-import i18n
 
 k_Account = "Account"
 k_Password = "Password"

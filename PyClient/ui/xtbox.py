@@ -40,5 +40,5 @@ class xtextbox(textbox):
         else:
             kbs.on_any = lambda c: spapp(chars.to_str(c)) if c.is_printable() else False
 
-    def on_input(self, ch: chars.char) -> Is_Consumed:
+    def on_input(self, ch: chars.char) -> IsConsumed:
         return self.kbs.trigger(ch)

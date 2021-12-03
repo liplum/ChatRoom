@@ -301,7 +301,7 @@ class login_tab(tab):
                         vcode = v
                         t_i = self.tablist.find_first(
                             lambda t: isinstance(t, chat_tab) and t.connected == token and t.user_info.verified and
-                            t.user_info.account == account)
+                                      t.user_info.account == account)
                         if t_i is None:
                             fill_or_add_chat_tab(self.win, None, token, account, None, vcode)
                         self.tablist.remove(self)

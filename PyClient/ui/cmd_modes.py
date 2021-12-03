@@ -97,7 +97,7 @@ class cmd_state(states.state):
     def __init__(self, mode: "cmd_mode"):
         self.mode = mode
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> IsConsumed:
         pass
 
 
@@ -325,7 +325,7 @@ class cmd_long_mode(cmd_state):
         mode.cmd_history_index = 0
         tb.clear()
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> IsConsumed:
         mode = self.mode
         tb = mode.textbox
 
@@ -334,7 +334,7 @@ class cmd_long_mode(cmd_state):
             self.cmd_long_mode_execute_cmd()
         # auto filling
         elif chars.c_tab_key == char:
-            return Not_Consumed
+            return NotConsumed
             # TODO:Complete Autofilling
             if mode.autofilling:  # press tab and already entered auto-filling mode
                 # to next candidate
@@ -373,7 +373,7 @@ class cmd_hotkey_mode(cmd_state):
     def __init__(self, mode: cmd_mode):
         super().__init__(mode)
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> IsConsumed:
         mode = self.mode
         tb = mode.textbox
 

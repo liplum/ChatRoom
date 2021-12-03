@@ -467,7 +467,7 @@ class chat_cmd_hotkey_mode(cmd_hotkey_mode):
     def __init__(self, mode: cmd_mode):
         super().__init__(mode)
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> IsConsumed:
         mode = self.mode
         tb = mode.textbox
         consumed = super().on_input(char)
@@ -475,7 +475,7 @@ class chat_cmd_hotkey_mode(cmd_hotkey_mode):
             if mode.client.key_enter_text == char:
                 mode.sm.enter(text_mode)
                 return Consumed
-        return Not_Consumed
+        return NotConsumed
 
 
 class text_mode(ui_state):
@@ -502,7 +502,7 @@ class text_mode(ui_state):
                     bkcolor=CmdBkColor.Blue,
                     end='\n')
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> IsConsumed:
         c = self.client
         if c.key_quit_text_mode == char:
             self.sm.enter(cmd_mode)

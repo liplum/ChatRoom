@@ -1,3 +1,4 @@
+from collections import deque
 from typing import List
 
 from chars import *
@@ -6,7 +7,7 @@ from events import event
 
 class iinput:
     def __init__(self):
-        self._input_list: List[char] = []
+        self._input_list: deque[char] = deque()
         self._on_input = event(cancelable=True)
 
     def get_input(self, tip: str = None):
@@ -14,7 +15,7 @@ class iinput:
 
     @property
     def input_list(self) -> List[char]:
-        return self._input_list[:]
+        return list(self._input_list)
 
     def flush(self):
         self._input_list = []
@@ -23,13 +24,13 @@ class iinput:
     @property
     def on_input(self) -> event:
         """
-        Para 1:i_input object
+        Para 1:iinput object
 
         Para 2:char object
 
         Canceled:The behavior will be determined by it's implement
 
-        :return: event(i_input,char)
+        :return: event(iinput,char)
         """
         return self._on_input
 
@@ -41,7 +42,7 @@ class iinput:
         if len(self._input_list) == 0:
             return None
         else:
-            return self._input_list.pop(0)
+            return self._input_list.popleft()
 
     def initialize(self):
         pass

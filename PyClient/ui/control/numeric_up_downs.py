@@ -1,8 +1,9 @@
 import keys
 import utils
 from ui.ctrl import *
+from ui.outputs import tintedtxt, CmdBkColor, CmdFgColor
 from ui.themes import plus_minus_theme
-from ui.outputs import tintedtxt,CmdBkColor,CmdFgColor
+
 operator = plus_minus_theme("-", "+")
 arrow = plus_minus_theme("<", ">")
 
@@ -82,15 +83,15 @@ class numeric_up_down(control):
             if rw == 1:
                 minus = theme.minus
                 if self.is_focused:
-                    minus = tintedtxt(minus,fgcolor=CmdFgColor.Black,bkcolor=CmdBkColor.White)
+                    minus = tintedtxt(minus, fgcolor=CmdFgColor.Black, bkcolor=CmdBkColor.White)
                 s.write(minus)
             if rw == 2:
                 minus = theme.minus
                 plus = theme.plus
                 if self.is_focused:
-                    minus = tintedtxt(minus,fgcolor=CmdFgColor.Black,bkcolor=CmdBkColor.White)
+                    minus = tintedtxt(minus, fgcolor=CmdFgColor.Black, bkcolor=CmdBkColor.White)
                 if self.is_focused:
-                    plus = tintedtxt(plus,fgcolor=CmdFgColor.Black,bkcolor=CmdBkColor.White)
+                    plus = tintedtxt(plus, fgcolor=CmdFgColor.Black, bkcolor=CmdBkColor.White)
                 s.write(minus)
                 s.write(plus)
             else:
@@ -134,13 +135,13 @@ class numeric_up_down(control):
             self._number = value
             self.on_content_changed(self)
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> IsConsumed:
         if keys.k_left == char:
             return self.decrease()
         elif keys.k_right == char:
             return self.increase()
         else:
-            return Not_Consumed
+            return NotConsumed
 
     def increase(self, number: int = 1) -> bool:
         number = abs(number)

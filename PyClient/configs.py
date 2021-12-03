@@ -75,4 +75,4 @@ colorful_main_menu.customizable().style(Style.CheckBox).notice(
 max_chat_line = addx("MaxChatLine", 16)
 max_chat_line.customizable().style(Style.NumericUpDown).notice(
     _convert_to_int(max_chat_line)
-).extra({"min":4,"max":50}).build()
+).extra({"min": 4, "max": 50}).build()

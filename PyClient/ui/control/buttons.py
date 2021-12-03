@@ -3,9 +3,9 @@ from typing import NoReturn
 import keys
 import utils
 from ui.ctrl import *
-from ui.outputs import buffer, CmdBkColor, CmdFgColor,tintedtxtIO
-from ui.shared import Is_Consumed, Consumed, Not_Consumed
-from GLOBAL import StringIO
+from ui.outputs import buffer, CmdBkColor, CmdFgColor, tintedtxtIO
+from ui.shared import IsConsumed, Consumed, NotConsumed
+
 
 class button(text_control):
 
@@ -34,14 +34,14 @@ class button(text_control):
         if self._layout_changed:
             self.cache_layout()
         with StringIO() as s:
-            utils.repeatIO(s,' ', self.left_margin)
+            utils.repeatIO(s, ' ', self.left_margin)
             bk = CmdBkColor.White if self.is_focused else None
             fg = CmdFgColor.Black if self.is_focused else None
-            tintedtxtIO(s,self.distext,fgcolor=fg, bkcolor=bk)
+            tintedtxtIO(s, self.distext, fgcolor=fg, bkcolor=bk)
             buf.addtext(s.getvalue(), end='')
 
     @property
-    def distext(self) ->str:
+    def distext(self) -> str:
         with StringIO() as s:
             content = self.content()
             content_len = len(content)
@@ -50,21 +50,21 @@ class button(text_control):
             margin = self.margin
             if margin > 0:
                 if self.is_focused:
-                    utils.repeatIO(s," ", margin)
-                    self._render_charsIO(s,content)
+                    utils.repeatIO(s, " ", margin)
+                    self._render_charsIO(s, content)
                     if is_odd:
-                        utils.repeatIO(s," ", margin - 1)
+                        utils.repeatIO(s, " ", margin - 1)
                     else:
-                        utils.repeatIO(s," ", margin)
+                        utils.repeatIO(s, " ", margin)
                 else:
-                    self._render_charsIO(s,'[')
+                    self._render_charsIO(s, '[')
                     utils.repeatIO(s, " ", margin - 1)
-                    self._render_charsIO(s,content)
+                    self._render_charsIO(s, content)
                     if is_odd:
                         utils.repeatIO(s, " ", margin - 2)
                     else:
                         utils.repeatIO(s, " ", margin - 1)
-                    self._render_charsIO(s,']')
+                    self._render_charsIO(s, ']')
             else:
                 s.write(content[0:render_width])
             return s.getvalue()
@@ -83,14 +83,14 @@ class button(text_control):
     def press(self):
         self.on_press_func()
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> IsConsumed:
         if keys.k_enter == char:
             self.press()
             return Consumed
         elif chars.c_esc == char:
             self.on_exit_focus(self)
             return Consumed
-        return Not_Consumed
+        return NotConsumed
 
     @property
     def margin(self) -> int:

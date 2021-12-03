@@ -52,7 +52,7 @@ class checkbox(control):
     def focusable(self) -> bool:
         return True
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> IsConsumed:
         if keys.k_enter == char:
             if not self.switch():
                 self.checked = True
@@ -60,7 +60,7 @@ class checkbox(control):
         elif chars.c_esc == char:
             self.on_exit_focus(self)
             return Consumed
-        return Not_Consumed
+        return NotConsumed
 
     def switch(self) -> bool:
         former = self.checked

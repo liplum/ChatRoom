@@ -19,6 +19,7 @@ T = TypeVar('T')
 TK = TypeVar('TK')
 TV = TypeVar('TV')
 
+
 def all_file(folder) -> Iterable[str]:
     for root, ds, fs in os.walk(folder):
         for f in fs:
@@ -50,7 +51,7 @@ def get_module_by(name: str) -> Optional[ModuleType]:
     g = sys.modules
     if name in g:
         m = g[name]
-        if isinstance(m,ModuleType):
+        if isinstance(m, ModuleType):
             return m
     return None
 

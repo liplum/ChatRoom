@@ -4,9 +4,9 @@ import chars
 from events import event
 from ui.outputs import buffer
 
-Is_Consumed = bool
+IsConsumed = bool
 Consumed = True
-Not_Consumed = False
+NotConsumed = False
 T = TypeVar('T')
 
 
@@ -16,13 +16,13 @@ class painter:
 
 
 class inputable:
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> IsConsumed:
         """
         When user types a char
         :param char: which be typed
         :return:whether this object consumed the char
         """
-        return Not_Consumed
+        return NotConsumed
 
 
 class reloadable:

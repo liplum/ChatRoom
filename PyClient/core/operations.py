@@ -26,7 +26,7 @@ def register(network: inetwork, server: server_token, account: str, password: st
     uc.send(server, msg)
 
 
-def join(network: inetwork, userinfo:uentity, room_id: roomid):
+def join(network: inetwork, userinfo: uentity, room_id: roomid):
     server = userinfo.server
     connect(network, server)
     uc = network.get_channel("User")
@@ -36,7 +36,8 @@ def join(network: inetwork, userinfo:uentity, room_id: roomid):
     msg.vcode = userinfo.vcode
     uc.send(server, msg)
 
-def create_room(network: inetwork, userinfo:uentity, room_name:str):
+
+def create_room(network: inetwork, userinfo: uentity, room_name: str):
     server = userinfo.server
     connect(network, server)
     uc = network.get_channel("User")
@@ -46,7 +47,8 @@ def create_room(network: inetwork, userinfo:uentity, room_name:str):
     msg.vcode = userinfo.vcode
     uc.send(server, msg)
 
-def send_text(network: inetwork,user_info: uentity, room_id: roomid, text: str):
+
+def send_text(network: inetwork, user_info: uentity, room_id: roomid, text: str):
     server = user_info.server
     connect(network, server)
     chatting = network.get_channel("Chatting")

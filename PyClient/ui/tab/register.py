@@ -152,8 +152,9 @@ class register_tab(tab):
                         reason = RR.map(state)
                         if reason:
                             p.title_getter = lambda: i18n.trans("controls.failed")
-                            tip = split_textblock_words(f"tabs.register_tab.failed_tip.{reason}", account=account, ip=token.ip,
-                                                    port=token.port)
+                            tip = split_textblock_words(f"tabs.register_tab.failed_tip.{reason}", account=account,
+                                                        ip=token.ip,
+                                                        port=token.port)
                     p.words = tip
                     p.reload()
 

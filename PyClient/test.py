@@ -1,3 +1,9 @@
+from io import StringIO
+
+import GLOBAL
+
+GLOBAL.StringIO = StringIO
+from collections import deque
 from datetime import timezone
 
 import autofill
@@ -49,7 +55,8 @@ def win_test():
 def linux_test():
     # nb_linux()
     # linux_nb()
-    test_dictrie2()
+    # test_dictrie2()
+    test_mt_input()
 
 
 test = None
@@ -58,6 +65,61 @@ if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
+
+
+def test_mt_input():
+    from threading import Thread
+    import tty
+    import termios
+    import linuxchars as lc
+    from time import sleep
+    queue: deque[char] = deque()
+    old_settings = termios.tcgetattr(sys.stdin)
+    tty.setcbreak(sys.stdin.fileno())
+
+    def inputs():
+        try:
+            while True:
+                cs = []
+                if sys.stdin.readable():
+                    c1: str = sys.stdin.read(1)
+                    nc1 = ord(c1)
+                    cs.append(nc1)
+                    if nc1 == lc.linux_esc:
+                        c2: str = sys.stdin.read(1)
+                        nc2 = ord(c2)
+                        cs.append(nc2)
+                        if nc2 == lc.linux_csi:
+                            c3: str = sys.stdin.read(1)
+                            nc3 = ord(c3)
+                            cs.append(nc3)
+                        elif nc2 == lc.linux_o:
+                            c3: str = sys.stdin.read(1)
+                            nc3 = ord(c3)
+                            cs.append(nc3)
+
+                    l = len(cs)
+                    if l == 1:
+                        queue.append(char(cs[0]))
+                    elif l > 1:
+                        queue.append(lc.lc.from_tuple(cs))
+        except:
+            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+
+    def outputs():
+        while True:
+            if len(queue) > 0:
+                ch = queue.popleft()
+                print(str(ch) if ch.is_printable() else "Control")
+            else:
+                print("Empty")
+            sleep(0.1)
+
+    inputsT = Thread(target=inputs)
+    inputsT.daemon = True
+    inputsT.start()
+    outputsT = Thread(target=outputs)
+    outputsT.start()
 
 
 def test_i18n_folder():

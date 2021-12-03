@@ -1,4 +1,4 @@
-from typing import Callable,Optional,Set
+from typing import Callable, Optional, Set
 
 import chars
 from events import event

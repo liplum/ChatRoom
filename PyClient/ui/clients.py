@@ -3,19 +3,20 @@ import traceback
 
 import GLOBAL
 import ioc as ioc
+import net.networks as net
 import ui.inputs as _input
 import ui.outputs as output
 from cmd import cmdmanager
 from core.chats import *
 from core.filer import ifiler, filer
 from core.operations import *
+from core.rooms import iroom_manager, room_manager
 from core.settings import entity as settings
-import net.networks as net
 from ui.core import iclient
 from ui.k import cmdkey
 from ui.windows import window
 from utils import get
-from core.rooms import iroom_manager,room_manager
+
 
 class client(iclient):
     def __init__(self):
@@ -70,7 +71,7 @@ class client(iclient):
 
         if GLOBAL.DEBUG:
             def on_msg_pre_analyzed(network, server_token, source, jobj):
-                self.logger.msg(json.dumps(jobj, indent=2,ensure_ascii=False))
+                self.logger.msg(json.dumps(jobj, indent=2, ensure_ascii=False))
 
             self.network.on_msg_pre_analyzed.add(on_msg_pre_analyzed)
 

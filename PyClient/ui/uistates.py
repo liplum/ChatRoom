@@ -5,16 +5,16 @@ from ui.shared import *
 from ui.tabs import tablist
 
 
-class ui_smachine(smachine,painter, inputable):
+class ui_smachine(smachine, painter, inputable):
 
     def paint_on(self, buf: buffer):
         if self.cur is not None:
             self.cur.paint_on(buf)
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> IsConsumed:
         if self.cur is not None:
             return self.cur.on_input(char)
-        return Not_Consumed
+        return NotConsumed
 
 
 class ui_state(state, painter, inputable):
@@ -29,5 +29,5 @@ class ui_state(state, painter, inputable):
     def paint_on(self, buf: buffer):
         pass
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
-        return Not_Consumed
+    def on_input(self, char: chars.char) -> IsConsumed:
+        return NotConsumed

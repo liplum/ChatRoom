@@ -155,7 +155,7 @@ class panel(control):
     def go_pre_focusable(self) -> bool:
         return False
 
-    def on_input(self, char: chars.char) -> Is_Consumed:
+    def on_input(self, char: chars.char) -> IsConsumed:
         if self.cur_focused:
             consumed = self.cur_focused.on_input(char)
             if consumed:
@@ -168,9 +168,9 @@ class panel(control):
                 elif chars.c_esc == char:
                     self.on_exit_focus(self)
                     return Consumed
-                return Not_Consumed
+                return NotConsumed
         else:
-            return Not_Consumed
+            return NotConsumed
 
     @abstractmethod
     def switch_to_first_or_default_item(self):

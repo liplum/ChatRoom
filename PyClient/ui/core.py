@@ -146,5 +146,5 @@ class iwindow(inputable, reloadable):
         pass
 
     @abstractmethod
-    def find_first_popup(self, predicate: Callable[["base_popup"], bool])->Optional["base_popup"]:
+    def find_first_popup(self, predicate: Callable[["base_popup"], bool]) -> Optional["base_popup"]:
         pass

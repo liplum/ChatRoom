@@ -56,13 +56,13 @@ class nbinput(inbinput):
     def _input_new(self, char: chars.char):
         with self._lock:
             self._input_list.append(char)
-        self.on_input(self, char)
+            self.on_input(self, char)
 
     def consume_char(self) -> Optional[chars.char]:
         with self._lock:
             if len(self._input_list) == 0:
                 return None
-            first = self._input_list.pop(0)
+            first = self._input_list.popleft()
             return first
 
     def get_input(self, tip: str = None):
@@ -71,4 +71,4 @@ class nbinput(inbinput):
     @property
     def input_list(self) -> List[chars.char]:
         with self._lock:
-            return self._input_list[:]
+            return list(self._input_list)
