@@ -6,7 +6,7 @@ from collections import namedtuple
 from functools import wraps
 from socket import socket, AF_INET, SOCK_STREAM
 from threading import Thread, RLock
-from typing import Dict, Tuple, Callable, List
+from typing import Dict, Tuple, Callable, List,Optional
 
 from core import converts
 from core.shared import server_token
@@ -74,6 +74,7 @@ class ichannel:
 
 
 Context = namedtuple("Context", ["client", "channel", "token", "network"])
+MsgHandler = Callable[[msg, Context], None]
 
 
 class channel(ichannel):
@@ -81,10 +82,10 @@ class channel(ichannel):
         super().__init__(name)
         self.network = network
         self.logger: outputs.ilogger = network.logger
-        self.id2msgt_and_handler: Dict[str, Tuple[type, Callable[[msg, Tuple], None]]] = {}
+        self.id2msg_and_handler: Dict[str, Tuple[type, Optional[MsgHandler]]] = {}
         self.msg2id: Dict[type, str] = {}
 
-    def register(self, msg_type: type, msg_id: str = None, msg_handler=None):
+    def register(self, msg_type: type, msg_id: str = None, msg_handler: Optional[MsgHandler] = None):
         if msg_id is None:
             msg_id = msg_type.name
 
@@ -94,11 +95,11 @@ class channel(ichannel):
             else:
                 msg_handler = None
 
-        self.id2msgt_and_handler[msg_id] = (msg_type, msg_handler)
+        self.id2msg_and_handler[msg_id] = (msg_type, msg_handler)
         self.msg2id[msg_type] = msg_id
 
     def receive_datapack(self, _json: Dict, msg_id: str, _from: server_token):
-        info = get(self.id2msgt_and_handler, msg_id)
+        info = get(self.id2msg_and_handler, msg_id)
         if info is not None:
             msgtype, handler = info
             msg = msgtype()
@@ -206,7 +207,8 @@ class network(inetwork):
 
     @property
     def connected_servers(self) -> List[server_token]:
-        return list(self.sockets.keys())
+        with self._lock:
+            return list(self.sockets.keys())
 
     def __init__(self, client):
         super().__init__(client)

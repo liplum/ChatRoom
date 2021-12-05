@@ -2,82 +2,62 @@
 using Microsoft.EntityFrameworkCore;
 
 namespace ChattingRoom.Server.DB;
-public class Database : IDatabase
-{
-    private readonly object _dblock = new();
+public class Database : IDatabase {
+    private readonly object _dbLock = new();
 #nullable disable
-    private CtrContext db;
+    private CtrContext _db;
 #nullable enable
-    public DbSet<User> UserTable
-    {
-        get
-        {
-            lock (_dblock)
-            {
-                return db.Users;
+    public DbSet<User> UserTable {
+        get {
+            lock (_dbLock) {
+                return _db.Users;
             }
         }
     }
 
-    public DbSet<ChatRoom> ChatRoomTable
-    {
-        get
-        {
-            lock (_dblock)
-            {
-                return db.ChatRooms;
+    public DbSet<ChatRoom> ChatRoomTable {
+        get {
+            lock (_dbLock) {
+                return _db.ChatRooms;
             }
         }
     }
 
-    public DbSet<Membership> MembershipTable
-    {
-        get
-        {
-            lock (_dblock)
-            {
-                return db.Memberships;
+    public DbSet<Membership> MembershipTable {
+        get {
+            lock (_dbLock) {
+                return _db.Memberships;
             }
         }
     }
 
-    public DbContext Context
-    {
-        get
-        {
-            lock (_dblock)
-            {
-                return db;
+    public DbContext Context {
+        get {
+            lock (_dbLock) {
+                return _db;
             }
         }
     }
 
-    public void Connect()
-    {
-        lock (_dblock)
-        {
-            db = new();
+    public void Connect() {
+        lock (_dbLock) {
+            _db = new();
         }
     }
 
-    public void Disconnect()
-    {
-        lock (_dblock)
-        {
-            db?.Dispose();
+    public void Disconnect() {
+        lock (_dbLock) {
+            _db?.Dispose();
         }
     }
 
-    public void Initialize(IServiceProvider serviceProvider)
-    {
+    public void Initialize(IServiceProvider serviceProvider) {
 
     }
 
-    public void SaveChange()
-    {
-        lock (_dblock)
-        {
-            db?.SaveChanges();
+    public void SaveChange() {
+        lock (_dbLock) {
+            _db?.SaveChanges();
         }
     }
 }

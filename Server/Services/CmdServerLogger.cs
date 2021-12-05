@@ -2,32 +2,55 @@
 using ChattingRoom.Server.Interfaces;
 
 namespace ChattingRoom.Server.Services;
-public class CmdServerLogger : ILogger
-{
+public class CmdServerLogger : ILogger {
     private readonly object _lock = new();
 #nullable disable
-    private IResourceManager ResourceManager
-    {
-        get; set;
+    private IResourceManager ResourceManager {
+        get;
+        set;
     }
 #nullable enable
-    private Thread? MainThread
-    {
-        get; set;
+    private Thread? MainThread {
+        get;
+        set;
     }
-    private StreamWriter? LogFile
-    {
-        get; set;
+    private StreamWriter? LogFile {
+        get;
+        set;
     }
-    public void Log([NotNull] WarnningLevel level, string message)
-    {
+    private BlockingCollection<(WarnningLevel, string)> Logs {
+        get;
+    } = new();
+    public void Log(WarnningLevel level, string message) {
         Logs.Add((level, message));
     }
+    public void StartService() {
+        var today = DateTime.Today;
+        Directory.CreateDirectory(ResourceManager.LogsFolder);
+        LogFile = new($"{ResourceManager.LogsFolder}/{today:yyyyMMdd}.log", true) {
+            AutoFlush = true
+        };
+        MainThread = new(() => {
+            foreach (var (level, msg) in Logs.GetConsumingEnumerable()) {
+                var log = $"{DateTime.Now:yyyyMMdd-HH:mm:ss}[{level}]{msg}";
+                LogFile?.WriteLine(log);
+                ApplyColor(level);
+                Console.WriteLine(log);
+                Console.Out.Flush();
+                ClearColor();
+            }
+        });
+        MainThread.Start();
+    }
 
-    private static void ApplyColor([NotNull] WarnningLevel level)
-    {
-        switch (level)
-        {
+    public void StopService() {
+        Logs.CompleteAdding();
+        MainThread?.Interrupt();
+        LogFile?.Close();
+    }
+
+    private static void ApplyColor(WarnningLevel level) {
+        switch (level) {
             case WarnningLevel.Message:
                 Console.ForegroundColor = ConsoleColor.White;
                 break;
@@ -43,46 +66,11 @@ public class CmdServerLogger : ILogger
         }
     }
 
-    private static void ClearColor()
-    {
+    private static void ClearColor() {
         Console.ForegroundColor = ConsoleColor.White;
     }
 
-    public void Initialize(IServiceProvider serviceProvider)
-    {
-        ResourceManager = serviceProvider.Reslove<IResourceManager>();
-    }
-    private BlockingCollection<(WarnningLevel, string)> Logs
-    {
-        get; init;
-    } = new();
-    public void StartService()
-    {
-        var today = DateTime.Today;
-        Directory.CreateDirectory(ResourceManager.LogsFolder);
-        LogFile = new($"{ResourceManager.LogsFolder}/{today:yyyyMMdd}.log", append: true)
-        {
-            AutoFlush = true
-        };
-        MainThread = new Thread(() =>
-        {
-            foreach ((var level, var msg) in Logs.GetConsumingEnumerable())
-            {
-                var log = $"{DateTime.Now:yyyyMMdd-HH:mm:ss}[{level}]{msg}";
-                LogFile?.WriteLine(log);
-                ApplyColor(level);
-                Console.WriteLine(log);
-                Console.Out.Flush();
-                ClearColor();
-            }
-        });
-        MainThread.Start();
-    }
-
-    public void StopService()
-    {
-        Logs.CompleteAdding();
-        MainThread?.Interrupt();
-        LogFile?.Close();
+    public void Initialize(IServiceProvider serviceProvider) {
+        ResourceManager = serviceProvider.Resolve<IResourceManager>();
     }
 }

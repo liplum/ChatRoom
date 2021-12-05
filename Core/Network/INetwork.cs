@@ -1,6 +1,15 @@
 ﻿namespace ChattingRoom.Core.Networks;
-public interface INetwork : IInjectable, IMessageChannelContainer
-{
+public interface INetwork : IInjectable, IMessageChannelContainer {
+
+    public delegate void OnClientConnectedHandler([NotNull] NetworkToken token);
+
+    public delegate void OnClientDisconnectedHandler([NotNull] NetworkToken token);
+
+    public delegate void OnMessagePreAnalyzeHandler([AllowNull] NetworkToken token, [NotNull] string sourceText, [NotNull] dynamic json);
+
+    public IEnumerable<NetworkToken> AllConnectedClient {
+        get;
+    }
     public void SendDatapackTo([NotNull] IDatapack datapack, [NotNull] NetworkToken token);
 
     public void RecevieDatapack([NotNull] IDatapack datapack, [AllowNull] NetworkToken token = null);
@@ -11,20 +20,9 @@ public interface INetwork : IInjectable, IMessageChannelContainer
 
     public bool IsConnected([NotNull] NetworkToken token);
 
-    public IEnumerable<NetworkToken> AllConnectedClient
-    {
-        get;
-    }
-
     public event OnClientConnectedHandler OnClientConnected;
-
-    public delegate void OnClientConnectedHandler([NotNull] NetworkToken token);
 
     public event OnClientDisconnectedHandler OnClientDisconnected;
 
-    public delegate void OnClientDisconnectedHandler([NotNull] NetworkToken token);
-
     public event OnMessagePreAnalyzeHandler OnMessagePreAnalyze;
-
-    public delegate void OnMessagePreAnalyzeHandler([AllowNull] NetworkToken token, [NotNull] string sourceText, [NotNull] dynamic json);
 }

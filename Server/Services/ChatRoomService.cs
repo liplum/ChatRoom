@@ -3,119 +3,62 @@ using ChattingRoom.Core.Networks;
 using ChattingRoom.Server.Interfaces;
 
 namespace ChattingRoom.Server.Services;
-public class ChatRoomService : IChatRoomService
-{
-#nullable disable
-    private IDatabase DB
-    {
-        get; set;
-    }
-    private INetwork Network
-    {
-        get; set;
-    }
-    private IUserService Users
-    {
-        get; set;
-    }
-    private IMessageChannel User
-    {
-        get; set;
-    }
-    private IMessageChannel Chatting
-    {
-        get; set;
-    }
-    private ILogger Logger
-    {
-        get; set;
-    }
-#nullable enable
+public class ChatRoomService : IChatRoomService {
     private readonly ConcurrentDictionary<int, ChatRoom> _cache = new();
-    public ChatRoom? ByID(int chatRoomID)
-    {
-        if (_cache.TryGetValue(chatRoomID, out var room))
-        {
-            if (room.IsActive)
-            {
-                return room;
-            }
-            else
-            {
-                _cache.TryRemove(chatRoomID, out _);
-                return null;
-            }
+    public ChatRoom? ById(int chatRoomId) {
+        if (_cache.TryGetValue(chatRoomId, out var room)) {
+            if (room.IsActive) return room;
+            _cache.TryRemove(chatRoomId, out _);
+            return null;
         }
-        var target = (from cr in DB.ChatRoomTable where cr.ChatRoomID == chatRoomID select cr).FirstOrDefault();
-        if (target is not null && target.IsActive)
-        {
-            _cache[chatRoomID] = target;
+        var target = (from cr in Db.ChatRoomTable where cr.ChatRoomId == chatRoomId select cr).FirstOrDefault();
+        if (target is not null && target.IsActive) {
+            _cache[chatRoomId] = target;
             return target;
         }
         return null;
     }
 
-    public MemberType GetRelationship(ChatRoom room, User user)
-    {
-        if (room.IsActive)
-        {
-            DB.Context.Entry(room)
+    public MemberType GetRelationship(ChatRoom room, User user, out Membership? membership) {
+        if (room.IsActive) {
+            Db.Context.Entry(room)
                 .Collection(r => r.Members)
                 .Load();
-            var relationship = (from m in room.Members where m.User == user select m.Type).FirstOrDefault();
-            return relationship;
+            membership = (from m in room.Members where m.User == user select m).FirstOrDefault();
+            return membership?.Type ?? MemberType.None;
         }
+        membership = null;
         return MemberType.None;
     }
 
-    public void Initialize(IServiceProvider serviceProvider)
-    {
-        DB = serviceProvider.Reslove<IDatabase>();
-        Network = serviceProvider.Reslove<INetwork>();
-        Logger = serviceProvider.Reslove<ILogger>();
-        Users = serviceProvider.Reslove<IUserService>();
-        User = Network.GetMessageChannelBy("User");
-        Chatting = Network.GetMessageChannelBy("Chatting");
-    }
-
-    public void ReceviceNewText(ChatRoom room, IUserEntity sender, string text, DateTime SendTimeClient)
-    {
-        if (room.IsActive)
-        {
-            DB.Context.Entry(room).Collection(r => r.Members).Load();
-            Logger.SendTip("[Chatting]Recevied a text.");
-            foreach (var member in from m in room.Members where m.IsActive && m.Type is not MemberType.None select m.User)
-            {
-                var uentity = Users.FindOnline(member.Account);
-                if (uentity is not null && uentity.IsOnline && uentity.Info.IsActive)
-                {
-                    Chatting.SendMessage(uentity.Token,
-                        new ChattingMsg()
-                        {
-                            Account = sender.Account,
-                            SendTime = DateTime.UtcNow,
-                            Text = text,
-                            ChatRoomID = room.ChatRoomID,
-                            VerificationCode = uentity.VerificationCode
-                        });
-                    Logger.SendTip($"[Chatting]A Text was sent to {uentity.Account}.");
-                }
-            }
+    public void ReceiveNewText(ChatRoom room, IUserEntity sender, string text, DateTime sendTimeClient) {
+        if (!room.IsActive) return;
+        Db.Context.Entry(room).Collection(r => r.Members).Load();
+        Logger.SendTip("[Chatting]Received a text.");
+        foreach (var member in from m in room.Members where m.IsActive && m.Type is not MemberType.None select m.User) {
+            var ue = Users.FindOnline(member.Account);
+            if (ue is null || !ue.IsOnline || !ue.Info.IsActive) continue;
+            Chatting.SendMessage(ue.Token,
+                new ChattingMsg {
+                    Account = sender.Account,
+                    SendTime = DateTime.UtcNow,
+                    Text = text,
+                    ChatRoomId = room.ChatRoomId,
+                    VerificationCode = ue.VerificationCode
+                });
+            Logger.SendTip($"[Chatting]A Text was sent to {ue.Account}.");
         }
     }
 
-    public bool CreateNewChatRoom(User user, string? roomName, DateTime createdTime, [NotNullWhen(true)] out int? chatRoomID)
-    {
+    public bool CreateNewChatRoom(User user, string? roomName, DateTime createdTime, [NotNullWhen(true)] out int? chatRoomId) {
         roomName ??= user.NickName;
-        var room = new ChatRoom()
-        {
+        var room = new ChatRoom {
             Name = roomName,
             IsActive = true,
             CreatedTime = createdTime,
             MemberCount = 1
         };
-        var membership = new Membership()
-        {
+        var membership = new Membership {
             IsActive = true,
             User = user,
             ChatRoom = room,
@@ -125,52 +68,51 @@ public class ChatRoomService : IChatRoomService
         room.Members.Add(membership);
         user.Joined.Add(membership);
         user.CreatedRoomCount++;
-        DB.ChatRoomTable.Add(room);
-        DB.MembershipTable.Add(membership);
-        DB.SaveChange();
-        chatRoomID = room.ChatRoomID;
-        Logger.SendTip($"Chat room {chatRoomID}-{roomName} was created by {user.Account}.");
+        Db.ChatRoomTable.Add(room);
+        Db.MembershipTable.Add(membership);
+        Db.SaveChange();
+        chatRoomId = room.ChatRoomId;
+        Logger.SendTip($"Chat room {chatRoomId}-{roomName} was created by {user.Account}.");
         return true;
     }
 
-    public bool JoinChatRoom(User user, ChatRoom room, DateTime joinTime)
-    {
-        var membership = new Membership()
-        {
-            IsActive = true,
-            User = user,
-            ChatRoom = room,
-            Type = MemberType.Member,
-            CreatedTime = joinTime
-        };
-        room.Members.Add(membership);
+    public bool JoinChatRoom(User user, ChatRoom room, DateTime joinTime, Membership? membership = null) {
+        if (membership is not null) {
+            membership.IsActive = true;
+            membership.Type = MemberType.Member;
+            membership.CreatedTime = joinTime;
+        }
+        else {
+            membership = new() {
+                IsActive = true,
+                User = user,
+                ChatRoom = room,
+                Type = MemberType.Member,
+                CreatedTime = joinTime
+            };
+            Db.MembershipTable.Add(membership);
+            room.Members.Add(membership);
+            user.Joined.Add(membership);
+        }
         room.MemberCount++;
-        user.Joined.Add(membership);
         user.JoinedRoomCount++;
-        DB.MembershipTable.Add(membership);
-        DB.SaveChange();
-        Logger.SendTip($"User {user.Account} joined the chat room {room.ChatRoomID}-{room.Name}.");
+        Db.SaveChange();
+        Logger.SendTip($"User {user.Account} joined the chat room {room.ChatRoomId}-{room.Name}.");
         return true;
     }
 
-    public bool IsExisted(int chatRoomID, [NotNullWhen(true)] out ChatRoom? chatRoom)
-    {
-        chatRoom = ByID(chatRoomID);
+    public bool IsExisted(int chatRoomId, [NotNullWhen(true)] out ChatRoom? chatRoom) {
+        chatRoom = ById(chatRoomId);
         return chatRoom is not null;
     }
 
-    public ChatRoom[] AllJoinedRoom(User user)
-    {
-        Membership Load(Membership membership)
-        {
-            DB.Context.Entry(membership).Reference(m => m.ChatRoom).Load();
+    public ChatRoom[] AllJoinedRoom(User user) {
+        Membership Load(Membership membership) {
+            Db.Context.Entry(membership).Reference(m => m.ChatRoom).Load();
             return membership;
         }
-        if (!user.IsActive)
-        {
-            return Array.Empty<ChatRoom>();
-        }
-        DB.Context.Entry(user).Collection(r => r.Joined).Load();
+        if (!user.IsActive) return Array.Empty<ChatRoom>();
+        Db.Context.Entry(user).Collection(r => r.Joined).Load();
         return (from m in user.Joined
                 where m.IsActive && m.Type is not MemberType.None
                 let room = Load(m).ChatRoom
@@ -178,12 +120,46 @@ public class ChatRoomService : IChatRoomService
                 select room).ToArray();
     }
 
-    public bool IsJoined(User user, ChatRoom room)
-    {
-        if (!user.IsActive)
-        {
+    public bool IsJoined(User user, ChatRoom room, [NotNullWhen(true)] out Membership? membership) {
+        if (!user.IsActive) {
+            membership = null;
             return false;
         }
-        return GetRelationship(room, user) is not MemberType.None;
+        return GetRelationship(room, user, out membership) is not MemberType.None;
     }
+
+    public void Initialize(IServiceProvider serviceProvider) {
+        Db = serviceProvider.Resolve<IDatabase>();
+        Network = serviceProvider.Resolve<INetwork>();
+        Logger = serviceProvider.Resolve<ILogger>();
+        Users = serviceProvider.Resolve<IUserService>();
+        User = Network.GetMessageChannelBy("User");
+        Chatting = Network.GetMessageChannelBy("Chatting");
+    }
+#nullable disable
+    private IDatabase Db {
+        get;
+        set;
+    }
+    private INetwork Network {
+        get;
+        set;
+    }
+    private IUserService Users {
+        get;
+        set;
+    }
+    private IMessageChannel User {
+        get;
+        set;
+    }
+    private IMessageChannel Chatting {
+        get;
+        set;
+    }
+    private ILogger Logger {
+        get;
+        set;
+    }
+#nullable enable
 }

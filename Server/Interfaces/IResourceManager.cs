@@ -1,13 +1,10 @@
 ﻿namespace ChattingRoom.Server.Interfaces;
-public interface IResourceManager : IInjectable
-{
-    public string LogsFolder
-    {
+public interface IResourceManager : IInjectable {
+    public string LogsFolder {
         get;
     }
 
-    public string SettingsFile
-    {
+    public string SettingsFile {
         get;
     }
 }

@@ -1,25 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AssemblyName>ChattingRoom.CmdClient</AssemblyName>
-    <RootNamespace>ChattingRoom.CmdClient</RootNamespace>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>ChattingRoom.CmdClient</AssemblyName>
+        <RootNamespace>ChattingRoom.CmdClient</RootNamespace>
         <AppendTargetFrameworkToOutputPath>Flase</AppendTargetFrameworkToOutputPath>
 
-    <StartupObject>ChattingRoom.CmdClient.Bootstrap</StartupObject>
+        <StartupObject>ChattingRoom.CmdClient.Bootstrap</StartupObject>
 
-    <Configurations>Debug;Release;Co</Configurations>
-  </PropertyGroup>
+        <Configurations>Debug;Release;Co</Configurations>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Core\Core.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Core\Core.csproj"/>
+    </ItemGroup>
 
 </Project>

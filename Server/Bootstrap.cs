@@ -1,8 +1,6 @@
 ﻿namespace ChattingRoom.Server;
-public class Bootstrap
-{
-    public static void Main(string[] args)
-    {
+public static class Bootstrap {
+    public static void Main(string[] args) {
         AppDomain.CurrentDomain.ProcessExit += OnQuit;
         Assets.InitConfigs();
         Assets.LoadConfigs();
@@ -11,8 +9,7 @@ public class Bootstrap
         server.Start();
     }
 
-    private static void OnQuit(object? sender, EventArgs e)
-    {
+    private static void OnQuit(object? sender, EventArgs e) {
         Assets.SaveConfig();
     }
 }

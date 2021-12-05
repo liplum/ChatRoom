@@ -1,13 +1,10 @@
 ﻿namespace ChattingRoom.Core;
-public interface IServiceProvider
-{
-    public object Reslove(Type inType);
+public interface IServiceProvider {
+    public object Resolve(Type inType);
 }
 
-public static class ServiceProviderHelper
-{
-    public static In Reslove<In>(this IServiceProvider provider)
-    {
-        return (In)provider.Reslove(typeof(In));
+public static class ServiceProviderHelper {
+    public static TIn Resolve<TIn>(this IServiceProvider provider) {
+        return (TIn)provider.Resolve(typeof(TIn));
     }
 }

@@ -1,13 +1,12 @@
 ﻿using ChattingRoom.Core.Networks;
 
 namespace ChattingRoom.Server.Interfaces;
-public interface IUserService : IInjectable
-{
-    public void RegisterUser(string account, string clear_password, DateTime registerTime);
+public interface IUserService : IInjectable {
+    public void RegisterUser(string account, string clearPassword, DateTime registerTime);
 
-    public bool Verify(string account, string clear_password);
+    public bool Verify(string account, string clearPassword);
 
-    public bool VerifyAndOnline(NetworkToken clientToken, DateTime loginTime, string account, string clear_password, [MaybeNullWhen(false)] out IUserEntity entity);
+    public bool VerifyAndOnline(NetworkToken clientToken, DateTime loginTime, string account, string clearPassword, [MaybeNullWhen(false)] out IUserEntity entity);
 
     public IUserEntity? FindOnline(string account);
 
