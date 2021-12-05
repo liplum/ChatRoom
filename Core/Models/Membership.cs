@@ -5,10 +5,10 @@ namespace ChattingRoom.Core.DB.Models;
 #nullable disable
 [DefaultValue(None)]
 public enum MemberType {
-    None,
-    Member,
-    Owner,
-    Admin
+    None = 0,
+    Member = 1,
+    Owner = 2,
+    Admin = 3,
 }
 
 public class Membership {
@@ -17,12 +17,14 @@ public class Membership {
     public string UserAccount { get; set; }
 
     public User User { get; set; }
-
+    [Required, DefaultValue(MemberType.None)]
     public MemberType Type { get; set; }
 
     public ChatRoom ChatRoom { get; set; }
 
-    [Required] [DefaultValue(true)] public bool IsActive { get; set; }
+    [Required, DefaultValue(true)]
+    public bool IsActive { get; set; }
 
-    [Required] public DateTime CreatedTime { get; set; }
+    [Required]
+    public DateTime CreatedTime { get; set; }
 }

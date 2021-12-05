@@ -58,6 +58,8 @@ public class ChatRoomService : IChatRoomService {
             CreatedTime = createdTime,
             MemberCount = 1
         };
+        Db.ChatRoomTable.Add(room);
+        
         var membership = new Membership {
             IsActive = true,
             User = user,
@@ -68,8 +70,6 @@ public class ChatRoomService : IChatRoomService {
         room.Members.Add(membership);
         user.Joined.Add(membership);
         user.CreatedRoomCount++;
-        Db.ChatRoomTable.Add(room);
-        Db.MembershipTable.Add(membership);
         Db.SaveChange();
         chatRoomId = room.ChatRoomId;
         Logger.SendTip($"Chat room {chatRoomId}-{roomName} was created by {user.Account}.");
@@ -90,7 +90,6 @@ public class ChatRoomService : IChatRoomService {
                 Type = MemberType.Member,
                 CreatedTime = joinTime
             };
-            Db.MembershipTable.Add(membership);
             room.Members.Add(membership);
             user.Joined.Add(membership);
         }

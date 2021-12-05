@@ -15,12 +15,22 @@ public class CtrContext : DbContext {
         get;
         set;
     }
-
     public DbSet<Membership> Memberships {
         get;
         set;
     }
-
+    public DbSet<Friendship> Friendships {
+        get;
+        set;
+    }
+    public DbSet<FriendRequest> FriendRequests {
+        get;
+        set;
+    }
+    public DbSet<JoinRoomRequest> JoinRoomRequests {
+        get;
+        set;
+    }
     public string DbPath {
         get;
         set;
@@ -45,5 +55,17 @@ public class CtrContext : DbContext {
             .HasOne(m => m.ChatRoom)
             .WithMany(room => room.Members)
             .HasForeignKey(m => m.ChatRoomId);
+        
+        b.Entity<Friendship>()
+            .HasKey(f => new { f.UserAAccount, f.UserBAccount });
+        b.Entity<Friendship>()
+            .HasOne(f => f.UserB)
+            .WithMany(u => u.FriendOf)
+            .HasForeignKey(f => f.UserBAccount)
+            .OnDelete(DeleteBehavior.Restrict);
+        b.Entity<Friendship>()
+            .HasOne(f => f.UserA)
+            .WithMany(u => u.Friends)
+            .HasForeignKey(f => f.UserAAccount);
     }
 }

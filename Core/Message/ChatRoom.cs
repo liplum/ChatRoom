@@ -93,7 +93,7 @@ public class CreateRoomReqMsg : IMessage {
 
     public void Serialize(dynamic json) {
         json.Account = Account;
-        json.ChatRoomName = ChatRoomName;
+        json.ChatRoomName = ChatRoomName!;
         json.VCode = VerificationCode;
     }
 
