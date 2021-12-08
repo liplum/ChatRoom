@@ -1,5 +1,5 @@
 from ui.control.textblocks import *
-from ui.panels import *
+from ui.panel.stacks import align_left, horizontal, stack
 from ui.tab.shared import *
 from ui.tabs import *
 

@@ -14,7 +14,8 @@ def sign(number: int):
 
 class numeric_up_down(control):
 
-    def __init__(self, minv: Optional[int] = None, maxv: Optional[int] = None, theme: plus_minus_theme = operator):
+    def __init__(self, minv: Optional[int] = None, maxv: Optional[int] = None, pg_updown_step: Optional[int] = 10,
+                 theme: plus_minus_theme = operator):
         super().__init__()
         self.theme = theme
         self._number = 0

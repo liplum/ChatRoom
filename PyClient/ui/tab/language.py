@@ -1,5 +1,6 @@
 from core.settings import entity
 from ui.cmd_modes import common_hotkey
+from ui.panel.stacks import stack
 from ui.panels import *
 from ui.tab.shared import *
 from ui.tabs import *

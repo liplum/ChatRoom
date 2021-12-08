@@ -1,3 +1,4 @@
+from itertools import islice
 from typing import Optional, Iterable, List
 
 import chars
@@ -254,6 +255,10 @@ class textbox(text_control):
         return True
 
     @property
+    def render_input_list(self) -> Iterable[str]:
+        return self._input_list
+
+    @property
     def limited_distext(self):
         if self.width == auto:
             return self.distext
@@ -274,8 +279,7 @@ class textbox(text_control):
 
         with StringIO() as s:
             cur = start
-            # TODO:Use itertools.islice
-            for char in self._input_list[start:end]:
+            for char in islice(self.render_input_list, start, end):
                 if cur == cursor_pos and self.show_cursor:
                     s.write(self.cursor_icon)
                 s.write(char)
@@ -293,7 +297,7 @@ class textbox(text_control):
         cursor_pos = self._cursor
         with StringIO() as s:
             cur = 0
-            for char in self._input_list:
+            for char in self.render_input_list:
                 if cur == cursor_pos and self.show_cursor:
                     s.write(self.cursor_icon)
                 s.write(char)

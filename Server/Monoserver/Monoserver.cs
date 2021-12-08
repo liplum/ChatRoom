@@ -73,7 +73,7 @@ public partial class Monoserver : IServer {
     }
 
     private void InitUserChannel() {
-        User = NetworkService.New("User");
+        User = NetworkService.New(Names.Channel.User);
         User.RegisterMessage<AuthenticationReqMsg, AuthenticationMsgHandler>();
         User.RegisterMessage<AuthenticationResultMsg>();
         User.RegisterMessage<RegisterRequestMsg, RegisterRequestMsgHandler>();
@@ -84,7 +84,13 @@ public partial class Monoserver : IServer {
         User.RegisterMessage<CreateRoomResultMsg>();
         User.RegisterMessage<JoinedRoomsInfoMsg>();
 
-        Chatting = NetworkService.New("Chatting");
+        Friend = NetworkService.New(Names.Channel.Friend);
+        Friend.RegisterMessage<AddFriendReqMsg, AddFriendReqMsgHandler>();
+        Friend.RegisterMessage<AddFriendReplyMsg, AddFriendReplyMsgHandler>();
+        Friend.RegisterMessage<ReceivedFriendRequestsInfoMsg>();
+        Friend.RegisterMessage<SentFriendRequestsResultsMsg>();
+
+        Chatting = NetworkService.New(Names.Channel.Chatting);
         Chatting.RegisterMessage<ChattingMsg, ChattingMsgHandler>();
     }
 
@@ -118,6 +124,10 @@ public partial class Monoserver : IServer {
         private set;
     }
     public IMessageChannel Chatting {
+        get;
+        private set;
+    }
+    public IMessageChannel Friend {
         get;
         private set;
     }

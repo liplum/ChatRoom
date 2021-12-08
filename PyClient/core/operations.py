@@ -59,3 +59,11 @@ def send_text(network: inetwork, user_info: uentity, room_id: roomid, text: str)
     msg.vcode = user_info.vcode
     msg.account = user_info.account
     chatting.send(server, msg)
+
+
+def make_friend(network: inetwork, user_info: uentity, to: userid):
+    server = user_info.server
+    connect(network, server)
+    friend = network.get_channel("Friend")
+    # TODO:Complete this
+    friend.send(server, msg)

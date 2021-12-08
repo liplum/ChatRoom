@@ -6,7 +6,7 @@ from collections import namedtuple
 from functools import wraps
 from socket import socket, AF_INET, SOCK_STREAM
 from threading import Thread, RLock
-from typing import Dict, Tuple, Callable, List,Optional
+from typing import Dict, Tuple, Callable, List, Optional
 
 from core import converts
 from core.shared import server_token
@@ -155,8 +155,20 @@ class inetwork(ABC):
     def connect(self, server: server_token, strict: bool = False) -> bool:
         """
 
-        :param strict:
         :param server:
+        :param strict:
+        :return:
+        :exception: CannotConnectError only strict mode
+        """
+        pass
+
+    @abstractmethod
+    def connectAsync(self, server: server_token, callback: Callable[[], None], strict: bool = False) -> bool:
+        """
+
+        :param server:
+        :param callback:
+        :param strict:
         :return:
         :exception: CannotConnectError only strict mode
         """
@@ -248,6 +260,8 @@ class network(inetwork):
             raise ChannelNotFoundError(name)
 
     def connect(self, server: server_token, strict: bool = False) -> bool:
+        if server in self.sockets.keys():
+            return True
         skt = socket(AF_INET, SOCK_STREAM)
         skt.settimeout(5)
         succeed = False
@@ -274,6 +288,9 @@ class network(inetwork):
         listen.start()
         self.on_connected(self, server)
         return True
+
+    def connectAsync(self, server: server_token, callback: Callable[[], None], strict: bool = False) -> bool:
+        pass
 
     def _add_socket(self, server: server_token, skt: socket, listen: Thread) -> None:
         self.sockets[server] = (skt, listen)

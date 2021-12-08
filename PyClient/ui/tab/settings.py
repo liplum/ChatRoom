@@ -3,10 +3,12 @@ from ui.cmd_modes import common_hotkey
 from ui.control.checkboxes import checkbox
 from ui.control.numeric_up_downs import numeric_up_down
 from ui.control.textboxes import textbox
+from ui.control.xtbox import xtextbox
+from ui.panel.grids import gen_grid
+from ui.panel.stacks import horizontal, stack
 from ui.panels import *
 from ui.tab.shared import *
 from ui.tabs import *
-from ui.xtbox import xtextbox
 
 OnSave = Callable[[], NoReturn]
 Ctrl_OnSave = Tuple[control, OnSave]

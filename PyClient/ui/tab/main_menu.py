@@ -1,6 +1,7 @@
 from core.settings import entity
 from ui.cmd_modes import common_hotkey
 from ui.control.display_boards import display_board, DCenter, DRight
+from ui.panel.stacks import align_left, stack
 from ui.panels import *
 from ui.tab.copyright import copyright_tab
 from ui.tab.language import language_tab
@@ -154,9 +155,6 @@ class main_menu_tab(tab):
             if v is True:
                 self.client.stop()
             self._on_quited = False
-            yield Finished
-        else:
-            yield Finished
 
     def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
         self.main.switch_to_first_or_default_item()

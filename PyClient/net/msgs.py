@@ -7,7 +7,7 @@ from ui.core import *
 from ui.outputs import CmdFgColor, tintedtxt
 from ui.tab.chat import fill_or_add_chat_tab
 from ui.tab.popups import waiting_popup, base_popup
-from utils import get, not_none, to_seconds
+from utils import get, to_seconds
 
 k_Account = "Account"
 k_Password = "Password"
@@ -21,6 +21,13 @@ k_OK = "OK"
 k_Result = "Result"
 k_AllJoined = "AllJoined"
 k_Cause = "Cause"
+k_Sender = "Sender"
+k_Receiver = "Receiver"
+k_From = "From"
+k_To = "To"
+k_RequestID = "RequestID"
+k_FriendRequests = "FriendRequests"
+k_Results = "Results"
 
 
 class authentication_req(msg):
@@ -165,14 +172,11 @@ class chatting(msg):
     channel = "Chatting"
 
     def read(self, json):
-        account = get(json, k_Account)
+        self.account = get(json, k_Account)
         self.text = get(json, k_Text)
         tiemstamp = get(json, k_TimeStamp)
         room_id = get(json, k_ChatRoomID)
-        if not not_none(account, self.text, tiemstamp, room_id):
-            raise ValueError()
         self.room_id = room_id
-        self.account = account
         self.send_time = datetime.fromtimestamp(tiemstamp)
         self.vcode = get(json, k_VCode)
 
@@ -186,6 +190,32 @@ class chatting(msg):
     @staticmethod
     def handle(self: "chatting", context: Context):
         client, channel, token, network = context
+        client.msg_manager.receive(token, self.room_id, (self.send_time, self.account, self.text))
+
+
+class whisper(msg):
+    name = "Whisper"
+    channel = "Chatting"
+
+    def read(self, json):
+        self.sender = get(json, k_Sender)
+        self.receiver = get(json, k_Receiver)
+        self.text = get(json, k_Text)
+        tiemstamp = get(json, k_TimeStamp)
+        self.send_time = datetime.fromtimestamp(tiemstamp)
+        self.vcode = get(json, k_VCode)
+
+    def write(self, json):
+        json[k_Sender] = self.sender
+        json[k_Receiver] = self.receiver
+        json[k_Text] = self.text
+        json[k_TimeStamp] = to_seconds(self.send_time)
+        json[k_VCode] = self.vcode
+
+    @staticmethod
+    def handle(self: "chatting", context: Context):
+        client, channel, token, network = context
+        # TODO:Support whisper
         client.msg_manager.receive(token, self.room_id, (self.send_time, self.account, self.text))
 
 
@@ -317,3 +347,69 @@ class joined_rooms_info(msg):
                 else:
                     tab = chat.find_best_incomplete(tablist, token, account, room_id, self.vcode)
                     fill_or_add_chat_tab(win, tab, token, self.account, room_id, self.vcode)
+
+
+class add_friend_req(msg):
+    name = "AddFriendReq"
+    channel = "Friend"
+
+    def read(self, json):
+        self.from_account = get(json, k_From)
+        self.to_account = get(json, k_To)
+        self.vcode = get(json, k_VCode)
+
+    def write(self, json):
+        json[k_From] = self.from_account
+        json[k_To] = self.to_account
+        json[k_VCode] = self.vcode
+
+
+class add_friend_reply(msg):
+    name = "AddFriendReply"
+    channel = "Friend"
+    Null = 0
+    Accept = 1
+    Refuse = 2
+    Dismiss = 3
+
+    def read(self, json):
+        self.account = get(json, k_Account)
+        self.vcode = get(json, k_VCode)
+        self.request_id = get(json, k_RequestID)
+        self.result = get(json, k_Result)
+
+    def write(self, json):
+        json[k_Account] = self.account
+        json[k_VCode] = self.vcode
+        json[k_RequestID] = self.request_id
+        json[k_Result] = self.result
+
+
+class received_friend_requests_info(msg):
+    name = "ReceivedFriendRequestsInfo"
+    channel = "Friend"
+
+    def read(self, json):
+        self.account = get(json, k_Account)
+        self.vcode = get(json, k_VCode)
+        self.friend_requests = get(json, k_FriendRequests)
+
+    def write(self, json):
+        json[k_Account] = self.account
+        json[k_VCode] = self.vcode
+        json[k_FriendRequests] = self.friend_requests
+
+
+class sent_friend_requests_results(msg):
+    name = "SentFriendRequestsResults"
+    channel = "Friend"
+
+    def read(self, json):
+        self.account = get(json, k_Account)
+        self.vcode = get(json, k_VCode)
+        self.results = get(json, k_Results)
+
+    def write(self, json):
+        json[k_Account] = self.account
+        json[k_VCode] = self.vcode
+        json[k_Results] = self.results

@@ -1,8 +1,9 @@
-from ui import panels as panels
-from ui.panels import gen_grid, column, stack
+import ui.panel.stacks
+from ui.control.xtbox import xtextbox
+from ui.panel.grids import column, gen_grid
+from ui.panel.stacks import stack
 from ui.tab.shared import *
 from ui.tabs import *
-from ui.xtbox import xtextbox
 
 
 class grid_tab(tab):
@@ -18,10 +19,10 @@ class grid_tab(tab):
         account_tbox = xtextbox(excepted_chars={keys.k_enter})
         account_tbox.space_placeholder = "_"
         account_stack = stack()
-        account_stack.over_range = panels.expend
+        account_stack.over_range = ui.panel.stacks.expend
         account_stack.add(label("Account"))
         account_stack.add(account_tbox)
-        account_stack.orientation = panels.horizontal
+        account_stack.orientation = ui.panel.stacks.horizontal
         b = button("Button", lambda: None)
         b.margin = 2
         # self.grid[0, 0] = account_stack

@@ -44,7 +44,7 @@ public partial class Monoserver {
 
         public void ReceiveMessage(string messageId, dynamic jsonContent, NetworkToken? token = null) {
             if (Id2MsgTypeAndHandler.TryGetValue(messageId, out var info)) {
-                dynamic? msg;
+                IMessage msg;
                 try {
                     msg = info.msgGetter();
                 }
@@ -52,31 +52,28 @@ public partial class Monoserver {
                     Network.Logger!.SendError($"Cannot create Message<{messageId}> object");
                     return;
                 }
+                try {
+                    msg.Deserialize(jsonContent);
+                }
+                catch (Exception e) {
+                    Network.Logger!.SendError(
+                        $"Cannot deserialize Message<{messageId}> from \"{jsonContent}\"\nBecause {e.Message}\n{e.StackTrace}");
+                    return;
+                }
 
-                if (msg is not null) {
-                    try {
-                        msg.Deserialize(jsonContent);
-                    }
-                    catch (Exception e) {
-                        Network.Logger!.SendError(
-                            $"Cannot deserialize Message<{messageId}> from \"{jsonContent}\"\nBecause {e.Message}\n{e.StackTrace}");
-                        return;
-                    }
-
-                    var handler = info.handler;
-                    OnMessageReceived?.Invoke(token, msg, handler);
-                    if (handler is null) return;
-                    var context = new MessageContext(Network.Server, this) {
-                        ClientToken = token
-                    };
-                    handler.Handle(msg, context);
-                    try {
-                        OnMessageHandled?.Invoke(token, msg, handler);
-                    }
-                    catch (Exception e) {
-                        Network.Logger!.SendError(
-                            $"Cannot handle Message<{messageId}> from \"{jsonContent}\"\nBecause {e.Message}\n{e.StackTrace}");
-                    }
+                var handler = info.handler;
+                OnMessageReceived?.Invoke(token, msg, handler);
+                if (handler is null) return;
+                var context = new MessageContext(Network, Network.Server, this) {
+                    ClientToken = token
+                };
+                handler.Handle(msg, context);
+                try {
+                    OnMessageHandled?.Invoke(token, msg, handler);
+                }
+                catch (Exception e) {
+                    Network.Logger!.SendError(
+                        $"Cannot handle Message<{messageId}> from \"{jsonContent}\"\nBecause {e.Message}\n{e.StackTrace}");
                 }
             }
             else {

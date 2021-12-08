@@ -12,6 +12,8 @@ public interface IUserService : IInjectable {
 
     public IUserEntity? FindOnline(NetworkToken token);
 
+    public bool TryGetByAccount(string account,[NotNullWhen(true)] out User? user);
+
     public bool DeleteUser(string account);
 
     public bool RecoverUser(string account);

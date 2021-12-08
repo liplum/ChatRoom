@@ -10,8 +10,8 @@ public class ChattingMsgHandler : IMessageHandler<ChattingMsg> {
         var user = userService.FindOnline(msg.Account);
         if (user is null || !user.Info.IsActive || user.VerificationCode != vcode) return;
         var ctrService = server.ServiceProvider.Resolve<IChatRoomService>();
-        var room = ctrService.ById(msg.ChatRoomId);
-        if (room is null) return;
-        ctrService.ReceiveNewText(room, user, msg.Text, msg.SendTime);
+        if (ctrService.TryGetById(msg.ChatRoomId, out var room)) {
+            ctrService.ReceiveNewText(room, user, msg.Text, msg.SendTime);
+        }
     }
 }

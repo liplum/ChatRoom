@@ -4,12 +4,13 @@ public interface IMessageHandler<in T> where T : IMessage {
 }
 
 public class MessageContext {
-    public MessageContext(IServer server, IMessageChannel channel) {
+    public MessageContext(INetwork network,IServer server, IMessageChannel channel) {
+        Network = network;
         Server = server;
         Channel = channel;
     }
-
-    public IServer Server { get; init; }
-    public IMessageChannel Channel { get; init; }
+    public INetwork Network { get; }
+    public IServer Server { get; }
+    public IMessageChannel Channel { get; }
     public NetworkToken? ClientToken { get; init; }
 }

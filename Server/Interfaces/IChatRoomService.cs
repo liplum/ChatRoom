@@ -1,8 +1,8 @@
 ﻿namespace ChattingRoom.Server.Interfaces;
 public interface IChatRoomService : IInjectable {
-    public ChatRoom? ById(int chatRoomId);
+    public bool TryGetById(int chatRoomId, [NotNullWhen(true)] out ChatRoom? chatRoom);
 
-    public void ReceiveNewText(ChatRoom room, IUserEntity sender, string text, DateTime cendTimeClient);
+    public void ReceiveNewText(ChatRoom room, IUserEntity sender, string text, DateTime sendTimeClient);
 
     public MemberType GetRelationship(ChatRoom room, User user, out Membership? membership);
 

@@ -11,7 +11,9 @@ public class AuthenticationMsgHandler : IMessageHandler<AuthenticationReqMsg> {
         var server = context.Server;
         var account = msg.Account;
         var password = msg.Password;
-        var userService = server.ServiceProvider.Resolve<IUserService>();
+        var sp = server.ServiceProvider;
+        var userService = sp.Resolve<IUserService>();
+        var channel = context.Channel;
         AuthenticationResultMsg reply;
         if (userService.VerifyAndOnline(target, loginTime, account, password, out var entity)) {
             var vcode = entity.VerificationCode;
@@ -20,26 +22,24 @@ public class AuthenticationMsgHandler : IMessageHandler<AuthenticationReqMsg> {
                 Account = account,
                 VerificationCode = vcode
             };
-            var logger = server.ServiceProvider.Resolve<ILogger>();
+            var logger = sp.Resolve<ILogger>();
             logger.SendTip($"[User][Authentication]User \"{account}\" authentication succeed.");
-            context.Channel.SendMessage(target, reply);
+            channel.SendMessage(target, reply);
 
-            var chatRoom = server.ServiceProvider.Resolve<IChatRoomService>();
-            var joined = (from r in chatRoom.AllJoinedRoom(entity.Info) select new { ChatRoomID = r.ChatRoomId, r.Name }).ToArray();
-            context.Channel.SendMessage(target, new JoinedRoomsInfoMsg {
-                Account = account,
-                VerificationCode = vcode,
-                AllJoined = joined
-            });
+            var chatRoom = sp.Resolve<IChatRoomService>();
+            Shared.SendAllJoinedRoomList(channel, chatRoom, entity);
+            var friend = context.Network.GetMessageChannelBy(Names.Channel.Friend)!;
+            Shared.SendUnhandledRequests(sp, friend, entity);
         }
         else {
             reply = new() {
                 Ok = false,
                 Account = account
             };
-            var logger = server.ServiceProvider.Resolve<ILogger>();
+            var logger = sp.Resolve<ILogger>();
             logger.SendTip($"[User][Authentication]User \"{account}\" authentication failed.");
-            context.Channel.SendMessage(target, reply);
+            channel.SendMessage(target, reply);
         }
     }
+
 }

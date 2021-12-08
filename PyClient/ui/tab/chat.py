@@ -8,11 +8,11 @@ from core.settings import settings, entity
 from core.shared import *
 from core.shared import server_token, userid, roomid, uentity
 from ui.cmd_modes import cmd_mode, cmd_hotkey_mode
+from ui.control.xtbox import xtextbox
 from ui.k import kbinding
 from ui.tab.shared import *
 from ui.tabs import *
 from ui.uistates import ui_state, ui_smachine
-from ui.xtbox import xtextbox
 from utils import get, all_none
 
 
@@ -346,24 +346,6 @@ class chat_tab(tab):
         else:
             tip = i18n.trans('tabs.chat_tab.no_connection')
         buf.addtext(text=tip, bkcolor=CmdBkColor.White, fgcolor=CmdFgColor.Black, end='\n')
-
-    @property
-    def distext(self) -> str:
-        if len(self.history) < self.max_display_height:
-            displayed = self.history
-            have_rest = True
-        else:
-            displayed = self.history[-self.max_display_height:]
-            have_rest = False
-
-        if have_rest and self.fill_until_max:
-            with StringIO() as s:
-                s.write(utils.compose(displayed, connector="\n"))
-                displayed_len = len(displayed)
-                s.write(utils.fill("", "\n", self.max_display_height - displayed_len))
-                return s.getvalue()
-        else:
-            return utils.compose(displayed, connector="\n")
 
     def on_input(self, char) -> Generator:
         self.sm.on_input(char)

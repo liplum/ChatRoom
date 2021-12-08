@@ -11,6 +11,20 @@ public class UserService : IUserService {
         get;
     } = new();
 
+    public bool TryGetByAccount(string account, [NotNullWhen(true)] out User? user) {
+        var uentity = FindOnline(account);
+        if (uentity is not null) {
+            user = uentity.Info;
+            return true;
+        }
+        var target = (from u in Db.UserTable where u.Account == account select u).FirstOrDefault();
+        if (target is null || !target.IsActive) {
+            user = null;
+            return false;
+        }
+        user = target;
+        return true;
+    }
     public void RegisterUser(string account, string clearPassword, DateTime registerTime) {
         var encryptedPwd = clearPassword.Encrypted();
         Db.UserTable.Add(new() {

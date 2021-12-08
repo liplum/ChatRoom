@@ -4,6 +4,30 @@ using ChattingRoom.Core.Utils;
 namespace ChattingRoom.Core.Messages;
 [Msg("Chatting", Direction.ClientToServer, Direction.ServerToClient)]
 public class ChattingMsg : IMessage {
+#nullable disable
+    public string Account {
+        get;
+        set;
+    }
+    public string Text {
+        get;
+        set;
+    }
+#nullable enable
+    public DateTime SendTime {
+        get;
+        set;
+    }
+
+    public int ChatRoomId {
+        get;
+        set;
+    }
+
+    public int VerificationCode {
+        get;
+        set;
+    }
     public void Deserialize(dynamic json) {
         Text = json.Text;
         Account = json.Account;
@@ -20,30 +44,4 @@ public class ChattingMsg : IMessage {
         json.TimeStamp = new DateTimeOffset(SendTime).ToUnixTimeSeconds();
         json.VCode = VerificationCode;
     }
-#nullable disable
-    public string Account {
-        get;
-        set;
-    }
-    public string Text {
-        get;
-        set;
-    }
-
-    public DateTime SendTime {
-        get;
-        set;
-    }
-
-    public int ChatRoomId {
-        get;
-        set;
-    }
-
-    public int VerificationCode {
-        get;
-        set;
-    }
-
-#nullable enable
 }

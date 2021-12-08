@@ -4,19 +4,9 @@ using ChattingRoom.Server.Interfaces;
 
 namespace ChattingRoom.Server.Services;
 public class ChatRoomService : IChatRoomService {
-    private readonly ConcurrentDictionary<int, ChatRoom> _cache = new();
-    public ChatRoom? ById(int chatRoomId) {
-        if (_cache.TryGetValue(chatRoomId, out var room)) {
-            if (room.IsActive) return room;
-            _cache.TryRemove(chatRoomId, out _);
-            return null;
-        }
-        var target = (from cr in Db.ChatRoomTable where cr.ChatRoomId == chatRoomId select cr).FirstOrDefault();
-        if (target is not null && target.IsActive) {
-            _cache[chatRoomId] = target;
-            return target;
-        }
-        return null;
+    public bool TryGetById(int chatRoomId, [NotNullWhen(true)] out ChatRoom? chatRoom) {
+        chatRoom = (from cr in Db.ChatRoomTable where cr.ChatRoomId == chatRoomId && cr.IsActive select cr).FirstOrDefault();
+        return chatRoom is not null;
     }
 
     public MemberType GetRelationship(ChatRoom room, User user, out Membership? membership) {
@@ -59,7 +49,7 @@ public class ChatRoomService : IChatRoomService {
             MemberCount = 1
         };
         Db.ChatRoomTable.Add(room);
-        
+
         var membership = new Membership {
             IsActive = true,
             User = user,
@@ -101,8 +91,7 @@ public class ChatRoomService : IChatRoomService {
     }
 
     public bool IsExisted(int chatRoomId, [NotNullWhen(true)] out ChatRoom? chatRoom) {
-        chatRoom = ById(chatRoomId);
-        return chatRoom is not null;
+        return TryGetById(chatRoomId, out chatRoom);
     }
 
     public ChatRoom[] AllJoinedRoom(User user) {

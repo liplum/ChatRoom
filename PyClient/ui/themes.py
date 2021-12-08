@@ -133,3 +133,12 @@ class plus_minus_theme:
     @property
     def minus(self) -> str:
         return self._minus
+
+
+class password_theme:
+    def __init__(self, hidden: str):
+        self._hidden = hidden[0]
+
+    @property
+    def hidden(self):
+        return self._hidden

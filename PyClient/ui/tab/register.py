@@ -3,11 +3,13 @@ from core import operations as op
 from core.shared import *
 from net.msgs import register_result
 from ui.cmd_modes import common_hotkey
+from ui.control.xtbox import xtextbox
+from ui.panel.grids import gen_grid
+from ui.panel.stacks import horizontal, stack
 from ui.panels import *
 from ui.tab.popups import ok_popup_gen, waiting_popup
 from ui.tab.shared import *
 from ui.tabs import *
-from ui.xtbox import xtextbox
 from utils import get
 
 RR = register_result
@@ -174,11 +176,6 @@ class register_tab(tab):
                 p = self.new_popup(ok_popup_gen(tip, lambda: i18n.trans("controls.error")))
                 self.win.popup(p)
                 yield Suspend
-                yield Finished
-            else:
-                yield Finished
-        else:
-            yield Finished
 
     def paint_on(self, buf: buffer):
         self.main.paint_on(buf)

@@ -1,8 +1,8 @@
-from ui import panels as panels
-from ui.panels import stack
+import ui.panel.stacks
+from ui.control.xtbox import xtextbox
+from ui.panel.stacks import stack
 from ui.tab.shared import *
 from ui.tabs import *
-from ui.xtbox import xtextbox
 
 
 class test_tab(tab):
@@ -28,7 +28,7 @@ class test_tab(tab):
         account_stack = stack()
         account_stack.add(label("Account"))
         account_stack.add(self.account_tbox)
-        account_stack.orientation = panels.horizontal
+        account_stack.orientation = ui.panel.stacks.horizontal
         self.stack.add(account_stack)
         self.stack.add(label("Test Label B"))
         self.stack.add(label("Test"))

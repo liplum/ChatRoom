@@ -1,7 +1,7 @@
 import keys
 from ui.cmd_modes import common_hotkey
 from ui.control.display_boards import display_board
-from ui.panels import stack
+from ui.panel.stacks import stack
 from ui.tab.shared import *
 from ui.tabs import *
 from ui.themes import *
