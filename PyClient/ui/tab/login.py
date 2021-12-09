@@ -4,7 +4,7 @@ from core.shared import *
 from ui.cmd_modes import common_hotkey
 from ui.control.passwordboxes import passwordbox, spot
 from ui.control.xtbox import xtextbox
-from ui.panel.grids import gen_grid
+from ui.panel.grids import gen_grid,column
 from ui.panel.stacks import horizontal, stack
 from ui.panels import *
 from ui.tab.chat import chat_tab, fill_or_add_chat_tab
@@ -12,7 +12,6 @@ from ui.tab.popups import waiting_popup, ok_popup_gen
 from ui.tab.shared import *
 from ui.tabs import *
 from utils import get
-
 
 class login_tab(tab):
 

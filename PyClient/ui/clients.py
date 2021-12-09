@@ -1,4 +1,5 @@
 import json
+import platform
 import traceback
 
 import GLOBAL
@@ -16,6 +17,8 @@ from ui.core import iclient
 from ui.k import cmdkey
 from ui.windows import window
 from utils import get
+
+system_type = platform.system()
 
 
 class client(iclient):
@@ -52,21 +55,25 @@ class client(iclient):
         # services register event
         self.on_service_register(self, ct)
 
-        self._network: net.inetwork = ct.resolve(net.inetwork)
-        self.inpt: _input.iinput = ct.resolve(_input.iinput)
-        self._logger: output.ilogger = ct.resolve(output.ilogger)
-        self.logger.output_to_cmd = False
+        self.filer: ifiler = ct.resolve(ifiler)
         if self.root_path is None:
             dirpath, filepath = utils.get_executed_path()
             self.root_path = dirpath
         if not self.check_file_permission():
             self.root_path = ""
 
-        self.filer: ifiler = ct.resolve(ifiler)
         self.filer.root_path = self.root_path
+        self._network: net.inetwork = ct.resolve(net.inetwork)
+        self.inpt: _input.iinput = ct.resolve(_input.iinput)
+        self._logger: output.ilogger = ct.resolve(output.ilogger)
+        self.logger.output_to_cmd = False
+        self.logger.startup_screen = GLOBAL.LOGO
+        self.logger.initialize()
+
         self._displayer: output.idisplay = ct.resolve(output.idisplay)
         self.cmd_manger: cmdmanager = ct.resolve(cmdmanager)
         self.logger.msg("[Client]Service component initialized.")
+        self.logger.msg(f"[Client]Client starts up on {system_type}.")
         self._msg_manager: imsgmager = ct.resolve(imsgmager)
 
         if GLOBAL.DEBUG:
@@ -93,7 +100,7 @@ class client(iclient):
 
         """
         self.winsize = output.get_winsize()
-        self.winsize_monitor = Thread(target=self.monitor_winsize)
+        self.winsize_monitor = Thread(target=self.monitor_winsize,name="SizeMonitor")
         self.winsize_monitor.daemon = True
         """
 
@@ -169,8 +176,8 @@ class client(iclient):
             self.msg_manager.save_all()
             self.win.stop()
         except Exception as e:
-            self.logger.error(f"[Client]{e}\n{traceback.format_exc()}")
-        self.logger.tip("[Client]Programme quited.")
+            self.logger.error(f"[Client]{e}\n{traceback.format_exc()}", Async=False)
+        self.logger.tip("[Client]Programme quited.", Async=False)
         return
 
     def stop(self):

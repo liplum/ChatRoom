@@ -2,17 +2,9 @@ import sys
 
 import GLOBAL
 import utils
+from debugs import FakeStringIO
 from utils import get_at
 
-LOGO = (
-    "  ______ _                    _             ",
-    " / _____) |          _   _   (_)            ",
-    "| /     | | _   ____| |_| |_  _ ____   ____ ",
-    "| |     | || \ / _  |  _)  _)| |  _ \ / _  |",
-    "| \_____| | | ( ( | | |_| |__| | | | ( ( | |",
-    " \______)_| |_|\_||_|\___)___)_|_| |_|\_|| |",
-    "                                     (_____|",
-)
 IDE = False
 args = sys.argv
 if get_at(args, -1) == "-debug":
@@ -53,33 +45,6 @@ if IDE:
     utils.clear_screen = lambda: None
 
 if IDE:
-    class FakeStringIO:
-        def __init__(self):
-            self.text = ""
-
-        def write(self, s: str):
-            self.text += s
-
-        def getvalue(self) -> str:
-            return self.text
-
-        def close(self):
-            return
-
-        @staticmethod
-        def writable() -> bool:
-            return True
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc_val, exc_tb):
-            pass
-
-        def __repr__(self):
-            return self.text
-
-
     GLOBAL.StringIO = FakeStringIO
 else:
     import io
@@ -113,11 +78,14 @@ from ioc import container
 def init_plugin(client, registry: container):
     from ui.inputs import iinput
     if system_type == "Windows":
-        from ui import nonblocks
+        from ui.wins import nonblocks
         registry.register_singleton(iinput, nonblocks.nbinput)
     elif system_type == "Linux":
-        from ui import linux
-        registry.register_singleton(iinput, linux.nbinput)
+        from ui.linuxs import nonblocks
+        registry.register_singleton(iinput, nonblocks.nbinput)
+    else:
+        from ui.cmdprompt import cmd_input
+        registry.register_singleton(iinput, cmd_input)
 
     if IDE:
         from ui.cmdprompt import cmd_input

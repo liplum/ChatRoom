@@ -7,7 +7,7 @@ from core.settings import entity as settings_table
 from core.shared import *
 from net.networks import CannotConnectError
 from ui.cmd_modes import Cmd_Context
-from ui.windows import *
+from ui.wins import *
 
 cmds = []
 

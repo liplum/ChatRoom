@@ -8,10 +8,9 @@ from ui.core import iclient
 from ui.inputs import inbinput
 from ui.outputs import ilogger
 
-
 class nbinput(inbinput):
     """
-    non-blocking input on windows
+    non-blocking input on wins
     """
 
     def __init__(self):
@@ -20,7 +19,7 @@ class nbinput(inbinput):
 
     def initialize(self):
         if self.input_thread is None:
-            self.input_thread = Thread(target=self._listen_input)
+            self.input_thread = Thread(target=self._listen_input,name="Input")
             self.input_thread.daemon = True
             self.input_thread.start()
             self._lock = RLock()

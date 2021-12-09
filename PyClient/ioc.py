@@ -49,6 +49,8 @@ class container:
             res = _item.out_type()
         if not _item.injected:
             self.__inject(res)
+            if register_type != RegisterType.Transient:
+                _item.injected = True
         return res
 
     def __inject(self, obj: Any):
@@ -75,17 +77,20 @@ class container:
         _item.register_type = RegisterType.Instance
         _item.instance = instance
         _item.out_type = type(instance)
+        _item.injected = False
 
     def register_transient(self, in_type, out_type):
         _item = self.__get_or_gen_item(in_type)
         _item.register_type = RegisterType.Transient
         _item.out_type = type(out_type)
+        _item.injected = False
 
     def register_singleton(self, in_type, out_type):
         _item = self.__get_or_gen_item(in_type)
         _item.register_type = RegisterType.Singleton
         _item.instance = out_type()
         _item.out_type = type(out_type)
+        _item.injected = False
 
 
 class injectable:

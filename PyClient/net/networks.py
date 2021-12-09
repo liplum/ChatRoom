@@ -282,7 +282,7 @@ class network(inetwork):
                 self.logger.error(f"[Network]Cannot connect {server}")
                 return False
         skt.settimeout(None)
-        listen = Thread(target=self.__receive_datapack, args=(server, skt))
+        listen = Thread(target=self.__receive_datapack, args=(server, skt), name=str(token))
         listen.daemon = True
         self.lock(self._add_socket)(server, skt, listen)
         listen.start()

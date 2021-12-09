@@ -7,7 +7,6 @@ from typing import List
 from linuxchars import *
 from ui.inputs import inbinput
 
-
 class nbinput(inbinput):
     """
     non-blocking input on linux
@@ -21,7 +20,7 @@ class nbinput(inbinput):
 
     def initialize(self):
         if self.input_thread is None:
-            self.input_thread = Thread(target=self._listen_input)
+            self.input_thread = Thread(target=self._listen_input,name="Input")
             self.input_thread.daemon = True
             self.input_thread.start()
             self._lock = RLock()

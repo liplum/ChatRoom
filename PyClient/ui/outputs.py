@@ -2,8 +2,10 @@ import os
 import sys
 import traceback
 from abc import ABC, abstractmethod
+from collections import deque
 from datetime import datetime
-from typing import Optional, NoReturn, List, Tuple
+from threading import Thread, currentThread
+from typing import Optional, NoReturn, List, Tuple, Deque, Collection
 
 import GLOBAL
 import i18n
@@ -29,18 +31,38 @@ except:
 class ilogger:
     def __init__(self):
         self._logfile: Optional[str] = None
+        self._startup_screen: Optional[Collection[str]] = None
 
-    def msg(self, text) -> NoReturn:
+    def msg(self, text, Async=True) -> NoReturn:
         pass
 
-    def tip(self, text) -> NoReturn:
+    def tip(self, text, Async=True) -> NoReturn:
         pass
 
-    def warn(self, text) -> NoReturn:
+    def warn(self, text, Async=True) -> NoReturn:
         pass
 
-    def error(self, text) -> NoReturn:
+    def error(self, text, Async=True) -> NoReturn:
         pass
+
+    def initialize(self):
+        pass
+
+    @property
+    def output_to_cmd(self) -> bool:
+        raise NotImplementedError()
+
+    @output_to_cmd.setter
+    def output_to_cmd(self, value: bool):
+        raise NotImplementedError()
+
+    @property
+    def startup_screen(self) -> Optional[Collection[str]]:
+        return self._startup_screen
+
+    @startup_screen.setter
+    def startup_screen(self, value: Optional[Collection[str]]):
+        self._startup_screen = value
 
 
 CmdFgColorEnum = str
@@ -134,12 +156,19 @@ def tintedtxtIO(IO, text: str, style: Optional[CmdStyleEnum] = None, fgcolor: Op
         IO.write(end)
 
 
+Content = str
+Color = str
+Item = Tuple[Content, Color]
+
+
 class cmd_logger(ilogger):
 
     def __init__(self, output_to_cmd: bool = True):
         super().__init__()
-        self.output_to_cmd = output_to_cmd
+        self._output_to_cmd = output_to_cmd
         self.removed = False
+        self.initialized = False
+        self.log_queue: Deque[Item] = deque()
 
     def init(self, container):
         self.filer = container.resolve(ifiler)
@@ -166,21 +195,69 @@ class cmd_logger(ilogger):
     def logfile(self):
         return self.filer.get_file(f"log/{datetime.today().strftime('%Y%m%d')}.log")
 
-    def msg(self, text: str) -> NoReturn:
-        self.alert_print(text, AlertLevel.Msg)
+    def msg(self, text: str, Async=True) -> NoReturn:
+        self.alert(text, AlertLevel.Msg, Async)
 
-    def tip(self, text: str) -> NoReturn:
-        self.alert_print(text, AlertLevel.Tip)
+    def tip(self, text: str, Async=True) -> NoReturn:
+        self.alert(text, AlertLevel.Tip, Async)
 
-    def warn(self, text: str) -> NoReturn:
-        self.alert_print(text, AlertLevel.Warn)
+    def warn(self, text: str, Async=True) -> NoReturn:
+        self.alert(text, AlertLevel.Warn, Async)
 
-    def error(self, text: str) -> NoReturn:
-        self.alert_print(text, AlertLevel.Error)
+    def error(self, text: str, Async=True) -> NoReturn:
+        self.alert(text, AlertLevel.Error, Async)
 
-    def alert_print(self, text: str, level: Tuple[CmdFgColorEnum, str]) -> None:
+    def alert(self, text: str, level: Tuple[CmdFgColorEnum, str], Async=True) -> None:
+        if Async:
+            self.add_alert(text, level)
+        else:
+            self.alert_print(text, level)
+
+    def initialize(self):
+        self.initialized = True
         if not self.removed:
             self.delete_outdated()
+        self.render_startup_screen()
+        self.log_thread = Thread(target=self.__logging, name="Log")
+        self.log_thread.daemon = True
+        self.log_thread.start()
+
+    def render_startup_screen(self):
+        if self.startup_screen:
+            with open(self.logfile, "a+", encoding='utf-8') as log:
+                for s in self.startup_screen:
+                    if self.output_to_cmd:
+                        tinted_print(s)
+                    log.write(s)
+                    log.write('\n')
+
+    def __logging(self):
+        queue = self.log_queue
+        content = ""
+        while True:
+            try:
+                if len(queue) > 0:
+                    content, color = queue.popleft()
+                    if self.output_to_cmd:
+                        tinted_print(content, fgcolor=color)
+                    with open(self.logfile, "a+", encoding='utf-8') as log:
+                        log.write(content)
+                        log.write('\n')
+            except Exception as e:
+                self.error(f"[Log]Can't Log text \"{content}\" because of {e}")
+
+    def add_alert(self, text: str, level: Tuple[CmdFgColorEnum, str]) -> None:
+        color, label = level
+        time_stamp = datetime.now().strftime("%Y%m%d-%H:%M:%S")
+        cur_thread = currentThread()
+        thread_name = cur_thread.getName()
+        if GLOBAL.DEBUG:
+            t = f"{time_stamp}[{thread_name}][DEBUG][{label}]{text}"
+        else:
+            t = f"{time_stamp}[{thread_name}][{label}]{text}"
+        self.log_queue.append((t, color))
+
+    def alert_print(self, text: str, level: Tuple[CmdFgColorEnum, str]) -> None:
         color, label = level
         time_stamp = datetime.now().strftime("%Y%m%d-%H:%M:%S")
         if GLOBAL.DEBUG:
@@ -190,7 +267,16 @@ class cmd_logger(ilogger):
         if self.output_to_cmd:
             tinted_print(t, fgcolor=color)
         with open(self.logfile, "a+", encoding='utf-8') as log:
-            log.write(t + '\n')
+            log.write(t)
+            log.write('\n')
+
+    @property
+    def output_to_cmd(self) -> bool:
+        return self._output_to_cmd
+
+    @output_to_cmd.setter
+    def output_to_cmd(self, value: bool):
+        self._output_to_cmd = value
 
 
 class buffer:

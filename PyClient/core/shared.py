@@ -76,4 +76,10 @@ def to_server_token(full: Optional[str]) -> Optional[server_token]:
         return None
 
 
+def token_to_str(self: server_token) -> str:
+    return f"{self.ip}:{self.port}"
+
+
 server_token.by = to_server_token
+server_token.__str__ = token_to_str
+server_token.__repr__ = token_to_str

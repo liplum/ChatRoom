@@ -12,17 +12,7 @@ from ui.tab.settings import settings_tab
 from ui.tab.shared import *
 from ui.tabs import *
 from ui.themes import *
-
-LOGO = (
-    "  ______ _                    _             ",
-    " / _____) |          _   _   (_)            ",
-    "| /     | | _   ____| |_| |_  _ ____   ____ ",
-    "| |     | || \ / _  |  _)  _)| |  _ \ / _  |",
-    "| \_____| | | ( ( | | |_| |__| | | | ( ( | |",
-    " \______)_| |_|\_||_|\___)___)_|_| |_|\_|| |",
-    "                                     (_____|",
-)
-
+import GLOBAL
 
 def _get_theme_tube(): return tube
 
@@ -126,7 +116,7 @@ class main_menu_tab(tab):
         return i18n.trans("tabs.main_menu_tab.name")
 
     def gen_title_texts(self):
-        l: List[str] = list(LOGO)
+        l: List[str] = list(GLOBAL.LOGO)
         l.append(i18n.trans('info.software.author'))
         self._title_texts = l
 
