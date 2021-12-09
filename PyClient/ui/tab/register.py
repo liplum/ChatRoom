@@ -4,7 +4,7 @@ from core.shared import *
 from net.msgs import register_result
 from ui.cmd_modes import common_hotkey
 from ui.control.xtbox import xtextbox
-from ui.panel.grids import gen_grid,column
+from ui.panel.grids import gen_grid, column
 from ui.panel.stacks import horizontal, stack
 from ui.panels import *
 from ui.tab.popups import ok_popup_gen, waiting_popup

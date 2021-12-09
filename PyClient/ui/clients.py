@@ -1,10 +1,13 @@
 import json
 import platform
 import traceback
+from threading import Thread
+from typing import Callable
 
 import GLOBAL
 import ioc as ioc
 import net.networks as net
+import tasks
 import ui.inputs as _input
 import ui.outputs as output
 from cmd import cmdmanager
@@ -13,6 +16,7 @@ from core.filer import ifiler, filer
 from core.operations import *
 from core.rooms import iroom_manager, room_manager
 from core.settings import entity as settings
+from timers import timer
 from ui.core import iclient
 from ui.k import cmdkey
 from ui.windows import window
@@ -32,6 +36,8 @@ class client(iclient):
         self.key_quit_text_mode = self.key(cmdkey())
         self.key_enter_text = self.key(cmdkey())
         self.root_path = None
+        self.tps = timer.byFps(18)
+        self.task_runner = tasks.task_runner(step_mode=tasks.byPercent(0.2))
 
     def key(self, ck: cmdkey) -> cmdkey:
         self.cmdkeys.append(ck)
@@ -86,23 +92,12 @@ class client(iclient):
         self._init_channels()
         self.on_cmd_register(self, self.cmd_manger)
 
-        def on_input(inpt, char):
-            ch = inpt.consume_char()
-            if ch is char:
-                self.win.on_input(ch)
-            else:
-                self.logger.error(f"[Client]Input event provides a wrong char '{ch} -> {char}'.")
-
-        self.inpt.on_input.add(on_input)
-
         for k in self.cmdkeys:
             self.on_keymapping(self, k)
 
-        """
         self.winsize = output.get_winsize()
-        self.winsize_monitor = Thread(target=self.monitor_winsize,name="SizeMonitor")
+        self.winsize_monitor = Thread(target=self.monitor_winsize, name="SizeMonitor")
         self.winsize_monitor.daemon = True
-        """
 
     def _init_channels(self):
         self.channel_user = self.network.new_channel("User")
@@ -116,18 +111,22 @@ class client(iclient):
     def mark_dirty(self):
         self._dirty = True
 
-    def _clear_dirty(self):
+    def __clear_dirty(self):
         self._dirty = False
 
     def monitor_winsize(self):
+        get_winsize = output.get_winsize
         while True:
-            cur = output.get_winsize()
+            cur = get_winsize()
             if self.winsize != cur:
                 self.winsize = cur
                 self.mark_dirty()
 
     def connect(self, ip: str, port: int):
         self.network.connect(server_token(ip, port))
+
+    def add_task(self, task: Callable):
+        self.task_runner.add(task)
 
     def auto_login(self):
         configs = settings()
@@ -155,20 +154,23 @@ class client(iclient):
     def start(self):
         self._running = True
         try:
-            i = self.inpt
-            i.initialize()
+            inpt = self.inpt
+            inpt.initialize()
             self.auto_connection()
             # self.winsize_monitor.start()
             self.win.start()
             self.auto_login()
             self.win.gen_default_tab()
+            tps = self.tps
+            tps.reset()
             while self._running:
-                # self.tps.delay()
-                if self.need_update:
-                    if not self._running:
-                        break
+                if self.need_update and tps.is_end:
                     self.render()
-                self.inpt.get_input()
+                    tps.reset()
+                inpt.get_input()
+                ch = inpt.consume_char()
+                self.on_input(ch)
+                self.task_runner.run_step()
         except Exception as e:
             self.logger.error(f"[Client]{e}\n{traceback.format_exc()}")
             self.stop()
@@ -183,9 +185,13 @@ class client(iclient):
     def stop(self):
         self._running = False
 
+    def on_input(self, char):
+        if char:
+            self.win.on_input(char)
+
     def render(self):
         with self._display_lock:
-            self._clear_dirty()
+            self.__clear_dirty()
             self.win.update_screen()
 
     @property

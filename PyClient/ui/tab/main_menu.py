@@ -12,7 +12,7 @@ from ui.tab.settings import settings_tab
 from ui.tab.shared import *
 from ui.tabs import *
 from ui.themes import *
-import GLOBAL
+
 
 def _get_theme_tube(): return tube
 
@@ -27,18 +27,12 @@ class main_menu_tab(tab):
         self._title_texts = []
         main = stack()
 
-        class _db_alignments:
-            def __getitem__(self, item: int):
-                if item == 7:
-                    return DRight
-                else:
-                    return DCenter
-
-        db_alignments = _db_alignments()
         main_button_width = 14
         secondary_button_width = 14
 
-        db = display_board(MCGT(lambda: self._title_texts), lambda: db_alignments, theme=_get_theme_tube)
+        db = display_board(MCGT(lambda: self._title_texts),
+                           lambda i, t: DRight if i == t - 1 else DCenter,
+                           theme=_get_theme_tube)
         self.db = db
         main.add(db)
         self.main = main

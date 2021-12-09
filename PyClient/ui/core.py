@@ -1,6 +1,7 @@
 from abc import abstractmethod, ABC
 from threading import RLock
-from typing import Union, Type, NoReturn, Any, Optional, Callable
+from typing import Callable
+from typing import Union, Type, NoReturn, Any, Optional
 
 from ui.shared import *
 
@@ -67,6 +68,10 @@ class iclient(ABC):
 
     @abstractmethod
     def init(self) -> None:
+        pass
+
+    @abstractmethod
+    def add_task(self, task: Callable):
         pass
 
     @property

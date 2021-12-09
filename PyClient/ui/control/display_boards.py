@@ -3,24 +3,27 @@ from ui.ctrl import *
 from ui.outputs import buffer
 from ui.themes import vanilla, ThemeGetter, is_theme
 
-Display_alignment = int
+DisplayAlignment = int
 DCenter = 0
 DLeft = 1
 DRight = 2
 
-AlignmentInfo = Any
-"""
-Any obj which override __getitem__(self,key:int).The key will be given a index from contents.
-"""
-AlignmentGetter = Callable[[], AlignmentInfo]
+CurIndex = int
+Total = int
+AlignmentInfo = Callable[[CurIndex, Total], DisplayAlignment]
+AlignmentList = Collection[DisplayAlignment]
 DefaultAlignment = DCenter
 
 
-def _get_alignment(alignments: Optional[AlignmentInfo], index: int) -> Display_alignment:
+def AlignmentInfoWrap(li: Collection[DisplayAlignment]) -> AlignmentInfo:
+    return lambda index, total: li[index]
+
+
+def _get_alignment(alignments: Optional[AlignmentInfo], index: CurIndex, total: Total) -> DisplayAlignment:
     if alignments is None:
         return DefaultAlignment
     try:
-        return alignments[index]
+        return alignments(index, total)
     except:
         return DefaultAlignment
 
@@ -48,13 +51,17 @@ class display_board(text_control):
     └────────┘
     """
 
-    def __init__(self, contents: ContentsGetter, alignments: AlignmentGetter = None, theme: ThemeGetter = vanilla):
+    def __init__(self, contents: ContentsGetter, alignments: Union[AlignmentInfo, AlignmentList] = None,
+                 theme: ThemeGetter = vanilla):
         super().__init__()
         if isinstance(contents, Collection):
             self.contents = lambda: contents
         else:
             self.contents = contents
-        self.alignments = alignments
+        if isinstance(alignments, Collection):
+            self.alignments: AlignmentInfo = AlignmentInfoWrap(alignments)
+        else:
+            self.alignments = alignments
         if is_theme(theme):
             self.theme = lambda: theme
         else:
@@ -73,8 +80,9 @@ class display_board(text_control):
         if render_width == 0 or self.render_height == 0:
             return
         with StringIO() as s:
-            alignments = self.alignments() if self.alignments else None
+            alignments = self.alignments if self.alignments else None
             contents = self.contents()
+            contents_len = len(contents)
             theme = self.theme()
             start = 0
             end = self.render_height - 1
@@ -86,7 +94,7 @@ class display_board(text_control):
                 elif i == end:  # last line -- a horizontal line
                     horizontal_lineIO(s, render_width, theme.left_bottom, theme.right_bottom, theme.horizontal)
                     s.write('\n')
-                elif 0 <= i - self._vertical_margin - 1 < len(contents):  # content in the middle
+                elif 0 <= i - self._vertical_margin - 1 < contents_len:  # content in the middle
                     index = i - self._vertical_margin - 1
                     content = contents[index]
                     content_len = len(content)
@@ -97,7 +105,7 @@ class display_board(text_control):
                         s.write(theme.vertical)
                     else:
                         s.write(theme.vertical)
-                        alignment = _GA(alignments, index)
+                        alignment = _GA(alignments, index, contents_len)
                         if alignment == DCenter:
                             cur_hor_margin = (render_width - content_len - 2) // 2
                             utils.repeatIO(s, ' ', cur_hor_margin)

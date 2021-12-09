@@ -4,7 +4,7 @@ from ui.control.checkboxes import checkbox
 from ui.control.numeric_up_downs import numeric_up_down
 from ui.control.textboxes import textbox
 from ui.control.xtbox import xtextbox
-from ui.panel.grids import gen_grid,column
+from ui.panel.grids import gen_grid, column
 from ui.panel.stacks import horizontal, stack
 from ui.panels import *
 from ui.tab.shared import *

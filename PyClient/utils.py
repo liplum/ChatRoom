@@ -467,22 +467,6 @@ def now_milisecs() -> int:
     return int(round(time.time() * 1000))
 
 
-class timer:
-    def __init__(self):
-        pass
-
-    def set_time(self, milliseconds: int):
-        self.time = milliseconds
-
-    def start(self):
-        self.start_time = now_milisecs()
-
-    @property
-    def is_end(self) -> bool:
-        cur_time = now_milisecs()
-        return self.start_time - cur_time > self.time
-
-
 if system_type == "Windows":
     clear_screen = clear_screen_win
 elif system_type == "Linux":
