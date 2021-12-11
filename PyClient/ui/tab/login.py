@@ -7,7 +7,7 @@ from ui.control.xtbox import xtextbox
 from ui.panel.grids import gen_grid, column
 from ui.panel.stacks import horizontal, stack
 from ui.panels import *
-from ui.tab.chat import chat_tab, fill_or_add_chat_tab
+from ui.tab.chat import chat_tab
 from ui.tab.popups import waiting_popup, ok_popup_gen
 from ui.tab.shared import *
 from ui.tabs import *
@@ -145,17 +145,7 @@ class login_tab(tab):
                 self.win.popup(p)
                 yield Suspend
                 v = self.win.retrieve_popup(p)
-                if v is not None:
-                    if v is False:
-                        pass
-                    else:
-                        vcode = v
-                        t_i = self.tablist.find_first(
-                            lambda t: isinstance(t, chat_tab) and t.connected == token and t.user_info.verified and
-                                      t.user_info.account == account)
-                        if t_i is None:
-                            fill_or_add_chat_tab(self.win, None, token, account, None, vcode)
-                        self.tablist.remove(self)
+                self.tablist.remove(self)
                 yield Finished
             elif isinstance(result, str):
                 error = result

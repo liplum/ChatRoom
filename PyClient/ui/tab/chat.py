@@ -269,15 +269,16 @@ class chat_tab(tab):
     def connected(self) -> Optional[server_token]:
         return self._connected
 
-    def connect(self, server_token):
-        if self.connected != server_token:
-            if not self.network.is_connected(server_token):
+    def connect(self, server: server_token):
+        if self.connected != server:
+            if not self.network.is_connected(server):
                 try:
-                    self.network.connect(server_token, strict=True)
+                    self.network.connect(server, strict=True)
                 except:
-                    self.logger.error(f"[Tab][{self}]Cannot connect the server {server_token}")
+                    self.logger.error(f"[Tab][{self}]Cannot connect the server {server}")
                     return
-            self._connected = server_token
+            self._connected = server
+            self.group_id = server
             self.on_content_changed(self)
             self.first_loaded = False
         # self.logger.error(f"[Tab][{self}]Cannot access a unconnected/disconnected server.")

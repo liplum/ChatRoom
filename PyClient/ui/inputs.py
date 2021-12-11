@@ -47,6 +47,10 @@ class iinput:
     def initialize(self):
         pass
 
+    @property
+    def is_end(self):
+        raise NotImplementedError()
+
 
 class inbinput(iinput):
     pass

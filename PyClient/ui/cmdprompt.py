@@ -40,3 +40,7 @@ class cmd_input(iinput):
             canceled = self.on_input(self, ch)
             if canceled:
                 return
+
+    @property
+    def is_end(self):
+        return len(self._input_list) == 0

@@ -35,7 +35,7 @@ class client(iclient):
         self.key_quit_text_mode = self.key(cmdkey())
         self.key_enter_text = self.key(cmdkey())
         self.root_path = None
-        self.tps = timer.byFps(18)
+        self.tps = timer.byFps(24)
         self.task_runner = tasks.task_runner(step_mode=tasks.byPercent(0.2))
         self.render_ticks = 0
         self.input_ticks = 0
@@ -193,10 +193,13 @@ class client(iclient):
     def handle_input(self):
         inpt = self.inpt
         inpt.get_input()
-        ch = inpt.consume_char()
-        if ch:
-            self.input_ticks += 1
-            self.win.on_input(ch)
+        while True:
+            ch = inpt.consume_char()
+            if ch:
+                self.input_ticks += 1
+                self.win.on_input(ch)
+            if inpt.is_end:
+                break
 
     def run_coroutine(self):
         self.win.run_coroutine()

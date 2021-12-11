@@ -1,5 +1,5 @@
 from collections import deque
-from typing import Deque, Callable
+from typing import Deque, Callable, Optional
 
 Total = int
 Count = int
@@ -22,11 +22,15 @@ def byCount(max_count: int) -> StepMode:
 
 DefaultStepMode = byCount(1)
 
+WhetherHandled = bool
+
 
 class task_runner:
     def __init__(self, step_mode: StepMode = DefaultStepMode):
         self.tasks: Deque = deque()
-        self._step = step_mode
+        self._step: StepMode = step_mode
+        self.exceptions: Deque[Exception] = deque()
+        self.on_catch: Optional[Callable[[Exception], WhetherHandled]] = None
 
     @property
     def step_mode(self) -> StepMode:
@@ -43,12 +47,21 @@ class task_runner:
         tasks = self.tasks
         while len(tasks) > 0:
             task = tasks.popleft()
-            task()
+            try:
+                task()
+            except Exception as e:
+                on_catch = self.on_catch
+                if on_catch is None or on_catch(e) is False:
+                    self.exceptions.append(e)
 
     def run_step(self):
         tasks = self.tasks
         count = self.step_mode(len(tasks))
         while count > 0 and len(tasks) > 0:
             task = self.tasks.popleft()
-            task()
+            try:
+                task()
+            except Exception as e:
+                if on_catch is None or on_catch(e) is False:
+                    self.exceptions.append(e)
             count -= 1

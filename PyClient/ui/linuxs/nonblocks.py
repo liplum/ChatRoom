@@ -78,3 +78,7 @@ class nbinput(inbinput):
     def input_list(self) -> List[char]:
         with self._lock:
             return list(self._input_list)
+
+    @property
+    def is_end(self):
+        return True

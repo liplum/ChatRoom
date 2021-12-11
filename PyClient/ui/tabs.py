@@ -207,11 +207,27 @@ class tablist(notifiable, painter):
             g = self.match_or_create_group(t)
             t.group = g
             g.add(t)
+            t.on_group_id_changed.add(self.__on_subtab_group_id_changed)
             self.on_tablist_changed(self, True, t)
             if self.cur is None:
                 self.cur = t
             t.on_added()
             t.on_content_changed.add(self.on_subtab_content_changed)
+
+    def find_group_by_id(self, Id) -> Optional[group]:
+        for g in self.groups:
+            if g.identity == Id:
+                return g
+        return None
+
+    def __on_subtab_group_id_changed(self, subtab, old, new):
+        with self._lock:
+            oldg = self.find_group_by_id(old)
+            if oldg:
+                oldg.remove(subtab)
+            g = self.match_or_create_group(subtab)
+            subtab.group = g
+            g.add(subtab)
 
     def replace(self, old_tab: Union[int, "tab"], new_tab: "tab"):
         with self._lock:
@@ -409,6 +425,20 @@ class tab(notifiable, reloadable, metaclass=metatab):
         self._tab_priority = 1
         self._group_id = None
         self._group = None
+        self._on_group_id_changed = event()
+
+    @property
+    def on_group_id_changed(self) -> event:
+        """
+        Para 1:tab object
+
+        Para 2:old group id
+
+        Para 3:new group id
+
+        :return: event(tab,Any,Any)
+        """
+        return self._on_group_id_changed
 
     def on_input(self, char: chars.char) -> Generator:
         yield Finished
@@ -471,7 +501,10 @@ class tab(notifiable, reloadable, metaclass=metatab):
 
     @group_id.setter
     def group_id(self, value: Any):
-        self._group_id = value
+        old = self._group_id
+        if old != value:
+            self._group_id = value
+            self.on_group_id_changed(self, old, value)
 
     @property
     def tab_priority(self) -> int:

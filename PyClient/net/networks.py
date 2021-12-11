@@ -82,6 +82,7 @@ class channel(ichannel):
         super().__init__(name)
         self.network = network
         self.logger: outputs.ilogger = network.logger
+        self.client = network.client
         self.id2msg_and_handler: Dict[str, Tuple[type, Optional[MsgHandler]]] = {}
         self.msg2id: Dict[type, str] = {}
 
@@ -106,8 +107,8 @@ class channel(ichannel):
             msg.read(_json)
             if not self.on_msg_received(self, msg, handler):
                 if handler is not None:
-                    context = Context(self.network.client, self, _from, self.network)
-                    handler(msg, context)
+                    context = Context(self.client, self, _from, self.network)
+                    self.client.add_task(lambda: handler(msg, context))
         else:
             self.logger.error(f"[Channel<{self.name}>]Cannot find message type called {msg_id}")
 
