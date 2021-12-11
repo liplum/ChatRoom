@@ -32,6 +32,7 @@ class ilogger:
     def __init__(self):
         self._logfile: Optional[str] = None
         self._startup_screen: Optional[Collection[str]] = None
+        self._close = False
 
     def msg(self, text, Async=True) -> NoReturn:
         pass
@@ -63,6 +64,13 @@ class ilogger:
     @startup_screen.setter
     def startup_screen(self, value: Optional[Collection[str]]):
         self._startup_screen = value
+
+    def close(self):
+        self._close = True
+
+    @property
+    def closed(self):
+        return self._close
 
 
 CmdFgColorEnum = str
@@ -247,6 +255,8 @@ class cmd_logger(ilogger):
                 self.error(f"[Log]Can't Log text \"{content}\" because of {e}")
 
     def add_alert(self, text: str, level: Tuple[CmdFgColorEnum, str]) -> None:
+        if self.closed:
+            return
         color, label = level
         time_stamp = datetime.now().strftime("%Y%m%d-%H:%M:%S")
         cur_thread = currentThread()
@@ -257,7 +267,12 @@ class cmd_logger(ilogger):
             t = f"{time_stamp}[{thread_name}][{label}]{text}"
         self.log_queue.append((t, color))
 
+    def wait_for_logging(self):
+        while len(self.log_queue) > 0:
+            pass
+
     def alert_print(self, text: str, level: Tuple[CmdFgColorEnum, str]) -> None:
+        self.wait_for_logging()
         color, label = level
         time_stamp = datetime.now().strftime("%Y%m%d-%H:%M:%S")
         if GLOBAL.DEBUG:

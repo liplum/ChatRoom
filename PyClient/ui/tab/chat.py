@@ -430,7 +430,7 @@ class chat_tab(tab):
 
     @classmethod
     def serializable(cls) -> bool:
-        return True
+        return False
 
     def __str__(self) -> str:
         c = f" {self.connected.ip}:{self.connected.port}" if self.connected else ""

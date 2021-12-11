@@ -28,7 +28,6 @@ class nbinput(inbinput):
     def init(self, container):
         self.client: iclient = container.resolve(iclient)
         self.logger: ilogger = container.resolve(ilogger)
-        self.display_lock = self.client.display_lock
 
     def _listen_input(self):
         try:
@@ -50,10 +49,6 @@ class nbinput(inbinput):
             self.client.stop()
 
     def input_new(self, char: chars.char):
-        with self.client.display_lock:
-            self._input_new(char)
-
-    def _input_new(self, char: chars.char):
         with self._lock:
             self._input_list.append(char)
             self.on_input(self, char)

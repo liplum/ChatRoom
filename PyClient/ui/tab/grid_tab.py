@@ -52,7 +52,7 @@ class grid_tab(tab):
         return "grid tab"
 
     def on_input(self, char: chars.char) -> Generator:
-        consumed = self.grid.on_input(char)
+        consumed = self.grid.handle_input(char)
         if not consumed:
             if keys.k_down == char:
                 self.grid.switch_to_first_or_default_item()

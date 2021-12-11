@@ -1,7 +1,6 @@
 import traceback
 from collections import namedtuple
 
-import GLOBAL
 import i18n
 import keys
 import states

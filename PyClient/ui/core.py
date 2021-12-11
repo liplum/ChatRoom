@@ -1,5 +1,4 @@
 from abc import abstractmethod, ABC
-from threading import RLock
 from typing import Callable
 from typing import Union, Type, NoReturn, Any, Optional
 
@@ -99,11 +98,6 @@ class iclient(ABC):
     def msg_manager(self) -> "imsgmager":
         raise NotImplementedError()
 
-    @property
-    @abstractmethod
-    def display_lock(self) -> RLock:
-        raise NotImplementedError()
-
 
 class iwindow(inputable, reloadable):
     def __init__(self, client: iclient):
@@ -152,4 +146,8 @@ class iwindow(inputable, reloadable):
 
     @abstractmethod
     def find_first_popup(self, predicate: Callable[["base_popup"], bool]) -> Optional["base_popup"]:
+        pass
+
+    @abstractmethod
+    def run_coroutine(self):
         pass

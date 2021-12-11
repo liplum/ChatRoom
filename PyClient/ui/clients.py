@@ -30,7 +30,6 @@ class client(iclient):
         super().__init__()
         self._container: ioc.container = ioc.container()
         self._running: bool = False
-        self._display_lock: RLock = RLock()
         self._dirty = True
         self.cmdkeys = []
         self.key_quit_text_mode = self.key(cmdkey())
@@ -38,6 +37,9 @@ class client(iclient):
         self.root_path = None
         self.tps = timer.byFps(18)
         self.task_runner = tasks.task_runner(step_mode=tasks.byPercent(0.2))
+        self.render_ticks = 0
+        self.input_ticks = 0
+        self.main_loop_ticks = 0
 
     def key(self, ck: cmdkey) -> cmdkey:
         self.cmdkeys.append(ck)
@@ -161,15 +163,17 @@ class client(iclient):
             self.win.start()
             self.auto_login()
             self.win.gen_default_tab()
+            first_rendered = False
             tps = self.tps
             tps.reset()
             while self._running:
-                if self.need_update and tps.is_end:
+                self.main_loop_ticks += 1
+                if (self.need_update and tps.is_end) or (not first_rendered):
                     self.render()
                     tps.reset()
-                inpt.get_input()
-                ch = inpt.consume_char()
-                self.on_input(ch)
+                    first_rendered = True
+                self.handle_input()
+                self.run_coroutine()
                 self.task_runner.run_step()
         except Exception as e:
             self.logger.error(f"[Client]{e}\n{traceback.format_exc()}")
@@ -179,24 +183,30 @@ class client(iclient):
             self.win.stop()
         except Exception as e:
             self.logger.error(f"[Client]{e}\n{traceback.format_exc()}", Async=False)
+        self.logger.close()
         self.logger.tip("[Client]Programme quited.", Async=False)
         return
 
     def stop(self):
         self._running = False
 
-    def on_input(self, char):
-        if char:
-            self.win.on_input(char)
+    def handle_input(self):
+        inpt = self.inpt
+        inpt.get_input()
+        ch = inpt.consume_char()
+        if ch:
+            self.input_ticks += 1
+            self.win.on_input(ch)
+
+    def run_coroutine(self):
+        self.win.run_coroutine()
 
     def render(self):
-        with self._display_lock:
-            self.__clear_dirty()
-            self.win.update_screen()
-
-    @property
-    def display_lock(self) -> RLock:
-        return self._display_lock
+        self.render_ticks += 1
+        self.__clear_dirty()
+        self.win.update_screen()
+        if GLOBAL.DEBUG:
+            print(f"MTick={self.main_loop_ticks},RTick={self.render_ticks},ITick={self.input_ticks}")
 
     @property
     def win(self) -> "window":

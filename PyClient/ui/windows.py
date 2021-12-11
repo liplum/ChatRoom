@@ -81,7 +81,7 @@ class window(iwindow):
                         continue
                     if dic is not None:
                         li.append(dic)
-        configs["LastOpenedTabs"] = last_opened
+        configs.LastOpenedTabs = last_opened
 
     def gen_default_tab(self):
         if self.tablist.tabs_count == 0:
@@ -116,6 +116,9 @@ class window(iwindow):
             cur_painter.paint_on(self.screen_buffer)
 
         self.displayer.render(self.screen_buffer)
+
+    def run_coroutine(self):
+        pass
 
     def on_input(self, char):
         if len(self.popups) > 0:
