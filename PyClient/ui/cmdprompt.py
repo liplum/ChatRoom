@@ -44,3 +44,8 @@ class cmd_input(iinput):
     @property
     def is_end(self):
         return len(self._input_list) == 0
+
+    @property
+    def is_blocked_input(self):
+        return True
+

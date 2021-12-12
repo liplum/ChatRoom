@@ -1,338 +1,180 @@
-import GLOBAL
-import core.operations as op
-import i18n
-import ui.tabs as tabs
-from cmd import *
-from core.settings import entity as settings_table
-from core.shared import *
-from net.networks import CannotConnectError
-from ui.cmd_modes import Cmd_Context
+from typing import Dict, List, Callable, Tuple
 
-cmds = []
+from GLOBAL import StringIO
+from autofill import prompt
 
 
-def add(*args) -> command:
-    cmd = command(*args)
-    cmds.append(cmd)
-    return cmd
+class cmdbase:
+    def match(self, text: str) -> bool:
+        pass
+
+    def execute(self, context, args: [str]):
+        pass
 
 
-def _goto_tab(context: Cmd_Context, args: [str]):
-    if len(args) != 1:
-        raise WrongUsageError(i18n.trans("cmds.goto.usage"), -1)
-    try:
-        tab_number = int(args[0])
-    except:
-        raise WrongUsageError(i18n.trans("cmds.$tabs$.not_number", args[0]), 0)
-    tbl: tablist = context.tablist
-    start = 1
-    end = len(tbl)
-    if start - 1 <= tab_number <= end - 1:
-        tbl.goto(tab_number - 1)
-    else:
-        raise WrongUsageError(i18n.trans("cmds.$tabs$.over_range", wrong=tab_number, start=start, end=end), 0)
+class command(cmdbase):
+    def __init__(self, name: str, handler: Callable = None):
+        self.name = name.lower()
+        self.handler = handler
+
+    def match(self, text: str) -> bool:
+        return text == self.name
+
+    def execute(self, context, args: [str]):
+        if self.handler:
+            self.handler(context, args)
 
 
-cmd_goto_tab = add("goto", _goto_tab)
+class cmdmanager:
+    def __init__(self):
+        self.autofill = prompt()
+        # self.autofill.max_candidate = 10
+        self.map: Dict[str, cmdbase] = {}
 
+    def add(self, cmd: cmdbase):
+        name = cmd.name
+        self.autofill.add(name)
+        self.map[name] = cmd
 
-def _register(context: Cmd_Context, args: [str]):
-    argslen = len(args)
-    network: inetwork = context.network
-    if argslen != 2 and argslen != 3:
-        raise WrongUsageError(i18n.trans("cmds.reg.usage"), -1)
-    if argslen == 3:  # first is server
-        full_server = args[0:1]
-        server = _con(context, full_server)
-        account = args[1]
-        pwd = args[2]
-    elif argslen == 2:
-        tab: chat_tab = context.tab
-        server = tab.connected
-        if not server:
-            raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unconnected"), 0)
-        account = args[0]
-        pwd = args[1]
-    op.register(network, server, account, pwd)
+    def has(self, cmd_name: str) -> bool:
+        return cmd_name in self.map
 
+    def __iter__(self):
+        return iter(self.map.items())
 
-cmd_register = add("reg", _register)
+    def prompts(self, inputs: str) -> List[Tuple[str, str]]:
+        return self.autofill.autofill(inputs)
 
+    def execute(self, context, cmd_name: str, args: [str]):
+        """
 
-def _help_show_usage(tab, name):
-    usage = i18n.trans(f"cmds.{name}.usage")
-    description = i18n.trans(f"cmds.{name}.description")
-    tab.add_string(f"{name}: {description}\n   {usage}")
-
-
-def _help(context: Cmd_Context, args: [str]):
-    argslen = len(args)
-    manager: cmdmanager = context.cmd_manager
-    tab: tabs.tab = context.tab
-    if argslen == 1:
-        if args[0] == "all":
-            for name, cmd in manager:
-                _help_show_usage(tab, name)
-        else:
-            name = args[0]
-            if manager.has(name):
-                _help_show_usage(tab, name)
+        :param cmd_name:
+        :param context: some background info
+        :param args:
+        :exception CmdError:the base exception
+        :exception WrongUsageError: raise when the para user inputted is wrong
+        :exception CmdNotFound: raise when the given cmd name is not in command list
+        :return:
+        """
+        if cmd_name in self.map:
+            cmd = self.map[cmd_name]
+            if cmd.match(cmd_name):
+                cmd.execute(context, args)
             else:
-                raise WrongUsageError(i18n.trans("cmds.help.cannot_find", name), 0)
-    else:
-        raise CmdError(i18n.trans("cmds.help.usage"))
-
-
-cmd_help = add("help", _help)
-
-
-def _con_shared(network, token):
-    """
-    connect a server
-    :param network: inetwork
-    :param token: server_token
-    :exception  WrongUsageError("cmds.$common$.invalid_server_token")
-    :exception  CmdError("cmds.$common$.cannot_connect_server")
-    """
-    if token:
-        try:
-            op.connect(network, token, strict=True)
-        except CannotConnectError as cce:
-            raise CmdError(
-                i18n.trans("cmds.$common$.cannot_connect_server", ip=token.ip, port=token.port))
-    else:
-        raise WrongUsageError(i18n.trans("cmds.$common$.invalid_server_token"), 0)
-
-
-def _con(context: Cmd_Context, args: [str]) -> server_token:
-    argslen = len(args)
-    if argslen != 1:
-        raise WrongUsageError(i18n.trans("cmds.con.usage"), -1)
-    server = server_token.by(args[0])
-    _con_shared(context.network, server)
-    tab = context.tab
-    has_attr = hasattr(tab, "connected") and hasattr(tab, "connect")
-    if has_attr:
-        connected = tab.connected
-        if connected and connected != server:
-            raise WrongUsageError(i18n.trans("cmds.$common$.already_connected", ip=connected.ip, port=connected.port),
-                                  0)
+                raise CmdNotFound(cmd_name)
         else:
-            tab.connect(server)
-    return server
+            raise CmdNotFound(cmd_name)
+
+    def apply_name(self, cmd_name: str):
+        if cmd_name in self.map:
+            self.autofill.apply(cmd_name)
 
 
-cmd_con = add("con", _con)
+class CmdError(Exception):
+
+    def __init__(self, msg: str):
+        super().__init__()
+        self.msg = msg
 
 
-def _join(context: Cmd_Context, args: [str]):
-    # TODO:Complete join cmd
-    argslen = len(args)
-    network = context.network
-    if argslen == 2:  # 1:<server ip>:<port> 2:<chatting room id>
-        server = server_token.by(args[0])
-        _con_shared(network, server)
-        try:
-            room_id = roomid(int(args[1]))
-        except:
-            raise WrongUsageError(i18n.trans("cmds.$common$.invalid_room_id", args[1]), 1)
-        tab: chat_tab = context.tab
-        if tab.joined:
-            raise CmdError(i18n.trans("cmds.join.already_joined", room_id))
-        tab.join(room_id)
-    elif argslen == 1:
-        try:
-            room_id = roomid(int(args[0]))
-        except:
-            raise WrongUsageError(i18n.trans("cmds.$common$.invalid_room_id", args[0]), 1)
-        tab: chat_tab = context.tab
-        if tab.connected is None:
-            raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unconnected"), -1)
-        if tab.joined:
-            raise CmdError(i18n.trans("cmds.join.already_joined", room_id))
-        tab.join(room_id)
-    else:
-        raise WrongUsageError(i18n.trans("cmds.join.usage"), -1)
+class WrongUsageError(CmdError):
+
+    def __init__(self, msg: str, pos: int):
+        super().__init__(msg)
+        self.position = pos
 
 
-cmd_join = add("join", _join)
+class CmdNotFound(Exception):
+    def __init__(self, cmd_name: str):
+        super().__init__()
+        self.cmd_name = cmd_name
 
 
-def _jroom_room(context: Cmd_Context, args: [str]):
-    argslen = len(args)
-    network = context.network
-    if argslen == 1:
-        tab: chat_tab = context.tab
-        if tab.connected is None:
-            raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unconnected"), 0)
-        if tab.user_info is None or not tab.user_info.verified:
-            raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unauthenticated"), 0)
-        try:
-            room_id = roomid(int(args[0]))
-        except:
-            raise WrongUsageError(i18n.trans("cmds.$common$.invalid_room_id", args[0]), 1)
-        op.join(network, tab.user_info, room_id)
-    else:
-        raise WrongUsageError(i18n.trans("cmds.jroom.usage"), -1)
+def is_quoted(index: int, quoted_indexes: List[Tuple[int, str]]):
+    for i, qtype in quoted_indexes:
+        if index == i:
+            return True
+        elif index > i:
+            return False
+    return False
 
 
-cmd_jroom = add("jroom", _jroom_room)
+def compose_full_cmd(cmd_args: List[str], quoted_indexes: List[Tuple[int, str]]) -> str:
+    argslen = len(cmd_args)
+    if len(quoted_indexes) == 0:  # no quotation
+        with StringIO() as s:
+            for i, arg in enumerate(cmd_args):
+                s.write(arg)
+                if i < argslen - 1:
+                    s.write(' ')
+            return s.getvalue()
+    else:  # has quotation
+        cur_quoted_metaindexes = 0
+        quoted_indexeslen = len(quoted_indexes)
+        with StringIO() as s:
+            for i, arg in enumerate(cmd_args):
+                if cur_quoted_metaindexes < quoted_indexeslen:
+                    index, qtype = quoted_indexes[cur_quoted_metaindexes]
+                    if index == i:
+                        s.write(qtype)
+                        s.write(arg)
+                        s.write(qtype)
+                    else:
+                        s.write(arg)
+                if i < argslen - 1:
+                    s.write(' ')
+            return s.getvalue()
 
 
-def _close(context: Cmd_Context, args: [str]):
-    argslen = len(args)
-    tbl: tablist = context.tablist
-    if argslen == 0:
-        tbl.remove(context.tab)
-    elif argslen == 1:
-        try:
-            tab_number = int(args[0])
-        except:
-            raise WrongUsageError(i18n.trans("cmds.$tabs$.not_number", args[0]), 0)
-        start = 1
-        end = len(tbl)
-        if start - 1 <= tab_number <= end - 1:
-            tbl.remove(tab_number - 1)
-        else:
-            raise WrongUsageError(i18n.trans("cmds.$tabs$.over_range", wrong=tab_number, start=start, end=end), 0)
-    else:
-        raise WrongUsageError(i18n.trans("cmds.close.usage"), -1)
+def analyze_cmd_args(full: str) -> Tuple[List[str], List[Tuple[int, str]]]:
+    if len(full) == 0:
+        return [], []
 
+    res = []
+    quoted_indexes = []
+    quotation_mode = False
+    quotation_type = None
+    temp = StringIO()
+    hasText = False
 
-cmd_close = add("close", _close)
+    def is_quotation(ch: str):
+        return ch == "\'" or ch == "\""
 
+    def save_and_refresh():
+        nonlocal res, temp, hasText
+        res.append(temp.getvalue())
+        temp.close()
+        temp = StringIO()
+        hasText = False
 
-def _login(context: Cmd_Context, args: [str]):
-    argslen = len(args)
-    network = context.network
-    if argslen != 3 and argslen != 2:
-        raise WrongUsageError(i18n.trans("cmds.login.usage"), -1)
-    if argslen == 3:
-        server = server_token.by(args[0])
-        _con_shared(network, server)
-    elif argslen == 2:
-        tab: chat_tab = context.tab
-        server = tab.connected
-        if server is None:
-            raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unconnected"), 0)
+    for ch in full:
+        if ch == ' ':  # is space
+            if quotation_mode:  # the space is quoted
+                temp.write(ch)
+            else:  # the space is not quoted
+                if hasText:  # has any text ahead
+                    save_and_refresh()
+                else:  # no text ahead
+                    continue
+        else:  # not space
+            if is_quotation(ch):  # is " or '
+                if quotation_mode:  # already had a quotation ahead
+                    if ch == quotation_type:  # match the same quotation
+                        save_and_refresh()
+                        quoted_indexes.append((len(res) - 1, ch))
+                    else:  # not the same quotation ,dismiss it
+                        hasText = True
+                        temp.write(ch)
+                else:  # not enter quotation mode
+                    # then enter
+                    quotation_mode = True
+                    quotation_type = ch
+            else:  # not a space and not a ' and not a "
+                hasText = True
+                temp.write(ch)
 
-    op.login(context.network, server, args[argslen - 2], args[argslen - 1])
-
-
-cmd_login = add("login", _login)
-
-
-def _lang(context: Cmd_Context, args: [str]):
-    win: iwindow = context.win
-    argslen = len(args)
-    if argslen == 0:  # reload & easy
-        try:
-            i18n.reload(strict=True)
-            win.reload()
-        except i18n.LocfileLoadError as lle:
-            raise WrongUsageError(i18n.trans("cmds.lang.cannot_reload"), 0)
-    elif argslen == 1:
-        if args[0] == "-s":  # reload & strict
-            try:
-                i18n.reload(strict=True)
-                win.reload()
-            except i18n.LocfileLoadError as lle:
-                raise WrongUsageError(i18n.trans("cmds.lang.cannot_reload_cause", cause=repr(lle.inner)), 0)
-        else:  # load & easy
-            lang = args[0]
-            try:
-                i18n.load(lang, strict=True)
-                settings = settings_table()
-                settings["Language"] = lang
-                win.reload()
-            except i18n.LocfileLoadError as lle:
-                raise WrongUsageError(i18n.trans("cmds.lang.cannot_load", lang=lang), 0)
-    elif argslen == 2:
-        if args[1] == "-s":  # load & strict
-            lang = args[0]
-            try:
-                i18n.load(lang, strict=True)
-                settings = settings_table()
-                settings["Language"] = lang
-                win.reload()
-            except i18n.LocfileLoadError as lle:
-                raise WrongUsageError(i18n.trans("cmds.lang.cannot_load_cause", lang=lang, cause=repr(lle.inner)), 0)
-        else:
-            raise WrongUsageError(i18n.trans("cmds.lang.usage"), 0)
-    else:
-        raise WrongUsageError(i18n.trans("cmds.lang.usage"), -1)
-
-
-cmd_lang = add("lang", _lang)
-
-
-def _croom(context: Cmd_Context, args: [str]):
-    network = context.network
-    argslen = len(args)
-    if argslen != 1:
-        raise WrongUsageError(i18n.trans("cmds.croom.usage"), -1)
-    tab: chat_tab = context.tab
-    server = tab.connected
-    if server is None:
-        raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unconnected"), 0)
-    if tab.user_info is None or not tab.user_info.verified:
-        raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unauthenticated"), 0)
-    room_name = args[0]
-    op.create_room(network, tab.user_info, room_name)
-
-
-cmd_croom = add("croom", _croom)
-
-
-def _main(context: Cmd_Context, args: [str]):
-    win: iwindow = context.win
-    argslen = len(args)
-    if argslen != 0:
-        raise WrongUsageError(i18n.trans("cmds.main.usage"), -1)
-    main_menu = win.newtab('main_menu_tab')
-    tablist: tablist = context.tablist
-    tablist.add(main_menu)
-
-
-cmd_main = add("main", _main)
-
-if GLOBAL.DEBUG:
-
-    def _run(context: Cmd_Context, args: [str]):
-        argslen = len(args)
-        if argslen == 0:
-            return
-        if argslen == 1:
-            code = args[0]
-        elif argslen == 2 and args[0] == "-f":
-            path = args[1]
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    code = f.read()
-            except:
-                raise WrongUsageError(i18n.trans("cmds.run.cannot_read_file", path=path), 0)
-        else:
-            raise WrongUsageError(i18n.trans("cmds.run.usage"), -1)
-        try:
-            exec(code)
-        except Exception as e:
-            raise WrongUsageError(i18n.trans("cmds.run.execute_error", code=code, exception=e), 0)
-
-
-    cmd_run = add("run", _run)
-
-
-    def _reload(context: Cmd_Context, args: [str]):
-        argslen = len(args)
-        if argslen == 0:
-            utils.reload_all_modules()
-        elif argslen == 1:
-            module_name = args[0]
-            found = utils.reload_module(module_name)
-            if not found:
-                raise WrongUsageError(i18n.trans("cmds.reload.no_such_module", module=module_name), 0)
-        else:
-            raise WrongUsageError(i18n.trans("cmds.reload.usage"), -1)
-
-
-    cmd_reload = add("reload", _reload)
+    final = temp.getvalue()
+    temp.close()
+    if final:
+        res.append(final)
+    return res, quoted_indexes

@@ -109,11 +109,11 @@ def mapkeys(client, keymap: uik.cmdkey):
         keymap.map(keys.k_quit)
 
 
-from cmd import cmdmanager
+from cmds import cmdmanager
 
 
 def add_commands(client, cmd_manager: cmdmanager):
-    from cmds import cmds
+    from builtincmds import cmds
     for cmd in cmds:
         cmd_manager.add(cmd)
 

@@ -42,7 +42,7 @@
       "description": "注册"
     },
     "help": {
-      "usage": "help <命令名称>/all",
+      "usage": "help 或 help <命令名称>/all",
       "cannot_find": "找不到名为{0}的命令",
       "description": "展示命令的用法和说明"
     },

@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from collections import deque
 from typing import List
 
@@ -5,7 +6,7 @@ from chars import *
 from events import event
 
 
-class iinput:
+class iinput(ABC):
     def __init__(self):
         self._input_list: deque[char] = deque()
         self._on_input = event(cancelable=True)
@@ -48,9 +49,18 @@ class iinput:
         pass
 
     @property
+    @abstractmethod
     def is_end(self):
         raise NotImplementedError()
 
+    @property
+    @abstractmethod
+    def is_blocked_input(self):
+        raise NotImplementedError()
 
-class inbinput(iinput):
-    pass
+
+class inbinput(iinput, ABC):
+
+    @property
+    def is_blocked_input(self):
+        return False

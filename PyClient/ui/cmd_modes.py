@@ -5,7 +5,7 @@ import i18n
 import keys
 import states
 import utils
-from cmd import *
+from cmds import *
 from ui import outputs as output
 from ui.outputs import CmdStyle
 from ui.tabs import *

@@ -42,7 +42,7 @@
       "description": "sign-up"
     },
     "help": {
-      "usage": "help <command name>/all",
+      "usage": "help or help <command name>/all",
       "cannot_find": "Can't find a command called {0}",
       "description": "show the usage of command"
     },

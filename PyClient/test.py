@@ -7,7 +7,7 @@ from collections import deque
 from datetime import timezone
 
 import autofill
-import cmd
+import cmds
 import dictries
 import xautofill
 from chars import *
@@ -156,13 +156,13 @@ def test_generic():
 
 def test_analyze_cmd_args():
     a1 = ":goto"
-    print(cmd.analyze_cmd_args(a1))
+    print(cmds.analyze_cmd_args(a1))
     a2 = ":goto 2"
-    print(cmd.analyze_cmd_args(a2))
+    print(cmds.analyze_cmd_args(a2))
     a3 = ':exec "print(123)"'
-    print(cmd.analyze_cmd_args(a3))
+    print(cmds.analyze_cmd_args(a3))
     a4 = ':exec "import sys"'
-    print(cmd.analyze_cmd_args(a4))
+    print(cmds.analyze_cmd_args(a4))
 
 
 def test_path():

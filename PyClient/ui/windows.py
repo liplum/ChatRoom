@@ -4,7 +4,7 @@ from typing import Deque
 
 import utils
 from core.settings import entity as settings
-from ui.coroutines import Suspend, Finished
+from ui.coroutines import Suspend
 from ui.tab.chat import chat_tab
 from ui.tab.main_menu import main_menu_tab
 from ui.tabs import *
@@ -24,6 +24,9 @@ class Frame:
 
     def __repr__(self):
         return f"{self.tab}:{'Coroutine' if self.coroutine else None}"
+
+    def __iter__(self):
+        return iter((self.tab, self.coroutine))
 
 
 class window(iwindow):
@@ -141,6 +144,11 @@ class window(iwindow):
     def prepare(self):
         self.screen_buffer = self.displayer.gen_buffer()
 
+    def render_debug_info(self, buf):
+        if GLOBAL.DEBUG:
+            buf.addtext(str(self.tablist.tabs))
+            buf.addtext(f"Focused={self.tablist.cur}")
+
     def update_screen(self):
         utils.clear_screen()
         self.prepare()
@@ -148,7 +156,7 @@ class window(iwindow):
         cur_painter = self.cur_painter
         if cur_painter:
             cur_painter.paint_on(self.screen_buffer)
-
+        self.render_debug_info(self.screen_buffer)
         self.displayer.render(self.screen_buffer)
 
     def run_coroutine(self):
@@ -157,9 +165,10 @@ class window(iwindow):
             if frame.coroutine:
                 need_remove = self.step(frame)
                 if need_remove:
+                    len(self.call_stack)
                     if len(self.call_stack) == 1:
                         frame.coroutine = None
-                    else:
+                    elif len(self.call_stack) > 1:
                         self.call_stack.pop()
 
     def step(self, frame: Frame) -> NeedRemoveCurFrame:
@@ -199,7 +208,7 @@ class window(iwindow):
         popup.on_lost_focus()
         popup.on_removed()
         if popup.need_refresh_instant:
-            self.run_coroutine()
+            self.call_stack.pop()
         else:
             self.client.mark_dirty()
 

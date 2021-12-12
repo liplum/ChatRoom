@@ -9,7 +9,7 @@ import net.networks as net
 import tasks
 import ui.inputs as _input
 import ui.outputs as output
-from cmd import cmdmanager
+from cmds import cmdmanager
 from core.chats import *
 from core.filer import ifiler, filer
 from core.operations import *
@@ -35,7 +35,7 @@ class client(iclient):
         self.key_enter_text = self.key(cmdkey())
         self.root_path = None
         self.tps = timer.byFps(24)
-        self.task_runner = tasks.task_runner(step_mode=tasks.byPercent(0.2))
+        self.task_runner = tasks.task_runner(step_mode=tasks.byPercent(0.2), safe_mode=False)
         self.render_ticks = 0
         self.input_ticks = 0
         self.main_loop_ticks = 0
@@ -172,10 +172,9 @@ class client(iclient):
                     tps.reset()
                     first_rendered = True
                 self.handle_input()
-                self.run_coroutine()
                 self.task_runner.run_step()
         except Exception as e:
-            self.logger.error(f"[Client]{e}\n{traceback.format_exc()}")
+            self.logger.error(f"[Client]{e}\n{traceback.format_exc()}", Async=False)
             self.stop()
         try:
             self.msg_manager.save_all()
@@ -191,12 +190,27 @@ class client(iclient):
 
     def handle_input(self):
         inpt = self.inpt
+        if inpt.is_blocked_input:
+            self.__handle_input_blocked(inpt)
+        else:
+            self.__handle_nonblocking_input(inpt)
+
+    def __handle_nonblocking_input(self, inpt):
+        inpt.get_input()
+        ch = inpt.consume_char()
+        if ch and self.win.accept_input:
+            self.input_ticks += 1
+            self.win.on_input(ch)
+        self.run_coroutine()
+
+    def __handle_input_blocked(self, inpt):
         inpt.get_input()
         while True:
             ch = inpt.consume_char()
             if ch and self.win.accept_input:
                 self.input_ticks += 1
                 self.win.on_input(ch)
+                self.run_coroutine()
             if inpt.is_end:
                 break
 
