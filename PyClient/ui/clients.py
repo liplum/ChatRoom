@@ -190,16 +190,15 @@ class client(iclient):
         self._running = False
 
     def handle_input(self):
-        if self.win.accept_input:
-            inpt = self.inpt
-            inpt.get_input()
-            while True:
-                ch = inpt.consume_char()
-                if ch:
-                    self.input_ticks += 1
-                    self.win.on_input(ch)
-                if inpt.is_end:
-                    break
+        inpt = self.inpt
+        inpt.get_input()
+        while True:
+            ch = inpt.consume_char()
+            if ch and self.win.accept_input:
+                self.input_ticks += 1
+                self.win.on_input(ch)
+            if inpt.is_end:
+                break
 
     def run_coroutine(self):
         self.win.run_coroutine()

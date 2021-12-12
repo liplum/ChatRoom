@@ -5,6 +5,7 @@ from typing import List, Iterable, Dict, Generator, Tuple, Hashable, Set
 import GLOBAL
 from GLOBAL import StringIO
 from ui.core import *
+from ui.coroutines import Finished
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
 from utils import is_in
 
@@ -18,9 +19,6 @@ def _add_tabtype(name: str, tabtype: "metatab"):
 
 
 Need_Release_Resource = bool
-
-Suspend = -1
-Finished = 0
 
 
 class group:

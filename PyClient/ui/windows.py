@@ -4,10 +4,10 @@ from typing import Deque
 
 import utils
 from core.settings import entity as settings
+from ui.coroutines import Suspend, Finished
 from ui.tab.chat import chat_tab
 from ui.tab.main_menu import main_menu_tab
 from ui.tabs import *
-from ui.tabs import Suspend
 from utils import multiget, get
 
 Focusable = Union[base_popup, tab]
@@ -183,7 +183,8 @@ class window(iwindow):
                 rv.on_added()
                 return False
             elif isinstance(rv, Generator):
-                return self.step(Frame(t, rv))
+                self.call_stack.append(Frame(t, rv))
+                return False
             else:
                 return self.step(frame)
 
