@@ -2,7 +2,6 @@ import json
 import platform
 import traceback
 from threading import Thread
-from typing import Callable
 
 import GLOBAL
 import ioc as ioc
@@ -17,7 +16,7 @@ from core.operations import *
 from core.rooms import iroom_manager, room_manager
 from core.settings import entity as settings
 from timers import timer
-from ui.core import iclient
+from ui.core import *
 from ui.k import cmdkey
 from ui.windows import window
 from utils import get
@@ -191,15 +190,16 @@ class client(iclient):
         self._running = False
 
     def handle_input(self):
-        inpt = self.inpt
-        inpt.get_input()
-        while True:
-            ch = inpt.consume_char()
-            if ch:
-                self.input_ticks += 1
-                self.win.on_input(ch)
-            if inpt.is_end:
-                break
+        if self.win.accept_input:
+            inpt = self.inpt
+            inpt.get_input()
+            while True:
+                ch = inpt.consume_char()
+                if ch:
+                    self.input_ticks += 1
+                    self.win.on_input(ch)
+                if inpt.is_end:
+                    break
 
     def run_coroutine(self):
         self.win.run_coroutine()
@@ -212,7 +212,7 @@ class client(iclient):
             print(f"MTick={self.main_loop_ticks},RTick={self.render_ticks},ITick={self.input_ticks}")
 
     @property
-    def win(self) -> "window":
+    def win(self) -> iwindow:
         return self._win
 
     @property

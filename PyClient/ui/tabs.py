@@ -200,7 +200,7 @@ class tablist(notifiable, painter):
                 if self._cur:
                     self._reset_index()
                     self._cur.on_focused()
-                self.on_curtab_changed(self, self.cur_index, tab)
+                self.on_curtab_changed(self, self.cur_index, value)
 
     def add(self, t: "tab"):
         with self._lock:
@@ -416,7 +416,7 @@ class metatab(ABCMeta):
         _add_tabtype(name, cls)
 
 
-class tab(notifiable, reloadable, metaclass=metatab):
+class tab(notifiable, painter, reloadable, metaclass=metatab):
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__()
         self.tablist: tablist = tablist

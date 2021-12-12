@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 from typing import Callable
-from typing import Union, Type, NoReturn, Any, Optional
+from typing import Union, Type, Any, Optional
 
 from ui.shared import *
 
@@ -128,8 +128,9 @@ class iwindow(inputable, reloadable):
     def gen_default_tab(self):
         pass
 
+    @property
     @abstractmethod
-    def popup(self, popup: "base_popup") -> NoReturn:
+    def accept_input(self) -> bool:
         pass
 
     @abstractmethod

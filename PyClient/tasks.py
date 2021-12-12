@@ -62,6 +62,7 @@ class task_runner:
             try:
                 task()
             except Exception as e:
+                on_catch = self.on_catch
                 if on_catch is None or on_catch(e) is False:
                     self.exceptions.append(e)
             count -= 1

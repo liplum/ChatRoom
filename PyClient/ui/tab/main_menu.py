@@ -133,8 +133,7 @@ class main_menu_tab(tab):
             p = self.new_popup(ok_cancel_popup)
             p.words = split_textblock_words("tabs.main_menu_tab.quit_tip")
             p.title_getter = lambda: i18n.trans("controls.warning")
-            self.win.popup(p)
-            yield Suspend
+            yield p
             v = self.win.retrieve_popup(p)
             if v is True:
                 self.client.stop()

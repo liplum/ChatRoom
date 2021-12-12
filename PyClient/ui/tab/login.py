@@ -142,8 +142,7 @@ class login_tab(tab):
                         p.reload()
 
                 p.on_state_changed = on_p_state_changed
-                self.win.popup(p)
-                yield Suspend
+                yield p
                 v = self.win.retrieve_popup(p)
                 self.tablist.remove(self)
                 yield Finished
@@ -151,8 +150,7 @@ class login_tab(tab):
                 error = result
                 tip = split_textblock_words(f"tabs.$account$.error_tip.{error}")
                 p = self.new_popup(ok_popup_gen(tip, lambda: i18n.trans("controls.error")))
-                self.win.popup(p)
-                yield Suspend
+                yield p
 
     def paint_on(self, buf: buffer):
         self.main.paint_on(buf)
