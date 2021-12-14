@@ -245,7 +245,9 @@ class chat_tab(tab):
         if self.connected and self.joined and info:
             if info.verified:
                 inputs = self.textbox.inputs
-                op.send_text(self.network, self.user_info, self.joined, inputs)
+                time = datetime.utcnow()
+                op.send_text(self.network, self.user_info, self.joined, inputs, time)
+                self.add_chat(self.connected, self.joined, (time, self.user_info.account, inputs), omit_self=False)
             else:
                 self.add_string(
                     i18n.trans("tabs.chat_tab.account_unverified", account=info.account, ip=self.connected.ip))
@@ -303,7 +305,7 @@ class chat_tab(tab):
     def authenticated(self) -> bool:
         return self.connected and self.user_info and self.user_info.verified
 
-    def _add_msg(self, time, uid, text):
+    def add_msg(self, time, uid, text):
         t = chat_item(time, uid, text)
         self.history.add(t)
 
@@ -325,7 +327,7 @@ class chat_tab(tab):
         if self.connected and self.joined:
             li = self.msg_manager.load_until_today(self.connected, self.joined, None)
             for time, uid, text in li:
-                self._add_msg(time, uid, text)
+                self.add_msg(time, uid, text)
 
     def paint_on(self, buf: buffer):
         if not self.first_loaded:
@@ -375,16 +377,16 @@ class chat_tab(tab):
     def on_added(self):
         self.msg_manager.on_received.add(self._on_received_msg)
 
-    def _on_received_msg(self, manager, server, room_id, msg_unit):
-        """
-        if self.is_focused:
-            self.on_content_changed(self)
-        """
+    def _on_received_msg(self, manager: imsgmager, server: server_token, room_id: roomid, msg_unit: StorageUnit):
+        self.add_chat(server, room_id, msg_unit, omit_self=True)
+
+    def add_chat(self, server: server_token, room_id: roomid, msg_unit: StorageUnit, *, omit_self: bool = False):
         if server == self.connected and room_id == self.joined:
             time, uid, text = msg_unit
-            self._add_msg(time, uid, text)
-            if not self.is_focused:
-                self.unread_msg_number += 1
+            if not omit_self or self.user_info.account != uid:
+                self.add_msg(time, uid, text)
+                if not self.is_focused:
+                    self.unread_msg_number += 1
 
     def on_removed(self):
         self.msg_manager.on_received.remove(self._on_received_msg)
