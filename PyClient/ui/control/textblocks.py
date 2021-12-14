@@ -14,7 +14,6 @@ words_getter = Callable[[], Words]
 WordsGetter = Union[Words, words_getter]
 
 
-# TODO:Complete This
 class textblock(text_control):
     """
     ┌────────────────────────────────┐

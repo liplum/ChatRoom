@@ -49,7 +49,9 @@ def win_test():
     # test_generic()
     # test_traceback()
     # test_gen_2d_array()
-    test_i18n_folder()
+    # test_i18n_folder()
+    # test_version()
+    test_nb_cmd_input()
 
 
 def linux_test():
@@ -65,6 +67,23 @@ if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
+
+
+def test_nb_cmd_input():
+    input()
+
+
+def test_final_attr():
+    from typing import Final
+
+    class Test:
+        def __init__(self):
+            self.a: Final[int] = 10
+
+
+def test_version():
+    print(sys.version_info)
+    input()
 
 
 def test_mt_input():

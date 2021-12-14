@@ -113,7 +113,7 @@ class iwindow(inputable, reloadable):
         pass
 
     @abstractmethod
-    def newtab(self, tabtype: Union[Type[T], str]) -> T:
+    def newtab(self, tabtype: Union[Type[T], str, Any]) -> T:
         pass
 
     @abstractmethod

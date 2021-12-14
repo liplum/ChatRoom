@@ -1,3 +1,4 @@
+import io
 import sys
 
 import GLOBAL
@@ -5,16 +6,36 @@ import utils
 from debugs import FakeStringIO
 from utils import get_at
 
+GLOBAL.StringIO = io.StringIO
 IDE = False
 args = sys.argv
-if get_at(args, -1) == "-debug":
+finalarg: str = arg if (arg := get_at(args, -1)) is not None else ""
+extra = []
+
+
+def match_arg(para: str):
+    matched = finalarg.startswith(para)
+    if matched:
+        global extra
+        extra = finalarg.replace(para, "")
+    return matched
+
+
+if match_arg("-debug"):
     GLOBAL.DEBUG = True
-elif get_at(args, -1) == "-debugX":
-    GLOBAL.DEBUG = True
-    GLOBAL.MONITOR = True
-elif get_at(args, -1) == "-ide":
+elif match_arg("-ide"):
     GLOBAL.DEBUG = True
     IDE = True
+elif match_arg(""):
+    pass
+
+if "M" in extra:
+    GLOBAL.MONITOR = True
+if "S" in extra:
+    GLOBAL.StringIO = FakeStringIO
+
+if IDE:
+    utils.clear_screen = lambda: None
 
 import core.settings as settings
 import configs
@@ -41,22 +62,18 @@ if get_at(args, 1) == "-login":
     port = may_port if may_port and not str(may_port).startswith("-") else port
     LOGIN = True
 
-if IDE:
-    utils.clear_screen = lambda: None
-
-if IDE:
-    GLOBAL.StringIO = FakeStringIO
-else:
-    import io
-
-    GLOBAL.StringIO = io.StringIO
-
 import platform
 
 system_type = platform.system()
 
 
+def detect_debug_attach():
+    input("Attach the process and enter any text to start:")
+
+
 def main():
+    if GLOBAL.DEBUG:
+        detect_debug_attach()
     from ui.clients import client
     _client = client()
     _client.on_service_register.add(init_plugin)
@@ -77,19 +94,19 @@ from ioc import container
 
 def init_plugin(client, registry: container):
     from ui.inputs import iinput
-    if system_type == "Windows":
-        from ui.wins import nonblocks
-        registry.register_singleton(iinput, nonblocks.nbinput)
-    elif system_type == "Linux":
-        from ui.linuxs import nonblocks
-        registry.register_singleton(iinput, nonblocks.nbinput)
-    else:
-        from ui.cmdprompt import cmd_input
-        registry.register_singleton(iinput, cmd_input)
-
     if IDE:
         from ui.cmdprompt import cmd_input
         registry.register_singleton(iinput, cmd_input)
+    else:
+        if system_type == "Windows":
+            from ui.wins import nonblocks
+            registry.register_singleton(iinput, nonblocks.nbinput)
+        elif system_type == "Linux":
+            from ui.linuxs import nonblocks
+            registry.register_singleton(iinput, nonblocks.nbinput)
+        else:
+            from ui.cmdprompt import cmd_input
+            registry.register_singleton(iinput, cmd_input)
 
     if GLOBAL.MONITOR:
         from pef.monitor import pef_monitor

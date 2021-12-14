@@ -64,11 +64,6 @@
       "cannot_load_cause": "Can't load language \"{lang}\" because {cause}",
       "description": "change the language of this app"
     },
-    "join": {
-      "usage": "join [<server ip>:<port>] <chatting room id>",
-      "description": "join a chatting room on current tab",
-      "already_joined": "Current tab has already joined another chatting room {id}"
-    },
     "close": {
       "usage": "close or close <number>",
       "description": "close a tab"
@@ -86,12 +81,12 @@
       "description": "reload a module or all modules",
       "no_such_module": "No such module {module}"
     },
-    "croom": {
-      "usage": "croom \"<room name>\"(surround \" if space exists)",
+    "create": {
+      "usage": "create \"<room name>\"(surround \" if space exists)",
       "description": "create a new chat room"
     },
-    "jroom": {
-      "usage": "jroom <room id>",
+    "join": {
+      "usage": "join <room id>",
       "description": "join a chat room with your account which is on current tab"
     }
   },

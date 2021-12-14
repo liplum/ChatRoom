@@ -26,7 +26,7 @@ WhetherHandled = bool
 
 
 class task_runner:
-    def __init__(self,*, step_mode: StepMode = DefaultStepMode, safe_mode: bool = True):
+    def __init__(self, *, step_mode: StepMode = DefaultStepMode, safe_mode: bool = True):
         self.tasks: Deque = deque()
         self._step: StepMode = step_mode
         self.exceptions: Deque[Exception] = deque()

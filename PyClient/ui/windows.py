@@ -55,12 +55,6 @@ class window(iwindow):
 
         self.tablist.on_curtab_changed.add(on_curtab_changed)
 
-        def on_closed_last_tab(li: tablist, mode, t):
-            if li.tabs_count == 0:
-                self.client.stop()
-
-        self.tablist.on_tablist_changed.add(on_closed_last_tab)
-
     @property
     def cur_frame(self) -> Optional[Frame]:
         if len(self.call_stack) > 0:
@@ -125,7 +119,7 @@ class window(iwindow):
             t = self.newtab(main_menu_tab)
             self.tablist.add(t)
 
-    def newtab(self, tabtype: Union[Type[T], str]) -> T:
+    def newtab(self, tabtype: Union[Type[T], str, Any]) -> T:
         if isinstance(tabtype, str):
             ttype = get(tab_name2type, tabtype)
             if ttype:

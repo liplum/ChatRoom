@@ -48,4 +48,3 @@ class cmd_input(iinput):
     @property
     def is_blocked_input(self):
         return True
-

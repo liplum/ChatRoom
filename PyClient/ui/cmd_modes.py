@@ -4,14 +4,16 @@ from collections import namedtuple
 import i18n
 import keys
 import states
+import ui.uiop as uiop
 import utils
 from cmds import *
+from lazys import lazy
 from ui import outputs as output
 from ui.outputs import CmdStyle
 from ui.tabs import *
 from ui.uistates import ui_state
 
-_main_menu_tab_name = "main_menu_tab"
+main_menu_type = lazy(lambda: utils.get(tab_name2type, "main_menu_tab"))
 
 
 def common_hotkey(char: chars.char, tab: tab, client: iclient, tablist: tablist, win: iwindow):
@@ -25,16 +27,14 @@ def common_hotkey(char: chars.char, tab: tab, client: iclient, tablist: tablist,
     :return: (True | None) Whether the char wasn't consumed
     """
     if chars.c_q == char:
-        main_menu_type = utils.get(tab_name2type, _main_menu_tab_name)
-        if main_menu_type:
-            if not isinstance(tab, main_menu_type):
-                main_menu_i = tablist.find_first(lambda t: isinstance(t, main_menu_type))
-                if main_menu_i:
-                    _, i = main_menu_i
-                    tablist.goto(i)
-                else:
-                    main_menu = win.newtab(_main_menu_tab_name)
-                    tablist.replace(tab, main_menu)
+        menu_type = main_menu_type()
+        if not isinstance(tab, menu_type):
+            main_menu_i = tablist.find_first(lambda t: isinstance(t, menu_type))
+            if main_menu_i and (_, i := main_menu_i):
+                tablist.goto(i)
+            else:
+                main_menu = win.newtab(menu_type)
+                tablist.replace(tab, main_menu)
     elif chars.c_a == char:
         tablist.back()
     elif chars.c_s == char:
@@ -42,12 +42,12 @@ def common_hotkey(char: chars.char, tab: tab, client: iclient, tablist: tablist,
     elif chars.c_d == char:
         tablist.next()
     elif chars.c_x == char:
-        tablist.remove(tab)
+        uiop.close_cur_tab(tablist, win, tab)
     elif chars.c_n == char:
         chat = win.new_chat_tab()
         tablist.add(chat)
     elif chars.c_m == char:
-        main_menu = win.newtab(_main_menu_tab_name)
+        main_menu = win.newtab(main_menu_type())
         tablist.add(main_menu)
     else:
         return True

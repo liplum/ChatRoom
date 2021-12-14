@@ -2,6 +2,7 @@ import GLOBAL
 import core.operations as op
 import i18n
 import ui.tabs as tabs
+import ui.uiop as uiop
 from cmds import *
 from core.settings import entity as settings_table
 from core.shared import *
@@ -127,9 +128,9 @@ def _con(context: Cmd_Context, args: [str]) -> server_token:
 
 cmd_con = add("con", _con)
 
-
+# Removed - join
+"""
 def _join(context: Cmd_Context, args: [str]):
-    # TODO:Complete join cmd
     argslen = len(args)
     network = context.network
     if argslen == 2:  # 1:<server ip>:<port> 2:<chatting room id>
@@ -159,6 +160,7 @@ def _join(context: Cmd_Context, args: [str]):
 
 
 cmd_join = add("join", _join)
+"""
 
 
 def _jroom_room(context: Cmd_Context, args: [str]):
@@ -176,17 +178,17 @@ def _jroom_room(context: Cmd_Context, args: [str]):
             raise WrongUsageError(i18n.trans("cmds.$common$.invalid_room_id", args[0]), 1)
         op.join(network, tab.user_info, room_id)
     else:
-        raise WrongUsageError(i18n.trans("cmds.jroom.usage"), -1)
+        raise WrongUsageError(i18n.trans("cmds.join.usage"), -1)
 
 
-cmd_jroom = add("jroom", _jroom_room)
+cmd_jroom = add("join", _jroom_room)
 
 
 def _close(context: Cmd_Context, args: [str]):
     argslen = len(args)
     tbl: tablist = context.tablist
     if argslen == 0:
-        tbl.remove(context.tab)
+        uiop.close_cur_tab(tbl, context.win)
     elif argslen == 1:
         try:
             tab_number = int(args[0])
@@ -273,7 +275,7 @@ def _croom(context: Cmd_Context, args: [str]):
     network = context.network
     argslen = len(args)
     if argslen != 1:
-        raise WrongUsageError(i18n.trans("cmds.croom.usage"), -1)
+        raise WrongUsageError(i18n.trans("cmds.create.usage"), -1)
     tab: chat_tab = context.tab
     server = tab.connected
     if server is None:
@@ -284,7 +286,7 @@ def _croom(context: Cmd_Context, args: [str]):
     op.create_room(network, tab.user_info, room_name)
 
 
-cmd_croom = add("croom", _croom)
+cmd_croom = add("create", _croom)
 
 
 def _main(context: Cmd_Context, args: [str]):

@@ -64,11 +64,6 @@
       "cannot_load_cause": "无法加载语言\"{lang}\"，因为{cause}",
       "description": "更改当前应用的语言"
     },
-    "join": {
-      "usage": "join [<服务器地址>:<端口>] <聊天室ID>",
-      "description": "在当前聊天框内加入一个聊天室",
-      "already_joined": "当前标签页已经加入了另一个聊天室{id}"
-    },
     "close": {
       "usage": "close 或者 close <整数>",
       "description": "关闭一个窗口"
@@ -86,12 +81,12 @@
       "description": "重新加载一个或多个模块",
       "no_such_module": "没有{module}模块"
     },
-    "croom": {
-      "usage": "croom \"<聊天室名称>\"(如果有空格，请用 \" 包围)",
+    "create": {
+      "usage": "create \"<聊天室名称>\"(如果有空格，请用 \" 包围)",
       "description": "创建一个新的聊天室"
     },
-    "jroom": {
-      "usage": "jroom <聊天室ID>",
+    "join": {
+      "usage": "join <聊天室ID>",
       "description": "用你当前标签页上的账号加入一个聊天室"
     }
   },

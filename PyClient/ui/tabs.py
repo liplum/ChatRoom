@@ -74,8 +74,8 @@ class tablist(notifiable, painter):
         self._cur: Optional["tab"] = None
         self.cur_group: Optional[group] = None
         self.groups: List[group] = []
-        self.cur_group_index: int = 0
-        self.cur_index: int = 0
+        self.cur_group_index: Optional[int] = None
+        self.cur_index: Optional[int] = None
 
         self.view_history = []
         self.max_view_history = 5
@@ -118,7 +118,7 @@ class tablist(notifiable, painter):
             self.tabs = no_duplicate
             if self.cur:
                 former = self.cur_index
-                self._reset_index()
+                self.reset_index()
                 if self.cur_index != former:
                     self.on_curtab_changed(self, self.cur_index, self.cur)
 
@@ -138,7 +138,7 @@ class tablist(notifiable, painter):
                 i += 1
             return None
 
-    def _reset_index(self):
+    def reset_index(self):
         with self._lock:
             cur = self.cur
             if cur:
@@ -157,11 +157,11 @@ class tablist(notifiable, painter):
         """
         Para 1:tablist object
 
-        Para 2:index of current tab
+        Para 2:index of current tab (nullable)
 
-        Para 3:current tab
+        Para 3:current tab (nullable)
 
-        :return: event(tablist,int,tab)
+        :return: event(tablist,Optional[int],Optional[tab])
         """
         return self._on_curtab_changed
 
@@ -196,7 +196,7 @@ class tablist(notifiable, painter):
                     self._cur.on_lost_focus()
                 self._cur = value
                 if self._cur:
-                    self._reset_index()
+                    self.reset_index()
                     self._cur.on_focused()
                 self.on_curtab_changed(self, self.cur_index, value)
 
@@ -206,6 +206,7 @@ class tablist(notifiable, painter):
             t.group = g
             g.add(t)
             t.on_group_id_changed.add(self.__on_subtab_group_id_changed)
+            self.reset_index()
             self.on_tablist_changed(self, True, t)
             if self.cur is None:
                 self.cur = t
@@ -228,55 +229,63 @@ class tablist(notifiable, painter):
             g.add(subtab)
 
     def replace(self, old_tab: Union[int, "tab"], new_tab: "tab"):
-        with self._lock:
-            if isinstance(old_tab, int):
-                if 0 <= old_tab < self.tabs_count:
-                    removed = self.get_by_index(item)
-                    if removed is None:
-                        return
-                    pos = old_tab
-                else:
+        if isinstance(old_tab, int):
+            if 0 <= old_tab < self.tabs_count:
+                removed: Optional["tab"] = self.get_by_index(item)
+                if removed is None:
                     return
-            elif isinstance(old_tab, tab):
-                removed = old_tab
-                try:
-                    pos = self.get_index(removed)
-                    if pos is None:
-                        return
-                except:
+                pos: int = old_tab
+            else:
+                return
+        elif isinstance(old_tab, tab):
+            removed: Optional["tab"] = old_tab
+            try:
+                pos: Optional[int] = self.get_index(removed)
+                if pos is None:
                     return
+            except:
+                return
 
-            g = self.match_group(old_tab)
-            new_tab.group = g
+        g = self.match_group(removed)
+        new_tab.group = g
 
-            new_tab.on_added()
-            need_release_resource = new_tab.on_replaced(removed)
-            new_tab.on_content_changed.add(self.on_subtab_content_changed)
-            if need_release_resource:
-                removed.on_removed()
-            removed.on_content_changed.remove(self.on_subtab_content_changed)
-            self.set_by_index(pos, new_tab)
+        g.add(new_tab)
+        g.remove(removed)
 
-            self.on_tablist_changed(self, False, removed)
-            self.on_tablist_changed(self, True, new_tab)
+        new_tab.on_added()
+        need_release_resource = new_tab.on_replaced(removed)
+        new_tab.on_content_changed.add(self.on_subtab_content_changed)
+        if need_release_resource:
+            removed.on_removed()
 
-            if self.cur is old_tab:
-                self.cur = new_tab
+        removed.on_content_changed.remove(self.on_subtab_content_changed)
+        self.set_by_index(pos, new_tab)
+
+        self.on_tablist_changed(self, False, removed)
+        self.on_tablist_changed(self, True, new_tab)
+
+        if self.cur is old_tab:
+            self.cur = new_tab
 
     def on_subtab_content_changed(self, subtab):
         with self._lock:
             self.on_content_changed(self)
 
-    def get_by_index(self, index: int) -> Optional["tab"]:
+    def get_by_index(self, index: Optional[int]) -> Optional["tab"]:
+        if index is None:
+            return None
         total = 0
         for g in self.groups:
             glen = len(g)
             if total <= index < total + glen:
                 rindex = index - total
                 return g.tabs[rindex]
+            total += glen
         return None
 
-    def get_index(self, t: "tab") -> Optional[int]:
+    def get_index(self, t: Optional["tab"]) -> Optional[int]:
+        if t is None:
+            return None
         total = 0
         for g in self.groups:
             try:
@@ -296,56 +305,58 @@ class tablist(notifiable, painter):
                 g.tabs[rindex] = new_tab
 
     def remove(self, item: Union[int, "tab"]):
-        with self._lock:
-            if isinstance(item, int):
-                if 0 <= item < self.tabs_count:
-                    removed = self.get_by_index(item)
-                    if removed:
-                        g = t.group
-                        g.remove(t)
-                    else:
-                        return
+        if isinstance(item, int):
+            if 0 <= item < self.tabs_count:
+                removed = self.get_by_index(item)
+                if removed:
+                    g = t.group
+                    g.remove(t)
                 else:
-                    return
-            elif isinstance(item, tab):
-                removed = item
-                try:
-                    g = item.group
-                    g.remove(item)
-                except:
                     return
             else:
                 return
+        elif isinstance(item, tab):
+            removed = item
+            try:
+                g = item.group
+                g.remove(item)
+            except:
+                return
+        else:
+            return
 
-            self.on_tablist_changed(self, False, removed)
-            removed.on_removed()
-            removed.on_content_changed.remove(self.on_subtab_content_changed)
+        self.on_tablist_changed(self, False, removed)
+        removed.on_removed()
+        removed.on_content_changed.remove(self.on_subtab_content_changed)
 
-            if self.tabs_count == 0:
-                self.cur = None
-            else:
-                self.goto(self.cur_index)
+        if self.tabs_count == 0:
+            self.cur = None
+        else:
+            self.goto(self.cur_index)
 
     def remove_cur(self):
-        with self._lock:
-            cur = self.cur
-            if cur:
-                g = cur.group
-                g.remove(cur)
-            self.on_tablist_changed(self, False, cur)
+        cur = self.cur
+        if cur:
+            g = cur.group
+            g.remove(cur)
+        self.on_tablist_changed(self, False, cur)
 
-            if self.tabs_count == 0:
-                self.cur = None
-            else:
-                self.goto(self.cur_index)
+        if self.tabs_count == 0:
+            self.cur = None
+        else:
+            self.goto(self.cur_index)
 
     def switch(self):
-        with self._lock:
-            if len(self.view_history) >= 2:
-                self.goto(self.view_history[-2])
+        if len(self.view_history) >= 2:
+            self.goto(self.view_history[-2])
 
-    def goto(self, number: int):
-        with self._lock:
+    def goto(self, number: Optional[int]):
+        if number is None:
+            origin = self.cur
+            if origin is target:
+                return
+            self.cur = None
+        else:
             number = max(number, 0)
             number = min(number, self.tabs_count - 1)
             origin = self.cur
@@ -369,38 +380,36 @@ class tablist(notifiable, painter):
                 self.remove(t)
 
     def add_view_history(self, number: int):
-        with self._lock:
-            self.view_history.append(number)
-            if len(self.view_history) > self.max_view_history:
-                self.view_history = self.view_history[-self.max_view_history:]
+        self.view_history.append(number)
+        if len(self.view_history) > self.max_view_history:
+            self.view_history = self.view_history[-self.max_view_history:]
 
     def paint_on(self, buf: buffer):
-        with self._lock:
-            tab_count = len(self.tabs)
-            cur = self.cur
-            with StringIO() as separator:
-                for i, t in enumerate(self.tabs):
-                    bk = CmdBkColor.Yellow if t is cur else CmdBkColor.Green
-                    fg = CmdFgColor.Black if t is cur else CmdFgColor.Violet
-                    title = t.title
-                    if GLOBAL.DEBUG:
-                        displayed_title = f" [{t.group.identity}]{title} "
+        tab_count = len(self.tabs)
+        cur = self.cur
+        with StringIO() as separator:
+            for i, t in enumerate(self.tabs):
+                bk = CmdBkColor.Yellow if t is cur else CmdBkColor.Green
+                fg = CmdFgColor.Black if t is cur else CmdFgColor.Violet
+                title = t.title
+                if GLOBAL.DEBUG:
+                    displayed_title = f" [{t.group.identity}]{title} "
+                else:
+                    displayed_title = f" {title} "
+                buf.addtext(displayed_title, fgcolor=fg, bkcolor=bk, end='')
+                repeated = " " if t is cur else "─"
+                second_line = repeated * len(displayed_title)
+                separator.write(second_line)
+                if i + 1 < tab_count:
+                    buf.addtext("│", end='')
+                    if t is cur:
+                        separator.write("└")
+                    elif i + 1 < tab_count and self.tabs[i + 1] is cur:
+                        separator.write("┘")
                     else:
-                        displayed_title = f" {title} "
-                    buf.addtext(displayed_title, fgcolor=fg, bkcolor=bk, end='')
-                    repeated = " " if t is cur else "─"
-                    second_line = repeated * len(displayed_title)
-                    separator.write(second_line)
-                    if i + 1 < tab_count:
-                        buf.addtext("│", end='')
-                        if t is cur:
-                            separator.write("└")
-                        elif i + 1 < tab_count and self.tabs[i + 1] is cur:
-                            separator.write("┘")
-                        else:
-                            separator.write("┴")
-                buf.addtext()
-                buf.addtext(separator.getvalue())
+                        separator.write("┴")
+            buf.addtext()
+            buf.addtext(separator.getvalue())
 
     def __iter__(self):
         with self._lock:
