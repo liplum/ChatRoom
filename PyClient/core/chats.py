@@ -1,10 +1,9 @@
-import os
 from datetime import datetime
 from threading import RLock
 from typing import Tuple, List, Dict, Optional
 
 import utils
-from core.filer import ifiler
+from core.filer import ifiler, sep, Directory, File
 from core.shared import server_token, userid, roomid, StorageUnit
 from events import event
 from ui.outputs import ilogger
@@ -14,7 +13,7 @@ from utils import compose, separate
 class chatting_room:
     def __init__(self, _id: roomid):
         self.id = _id
-        self._history = msgstorage(f"records\\{self.id}.rec")
+        self._history = msgstorage(File(f"records{sep}{self.id}.rec"))
 
     @property
     def history(self) -> "msgstorage":
@@ -22,8 +21,8 @@ class chatting_room:
 
 
 class msgstorage:
-    def __init__(self, save_file: str = None):
-        self._save_file = save_file
+    def __init__(self, save_file: File = None):
+        self._save_file: File = save_file
         self.__storage: List[StorageUnit] = []
         self._on_stored = event()
         self.changed = False
@@ -52,21 +51,20 @@ class msgstorage:
         return iter(self.__storage[:])
 
     @property
-    def save_file(self) -> str:
+    def save_file(self) -> File:
         return self._save_file
 
     @save_file.setter
-    def save_file(self, value):
+    def save_file(self, value: File):
         self._save_file = value
-        if not os.path.exists(value):
-            with open(value, "w", encoding="utf-8"):
-                pass
+        if not value.IsExisted:
+            value.CreateOrTruncate()
 
     def serialize(self):
         if not self._save_file:
             raise ValueError("You should provide a save file path first.")
         self.sort()
-        with open(self._save_file, "w", encoding="utf-16") as save:
+        with open(self._save_file.FullPath, "w", encoding="utf-16") as save:
             for unit in self.__storage:
                 unit_str = (str(unit[0]), str(unit[1]), unit[2])
                 saved_line = compose(unit_str, '|', end='\n')
@@ -76,7 +74,7 @@ class msgstorage:
         if not self._save_file:
             raise ValueError("You should provide a save file path first.")
         self.__storage = []
-        with open(self._save_file, "r", encoding="utf-16") as save:
+        with open(self._save_file.FullPath, "r", encoding="utf-16") as save:
             lines = save.readlines()
             for line in lines:
                 line = line.rstrip()
@@ -195,7 +193,7 @@ class imsgfiler:
     def save(self, server: server_token, room_id: roomid, storage: msgstorage):
         pass
 
-    def get(self, server: server_token, room_id: roomid) -> str:
+    def get(self, server: server_token, room_id: roomid) -> File:
         pass
 
 
@@ -204,20 +202,21 @@ class msgfiler(imsgfiler):
     def init(self, container):
         self.logger: ilogger = container.resolve(ilogger)
         self.filer: ifiler = container.resolve(ifiler)
+        self.data_folder: Directory = self.filer.get_dir("data")
 
     def __init__(self):
         pass
 
     def save(self, server: server_token, room_id: roomid, storage: msgstorage):
         try:
-            file = self.filer.get_file(f"/data/{server.ip}-{server.port}/{room_id}.rec")
+            file = self.data_folder.SubFile(f"{server.ip}-{server.port}{sep}{room_id}.rec")
             storage.save_file = file
             storage.serialize()
         except:
             self.logger.error(f'[MsgFiler]Cannot save msg into "{storage.save_file}"')
 
-    def get(self, server: server_token, room_id: roomid) -> str:
-        return self.filer.get_file(f"/data/{server.ip}-{server.port}/{room_id}.rec")
+    def get(self, server: server_token, room_id: roomid) -> File:
+        return self.data_folder.SubFile(f"{server.ip}-{server.port}{sep}{room_id}.rec")
 
 
 class msgmager(imsgmager):

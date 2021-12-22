@@ -50,8 +50,7 @@ def win_test():
     # test_traceback()
     # test_gen_2d_array()
     # test_i18n_folder()
-    # test_version()
-    test_nb_cmd_input()
+    test_version()
 
 
 def linux_test():
@@ -67,10 +66,6 @@ if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
-
-
-def test_nb_cmd_input():
-    input()
 
 
 def test_final_attr():

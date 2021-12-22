@@ -32,6 +32,7 @@
     e to one which contains non-monospaced characters, the layout will be strange.]
     (11/22): Implement textbox.cache_layout(self)
     (11/26): Suspendable tab and pop-up
-     12/09 : Grouped tabs
+    (12/09): Grouped tabs
      12/09 : Scroll Viewer
      12/09 : Friends&Chat Room list tab
+     12/23 : New render system

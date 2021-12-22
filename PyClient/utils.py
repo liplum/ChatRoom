@@ -303,7 +303,7 @@ def separate(text: str, separator: str, number: int = None, allow_emptychar: boo
     return res
 
 
-def compose(seq: [], connector: str = ",", pretreat=str, end: str = ""):
+def compose(seq: Collection, connector: str = ",", pretreat=str, end: str = "") -> str:
     with StringIO() as temp:
         c = 0
         max_len = len(seq)
@@ -324,6 +324,13 @@ def compose(seq: [], connector: str = ",", pretreat=str, end: str = ""):
                     temp.write(connector)
         temp.write(end)
         return temp.getvalue()
+
+
+def chain(seq: Iterable[str]) -> str:
+    with StringIO() as res:
+        for ch in seq:
+            res.write(ch)
+        return res.getvalue()
 
 
 def get_mid(a: int, b: int) -> int:

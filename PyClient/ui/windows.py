@@ -144,13 +144,13 @@ class window(iwindow):
             buf.addtext(f"Focused={self.tablist.cur}")
 
     def update_screen(self):
-        utils.clear_screen()
         self.prepare()
         self.tablist.paint_on(self.screen_buffer)
         cur_painter = self.cur_painter
         if cur_painter:
             cur_painter.paint_on(self.screen_buffer)
         self.render_debug_info(self.screen_buffer)
+        utils.clear_screen()
         self.displayer.render(self.screen_buffer)
 
     def run_coroutine(self):

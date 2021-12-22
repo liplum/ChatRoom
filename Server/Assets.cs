@@ -22,9 +22,7 @@ public static class Assets {
     public static void LoadConfigs() {
         try {
 
-            string content;
-            if (ConfigFile.Exists()) content = File.ReadAllText(ConfigFile);
-            else content = "{}";
+            var content = ConfigFile.Exists() ? File.ReadAllText(ConfigFile) : "{}";
 
             _configJson = JsonConvert.DeserializeObject<ExpandoObject>(content, new ExpandoObjectConverter())!;
         }

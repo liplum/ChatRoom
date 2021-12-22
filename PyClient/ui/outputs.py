@@ -1,31 +1,17 @@
-import os
 import sys
 import traceback
-from abc import ABC, abstractmethod
 from collections import deque
 from datetime import datetime
 from threading import Thread, currentThread
-from typing import Optional, NoReturn, List, Tuple, Deque, Collection
+from typing import Optional, NoReturn, List, Deque, Collection
 
 import GLOBAL
 import i18n
 import utils
 from GLOBAL import StringIO
-from core.filer import ifiler
-
-
-def get_winsize() -> Tuple[int, int]:
-    return os.get_terminal_size()
-
-
-def get_winsize_default() -> Tuple[int, int]:
-    return 80, 20
-
-
-try:
-    os.get_terminal_size()
-except:
-    get_winsize = get_winsize_default
+from core.filer import ifiler, sep, Directory, File
+from files import EndsWith
+from ui.displays import *
 
 
 class ilogger:
@@ -177,22 +163,24 @@ class cmd_logger(ilogger):
         self.removed = False
         self.initialized = False
         self.log_queue: Deque[Item] = deque()
+        self.log_folder: Directory = Directory("log")
 
     def init(self, container):
         self.filer = container.resolve(ifiler)
+        self.log_folder: Directory = self.filer.get_dir("log")
 
     def delete_outdated(self):
         self.removed = True
-        log_folder = self.filer.get_dir("log")
         now = datetime.now()
-        all_log_files = [f"{log_folder}/{t[1]}" for t in utils.all_file_with_extension(log_folder, ".log")]
+        all_log_files = self.log_folder.GetSubFiles(EndsWith(".log"))
         need_removed = []
         for log_file in all_log_files:
-            timestamp = os.path.getctime(log_file)
+            logf = log_file.FullPath
+            timestamp = os.path.getctime(logf)
             create_time = datetime.fromtimestamp(timestamp)
             delta = now - create_time
             if delta.days > 7:
-                need_removed.append(log_file)
+                need_removed.append(logf)
         for file in need_removed:
             try:
                 os.remove(file)
@@ -200,8 +188,8 @@ class cmd_logger(ilogger):
                 self.error(f"[Log]Can't delete out-dated log file {file}")
 
     @property
-    def logfile(self):
-        return self.filer.get_file(f"log/{datetime.today().strftime('%Y%m%d')}.log")
+    def logfile(self) -> File:
+        return self.log_folder.SubFile(f"{datetime.today().strftime('%Y%m%d')}.log")
 
     def msg(self, text: str, Async=True) -> NoReturn:
         self.alert(text, AlertLevel.Msg, Async)
@@ -232,7 +220,7 @@ class cmd_logger(ilogger):
 
     def render_startup_screen(self):
         if self.startup_screen:
-            with open(self.logfile, "a+", encoding='utf-8') as log:
+            with open(self.logfile.FullPath, "a+", encoding='utf-8') as log:
                 for s in self.startup_screen:
                     if self.output_to_cmd:
                         tinted_print(s)
@@ -248,7 +236,7 @@ class cmd_logger(ilogger):
                     content, color = queue.popleft()
                     if self.output_to_cmd:
                         tinted_print(content, fgcolor=color)
-                    with open(self.logfile, "a+", encoding='utf-8') as log:
+                    with open(self.logfile.FullPath, "a+", encoding='utf-8') as log:
                         log.write(content)
                         log.write('\n')
             except Exception as e:
@@ -281,7 +269,7 @@ class cmd_logger(ilogger):
             t = f"{time_stamp}[{label}]{text}"
         if self.output_to_cmd:
             tinted_print(t, fgcolor=color)
-        with open(self.logfile, "a+", encoding='utf-8') as log:
+        with open(self.logfile.FullPath, "a+", encoding='utf-8') as log:
             log.write(t)
             log.write('\n')
 

@@ -41,9 +41,7 @@ class cmdkey:
         """
         Para 1:cmdkey object
 
-
         Para 2:mapped char
-
 
         :return: event(textbox,int,str)
         """
@@ -54,9 +52,7 @@ class cmdkey:
         """
         Para 1:cmdkey object
 
-
         Para 2:demapped char
-
 
         :return: event(textbox,int,str)
         """

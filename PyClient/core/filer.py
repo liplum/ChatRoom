@@ -1,8 +1,8 @@
-import os
+from files import Directory, File, sep
 
 
 class ifiler:
-    def get_dir(self, dir_path: str) -> str:
+    def get_dir(self, dir_path: str) -> Directory:
         """
         Gets or generate a directory from the path.
         :param dir_path: a relative path based on root path
@@ -10,7 +10,7 @@ class ifiler:
         """
         pass
 
-    def get_file(self, file_path) -> str:
+    def get_file(self, file_path) -> File:
         """
         Gets or generate a file from the path.
         :param file_path: a relative path based on root path
@@ -32,21 +32,17 @@ class filer(ifiler):
         super().__init__()
         self._root_path = ""
 
-    def get_dir(self, dir_path: str) -> str:
-        full = f"{self.root_path}/{dir_path}"
-        if not os.path.exists(full):
-            os.makedirs(full, exist_ok=True)
-        return full
+    def get_dir(self, dir_path: str) -> Directory:
+        dire = Directory(f"{self.root_path}{sep}{dir_path}")
+        if not dire.IsExisted:
+            dire.Create()
+        return dire
 
-    def get_file(self, file_path) -> str:
-        full = f"{self.root_path}/{file_path}"
-        if not os.path.exists(full):
-            folder, file = os.path.split(full)
-            os.makedirs(folder, exist_ok=True)
-            if not os.path.exists(file):
-                with open(full, "w", encoding="utf-8"):
-                    pass
-        return full
+    def get_file(self, file_path) -> File:
+        f = File(f"{self.root_path}{sep}{file_path}")
+        if not f.IsExisted:
+            f.CreateOrTruncate()
+        return f
 
     @property
     def root_path(self) -> str:
