@@ -1,5 +1,23 @@
 import os
+from typing import Iterable
 from typing import Tuple
+
+from numpy import ndarray
+
+Buffer = ndarray
+DirtyMarks = ndarray
+
+
+def Iterate2DRow(array2D: ndarray, row_index: int) -> Iterable:
+    column = array2D.shape[1]
+    for j in range(column):
+        yield array2D[row_index, j]
+
+
+def Iterate2DColumn(array2D: ndarray, column_index: int) -> Iterable:
+    row = array2D.shape[0]
+    for j in range(row):
+        yield array2D[i, column_index]
 
 
 def get_winsize() -> Tuple[int, int]:
@@ -19,10 +37,20 @@ from abc import ABC, abstractmethod
 
 
 class Canvas(ABC):
-    def Char(self, x, y, char: str):
+    @abstractmethod
+    def Char(self, x: int, y: int, char: str):
         pass
 
-    def Str(self, x, y, string: str):
+    @abstractmethod
+    def Str(self, x: int, y: int, string: str):
+        pass
+
+    @abstractmethod
+    def Color(self, x: int, y: int, color):
+        pass
+
+    @abstractmethod
+    def Colors(self, x1: int, x2: int, y1: int, y2: int, color):
         pass
 
     @property

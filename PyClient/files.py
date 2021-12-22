@@ -59,22 +59,40 @@ class Directory(FileSystemInfo):
         os.makedirs(self.FullPath, exist_ok=True)
 
     @property
-    def Files(self) -> Iterable[File]:
+    def FilesIt(self) -> Iterable[File]:
         for root, ds, fs in os.walk(self.FullPath):
             for f in fs:
                 yield File(f"{root}{sep}{f}")
 
     @property
-    def Directories(self) -> Iterable["Directory"]:
+    def DirectoriesIt(self) -> Iterable["Directory"]:
         for root, ds, fs in os.walk(self.FullPath):
             for d in ds:
                 yield Directory(f"{root}{sep}{d}")
 
+    @property
+    def Files(self) -> List[File]:
+        return [File(f"{root}{sep}{f}") for root, ds, fs in os.walk(self.FullPath) for f in fs]
+
+    @property
+    def Directories(self) -> List["Directory"]:
+        return [Directory(f"{root}{sep}{d}") for root, ds, fs in os.walk(self.FullPath) for d in ds]
+
     def GetSubFiles(self, _filter: Filter = All) -> List[File]:
-        return [f for f in self.Files if _filter(f.Name)]
+        return [f for f in self.FilesIt if _filter(f.Name)]
 
     def GetSubDirectories(self, _filter: Filter = All) -> List["Directory"]:
-        return [d for d in self.Directories if _filter(d.Name)]
+        return [d for d in self.DirectoriesIt if _filter(d.Name)]
+
+    def GetSubFilesIt(self, _filter: Filter = All) -> Iterable[File]:
+        for f in self.FilesIt:
+            if _filter(f.Name):
+                yield f
+
+    def GetSubDirectoriesIt(self, _filter: Filter = All) -> Iterable["Directory"]:
+        for d in self.DirectoriesIt:
+            if _filter(d.Name):
+                yield d
 
     def SubFile(self, fileName) -> File:
         return File(f"{self.FullPath}{sep}{fileName}")
