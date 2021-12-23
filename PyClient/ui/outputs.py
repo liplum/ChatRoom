@@ -11,7 +11,7 @@ import utils
 from GLOBAL import StringIO
 from core.filer import ifiler, sep, Directory, File
 from files import EndsWith
-from ui.displays import *
+from ui.Renders import *
 
 
 class ilogger:

@@ -12,6 +12,7 @@ class label(control):
             self.content = content
         self._width: PROP = auto
         self._r_width = 0
+        self.viewer = Viewer()
 
     @property
     def width(self) -> PROP:
@@ -43,6 +44,23 @@ class label(control):
             elif self.width > len(content):
                 content = utils.fillto(content, " ", self.width)
         buf.addtext(content, end="")
+
+    def PaintOn(self, canvas: Canvas):
+        if self._layout_changed:
+            self.cache_layout()
+        v = self.viewer
+        v.Bind(canvas)
+        v.X = self.X
+        v.Y = self.Y
+        v.Width = self.render_width
+        v.Height = self.render_height
+        content = self.content()
+        rw = self.render_width
+        if rw < len(content):
+            content = content[0:self.width]
+        elif rw > len(content):
+            content = utils.fillto(content, " ", self.width)
+        v.Str(0, 0, content)
 
     @width.setter
     def width(self, value: int):

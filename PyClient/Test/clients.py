@@ -1,27 +1,19 @@
-import json
 import os
 import platform
 import traceback
-from threading import Thread
 
 import GLOBAL
 import ioc as ioc
-import net.networks as net
 import tasks
-import ui.displays as dis
 import ui.inputs as _input
 import ui.outputs as output
-from cmds import cmdmanager
+from Test.windows import TestWindow
 from core.chats import *
 from core.filer import ifiler, filer
 from core.operations import *
-from core.rooms import iroom_manager, room_manager
-from core.settings import entity as settings
 from timers import timer
+from ui.Renders import IRender
 from ui.core import *
-from ui.k import cmdkey
-from Test.windows import TestWindow
-from utils import get
 
 system_type = platform.system()
 
@@ -65,7 +57,8 @@ class TestClient(iclient):
         self.logger.output_to_cmd = False
         self.logger.startup_screen = GLOBAL.LOGO
         self.logger.initialize()
-
+        self._render = ct.resolve(IRender)
+        self._render.Initialize()
         self._displayer: output.idisplay = ct.resolve(output.idisplay)
         self.logger.msg("[Client]Service component initialized.")
         self.logger.msg(f"[Client]Client starts up on {system_type}.")
@@ -94,6 +87,7 @@ class TestClient(iclient):
             inpt = self.inpt
             inpt.initialize()
             self.win.start()
+            self.win.gen_default_tab()
             first_rendered = False
             tps = self.tps
             tps.reset()
@@ -178,3 +172,7 @@ class TestClient(iclient):
     @property
     def displayer(self) -> "idisplay":
         return self._displayer
+
+    @property
+    def Render(self) -> IRender:
+        return self._render

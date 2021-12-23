@@ -1,12 +1,13 @@
 from abc import ABCMeta
 from threading import RLock
-from typing import List, Iterable, Dict, Generator, Tuple, Hashable, Set
+from typing import List, Dict, Generator, Hashable, Set
 
 import GLOBAL
 from GLOBAL import StringIO
+from ui.Renders import *
 from ui.core import *
 from ui.coroutines import Finished
-from ui.outputs import buffer, CmdBkColor, CmdFgColor
+from ui.outputs import buffer, CmdBkColor, CmdFgColor, tintedtxtIO
 from utils import is_in
 
 tab_name2type: Dict[str, type] = {}
@@ -68,7 +69,7 @@ class group:
         return f"group({self.identity})"
 
 
-class tablist(notifiable, painter):
+class tablist(notifiable, Painter, painter):
     def __init__(self):
         super().__init__()
         self._cur: Optional["tab"] = None
@@ -83,6 +84,9 @@ class tablist(notifiable, painter):
         self._on_curtab_changed = event()
         self._on_tablist_changed = event()
         self._lock = RLock()
+        self.X = 0
+        self.Y = 0
+        self.viewer = Viewer()
 
     def match_or_create_group(self, t: "tab") -> group:
         for g in self.groups:
@@ -385,7 +389,7 @@ class tablist(notifiable, painter):
             self.view_history = self.view_history[-self.max_view_history:]
 
     def paint_on(self, buf: buffer):
-        tab_count = len(self.tabs)
+        tab_count = self.tabs_count
         cur = self.cur
         with StringIO() as separator:
             for i, t in enumerate(self.tabs):
@@ -411,6 +415,44 @@ class tablist(notifiable, painter):
             buf.addtext()
             buf.addtext(separator.getvalue())
 
+    def PaintOn(self, canvas: Canvas):
+        v = self.viewer
+        v.X = self.X
+        v.Y = self.Y
+        v.Width = canvas.Width
+        v.Height = min(2, canvas.Height)
+        v.Bind(canvas)
+        tab_count = self.tabs_count
+        cur = self.cur
+        names = StringIO()
+        separator = StringIO()
+        for i, t in enumerate(self.tabs):
+            bk = CmdBkColor.Yellow if t is cur else CmdBkColor.Green
+            fg = CmdFgColor.Black if t is cur else CmdFgColor.Violet
+            title = t.title
+            if GLOBAL.DEBUG:
+                displayed_title = f" [{t.group.identity}]{title} "
+            else:
+                displayed_title = f" {title} "
+            tintedtxtIO(names, displayed_title, fgcolor=fg, bkcolor=bk)
+            repeated = " " if t is cur else "─"
+            second_line = repeated * len(displayed_title)
+            separator.write(second_line)
+            if i + 1 < tab_count:
+                names.write("│", end='')
+                if t is cur:
+                    separator.write("└")
+                elif i + 1 < tab_count and self.tabs[i + 1] is cur:
+                    separator.write("┘")
+                else:
+                    separator.write("┴")
+        names_str = names.getvalue()
+        separator_str = separator.getvalue()
+        names.close()
+        separator.close()
+        v.Str(0, 0, names_str)
+        v.Str(0, 1, separator_str)
+
     def __iter__(self):
         with self._lock:
             return iter(self.tabs)
@@ -423,7 +465,7 @@ class metatab(ABCMeta):
         _add_tabtype(name, cls)
 
 
-class tab(notifiable, painter, reloadable, metaclass=metatab):
+class tab(notifiable, painter, Painter, reloadable, metaclass=metatab):
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__()
         self.tablist: tablist = tablist
@@ -433,6 +475,8 @@ class tab(notifiable, painter, reloadable, metaclass=metatab):
         self._group_id = None
         self._group = None
         self._on_group_id_changed = event()
+        self.X = 0
+        self.Y = 0
 
     @property
     def on_group_id_changed(self) -> event:
@@ -451,6 +495,9 @@ class tab(notifiable, painter, reloadable, metaclass=metatab):
         yield Finished
 
     def paint_on(self, buf: buffer):
+        pass
+
+    def PaintOn(self, canvas: Canvas):
         pass
 
     @classmethod

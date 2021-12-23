@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Callable, Collection, Dict, Optional, Union, Any, Tuple
 
 from GLOBAL import StringIO
+from ui.Renders import *
 from ui.shared import *
 
 auto = "auto"
@@ -9,7 +10,7 @@ PROP = TypeVar('PROP', str, int)
 unlimited = "unlimited"
 
 
-class control(notifiable, painter, inputable, reloadable, ABC):
+class control(notifiable, painter, Painter, inputable, reloadable, ABC):
     def __init__(self):
         super().__init__()
         self._in_container = False
@@ -21,11 +22,23 @@ class control(notifiable, painter, inputable, reloadable, ABC):
         self._on_exit_focus = event()
         self._layout_changed = True
         self.on_prop_changed.add(self._on_layout_changed)
+        self._onImageAreaChanged = event()
         self._attach_prop: Dict[str, T] = {}
+        self._x = 0
+        self._y = 0
 
     def _on_layout_changed(self, self2, prop_name):
         self.on_content_changed(self)
         self._layout_changed = True
+
+    @property
+    def OnImageAreaChanged(self) -> event:
+        """
+        Para 1:control object
+
+        :return: event(control)
+        """
+        return self._onImageAreaChanged
 
     @property
     def on_exit_focus(self) -> event:
@@ -68,6 +81,43 @@ class control(notifiable, painter, inputable, reloadable, ABC):
             else:
                 self._width = max(0, value)
                 self.on_prop_changed(self, "width")
+                self.OnImageAreaChanged(self)
+
+    @property
+    def X(self) -> int:
+        """
+        Gets the current X of this control
+        :return:an int
+        """
+        return self._x
+
+    @X.setter
+    def X(self, value: int):
+        """
+        Sets the x of this control.
+        :param value: int
+        """
+        if self._x != value:
+            self._x = max(0, value)
+            self.OnImageAreaChanged(self)
+
+    @property
+    def Y(self) -> int:
+        """
+        Gets the current Y of this control
+        :return:an int
+        """
+        return self._y
+
+    @Y.setter
+    def Y(self, value: int):
+        """
+        Sets the x of this control.
+        :param value: int
+        """
+        if self._y != value:
+            self._y = max(0, value)
+            self.OnImageAreaChanged(self)
 
     @property
     def render_height(self) -> int:
@@ -106,6 +156,7 @@ class control(notifiable, painter, inputable, reloadable, ABC):
             else:
                 self._height = max(0, value)
                 self.on_prop_changed(self, "height")
+                self.OnImageAreaChanged(self)
 
     @abstractmethod
     def paint_on(self, buf: buffer):
@@ -113,6 +164,9 @@ class control(notifiable, painter, inputable, reloadable, ABC):
         Paint all content on the buffer
         :param buf:screen buffer
         """
+        pass
+
+    def PaintOn(self, canvas: Canvas):
         pass
 
     @property

@@ -1,14 +1,10 @@
-import traceback
 from collections import deque
 from typing import Deque
 
-import utils
-from core.settings import entity as settings
 from ui.coroutines import Suspend
-from ui.tab.chat import chat_tab
 from ui.tab.main_menu import main_menu_tab
 from ui.tabs import *
-from utils import multiget, get
+from utils import get
 
 Focusable = Union[base_popup, tab]
 CallStackItem = Tuple[Generator, Focusable]
@@ -35,11 +31,13 @@ class TestWindow(iwindow):
         super().__init__(client)
         self.logger: "ilogger" = self.client.logger
         self._tablist: tablist = tablist()
+        self.render: IRender = self.client.Render
         self.screen_buffer: Optional[buffer] = None
         self.tablist.on_content_changed.add(lambda _: self.client.mark_dirty())
         self.tablist.on_tablist_changed.add(lambda li, mode, t: self.client.mark_dirty())
         self.popup_return_values: Dict[base_popup, Any] = {}
         self.call_stack: Deque[Frame] = deque()
+        self.cur_canvas: Optional[Canvas] = None
 
         def on_curtab_changed(tablist, index, curtab):
             if curtab is None:
@@ -65,53 +63,12 @@ class TestWindow(iwindow):
         return (frame := self.cur_frame) and frame.coroutine is None
 
     def start(self):
-        configs = settings()
-        if configs.RestoreTabWhenRestart:
-            self.restore_last_time_tabs()
+        from Test.TestTabs import TestTab
+        t = self.newtab(TestTab)
+        self.tablist.add(t)
 
     def stop(self):
-        configs = settings()
-        if configs.RestoreTabWhenRestart:
-            self.store_unclosed_tabs()
-
-    def restore_last_time_tabs(self):
-        configs = settings()
-        last_opened: Dict[str, List[dict]] = configs.LastOpenedTabs
-        for tab_name, li in last_opened.items():
-            if tab_name in tab_name2type:
-                tabtype = tab_name2type[tab_name]
-                if tabtype.serializable():
-                    for entity in li:
-                        try:
-                            tab = tabtype.deserialize(entity, self.client, self.tablist)
-                        except CannotRestoreTab:
-                            continue
-                        except Exception as e:
-                            self.client.logger.warn(f"[Window]{e}\n{traceback.format_exc()}")
-                            continue
-                        if tab is not None:
-                            self.tablist.add(tab)
-        self.tablist.unite_like_tabs()
-
-    def store_unclosed_tabs(self):
-        self.tablist.unite_like_tabs()
-        configs = settings()
-        last_opened: Dict[str, List[dict]] = {}
-        for tab in self.tablist.tabs:
-            tabtype = type(tab)
-            if tabtype in tab_type2name:
-                if tabtype.serializable():
-                    li = multiget(last_opened, tab_type2name[tabtype])
-                    try:
-                        dic = tabtype.serialize(tab)
-                    except CannotStoreTab:
-                        continue
-                    except Exception as e:
-                        self.client.logger.warn(f"[Window]{e}\n{traceback.format_exc()}")
-                        continue
-                    if dic is not None:
-                        li.append(dic)
-        configs.LastOpenedTabs = last_opened
+        pass
 
     def gen_default_tab(self):
         if self.tablist.tabs_count == 0:
@@ -131,11 +88,13 @@ class TestWindow(iwindow):
             raise TypeError(tabtype, type(tabtype))
         return t
 
-    def new_chat_tab(self) -> chat_tab:
-        return self.newtab(chat_tab)
+    def new_chat_tab(self) -> "chat_tab":
+        raise NotImplementedError()
 
     def prepare(self):
-        self.screen_buffer = self.displayer.gen_buffer()
+        # self.screen_buffer = self.displayer.gen_buffer()
+        if self.cur_canvas is None:
+            self.cur_canvas = self.render.CreateCanvas()
 
     def render_debug_info(self, buf):
         if GLOBAL.DEBUG:
@@ -144,13 +103,18 @@ class TestWindow(iwindow):
 
     def update_screen(self):
         self.prepare()
-        self.tablist.paint_on(self.screen_buffer)
+        canvas = self.cur_canvas
+        self.tablist.PaintOn(canvas)
         cur_painter = self.cur_painter
         if cur_painter:
-            cur_painter.paint_on(self.screen_buffer)
-        self.render_debug_info(self.screen_buffer)
-        utils.clear_screen()
-        self.displayer.render(self.screen_buffer)
+            cur_painter.X=0
+            cur_painter.Y=2
+            cur_painter.PaintOn(canvas)
+            # cur_painter.paint_on(self.screen_buffer)
+        # self.render_debug_info(self.screen_buffer)
+        # utils.clear_screen()
+        # self.displayer.render(self.screen_buffer)
+        self.render.Render(canvas)
 
     def run_coroutine(self):
         if len(self.call_stack) > 0:
@@ -206,7 +170,7 @@ class TestWindow(iwindow):
             self.client.mark_dirty()
 
     @property
-    def cur_painter(self) -> Optional[painter]:
+    def cur_painter(self) -> Optional[tab]:
         frame = self.cur_frame
         if frame:
             return frame.tab

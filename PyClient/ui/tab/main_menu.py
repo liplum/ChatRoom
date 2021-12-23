@@ -144,11 +144,14 @@ class main_menu_tab(tab):
         return True
 
     def on_focused(self):
-        configs = entity()
+        try:
+            configs = entity()
 
-        if configs.ColorfulMainMenu:
-            self.db.theme = _get_theme_chaos_tube
-            self.db.on_render_char = colorize_char
-        else:
-            self.db.theme = _get_theme_tube
-            self.db.on_render_char = None
+            if configs.ColorfulMainMenu:
+                self.db.theme = _get_theme_chaos_tube
+                self.db.on_render_char = colorize_char
+            else:
+                self.db.theme = _get_theme_tube
+                self.db.on_render_char = None
+        except:
+            pass

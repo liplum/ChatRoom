@@ -8,7 +8,7 @@ import GLOBAL
 import ioc as ioc
 import net.networks as net
 import tasks
-import ui.displays as dis
+import ui.Renders as dis
 import ui.inputs as _input
 import ui.outputs as output
 from cmds import cmdmanager
