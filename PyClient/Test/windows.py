@@ -38,6 +38,7 @@ class TestWindow(iwindow):
         self.popup_return_values: Dict[base_popup, Any] = {}
         self.call_stack: Deque[Frame] = deque()
         self.cur_canvas: Optional[Canvas] = None
+        self.viewer: Viewer = Viewer()
 
         def on_curtab_changed(tablist, index, curtab):
             if curtab is None:
@@ -63,8 +64,10 @@ class TestWindow(iwindow):
         return (frame := self.cur_frame) and frame.coroutine is None
 
     def start(self):
+        utils.clear_screen()
         from Test.TestTabs import TestTab
         t = self.newtab(TestTab)
+        self.tablist.add(self.newtab(main_menu_tab))
         self.tablist.add(t)
 
     def stop(self):
@@ -92,7 +95,6 @@ class TestWindow(iwindow):
         raise NotImplementedError()
 
     def prepare(self):
-        # self.screen_buffer = self.displayer.gen_buffer()
         if self.cur_canvas is None:
             self.cur_canvas = self.render.CreateCanvas()
 
@@ -103,17 +105,21 @@ class TestWindow(iwindow):
 
     def update_screen(self):
         self.prepare()
+        v = self.viewer
         canvas = self.cur_canvas
-        self.tablist.PaintOn(canvas)
+        v.Bind(canvas)
+        v.X = 0
+        v.Y = 0
+        v.Width = canvas.Width
+        v.Height = 2
+        self.tablist.PaintOn(v)
         cur_painter = self.cur_painter
         if cur_painter:
-            cur_painter.X=0
-            cur_painter.Y=2
-            cur_painter.PaintOn(canvas)
-            # cur_painter.paint_on(self.screen_buffer)
-        # self.render_debug_info(self.screen_buffer)
-        # utils.clear_screen()
-        # self.displayer.render(self.screen_buffer)
+            v.X = 0
+            v.Y = 2
+            v.Width = canvas.Width
+            v.Height = canvas.Height - 2
+            cur_painter.PaintOn(v)
         self.render.Render(canvas)
 
     def run_coroutine(self):

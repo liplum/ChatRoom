@@ -3,7 +3,7 @@ import random
 import ui.themes as themes
 from ui.control.buttons import button
 from ui.control.labels import label
-from ui.ctrl import *
+from ui.controls import *
 from ui.outputs import *
 
 T = TypeVar('T')

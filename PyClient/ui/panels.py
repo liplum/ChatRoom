@@ -1,7 +1,7 @@
 from typing import Set
 
 import keys
-from ui.ctrl import *
+from ui.controls import *
 
 CTRL = TypeVar('CTRL', covariant=True, bound=control)
 

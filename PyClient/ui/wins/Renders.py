@@ -2,7 +2,7 @@ import numpy as np
 import win32con
 import win32console
 from win32console import PyConsoleScreenBufferType, PyCOORDType
-from typing import Iterable
+
 import utils
 from ui.Renders import *
 
@@ -20,11 +20,12 @@ v 3 4 5 6 7 8 9
 
 class WinCanvas(Canvas):
 
-    def __init__(self, width: int, height: int, buffer: Buffer, dirty_marks: DirtyMarks):
+    def __init__(self, width: int, height: int, buffer: Buffer, colors: Buffer, dirty_marks: DirtyMarks):
         self.__width = width
         self.__height = height
         self.buffer: Buffer = buffer
-        self.dirty_marks: DirtyMarks = dirty_marks
+        self.colors: Buffer = colors
+        self.DirtyMarks: DirtyMarks = dirty_marks
 
     @property
     def Width(self):
@@ -37,13 +38,13 @@ class WinCanvas(Canvas):
     def Char(self, x, y, char: str):
         if 0 <= x < self.Width and 0 <= y < self.Height:
             self.buffer[y, x] = char
-            self.dirty_marks[y] = True
+            self.DirtyMarks[y] = True
 
     def Str(self, x, y, string: Iterable[str]):
         width = self.Width
         height = self.Height
         buffer = self.buffer
-        marks = self.dirty_marks
+        marks = self.DirtyMarks
         for i, char in enumerate(string):
             nx = x + i
             if 0 <= nx < width and 0 <= y < height:
@@ -51,19 +52,31 @@ class WinCanvas(Canvas):
         if 0 <= y < height:
             marks[y] = True
 
-    def Color(self, x: int, y: int, color):
-        pass
+    def Color(self, x: int, y: int, bk, fg):
+        if 0 <= x < self.Width and 0 <= y < self.Height:
+            self.colors[y, x] = bk | fg
+            self.DirtyMarks[y] = True
 
-    def Colors(self, x1: int, x2: int, y1: int, y2: int, color):
-        pass
+    def Colors(self, x1: int, x2: int, y: int, bk, fg):
+        width = self.Width
+        height = self.Height
+        colors = self.colors
+        marks = self.DirtyMarks
+        for i, char in enumerate(string):
+            nx = x + i
+            if 0 <= nx < width and 0 <= y < height:
+                colors[y, nx] = bk | fg
+        if 0 <= y < height:
+            marks[y] = True
 
 
 class WinRender(IRender):
 
     def __init__(self):
         super().__init__()
-        self.CharMatrix: Optional[ndarray] = None
-        self.DirtyMarks: Optional[ndarray] = None
+        self.CharMatrix: Optional[Buffer] = None
+        self.ColorMatrix: Optional[Buffer] = None
+        self.DirtyMarks: Optional[DirtyMarks] = None
         self.buffer: Optional[CSBuffer] = None
         self.width: int = 0
         self.height: int = 0
@@ -84,9 +97,11 @@ class WinRender(IRender):
         self.height = size.Y
         size = self.height, self.width
         heights = self.height,
-        if not self.CharMatrix or self.CharMatrix.shape != size:
+        if self.CharMatrix is None or self.CharMatrix.shape != size:
             self.CharMatrix = np.full(size, " ", dtype=str)
-        if not self.DirtyMarks or self.DirtyMarks.shape != heights:
+        if self.ColorMatrix is None or self.ColorMatrix.shape != size:
+            self.ColorMatrix = np.full(size, FG.White, dtype=int)
+        if self.DirtyMarks is None or self.DirtyMarks.shape != heights:
             self.DirtyMarks = np.full(heights, False, dtype=bool)
         self.NeedRegen = False
 
@@ -96,18 +111,23 @@ class WinRender(IRender):
     def CreateCanvas(self) -> WinCanvas:
         if self.NeedRegen:
             self.RegenBuffer()
-        return WinCanvas(self.width, self.height, self.CharMatrix, self.DirtyMarks)
+        return WinCanvas(self.width, self.height, self.CharMatrix, self.ColorMatrix, self.DirtyMarks)
 
     def Render(self, canvas: Canvas):
         if isinstance(canvas, WinCanvas):
-            cm = self.CharMatrix
+            cm = canvas.buffer
+            colorm = canvas.colors
             buf = self.buffer
-            dm = self.DirtyMarks
+            dm = canvas.DirtyMarks
             for i, dirty in enumerate(dm):
                 if dirty:
                     line = utils.chain(Iterate2DRow(cm, i))
                     buf.WriteConsoleOutputCharacter(
                         line, XY(0, i)
+                    )
+                    colors = Iterate2DRow(colorm, i)
+                    buf.WriteConsoleOutputAttribute(
+                        colors, XY(0, i)
                     )
                     dm[i] = False
 

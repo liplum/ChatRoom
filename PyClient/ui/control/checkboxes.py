@@ -1,6 +1,6 @@
 import keys
 import utils
-from ui.ctrl import *
+from ui.controls import *
 from ui.outputs import CmdBkColor, tintedtxt, CmdFgColor
 from ui.themes import check_theme
 
@@ -21,6 +21,8 @@ class checkbox(control):
         self._checked: Optional[bool] = value
 
     def paint_on(self, buf: buffer):
+        if self._layout_changed:
+            self.cache_layout()
         with StringIO() as s:
             if self.left_margin > 0:
                 utils.repeatIO(s, " ", self.left_margin)
@@ -28,6 +30,14 @@ class checkbox(control):
             bk = CmdBkColor.White if self.is_focused else None
             fg = CmdFgColor.Black if self.is_focused else None
             buf.addtext(tintedtxt(s.getvalue(), fgcolor=fg, bkcolor=bk), end="")
+
+    def PaintOn(self, canvas: Canvas):
+        if self._layout_changed:
+            self.cache_layout()
+        bk = BK.White if self.is_focused else None
+        fg = FG.Black if self.is_focused else None
+        buf = StrWriter(canvas, 0, 0, self.render_width, self.render_height)
+        buf.Write(self.cur_render_icon, bk, fg)
 
     @property
     def checked(self) -> Optional[bool]:

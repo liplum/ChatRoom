@@ -2,7 +2,7 @@ from typing import NoReturn
 
 import keys
 import utils
-from ui.ctrl import *
+from ui.controls import *
 from ui.outputs import buffer, CmdBkColor, CmdFgColor, tintedtxtIO
 from ui.shared import IsConsumed, Consumed, NotConsumed
 
@@ -39,6 +39,14 @@ class button(text_control):
             fg = CmdFgColor.Black if self.is_focused else None
             tintedtxtIO(s, self.distext, fgcolor=fg, bkcolor=bk)
             buf.addtext(s.getvalue(), end='')
+
+    def PaintOn(self, canvas: Canvas):
+        if self._layout_changed:
+            self.cache_layout()
+        g = StrWriter(canvas, 0, 0, self.render_width, self.render_height)
+        bk = BK.White if self.is_focused else None
+        fg = FG.Black if self.is_focused else None
+        g.Write(self.distext, bk, fg)
 
     @property
     def distext(self) -> str:

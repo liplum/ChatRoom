@@ -62,4 +62,32 @@ def init_keys():
         keys.k_quit = linuxchars.lc_eot
 
 
+def init_colors():
+    import ui.Renders
+    BK = ui.Renders.BK
+    FG = ui.Renders.FG
+    if system_type == "Windows":
+        from win32console import BACKGROUND_RED, BACKGROUND_BLUE, BACKGROUND_GREEN, FOREGROUND_BLUE, FOREGROUND_RED, \
+            FOREGROUND_GREEN
+        BK.Blue = BACKGROUND_BLUE
+        BK.Green = BACKGROUND_GREEN
+        BK.Red = BACKGROUND_RED
+        BK.Yellow = BACKGROUND_RED | BACKGROUND_GREEN
+        BK.Violet = BACKGROUND_RED | BACKGROUND_BLUE
+        BK.Cyan = BACKGROUND_BLUE | BACKGROUND_GREEN
+        BK.Black = 0
+        BK.White = BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_GREEN
+        FG.Blue = FOREGROUND_BLUE
+        FG.Green = FOREGROUND_GREEN
+        FG.Red = FOREGROUND_RED
+        FG.Yellow = FOREGROUND_RED | FOREGROUND_GREEN
+        FG.Violet = FOREGROUND_RED | FOREGROUND_BLUE
+        FG.Cyan = FOREGROUND_GREEN | FOREGROUND_BLUE
+        FG.Black = 0
+        FG.White = FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_RED
+    elif system_type == "Linux":
+        pass
+
+
 init_keys()
+init_colors()

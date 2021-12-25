@@ -4,7 +4,7 @@ from typing import Iterable
 
 import utils
 from ui.control.display_boards import horizontal_lineIO
-from ui.ctrl import *
+from ui.controls import *
 from ui.outputs import buffer
 from ui.themes import theme, vanilla
 

@@ -1,11 +1,8 @@
 from itertools import islice
-from typing import Optional, Iterable, List
+from typing import List
 
-import chars
 import utils
-from GLOBAL import StringIO
-from events import event
-from ui.ctrl import auto, unlimited, PROP, text_control
+from ui.controls import *
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
 from ui.shared import IsConsumed, NotConsumed, Consumed
 
@@ -109,6 +106,20 @@ class textbox(text_control):
         elif len(drawn) < self.render_width:
             drawn = utils.fillto(drawn, self.space_placeholder, self.width)
         buf.addtext(self._render_chars(drawn), end='', fgcolor=fg, bkcolor=bk)
+
+    def PaintOn(self, canvas: Canvas):
+        if self._layout_changed:
+            self.cache_layout()
+        bk = BK.White if self.is_focused else None
+        fg = FG.Black if self.is_focused else None
+        drawn = self.limited_distext
+        if self.max_inputs_count != unlimited:
+            max_render_width = min(self.max_inputs_count, self.render_width)
+            drawn = utils.fillto(drawn, self.space_placeholder, max_render_width)
+        elif len(drawn) < self.render_width:
+            drawn = utils.fillto(drawn, self.space_placeholder, self.width)
+        buf = StrWriter(canvas, 0, 0, canvas.Width, canvas.Height, autoWrap=True)
+        buf.Write(drawn, bk, fg)
 
     def on_input(self, char: chars.char) -> IsConsumed:
         return self.append(str(char))

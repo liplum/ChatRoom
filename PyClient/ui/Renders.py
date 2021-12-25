@@ -1,4 +1,5 @@
 import os
+from abc import ABC, abstractmethod
 from typing import Iterable, Tuple, Optional
 
 from numpy import ndarray
@@ -32,7 +33,27 @@ try:
 except:
     get_winsize = get_winsize_default
 
-from abc import ABC, abstractmethod
+
+class BK:
+    Red = None
+    Green = None
+    Blue = None
+    Yellow = None
+    Violet = None
+    White = None
+    Black = None
+    Cyan = None
+
+
+class FG:
+    Red = None
+    Green = None
+    Blue = None
+    Yellow = None
+    Violet = None
+    White = None
+    Black = None
+    Cyan = None
 
 
 class Canvas:
@@ -45,11 +66,11 @@ class Canvas:
         pass
 
     @abstractmethod
-    def Color(self, x: int, y: int, color):
+    def Color(self, x: int, y: int, bk, fg):
         pass
 
     @abstractmethod
-    def Colors(self, x1: int, x2: int, y1: int, y2: int, color):
+    def Colors(self, x1: int, x2: int, y: int, bk, fg):
         pass
 
     @property
@@ -61,6 +82,10 @@ class Canvas:
     @abstractmethod
     def Height(self):
         raise NotImplementedError()
+
+
+def ColoredText(canvas: Canvas, text: str, x: int, y: int, bk, fg):
+    pass
 
 
 class IRender(ABC):
@@ -92,34 +117,47 @@ class Painter:
 
 class Viewer(Canvas):
 
-    def __init__(self):
-        self.X = 0
-        self.Y = 0
-        self._width = 0
-        self._height = 0
-        self.canvas: Optional[Canvas] = None
+    def __init__(self, x=0, y=0, width=0, height=0, canvas: Canvas = None):
+        self.X = x
+        self.Y = y
+        self._width = width
+        self._height = height
+        self._canvas: Optional[Canvas] = canvas
+
+    @staticmethod
+    def ByCanvas(canvas: Canvas):
+        return Viewer(0, 0, canvas.Width, canvas.Height, canvas)
 
     def Bind(self, canvas: Canvas):
-        self.canvas = canvas
+        self._canvas = canvas
+
+    def Sub(self, dx, dy, width, height) -> "Viewer":
+        return SubViewer(dx, dy, width, height, self)
 
     def Char(self, x: int, y: int, char: str):
-        canvas = self.canvas
+        canvas = self.Canvas
         if canvas and 0 <= x < self.Width and 0 <= y < self.Height:
             canvas.Char(self.X + x, self.Y + y, char)
 
     def Str(self, x: int, y: int, string: str):
-        canvas = self.canvas
+        canvas = self.Canvas
         if canvas and 0 <= x < self.Width and 0 <= y < self.Height:
             rest = self.Width - x
             if len(string) > rest:
                 string = string[0:rest]
             canvas.Str(self.X + x, self.Y + y, string)
 
-    def Color(self, x: int, y: int, color):
-        pass
+    def Color(self, x: int, y: int, bk, fg):
+        canvas = self.Canvas
+        if canvas and 0 <= x < self.Width and 0 <= y < self.Height:
+            canvas.Color(self.X + x, self.Y + y, bk, fg)
 
-    def Colors(self, x1: int, x2: int, y1: int, y2: int, color):
-        pass
+    def Colors(self, x1: int, x2: int, y: int, bk, fg):
+        canvas = self.Canvas
+        if canvas and 0 <= x1 < self.Width and 0 <= y < self.Height:
+            x1 = self.X + x1
+            x2 = self.X + x2
+            canvas.Colors(x1, x2, self.Y + y, fg, bk)
 
     @property
     def Width(self) -> int:
@@ -136,3 +174,62 @@ class Viewer(Canvas):
     @Height.setter
     def Height(self, value: int):
         self._height = max(value, 0)
+
+    @property
+    def Canvas(self):
+        return self._canvas
+
+
+class SubViewer(Viewer):
+    def __init__(self, x, y, width, height, parent: Viewer):
+        super().__init__(x, y, width, height)
+        self.parent = parent
+
+    def Bind(self, canvas: Canvas):
+        pass
+
+    @property
+    def Canvas(self):
+        return self.parent.Canvas
+
+
+class StrWriter:
+    def __init__(self, canvas: Canvas, x, y, width, height, autoWrap=False):
+        self.X = max(x, 0)
+        self.Y = max(y, 0)
+        self.Width = width or canvas.Width
+        self.Height = height or canvas.Height
+        self.xi = 0
+        self.yi = 0
+        self.canvas: Canvas = canvas
+        self.AutoWrap = autoWrap
+
+    def Write(self, text: str, bk=None, fg=None):
+        x = self.X
+        y = self.Y
+        xi = self.xi
+        yi = self.yi
+        width = self.Width
+        height = self.Height
+        if bk is None:
+            bk = BK.Black
+        if fg is None:
+            fg = FG.White
+        if xi - x >= width and yi - y >= height:
+            return
+        canvas = self.canvas
+        autoWrap = self.AutoWrap
+        for ch in text:
+            if xi - x >= width:
+                if autoWrap:
+                    xi = 0
+                    yi += 1
+                else:
+                    break
+            if yi - y >= height:
+                break
+            canvas.Char(xi + x, yi + y, ch)
+            canvas.Color(xi + x, yi + y, bk, fg)
+            xi += 1
+        self.xi = xi
+        self.yi = yi

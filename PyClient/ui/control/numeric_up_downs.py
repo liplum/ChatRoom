@@ -1,6 +1,6 @@
 import keys
 import utils
-from ui.ctrl import *
+from ui.controls import *
 from ui.outputs import tintedtxt, CmdBkColor, CmdFgColor
 from ui.themes import plus_minus_theme
 

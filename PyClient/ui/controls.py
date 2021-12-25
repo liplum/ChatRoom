@@ -1,5 +1,4 @@
-from abc import ABC, abstractmethod
-from typing import Callable, Collection, Dict, Optional, Union, Any, Tuple
+from typing import Callable, Collection, Dict, Union, Any
 
 from GLOBAL import StringIO
 from ui.Renders import *
@@ -24,8 +23,8 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
         self.on_prop_changed.add(self._on_layout_changed)
         self._onImageAreaChanged = event()
         self._attach_prop: Dict[str, T] = {}
-        self._x = 0
-        self._y = 0
+        # self._x = 0
+        # self._y = 0
 
     def _on_layout_changed(self, self2, prop_name):
         self.on_content_changed(self)
@@ -83,41 +82,42 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
                 self.on_prop_changed(self, "width")
                 self.OnImageAreaChanged(self)
 
-    @property
-    def X(self) -> int:
-        """
-        Gets the current X of this control
-        :return:an int
-        """
-        return self._x
-
-    @X.setter
-    def X(self, value: int):
-        """
-        Sets the x of this control.
-        :param value: int
-        """
-        if self._x != value:
-            self._x = max(0, value)
-            self.OnImageAreaChanged(self)
-
-    @property
-    def Y(self) -> int:
-        """
-        Gets the current Y of this control
-        :return:an int
-        """
-        return self._y
-
-    @Y.setter
-    def Y(self, value: int):
-        """
-        Sets the x of this control.
-        :param value: int
-        """
-        if self._y != value:
-            self._y = max(0, value)
-            self.OnImageAreaChanged(self)
+    #
+    # @property
+    # def X(self) -> int:
+    #     """
+    #     Gets the current X of this control
+    #     :return:an int
+    #     """
+    #     return self._x
+    #
+    # @X.setter
+    # def X(self, value: int):
+    #     """
+    #     Sets the x of this control.
+    #     :param value: int
+    #     """
+    #     if self._x != value:
+    #         self._x = max(0, value)
+    #         self.OnImageAreaChanged(self)
+    #
+    # @property
+    # def Y(self) -> int:
+    #     """
+    #     Gets the current Y of this control
+    #     :return:an int
+    #     """
+    #     return self._y
+    #
+    # @Y.setter
+    # def Y(self, value: int):
+    #     """
+    #     Sets the x of this control.
+    #     :param value: int
+    #     """
+    #     if self._y != value:
+    #         self._y = max(0, value)
+    #         self.OnImageAreaChanged(self)
 
     @property
     def render_height(self) -> int:

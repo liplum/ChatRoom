@@ -1,7 +1,7 @@
 from typing import Tuple, List, Optional, Iterator
 
 import utils
-from ui.ctrl import PROP, control, auto
+from ui.controls import PROP, control, auto
 from ui.outputs import buffer
 from ui.panels import panel, CTRL
 
