@@ -130,25 +130,25 @@ cmd_con = add("con", _con)
 
 # Removed - join
 """
-def _join(context: Cmd_Context, args: [str]):
-    argslen = len(args)
+def _join(context: Cmd_Context, argTypes: [str]):
+    argslen = len(argTypes)
     network = context.network
     if argslen == 2:  # 1:<server ip>:<port> 2:<chatting room id>
-        server = server_token.by(args[0])
+        server = server_token.by(argTypes[0])
         _con_shared(network, server)
         try:
-            room_id = roomid(int(args[1]))
+            room_id = roomid(int(argTypes[1]))
         except:
-            raise WrongUsageError(i18n.trans("cmds.$common$.invalid_room_id", args[1]), 1)
+            raise WrongUsageError(i18n.trans("cmds.$common$.invalid_room_id", argTypes[1]), 1)
         tab: chat_tab = context.tab
         if tab.joined:
             raise CmdError(i18n.trans("cmds.join.already_joined", room_id))
         tab.join(room_id)
     elif argslen == 1:
         try:
-            room_id = roomid(int(args[0]))
+            room_id = roomid(int(argTypes[0]))
         except:
-            raise WrongUsageError(i18n.trans("cmds.$common$.invalid_room_id", args[0]), 1)
+            raise WrongUsageError(i18n.trans("cmds.$common$.invalid_room_id", argTypes[0]), 1)
         tab: chat_tab = context.tab
         if tab.connected is None:
             raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unconnected"), -1)
@@ -197,7 +197,7 @@ def _close(context: Cmd_Context, args: [str]):
         start = 1
         end = len(tbl)
         if start - 1 <= tab_number <= end - 1:
-            tbl.remove(tab_number - 1)
+            tbl.Remove(tab_number - 1)
         else:
             raise WrongUsageError(i18n.trans("cmds.$tabs$.over_range", wrong=tab_number, start=start, end=end), 0)
     else:
@@ -296,7 +296,7 @@ def _main(context: Cmd_Context, args: [str]):
         raise WrongUsageError(i18n.trans("cmds.main.usage"), -1)
     main_menu = win.newtab('main_menu_tab')
     tablist: tablist = context.tablist
-    tablist.add(main_menu)
+    tablist.Add(main_menu)
 
 
 cmd_main = add("main", _main)

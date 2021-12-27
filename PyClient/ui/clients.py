@@ -89,7 +89,7 @@ class client(iclient):
             def on_msg_pre_analyzed(network, server_token, source, jobj):
                 self.logger.msg(json.dumps(jobj, indent=2, ensure_ascii=False))
 
-            self.network.on_msg_pre_analyzed.add(on_msg_pre_analyzed)
+            self.network.on_msg_pre_analyzed.Add(on_msg_pre_analyzed)
 
         self._win = window(self)
         self._init_channels()

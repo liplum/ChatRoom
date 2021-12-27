@@ -36,7 +36,7 @@ class main_menu_tab(tab):
         self.db = db
         main.add(db)
         self.main = main
-        self.main.on_content_changed.add(lambda _: self.on_content_changed(self))
+        self.main.on_content_changed.Add(lambda _: self.on_content_changed(self))
         db.width = 60
         db.height = auto
 

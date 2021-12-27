@@ -37,8 +37,8 @@ class window(iwindow):
         self.network: "inetwork" = self.client.network
         self._tablist: tablist = tablist()
         self.screen_buffer: Optional[buffer] = None
-        self.tablist.on_content_changed.add(lambda _: self.client.mark_dirty())
-        self.tablist.on_tablist_changed.add(lambda li, mode, t: self.client.mark_dirty())
+        self.tablist.on_content_changed.Add(lambda _: self.client.mark_dirty())
+        self.tablist.on_tablist_changed.Add(lambda li, mode, t: self.client.mark_dirty())
         self.popup_return_values: Dict[base_popup, Any] = {}
         self.call_stack: Deque[Frame] = deque()
 
@@ -53,7 +53,7 @@ class window(iwindow):
                     self.call_stack[0] = new_frame
                 self.client.mark_dirty()
 
-        self.tablist.on_curtab_changed.add(on_curtab_changed)
+        self.tablist.on_curtab_changed.Add(on_curtab_changed)
 
     @property
     def cur_frame(self) -> Optional[Frame]:
@@ -181,8 +181,8 @@ class window(iwindow):
                 return True
             elif isinstance(rv, base_popup):
                 self.call_stack.append(Frame(rv, None))
-                rv.on_content_changed.add(lambda _: self.client.mark_dirty())
-                rv.on_returned.add(self._on_popup_returned)
+                rv.on_content_changed.Add(lambda _: self.client.mark_dirty())
+                rv.on_returned.Add(self._on_popup_returned)
                 rv.on_added()
                 return False
             elif isinstance(rv, Generator):

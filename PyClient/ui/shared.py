@@ -1,7 +1,7 @@
 from typing import TypeVar
 
 import chars
-from events import event
+from Events import Event
 from ui.outputs import buffer
 
 IsConsumed = bool
@@ -32,13 +32,13 @@ class reloadable:
 
 class notifiable:
     def __init__(self):
-        self._on_content_changed = event()
+        self._on_content_changed = Event(notifiable)
 
     @property
-    def on_content_changed(self) -> event:
+    def on_content_changed(self) -> Event:
         """
-        Para 1:current object
+        Para 1:notifiable object
 
-        :return: event(noticed)
+        :return: Event(notifiable)
         """
         return self._on_content_changed

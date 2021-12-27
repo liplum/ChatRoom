@@ -38,7 +38,7 @@ class settings_tab(tab):
         self.last_tab = None
         self.ctrl2on_save = {}
         main = stack()
-        main.on_content_changed.add(lambda _: self.on_content_changed(self))
+        main.on_content_changed.Add(lambda _: self.on_content_changed(self))
         main.left_margin = 3
         self.main = main
         main.switch_to_first_or_default_item()

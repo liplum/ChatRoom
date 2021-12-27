@@ -17,7 +17,7 @@ cmd_input_map = {
 
 class cmd_input(iinput):
     """
-    If the on_input event is canceled, it'll abandon all remaining chars in input list
+    If the on_input Event is canceled, it'll abandon all remaining chars in input list
     """
 
     def __init__(self):

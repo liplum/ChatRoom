@@ -69,6 +69,38 @@ class WinCanvas(Canvas):
         if 0 <= y < height:
             marks[y] = True
 
+    def Clear(self, x: int, y: int):
+        if 0 <= x < self.Width and 0 <= y < self.Height:
+            self.buffer[y, x] = " "
+            self.colors[y, x] = 0
+            self.DirtyMarks[y] = True
+
+    def ClearAll(self):
+        width = self.Width
+        height = self.Height
+        buffer = self.buffer
+        marks = self.DirtyMarks
+        colors = self.colors
+        for j in range(height):
+            for i in range(width):
+                buffer[j, i] = " "
+                colors[j, i] = 0
+            marks[j] = True
+
+    def ClearArea(self, x1: int, y1: int, x2: int, y2: int):
+        x1 = max(x1, 0)
+        y1 = max(y1, 0)
+        x2 = min(x2, self.Width)
+        y2 = min(y2, self.Height)
+        buffer = self.buffer
+        marks = self.DirtyMarks
+        colors = self.colors
+        for j in range(y1, y2):
+            for i in range(x1, x2):
+                buffer[j, i] = " "
+                colors[j, i] = 0
+            marks[j] = True
+
 
 class WinRender(IRender):
 

@@ -1,7 +1,7 @@
 from typing import Callable, Optional, Set
 
 import chars
-from events import event
+from Events import Event
 from utils import get
 
 
@@ -33,8 +33,8 @@ class kbinding:
 class cmdkey:
     def __init__(self):
         self.mappings: Set[chars.char] = set()
-        self._on_map = event()
-        self._on_demap = event()
+        self._on_map = Event(cmdkey,chars.char)
+        self._on_demap = Event(cmdkey,chars.char)
 
     @property
     def on_map(self):
@@ -43,7 +43,7 @@ class cmdkey:
 
         Para 2:mapped char
 
-        :return: event(textbox,int,str)
+        :return: Event(cmdkey,char)
         """
         return self._on_map
 
@@ -54,7 +54,7 @@ class cmdkey:
 
         Para 2:demapped char
 
-        :return: event(textbox,int,str)
+        :return: Event(cmdkey,char)
         """
         return self._on_demap
 

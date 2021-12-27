@@ -46,7 +46,7 @@ class label(control):
 
     def PaintOn(self, canvas: Canvas):
         if self._layout_changed:
-            self.cache_layout()
+            self.CalcuLayout(canvas)
         content = self.content()
         rw = self.render_width
         if rw < len(content):
@@ -75,6 +75,15 @@ class label(control):
             self._r_width = len(self.content())
         else:
             self._r_width = self.width
+
+    def CalcuLayout(self, canvas: Canvas):
+        if not self._layout_changed:
+            return
+        self._layout_changed = False
+        if self.width == auto:
+            self._r_width = min(len(self.content()), canvas.Width)
+        else:
+            self._r_width = min(self.width, canvas.Width)
 
     @property
     def render_width(self) -> int:

@@ -5,7 +5,7 @@ from typing import Tuple, List, Dict, Optional
 import utils
 from core.filer import ifiler, sep, Directory, File
 from core.shared import server_token, userid, roomid, StorageUnit
-from events import event
+from Events import Event
 from ui.outputs import ilogger
 from utils import compose, separate
 
@@ -24,7 +24,7 @@ class msgstorage:
     def __init__(self, save_file: File = None):
         self._save_file: File = save_file
         self.__storage: List[StorageUnit] = []
-        self._on_stored = event()
+        self._on_stored = Event(msgstorage,tuple)
         self.changed = False
 
     def store(self, msg_unit: StorageUnit):
@@ -32,13 +32,13 @@ class msgstorage:
         self.changed = True
 
     @property
-    def on_stored(self) -> event:
+    def on_stored(self) -> Event:
         """
         Para 1:msgstorage object
 
         Para 2:storage unit
 
-        :return: event(msgstorage,StorageUnit)
+        :return: Event(msgstorage,StorageUnit)
         """
         return self._on_stored
 
@@ -155,6 +155,11 @@ class msgstorage:
 
 
 class imsgmager:
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._on_received = Event(imsgmager,server_token,roomid,tuple)
+
     def load_lasted(self, server: server_token, room_id: roomid,
                     amount: int) -> List[StorageUnit]:
         pass
@@ -174,9 +179,9 @@ class imsgmager:
         pass
 
     @property
-    def on_received(self) -> event:
+    def on_received(self) -> Event:
         """
-        Para 1:i_msgmager object
+        Para 1:imsgmager object
 
         Para 2:server
 
@@ -184,9 +189,9 @@ class imsgmager:
 
         Para 4:storage unit
 
-        :return: event(i_msgmager,server_token,roomid,StorageUnit)
+        :return: Event(imsgmager,server_token,roomid,StorageUnit)
         """
-        return event()
+        return self._on_received
 
 
 class imsgfiler:
@@ -221,9 +226,9 @@ class msgfiler(imsgfiler):
 
 class msgmager(imsgmager):
     def __init__(self):
+        super().__init__()
         self.cache: Dict[Tuple[server_token, roomid], msgstorage] = {}
         self._lock = RLock()
-        self._on_received = event()
 
     def init(self, container):
         self.filer: imsgfiler = container.resolve(imsgfiler)
@@ -282,7 +287,3 @@ class msgmager(imsgmager):
     def save_all(self):
         for strg in self.cache.values():
             strg.serialize()
-
-    @property
-    def on_received(self) -> event:
-        return self._on_received

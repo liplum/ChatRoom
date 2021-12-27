@@ -4,7 +4,7 @@ import sys
 from typing import Dict, List, Iterable, Tuple
 from typing import Optional
 
-from events import event
+from Events import Event
 
 _cache: Dict[str, str] = {}
 _l2_cache: Dict[str, str] = {}
@@ -19,7 +19,7 @@ else:
 lang_folder = f"{_root_path}/lang"
 cur_lang = "en_us"
 
-on_load = event()
+on_load = Event(str)
 """
 Para 1:current language
 

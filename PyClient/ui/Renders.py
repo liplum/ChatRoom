@@ -73,6 +73,18 @@ class Canvas:
     def Colors(self, x1: int, x2: int, y: int, bk, fg):
         pass
 
+    @abstractmethod
+    def Clear(self, x: int, y: int):
+        pass
+
+    @abstractmethod
+    def ClearArea(self, x1: int, y1: int, x2: int, y2: int):
+        pass
+
+    @abstractmethod
+    def ClearAll(self):
+        pass
+
     @property
     @abstractmethod
     def Width(self):
@@ -158,6 +170,23 @@ class Viewer(Canvas):
             x1 = self.X + x1
             x2 = self.X + x2
             canvas.Colors(x1, x2, self.Y + y, fg, bk)
+
+    def Clear(self, x: int, y: int):
+        canvas = self.Canvas
+        if canvas and 0 <= x < self.Width and 0 <= y < self.Height:
+            canvas.Clear(self.X + x, self.Y + y)
+
+    def ClearAll(self):
+        canvas = self.Canvas
+        canvas.ClearArea(self.X, self.Y, self.X + self.Width, self.Y + self.Height)
+
+    def ClearArea(self, x1: int, y1: int, x2: int, y2: int):
+        canvas = self.Canvas
+        x1 = max(x1, 0)
+        y1 = max(y1, 0)
+        x2 = min(x2, self.Width)
+        y2 = min(y2, self.Height)
+        canvas.ClearArea(self.X + x1, self.Y + y1, self.X + x2, self.Y + y2)
 
     @property
     def Width(self) -> int:

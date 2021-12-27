@@ -198,7 +198,7 @@ class chat_tab(tab):
         self.max_display_height = configs.MaxChatLine
         self.fill_until_max = True
         self.history: history_viewer = history_viewer(self.max_display_height, self.fill_until_max)
-        self.history.on_content_changed.add(lambda _: self.on_content_changed(self))
+        self.history.on_content_changed.Add(lambda _: self.on_content_changed(self))
         self.msg_manager: imsgmager = self.client.msg_manager
         self.network: "inetwork" = self.client.network
         self.logger: "ilogger" = self.client.logger
@@ -228,7 +228,7 @@ class chat_tab(tab):
 
         self.sm = ui_smachine(state_pre=set_chat_tab, stype_pre=gen_state, allow_repeated_entry=False)
         self.sm.enter(cmd_mode)
-        self.textbox.on_content_changed.add(lambda _: self.on_content_changed(self))
+        self.textbox.on_content_changed.Add(lambda _: self.on_content_changed(self))
 
     @property
     def unread_msg_number(self) -> int:
@@ -375,7 +375,7 @@ class chat_tab(tab):
         self.history.add(text)
 
     def on_added(self):
-        self.msg_manager.on_received.add(self._on_received_msg)
+        self.msg_manager.on_received.Add(self._on_received_msg)
 
     def _on_received_msg(self, manager: imsgmager, server: server_token, room_id: roomid, msg_unit: StorageUnit):
         self.add_chat(server, room_id, msg_unit, omit_self=True)
@@ -389,7 +389,7 @@ class chat_tab(tab):
                     self.unread_msg_number += 1
 
     def on_removed(self):
-        self.msg_manager.on_received.remove(self._on_received_msg)
+        self.msg_manager.on_received.Remove(self._on_received_msg)
 
     @classmethod
     def deserialize(cls, data: dict, client: "client", tablist: "tablist") -> "chat_tab":
@@ -519,7 +519,7 @@ def fill_or_add_chat_tab(win: iwindow, tab: Optional[chat_tab], token: server_to
     else:
         tab = win.new_chat_tab()
         tab.user_info = uentity(token, account, vcode)
-        win.tablist.add(tab)
+        win.tablist.Add(tab)
     tab.connect(token)
     if room_id:
         tab.join(room_id)

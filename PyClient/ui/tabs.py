@@ -82,8 +82,8 @@ class tablist(notifiable, Painter, painter):
         self.view_history = []
         self.max_view_history = 5
 
-        self._on_curtab_changed = event()
-        self._on_tablist_changed = event()
+        self._on_curtab_changed = Event(tablist, (int, type(None)), (tab, type(None)))
+        self._on_tablist_changed = Event(tablist, bool, tab)
         self._lock = RLock()
 
     def match_or_create_group(self, t: "tab") -> group:
@@ -155,7 +155,7 @@ class tablist(notifiable, Painter, painter):
             return sum(len(g) for g in self.groups)
 
     @property
-    def on_curtab_changed(self) -> event:
+    def on_curtab_changed(self) -> Event:
         """
         Para 1:tablist object
 
@@ -163,12 +163,12 @@ class tablist(notifiable, Painter, painter):
 
         Para 3:current tab (nullable)
 
-        :return: event(tablist,Optional[int],Optional[tab])
+        :return: Event(tablist,Optional[int],Optional[tab])
         """
         return self._on_curtab_changed
 
     @property
-    def on_tablist_changed(self) -> event:
+    def on_tablist_changed(self) -> Event:
         """
         Para 1:tablist object
 
@@ -176,7 +176,7 @@ class tablist(notifiable, Painter, painter):
 
         Para 3:operated tab
 
-        :return: event(tablist,bool,tab)
+        :return: Event(tablist,bool,tab)
         """
         return self._on_tablist_changed
 
@@ -207,13 +207,13 @@ class tablist(notifiable, Painter, painter):
             g = self.match_or_create_group(t)
             t.group = g
             g.add(t)
-            t.on_group_id_changed.add(self.__on_subtab_group_id_changed)
+            t.on_group_id_changed.Add(self.__on_subtab_group_id_changed)
             self.reset_index()
             self.on_tablist_changed(self, True, t)
             if self.cur is None:
                 self.cur = t
             t.on_added()
-            t.on_content_changed.add(self.on_subtab_content_changed)
+            t.on_content_changed.Add(self.on_subtab_content_changed)
 
     def find_group_by_id(self, Id) -> Optional[group]:
         for g in self.groups:
@@ -256,11 +256,11 @@ class tablist(notifiable, Painter, painter):
 
         new_tab.on_added()
         need_release_resource = new_tab.on_replaced(removed)
-        new_tab.on_content_changed.add(self.on_subtab_content_changed)
+        new_tab.on_content_changed.Add(self.on_subtab_content_changed)
         if need_release_resource:
             removed.on_removed()
 
-        removed.on_content_changed.remove(self.on_subtab_content_changed)
+        removed.on_content_changed.Remove(self.on_subtab_content_changed)
         self.set_by_index(pos, new_tab)
 
         self.on_tablist_changed(self, False, removed)
@@ -312,7 +312,7 @@ class tablist(notifiable, Painter, painter):
                 removed = self.get_by_index(item)
                 if removed:
                     g = t.group
-                    g.remove(t)
+                    g.Remove(t)
                 else:
                     return
             else:
@@ -329,7 +329,7 @@ class tablist(notifiable, Painter, painter):
 
         self.on_tablist_changed(self, False, removed)
         removed.on_removed()
-        removed.on_content_changed.remove(self.on_subtab_content_changed)
+        removed.on_content_changed.Remove(self.on_subtab_content_changed)
 
         if self.tabs_count == 0:
             self.cur = None
@@ -426,7 +426,7 @@ class tablist(notifiable, Painter, painter):
                 displayed_title = f" [{t.group.identity}]{title} "
             else:
                 displayed_title = f" {title} "
-            names.Write(displayed_title,bk,fg)
+            names.Write(displayed_title, bk, fg)
             repeated = " " if t is cur else "─"
             second_line = utils.repeat(repeated, len(displayed_title))
             separator.Write(second_line)
@@ -460,10 +460,10 @@ class tab(notifiable, painter, Painter, reloadable, metaclass=metatab):
         self._tab_priority = 1
         self._group_id = None
         self._group = None
-        self._on_group_id_changed = event()
+        self._on_group_id_changed = Event(tab, object, object)
 
     @property
-    def on_group_id_changed(self) -> event:
+    def on_group_id_changed(self) -> Event:
         """
         Para 1:tab object
 
@@ -471,7 +471,7 @@ class tab(notifiable, painter, Painter, reloadable, metaclass=metatab):
 
         Para 3:new group id
 
-        :return: event(tab,Any,Any)
+        :return: Event(tab,object,object)
         """
         return self._on_group_id_changed
 
@@ -587,16 +587,16 @@ class base_popup(tab, ABC):
         super().__init__(client, tablist)
         self._return_value: Optional[Any] = None
         self._returned = False
-        self._on_returned = event()
+        self._on_returned = Event(base_popup)
         self._title_getter: Optional[Callable[[], str]] = None
         self._need_refresh_instant = False
 
     @property
-    def on_returned(self) -> event:
+    def on_returned(self) -> Event:
         """
         Para 1:base_popup object
 
-        :return: event(base_popup)
+        :return: Event(base_popup)
         """
         return self._on_returned
 

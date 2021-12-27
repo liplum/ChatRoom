@@ -8,9 +8,9 @@ from socket import socket, AF_INET, SOCK_STREAM
 from threading import Thread, RLock
 from typing import Dict, Tuple, Callable, List, Optional
 
+from Events import Event
 from core import converts
 from core.shared import server_token
-from events import event
 from ui import outputs
 from utils import get, not_none
 
@@ -43,13 +43,17 @@ class msg(metaclass=metamsg):
         pass
 
 
+Context = namedtuple("Context", ["client", "channel", "token", "network"])
+MsgHandler = Callable[[msg, Context], None]
+
+
 class ichannel:
     def __init__(self, name):
         self.name = name
-        self._on_msg_received = event(cancelable=True)
+        self._on_msg_received = Event(ichannel, msg, Callable, cancelable=True)
 
     @property
-    def on_msg_received(self) -> event:
+    def on_msg_received(self) -> Event:
         """
         Para 1:ichannel object
 
@@ -59,7 +63,7 @@ class ichannel:
 
         Cancelable:If yes,it will stop any more handle on this msg
 
-        :return: event(ichannel,msg,Callable[msg,"context tuple"])
+        :return: Event(ichannel,msg,MsgHandler)
         """
         return self._on_msg_received
 
@@ -71,10 +75,6 @@ class ichannel:
 
     def send(self, to: server_token, msg):
         pass
-
-
-Context = namedtuple("Context", ["client", "channel", "token", "network"])
-MsgHandler = Callable[[msg, Context], None]
 
 
 class channel(ichannel):
@@ -127,28 +127,28 @@ class channel(ichannel):
 class inetwork(ABC):
     def __init__(self, client):
         self.client = client
-        self._on_connected = event()
-        self._on_disconnected = event()
+        self._on_connected = Event(inetwork,server_token)
+        self._on_disconnected = Event(inetwork,server_token)
 
     @property
-    def on_connected(self) -> event:
+    def on_connected(self) -> Event:
         """
         Para 1:inetwork object
 
         Para 2:server info
 
-        :return: event(inetwork,server_token)
+        :return: Event(inetwork,server_token)
         """
         return self._on_connected
 
     @property
-    def on_disconnected(self) -> event:
+    def on_disconnected(self) -> Event:
         """
         Para 1:inetwork object
 
         Para 2:server info
 
-        :return: event(inetwork,server_token)
+        :return: Event(inetwork,server_token)
         """
         return self._on_disconnected
 
@@ -227,7 +227,7 @@ class network(inetwork):
         super().__init__(client)
         self.sockets: Dict[server_token, Tuple[socket, Thread]] = {}
         self.channels: Dict[str, channel] = {}
-        self._on_msg_pre_analyzed = event()
+        self._on_msg_pre_analyzed = Event(network,server_token,str,dict)
         self._lock = RLock()
         self._max_retry_time = 3
 
@@ -240,7 +240,7 @@ class network(inetwork):
         self._max_retry_time = max(1, int(value))
 
     @property
-    def on_msg_pre_analyzed(self) -> event:
+    def on_msg_pre_analyzed(self) -> Event:
         """
         Para 1:network object
 
@@ -250,7 +250,7 @@ class network(inetwork):
 
         Para 4:json dictionary
 
-        :return: event(network,server_token,source,json)
+        :return: Event(network,server_token,str,dict)
         """
         return self._on_msg_pre_analyzed
 

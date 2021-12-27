@@ -85,7 +85,7 @@ class register_tab(tab):
 
         main = stack()
         self.main = main
-        self.main.on_content_changed.add(lambda _: self.on_content_changed(self))
+        self.main.on_content_changed.Add(lambda _: self.on_content_changed(self))
         main.add(grid)
         main.add(dialog_stack)
         grid.elemt_interval_w = 7

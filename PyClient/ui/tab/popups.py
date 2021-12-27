@@ -47,7 +47,7 @@ class one_button_popup(text_popup):
     def on_added(self):
         m = stack()
         self.main = m
-        m.on_content_changed.add(lambda _: self.on_content_changed(self))
+        m.on_content_changed.Add(lambda _: self.on_content_changed(self))
 
         l_title = label(self.get_title)
         l_title.prop(stack.Horizontal_Alignment, align_left)
@@ -129,7 +129,7 @@ class ok_cancel_popup(text_popup):
     def on_added(self):
         m = stack()
         self.main = m
-        m.on_content_changed.add(lambda _: self.on_content_changed(self))
+        m.on_content_changed.Add(lambda _: self.on_content_changed(self))
 
         l_title = label(self.get_title)
         l_title.prop(stack.Horizontal_Alignment, align_left)
@@ -164,7 +164,7 @@ class waiting_popup(text_popup):
     def on_added(self):
         m = stack()
         self.main = m
-        m.on_content_changed.add(lambda _: self.on_content_changed(self))
+        m.on_content_changed.Add(lambda _: self.on_content_changed(self))
 
         l_title = label(self.get_title)
         l_title.prop(stack.Horizontal_Alignment, align_left)

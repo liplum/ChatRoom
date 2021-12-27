@@ -61,7 +61,7 @@ def main():
         detect_debug_attach()
     from Test.clients import TestClient
     _client = TestClient()
-    _client.on_service_register.add(init_plugin)
+    _client.on_service_register.Add(init_plugin)
     _client.init()
     if GLOBAL.MONITOR:
         from pef.monitor import pef_monitor

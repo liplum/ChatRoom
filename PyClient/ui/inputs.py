@@ -3,13 +3,13 @@ from collections import deque
 from typing import List
 
 from chars import *
-from events import event
+from Events import Event
 
 
 class iinput(ABC):
     def __init__(self):
         self._input_list: deque[char] = deque()
-        self._on_input = event(cancelable=True)
+        self._on_input = Event(iinput,char,cancelable=True)
 
     def get_input(self, tip: str = None):
         pass
@@ -23,7 +23,7 @@ class iinput(ABC):
         self.on_inputli_changed(self, self._input_list)
 
     @property
-    def on_input(self) -> event:
+    def on_input(self) -> Event:
         """
         Para 1:iinput object
 
@@ -31,7 +31,7 @@ class iinput(ABC):
 
         Canceled:The behavior will be determined by it's implement
 
-        :return: event(iinput,char)
+        :return: Event(iinput,char)
         """
         return self._on_input
 

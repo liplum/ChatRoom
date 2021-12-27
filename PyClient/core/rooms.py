@@ -36,8 +36,8 @@ class room_manager(iroom_manager):
 
     def init(self, container):
         self.network: inetwork = container.resolve(inetwork)
-        self.network.on_connected.add(self.on_connect_new_server)
-        self.network.on_disconnected.add(self.on_disconnect)
+        self.network.on_connected.Add(self.on_connect_new_server)
+        self.network.on_disconnected.Add(self.on_disconnect)
 
     def on_connect_new_server(self, network, server: server_token):
         self.rooms[server] = set()

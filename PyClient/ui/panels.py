@@ -14,12 +14,12 @@ class panel(control):
         self._elements: Set[CTRL] = set()
         self._focused = False
         self._cur_focused: Optional[CTRL] = None
-        self._on_elements_changed = event()
-        self._on_focused_changed = event()
+        self._on_elements_changed = Event(panel, bool, control)
+        self._on_focused_changed = Event(panel, (control, type(None)), (control, type(None)))
         self._top_margin = 0
 
-        self._on_elements_changed.add(lambda _, _1, _2: self.on_content_changed(self))
-        self._on_focused_changed.add(lambda _, _1, _2: self.on_content_changed(self))
+        self._on_elements_changed.Add(lambda _, _1, _2: self.on_content_changed(self))
+        self._on_focused_changed.Add(lambda _, _1, _2: self.on_content_changed(self))
 
     def _on_elemt_exit_focus(self, elemt) -> bool:
         """
@@ -36,9 +36,9 @@ class panel(control):
         if elemt and elemt not in self._elements:
             self._elements.add(elemt)
             elemt.in_container = True
-            elemt.on_content_changed.add(self._on_elemt_content_changed)
+            elemt.on_content_changed.Add(self._on_elemt_content_changed)
             self.on_elements_changed(self, True, elemt)
-            elemt.on_exit_focus.add(self._on_elemt_exit_focus)
+            elemt.on_exit_focus.Add(self._on_elemt_exit_focus)
             return True
         return False
 
@@ -46,9 +46,9 @@ class panel(control):
         if elemt and elemt in self._elements:
             self._elements.remove(elemt)
             elemt.in_container = False
-            elemt.on_content_changed.remove(self._on_elemt_content_changed)
+            elemt.on_content_changed.Remove(self._on_elemt_content_changed)
             self.on_elements_changed(self, False, elemt)
-            elemt.on_exit_focus.remove(self._on_elemt_exit_focus)
+            elemt.on_exit_focus.Remove(self._on_elemt_exit_focus)
             return True
         return False
 
@@ -60,7 +60,7 @@ class panel(control):
         self.on_content_changed(self)
 
     @property
-    def on_elements_changed(self) -> event:
+    def on_elements_changed(self) -> Event:
         """
         Para 1:panel object
 
@@ -68,12 +68,12 @@ class panel(control):
 
         Para 3:operated control
 
-        :return: event(panel,bool,control)
+        :return: Event(panel,bool,control)
         """
         return self._on_elements_changed
 
     @property
-    def on_focused_changed(self) -> event:
+    def on_focused_changed(self) -> Event:
         """
         Para 1:panel object
 
@@ -81,7 +81,7 @@ class panel(control):
 
         Para 3:current focused
 
-        :return: event(panel,control,control)
+        :return: Event(panel,Optional[control],control)
         """
         return self._on_focused_changed
 

@@ -2,14 +2,17 @@ from abc import abstractmethod, ABC
 from typing import Callable
 from typing import Union, Type, Any, Optional
 
+from cmds import cmdmanager
+from ioc import container
+from ui.k import cmdkey
 from ui.shared import *
 
 
 class iclient(ABC):
     def __init__(self):
-        self._on_service_register = event()
-        self._on_cmd_register = event()
-        self._on_keymapping = event()
+        self._on_service_register = Event(iclient, container)
+        self._on_cmd_register = Event(iclient, cmdmanager)
+        self._on_keymapping = Event(iclient, cmdkey)
 
     @property
     @abstractmethod
@@ -17,35 +20,35 @@ class iclient(ABC):
         raise NotImplementedError()
 
     @property
-    def on_service_register(self) -> event:
+    def on_service_register(self) -> Event:
         """
         Para 1:client object
 
 
         Para 2:container
 
-        :return: event(client,container)
+        :return: Event(iclient,container)
         """
         return self._on_service_register
 
     @property
-    def on_cmd_register(self) -> event:
+    def on_cmd_register(self) -> Event:
         """
         Para 1:the manager of cmd
 
-        :return: event(client,cmdmanager)
+        :return: Event(iclient,cmdmanager)
         """
         return self._on_cmd_register
 
     @property
-    def on_keymapping(self) -> event:
+    def on_keymapping(self) -> Event:
         """
         Para 1: client object
 
 
         Para 1: key map
 
-        :return: event(client,cmdkey)
+        :return: Event(iclient,cmdkey)
         """
         return self._on_keymapping
 

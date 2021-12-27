@@ -15,7 +15,8 @@ class TestTab(tab):
         self.t_button.width = 10
         self.t_checkbox = checkbox()
         self.t_tbox = xtextbox()
-        self.t_tbox.on_content_changed.add(lambda _: self.on_content_changed(self))
+        self.t_tbox.on_content_changed.Add(lambda _: self.on_content_changed(self))
+        self.t_tbox.width = 10
 
     @property
     def title(self) -> str:
@@ -26,6 +27,7 @@ class TestTab(tab):
         self.t_label.PaintOn(v.Sub(0, 0, v.Width, 1))
         self.t_button.PaintOn(v.Sub(0, 1, v.Width, 1))
         self.t_checkbox.PaintOn(v.Sub(0, 2, v.Width, 1))
+
         self.t_tbox.PaintOn(v.Sub(0, 3, v.Width, 3))
 
     def on_input(self, char: chars.char) -> Generator:

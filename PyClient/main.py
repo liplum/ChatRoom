@@ -76,9 +76,9 @@ def main():
         detect_debug_attach()
     from ui.clients import client
     _client = client()
-    _client.on_service_register.add(init_plugin)
-    _client.on_cmd_register.add(add_commands)
-    _client.on_keymapping.add(mapkeys)
+    _client.on_service_register.Add(init_plugin)
+    _client.on_cmd_register.Add(add_commands)
+    _client.on_keymapping.Add(mapkeys)
     _client.init()
     if LOGIN:
         _client.connect(server_ip, port)

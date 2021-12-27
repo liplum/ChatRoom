@@ -20,7 +20,7 @@ class test_tab(tab):
             button_content = "Clicked"
             self.client.mark_dirty()
 
-        self.stack.on_content_changed.add(lambda _: self.on_content_changed(self))
+        self.stack.on_content_changed.Add(lambda _: self.on_content_changed(self))
         self.stack.add(button(CGT(button_content_getter), _click_button))
         self.stack.add(label("Label A"))
         self.account_tbox = xtextbox()
@@ -50,7 +50,7 @@ class test_tab(tab):
         def _on_stack_exit_focus(stak):
             self._stack_focused = False
 
-        self.stack.on_exit_focus.add(_on_stack_exit_focus)
+        self.stack.on_exit_focus.Add(_on_stack_exit_focus)
         self.stack.switch_to_first_or_default_item()
         self.stack.left_margin = 10
 

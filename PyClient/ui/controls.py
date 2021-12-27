@@ -17,45 +17,44 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
         self._width = auto
         self._height = auto
         self._left_margin = 0
-        self._on_prop_changed = event()
-        self._on_exit_focus = event()
+        self._on_prop_changed = Event(control, str)
+        self.onLayoutPropChanged = self._on_prop_changed.Sub()
+        self._on_exit_focus = Event(control)
         self._layout_changed = True
-        self.on_prop_changed.add(self._on_layout_changed)
-        self._onImageAreaChanged = event()
+        self.on_prop_changed.Add(self._on_layout_changed)
+        self._onImageAreaChanged = Event(control)
         self._attach_prop: Dict[str, T] = {}
-        # self._x = 0
-        # self._y = 0
 
     def _on_layout_changed(self, self2, prop_name):
         self.on_content_changed(self)
         self._layout_changed = True
 
     @property
-    def OnImageAreaChanged(self) -> event:
+    def OnImageAreaChanged(self) -> Event:
         """
         Para 1:control object
 
-        :return: event(control)
+        :return: Event(control)
         """
         return self._onImageAreaChanged
 
     @property
-    def on_exit_focus(self) -> event:
+    def on_exit_focus(self) -> Event:
         """
         Para 1:control object
 
-        :return: event(control)
+        :return: Event(control)
         """
         return self._on_exit_focus
 
     @property
-    def on_prop_changed(self) -> event:
+    def on_prop_changed(self) -> Event:
         """
         Para 1:control object
 
         Para 2:property name
 
-        :return: event(control,str)
+        :return: Event(control,str)
         """
         return self._on_prop_changed
 
@@ -81,43 +80,6 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
                 self._width = max(0, value)
                 self.on_prop_changed(self, "width")
                 self.OnImageAreaChanged(self)
-
-    #
-    # @property
-    # def X(self) -> int:
-    #     """
-    #     Gets the current X of this control
-    #     :return:an int
-    #     """
-    #     return self._x
-    #
-    # @X.setter
-    # def X(self, value: int):
-    #     """
-    #     Sets the x of this control.
-    #     :param value: int
-    #     """
-    #     if self._x != value:
-    #         self._x = max(0, value)
-    #         self.OnImageAreaChanged(self)
-    #
-    # @property
-    # def Y(self) -> int:
-    #     """
-    #     Gets the current Y of this control
-    #     :return:an int
-    #     """
-    #     return self._y
-    #
-    # @Y.setter
-    # def Y(self, value: int):
-    #     """
-    #     Sets the x of this control.
-    #     :param value: int
-    #     """
-    #     if self._y != value:
-    #         self._y = max(0, value)
-    #         self.OnImageAreaChanged(self)
 
     @property
     def render_height(self) -> int:
@@ -196,6 +158,9 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
         self._focused = False
 
     def cache_layout(self):
+        pass
+
+    def CalcuLayout(self, canvas: Canvas):
         pass
 
     def reload(self):

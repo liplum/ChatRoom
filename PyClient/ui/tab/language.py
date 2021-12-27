@@ -26,7 +26,7 @@ class language_tab(tab):
         self.gen_language_list()
         main = stack()
         self.main = main
-        main.on_content_changed.add(lambda _: self.on_content_changed(self))
+        main.on_content_changed.Add(lambda _: self.on_content_changed(self))
         lang_tabs = stack()
         main.add(lang_tabs)
         main.add(self.b_quit)
