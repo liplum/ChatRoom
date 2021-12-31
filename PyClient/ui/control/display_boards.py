@@ -1,4 +1,3 @@
-import utils
 from ui.controls import *
 from ui.outputs import buffer
 from ui.themes import vanilla, ThemeGetter, is_theme
@@ -74,7 +73,7 @@ class display_board(text_control):
         self._vertical_margin = 0
 
     def paint_on(self, buf: buffer):
-        if self._layout_changed:
+        if self.IsLayoutChanged:
             self.cache_layout()
         render_width = self.render_width
         if render_width == 0 or self.render_height == 0:
@@ -141,9 +140,9 @@ class display_board(text_control):
         return self._r_width
 
     def cache_layout(self):
-        if not self._layout_changed:
+        if not self.IsLayoutChanged:
             return
-        self._layout_changed = False
+        self.IsLayoutChanged = False
         contents = self.contents()
         if self.width == auto:
             max_width = max(len(t) for t in contents)

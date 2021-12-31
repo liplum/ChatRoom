@@ -1,5 +1,6 @@
 from typing import Callable, Collection, Dict, Union, Any
 
+import utils
 from GLOBAL import StringIO
 from ui.Renders import *
 from ui.shared import *
@@ -9,6 +10,12 @@ PROP = TypeVar('PROP', str, int)
 unlimited = "unlimited"
 
 
+def IfAutoOr(prop, value):
+    if prop == auto:
+        return value
+    return prop
+
+
 class control(notifiable, painter, Painter, inputable, reloadable, ABC):
     def __init__(self):
         super().__init__()
@@ -16,36 +23,65 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
         self._focused = False
         self._width = auto
         self._height = auto
+        """Deprecated"""
         self._left_margin = 0
-        self._on_prop_changed = Event(control, str)
-        self.onLayoutPropChanged = self._on_prop_changed.Sub()
-        self._on_exit_focus = Event(control)
-        self._layout_changed = True
-        self.on_prop_changed.Add(self._on_layout_changed)
-        self._onImageAreaChanged = Event(control)
-        self._attach_prop: Dict[str, T] = {}
+        self._onPropChanged = Event(control, str)
+        self._onAttachPropChanged = Event(control, str)
+        self._onLayoutPropChanged = self._onPropChanged.Sub()
+        self._onNormalPropChanged = self._onPropChanged.Sub()
+        self._onExitFocus = Event(control)
 
-    def _on_layout_changed(self, self2, prop_name):
-        self.on_content_changed(self)
-        self._layout_changed = True
+        def __onLayoutChangedHandler(self, prop_name):
+            self.IsLayoutChanged = True
+            self.on_content_changed(self)
+
+        self._onPropChanged.Add(__onLayoutChangedHandler)
+        self.IsLayoutChanged = True
+        self._attachProps: Dict[str, T] = {}
 
     @property
-    def OnImageAreaChanged(self) -> Event:
+    def OnPropChanged(self) -> Event:
         """
         Para 1:control object
 
-        :return: Event(control)
+        Para 2:property name
+
+        :return: Event(control,str)
         """
-        return self._onImageAreaChanged
+        return self._onPropChanged
 
     @property
-    def on_exit_focus(self) -> Event:
+    def OnAttachPropChanged(self) -> Event:
         """
         Para 1:control object
 
-        :return: Event(control)
+        Para 2:property name
+
+        :return: Event(control,str)
         """
-        return self._on_exit_focus
+        return self._onAttachPropChanged
+
+    @property
+    def OnLayoutPropChanged(self) -> Event:
+        """
+        Para 1:control object
+
+        Para 2:property name
+
+        :return: Event(control,str)
+        """
+        return self._onLayoutPropChanged
+
+    @property
+    def OnNormalPropChanged(self) -> Event:
+        """
+        Para 1:control object
+
+        Para 2:property name
+
+        :return: Event(control,str)
+        """
+        return self._onNormalPropChanged
 
     @property
     def on_prop_changed(self) -> Event:
@@ -56,7 +92,25 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
 
         :return: Event(control,str)
         """
-        return self._on_prop_changed
+        return self._onPropChanged
+
+    @property
+    def on_exit_focus(self) -> Event:
+        """
+        Para 1:control object
+
+        :return: Event(control)
+        """
+        return self._onExitFocus
+
+    @property
+    def OnExitFocus(self) -> Event:
+        """
+        Para 1:control object
+
+        :return: Event(control)
+        """
+        return self._onExitFocus
 
     @property
     def width(self) -> PROP:
@@ -78,8 +132,7 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
                 self._width = auto
             else:
                 self._width = max(0, value)
-                self.on_prop_changed(self, "width")
-                self.OnImageAreaChanged(self)
+                self._onLayoutPropChanged(self, "width")
 
     @property
     def render_height(self) -> int:
@@ -117,12 +170,11 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
                 self._height = auto
             else:
                 self._height = max(0, value)
-                self.on_prop_changed(self, "height")
-                self.OnImageAreaChanged(self)
+                self._onLayoutPropChanged(self, "height")
 
-    @abstractmethod
     def paint_on(self, buf: buffer):
         """
+        Deprecated
         Paint all content on the buffer
         :param buf:screen buffer
         """
@@ -158,21 +210,24 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
         self._focused = False
 
     def cache_layout(self):
+        """Deprecated"""
         pass
 
-    def CalcuLayout(self, canvas: Canvas):
+    def Arrange(self, canvas: Canvas):
         pass
 
     def reload(self):
-        self._layout_changed = True
+        self.IsLayoutChanged = True
         self.cache_layout()
 
     @property
     def left_margin(self) -> int:
+        """Deprecated"""
         return self._left_margin
 
     @left_margin.setter
     def left_margin(self, value: int):
+        """Deprecated"""
         if value < 0:
             return
         if self._left_margin != value:
@@ -180,17 +235,19 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
             self.on_prop_changed(self, "left_margin")
 
     def prop(self, key: str, value: T) -> "control":
-        self._attach_prop[key] = value
+        if utils.get(self._attachProps, key) != value:
+            self._attachProps[key] = value
+            self.OnAttachPropChanged(self, key)
         return self
 
     def gprop(self, key: str) -> Optional[T]:
-        if key in self._attach_prop:
-            return self._attach_prop[key]
+        if key in self._attachProps:
+            return self._attachProps[key]
         return None
 
     def delprop(self, key: str) -> "control":
-        if key in self._attach_prop:
-            del self._attach_prop[key]
+        if key in self._attachProps:
+            del self._attachProps[key]
         return self
 
 
@@ -228,7 +285,7 @@ class text_control(control, ABC):
 
     def notify_content_changed(self):
         self.on_content_changed(self)
-        self._layout_changed = True
+        self.IsLayoutChanged = True
 
 
 class content_getter:

@@ -3,9 +3,9 @@ from threading import RLock
 from typing import Tuple, List, Dict, Optional
 
 import utils
+from Events import Event
 from core.filer import ifiler, sep, Directory, File
 from core.shared import server_token, userid, roomid, StorageUnit
-from Events import Event
 from ui.outputs import ilogger
 from utils import compose, separate
 
@@ -24,7 +24,7 @@ class msgstorage:
     def __init__(self, save_file: File = None):
         self._save_file: File = save_file
         self.__storage: List[StorageUnit] = []
-        self._on_stored = Event(msgstorage,tuple)
+        self._on_stored = Event(msgstorage, tuple)
         self.changed = False
 
     def store(self, msg_unit: StorageUnit):
@@ -158,7 +158,7 @@ class imsgmager:
 
     def __init__(self) -> None:
         super().__init__()
-        self._on_received = Event(imsgmager,server_token,roomid,tuple)
+        self._on_received = Event(imsgmager, server_token, roomid, tuple)
 
     def load_lasted(self, server: server_token, room_id: roomid,
                     amount: int) -> List[StorageUnit]:

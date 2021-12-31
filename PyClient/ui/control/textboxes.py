@@ -1,7 +1,6 @@
 from itertools import islice
 from typing import List
 
-import utils
 from ui.controls import *
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
 from ui.shared import IsConsumed, NotConsumed, Consumed
@@ -15,10 +14,10 @@ class textbox(text_control):
         self.cursor_icon = cursor_icon
         self._cursor: int = 0
         self._on_cursor_move = Event(textbox, int, int)
-        self._on_append = Event(textbox,int,str)
-        self._on_delete = Event(textbox,int,str)
+        self._on_append = Event(textbox, int, str)
+        self._on_delete = Event(textbox, int, str)
         self._on_gen_distext = Event(textbox, list)
-        self._on_list_replace = Event(textbox,list,list)
+        self._on_list_replace = Event(textbox, list, list)
         self._on_pre_append = Event(textbox, str, cancelable=True)
         self._r_width = 0
         self._r_height = 1
@@ -28,7 +27,7 @@ class textbox(text_control):
 
         def on_append_or_delete_or_replace(_, _1, _2):
             self.on_content_changed(self)
-            self._layout_changed = True
+            self.IsLayoutChanged = True
 
         self._on_append.Add(on_append_or_delete_or_replace)
         self._on_delete.Add(on_append_or_delete_or_replace)
@@ -39,18 +38,18 @@ class textbox(text_control):
             self.input_list = init
 
     def cache_layout(self):
-        if not self._layout_changed:
+        if not self.IsLayoutChanged:
             return
-        self._layout_changed = False
+        self.IsLayoutChanged = False
         if self.width == auto:
             self._r_width = self.input_count + len(self.cursor_icon)
         else:
             self._r_width = self.width
 
-    def CalcuLayout(self, canvas: Canvas):
-        if not self._layout_changed:
+    def Arrange(self, canvas: Canvas):
+        if not self.IsLayoutChanged:
             return
-        self._layout_changed = False
+        self.IsLayoutChanged = False
         num = self.input_count + len(self.cursor_icon)
         if self.width == auto:
             w = min(num, canvas.Width)
@@ -100,7 +99,7 @@ class textbox(text_control):
             self.on_prop_changed(self, "max_inputs_count")
 
     def paint_on(self, buf: buffer):
-        if self._layout_changed:
+        if self.IsLayoutChanged:
             self.cache_layout()
         if self.left_margin > 0:
             buf.addtext(utils.repeat(' ', self.left_margin), end='')
@@ -115,8 +114,8 @@ class textbox(text_control):
         buf.addtext(self._render_chars(drawn), end='', fgcolor=fg, bkcolor=bk)
 
     def PaintOn(self, canvas: Canvas):
-        if self._layout_changed:
-            self.CalcuLayout(canvas)
+        if self.IsLayoutChanged:
+            self.Arrange(canvas)
         bk = BK.White if self.is_focused else None
         fg = FG.Black if self.is_focused else None
         drawn = self.limited_distext

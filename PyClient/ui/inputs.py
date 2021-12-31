@@ -2,14 +2,14 @@ from abc import ABC, abstractmethod
 from collections import deque
 from typing import List
 
-from chars import *
 from Events import Event
+from chars import *
 
 
 class iinput(ABC):
     def __init__(self):
         self._input_list: deque[char] = deque()
-        self._on_input = Event(iinput,char,cancelable=True)
+        self._on_input = Event(iinput, char, cancelable=True)
 
     def get_input(self, tip: str = None):
         pass

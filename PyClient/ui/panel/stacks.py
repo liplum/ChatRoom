@@ -25,9 +25,9 @@ class stack(panel):
         for c in self.elements:
             c.cache_layout()
 
-        if not self._layout_changed:
+        if not self.IsLayoutChanged:
             return
-        self._layout_changed = False
+        self.IsLayoutChanged = False
         if self.orientation == vertical:
             if self.elemt_interval == auto:
                 if self.height == auto:
@@ -84,7 +84,7 @@ class stack(panel):
         for c in self.elements:
             c.cache_layout()
 
-        if self._layout_changed:
+        if self.IsLayoutChanged:
             self.cache_layout()
 
         if self.orientation == vertical:

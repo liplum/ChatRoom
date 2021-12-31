@@ -4,7 +4,6 @@ from core.shared import *
 from ui.cmd_modes import common_hotkey
 from ui.control.passwordboxes import passwordbox, spot
 from ui.control.xtbox import xtextbox
-from ui.coroutines import *
 from ui.panel.grids import gen_grid, column
 from ui.panel.stacks import horizontal, stack
 from ui.panels import *

@@ -126,7 +126,7 @@ class SubEvent(Event):
 
     @property
     def ArgTypes(self) -> tuple:
-        return self.ArgTypes + self.newArgTypes
+        return self.parent.ArgTypes + self.newArgTypes
 
 
 class EventArgError(Exception):

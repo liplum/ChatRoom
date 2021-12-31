@@ -2,7 +2,6 @@ import traceback
 from collections import deque
 from typing import Deque
 
-import utils
 from core.settings import entity as settings
 from ui.coroutines import Suspend
 from ui.tab.chat import chat_tab

@@ -1,4 +1,3 @@
-import utils
 from lazys import lazy
 from ui.tabs import *
 

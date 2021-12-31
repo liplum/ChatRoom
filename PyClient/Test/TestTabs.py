@@ -1,8 +1,9 @@
 from ui.cmd_modes import common_hotkey
+from ui.control.TextAreas import TextArea
 from ui.control.buttons import button
 from ui.control.checkboxes import checkbox
 from ui.control.labels import label
-from ui.control.xtbox import xtextbox
+from ui.control.xtbox import XtextWrapper
 from ui.tabs import *
 
 
@@ -13,8 +14,8 @@ class TestTab(tab):
         self.t_label = label("Test")
         self.t_button = button("Button", lambda: None)
         self.t_button.width = 10
-        self.t_checkbox = checkbox()
-        self.t_tbox = xtextbox()
+        self.t_checkbox = checkbox(True)
+        self.t_tbox = XtextWrapper(TextArea())
         self.t_tbox.on_content_changed.Add(lambda _: self.on_content_changed(self))
         self.t_tbox.width = 10
 

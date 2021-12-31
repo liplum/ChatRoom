@@ -1,8 +1,6 @@
 import math
 from collections import deque
-from typing import Iterable
 
-import utils
 from ui.control.display_boards import horizontal_lineIO
 from ui.controls import *
 from ui.outputs import buffer
@@ -38,7 +36,7 @@ class textblock(text_control):
         self._r_height = 0
 
     def paint_on(self, buf: buffer):
-        if self._layout_changed:
+        if self.IsLayoutChanged:
             self.cache_layout()
         render_width = self.render_width
         render_height = self.render_height
@@ -111,9 +109,9 @@ class textblock(text_control):
         return self._r_width
 
     def cache_layout(self):
-        if not self._layout_changed:
+        if not self.IsLayoutChanged:
             return
-        self._layout_changed = False
+        self.IsLayoutChanged = False
         sum_len = 0
         max_width = 0
         for word in self.words():

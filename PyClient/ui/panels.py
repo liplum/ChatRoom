@@ -174,7 +174,7 @@ class panel(control):
         self.cur_focused = elemt
 
     def reload(self):
-        self._layout_changed = True
+        self.IsLayoutChanged = True
         for c in self.elements:
             c.reload()
         self.cache_layout()

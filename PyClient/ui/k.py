@@ -33,8 +33,8 @@ class kbinding:
 class cmdkey:
     def __init__(self):
         self.mappings: Set[chars.char] = set()
-        self._on_map = Event(cmdkey,chars.char)
-        self._on_demap = Event(cmdkey,chars.char)
+        self._on_map = Event(cmdkey, chars.char)
+        self._on_demap = Event(cmdkey, chars.char)
 
     @property
     def on_map(self):

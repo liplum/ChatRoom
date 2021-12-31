@@ -1,7 +1,6 @@
 from typing import NoReturn
 
 import keys
-import utils
 from ui.controls import *
 from ui.outputs import buffer, CmdBkColor, CmdFgColor, tintedtxtIO
 from ui.shared import IsConsumed, Consumed, NotConsumed
@@ -10,13 +9,13 @@ from ui.shared import IsConsumed, Consumed, NotConsumed
 class button(text_control):
 
     def reload(self):
-        self._layout_changed = True
+        self.IsLayoutChanged = True
         self.cache_layout()
 
     def cache_layout(self):
-        if not self._layout_changed:
+        if not self.IsLayoutChanged:
             return
-        self._layout_changed = False
+        self.IsLayoutChanged = False
         content = self.content()
         content_len = len(content)
         width = self.width
@@ -31,7 +30,7 @@ class button(text_control):
             self._r_width = content_len + 2 * self.margin
 
     def paint_on(self, buf: buffer):
-        if self._layout_changed:
+        if self.IsLayoutChanged:
             self.cache_layout()
         with StringIO() as s:
             utils.repeatIO(s, ' ', self.left_margin)
@@ -40,9 +39,47 @@ class button(text_control):
             tintedtxtIO(s, self.distext, fgcolor=fg, bkcolor=bk)
             buf.addtext(s.getvalue(), end='')
 
+    def Arrange(self, canvas: Canvas):
+        if not self.IsLayoutChanged:
+            return
+        self.IsLayoutChanged = False
+        content = self.content()
+        content_len = len(content)
+        width = self.width
+        if width != auto:
+            width = min(width, canvas.Width)
+            self._r_width = width
+            rest = width - content_len
+            if rest <= 1:
+                self.margin = 0
+            else:
+                self.margin = (rest + 1) // 2
+        else:
+            width = canvas.Width
+            self._r_width = width
+            rest = width - content_len
+            if rest <= 1:
+                self.margin = 0
+            else:
+                self.margin = (rest + 1) // 2
+
+    def PreArrange(self):
+        content = self.content()
+        content_len = len(content)
+        width = self.width
+        if width != auto:
+            self._r_width = width
+            rest = width - content_len
+            if rest <= 1:
+                self.margin = 0
+            else:
+                self.margin = (rest + 1) // 2
+        else:
+            self._r_width = content_len + 2 * self.margin
+
     def PaintOn(self, canvas: Canvas):
-        if self._layout_changed:
-            self.cache_layout()
+        if self.IsLayoutChanged:
+            self.Arrange(canvas)
         g = StrWriter(canvas, 0, 0, self.render_width, self.render_height)
         bk = BK.White if self.is_focused else None
         fg = FG.Black if self.is_focused else None

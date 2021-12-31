@@ -1,4 +1,3 @@
-import utils
 from ui.controls import *
 from ui.outputs import buffer
 
@@ -32,7 +31,7 @@ class label(control):
         return False
 
     def paint_on(self, buf: buffer):
-        if self._layout_changed:
+        if self.IsLayoutChanged:
             self.cache_layout()
         if self.left_margin > 0:
             buf.addtext(utils.repeat(' ', self.left_margin), end='')
@@ -45,8 +44,8 @@ class label(control):
         buf.addtext(content, end="")
 
     def PaintOn(self, canvas: Canvas):
-        if self._layout_changed:
-            self.CalcuLayout(canvas)
+        if self.IsLayoutChanged:
+            self.Arrange(canvas)
         content = self.content()
         rw = self.render_width
         if rw < len(content):
@@ -68,18 +67,18 @@ class label(control):
         return f"<label {self.content()}>"
 
     def cache_layout(self):
-        if not self._layout_changed:
+        if not self.IsLayoutChanged:
             return
-        self._layout_changed = False
+        self.IsLayoutChanged = False
         if self.width == auto:
             self._r_width = len(self.content())
         else:
             self._r_width = self.width
 
-    def CalcuLayout(self, canvas: Canvas):
-        if not self._layout_changed:
+    def Arrange(self, canvas: Canvas):
+        if not self.IsLayoutChanged:
             return
-        self._layout_changed = False
+        self.IsLayoutChanged = False
         if self.width == auto:
             self._r_width = min(len(self.content()), canvas.Width)
         else:

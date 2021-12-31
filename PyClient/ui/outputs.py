@@ -3,13 +3,12 @@ import traceback
 from collections import deque
 from datetime import datetime
 from threading import Thread, currentThread
-from typing import Optional, NoReturn, List, Deque, Collection
+from typing import NoReturn, List, Deque, Collection
 
 import GLOBAL
 import i18n
-import utils
 from GLOBAL import StringIO
-from core.filer import ifiler, sep, Directory, File
+from core.filer import ifiler, Directory, File
 from files import EndsWith
 from ui.Renders import *
 
@@ -327,7 +326,7 @@ class cmd_display(idisplay):
             added_text = f"{text}{end}"
         else:
             added_text = tintedtxt(text, style, fgcolor, bkcolor, end)
-        buffer_list.append(added_text)
+        buffer_list.Append(added_text)
         return None
 
     def render(self, buf: buffer) -> bool:

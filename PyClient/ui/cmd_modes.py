@@ -5,7 +5,6 @@ import i18n
 import keys
 import states
 import ui.uiop as uiop
-import utils
 from cmds import *
 from lazys import lazy
 from ui import outputs as output

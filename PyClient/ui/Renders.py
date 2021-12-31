@@ -222,9 +222,25 @@ class SubViewer(Viewer):
         return self.parent.Canvas
 
 
+"""
+      [0]   [1]   [2]   [3]   [4]
+[0]    A     n           a     p
+[1]    p     l     e           a
+[2]          d     a     y          
+[3]    ,     k     e     e     p      
+[4]          t     h     e               
+[5]    d     o     c     t     o          
+[6]    r           a     w     a     
+[7]    y     .
+"""
+
+
 class StrWriter:
-    def __init__(self, canvas: Canvas, x, y, width, height, autoWrap=False):
+
+    def __init__(self, canvas: Canvas, x: int, y: int, width: int = None, height: int = None, autoWrap=False):
+        """X in canvas"""
         self.X = max(x, 0)
+        """Y in canvas"""
         self.Y = max(y, 0)
         self.Width = width or canvas.Width
         self.Height = height or canvas.Height
@@ -234,28 +250,30 @@ class StrWriter:
         self.AutoWrap = autoWrap
 
     def Write(self, text: str, bk=None, fg=None):
+        width = self.Width
+        height = self.Height
+        if width == 0 or height == 0:
+            return
         x = self.X
         y = self.Y
         xi = self.xi
         yi = self.yi
-        width = self.Width
-        height = self.Height
         if bk is None:
             bk = BK.Black
         if fg is None:
             fg = FG.White
-        if xi - x >= width and yi - y >= height:
+        if xi >= width and yi >= height:
             return
         canvas = self.canvas
         autoWrap = self.AutoWrap
         for ch in text:
-            if xi - x >= width:
+            if xi >= width:
                 if autoWrap:
                     xi = 0
                     yi += 1
                 else:
                     break
-            if yi - y >= height:
+            if yi >= height:
                 break
             canvas.Char(xi + x, yi + y, ch)
             canvas.Color(xi + x, yi + y, bk, fg)

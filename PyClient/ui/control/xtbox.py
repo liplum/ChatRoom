@@ -42,3 +42,44 @@ class xtextbox(textbox):
 
     def on_input(self, ch: chars.char) -> IsConsumed:
         return self.kbs.trigger(ch)
+
+
+class XtextWrapper:
+    def __init__(self, textArea,
+                 excepted_chars: Optional[Set[chars.char]] = None,
+                 onlyAllowedChars: Optional[Set[chars.char]] = None):
+        object.__setattr__(self, "textArea", textArea)
+        if excepted_chars and onlyAllowedChars:
+            onlyAllowedChars = onlyAllowedChars - excepted_chars
+        kbs = kbinding()
+        object.__setattr__(self, "kbs", kbs)
+        kbs.bind(keys.k_backspace, lambda c: textArea.Delete())
+        kbs.bind(keys.k_delete, lambda c: textArea.Delete(left=False))
+        kbs.bind(keys.k_left, lambda c: textArea.Left())
+        kbs.bind(keys.k_right, lambda c: textArea.Right())
+        kbs.bind(keys.k_home, lambda c: textArea.Home())
+        kbs.bind(keys.k_end, lambda c: textArea.End())
+
+        def onExitFocusHandler(_):
+            textArea.on_exit_focus(textArea)
+            return True
+
+        kbs.bind(chars.c_esc, onExitFocusHandler)
+        spapp = textArea.Append
+        if onlyAllowedChars:
+            kbs.on_any = lambda c: spapp(
+                chars.to_str(c)) if c.is_printable() and c in onlyAllowedChars else False
+        elif excepted_chars:
+            kbs.on_any = lambda c: spapp(
+                chars.to_str(c)) if c.is_printable() and c not in exceptedChars else False
+        else:
+            kbs.on_any = lambda c: spapp(chars.to_str(c)) if c.is_printable() else False
+
+    def __getattr__(self, item):
+        return getattr(self.textArea, item)
+
+    def __setattr__(self, key, value):
+        setattr(self.textArea, key, value)
+
+    def on_input(self, ch: chars.char) -> IsConsumed:
+        return self.kbs.trigger(ch)

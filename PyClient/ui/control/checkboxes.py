@@ -1,5 +1,4 @@
 import keys
-import utils
 from ui.controls import *
 from ui.outputs import CmdBkColor, tintedtxt, CmdFgColor
 from ui.themes import check_theme
@@ -19,9 +18,10 @@ class checkbox(control):
         super().__init__()
         self.theme = theme
         self._checked: Optional[bool] = value
+        self._r_width = 0
 
     def paint_on(self, buf: buffer):
-        if self._layout_changed:
+        if self.IsLayoutChanged:
             self.cache_layout()
         with StringIO() as s:
             if self.left_margin > 0:
@@ -31,9 +31,24 @@ class checkbox(control):
             fg = CmdFgColor.Black if self.is_focused else None
             buf.addtext(tintedtxt(s.getvalue(), fgcolor=fg, bkcolor=bk), end="")
 
+    def Arrange(self, canvas: Canvas):
+        if not self.IsLayoutChanged:
+            return
+        self.IsLayoutChanged = False
+        if self.width == auto:
+            self._r_width = min(len(self.cur_render_icon), canvas.Width)
+        else:
+            self._r_width = min(self.width, canvas.Width)
+
+    def PreArrange(self):
+        if self.width == auto:
+            self._r_width = len(self.cur_render_icon)
+        else:
+            self._r_width = self.width
+
     def PaintOn(self, canvas: Canvas):
-        if self._layout_changed:
-            self.cache_layout()
+        if self.IsLayoutChanged:
+            self.Arrange(canvas)
         bk = BK.White if self.is_focused else None
         fg = FG.Black if self.is_focused else None
         buf = StrWriter(canvas, 0, 0, self.render_width, self.render_height)
@@ -80,9 +95,9 @@ class checkbox(control):
         return False
 
     def cache_layout(self):
-        if not self._layout_changed:
+        if not self.IsLayoutChanged:
             return
-        self._layout_changed = False
+        self.IsLayoutChanged = False
 
     @property
     def render_height(self) -> int:
@@ -90,7 +105,7 @@ class checkbox(control):
 
     @property
     def render_width(self) -> int:
-        return len(self.cur_render_icon)
+        return self._r_width
 
     @property
     def height(self) -> PROP:

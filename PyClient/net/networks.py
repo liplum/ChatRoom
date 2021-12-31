@@ -127,8 +127,8 @@ class channel(ichannel):
 class inetwork(ABC):
     def __init__(self, client):
         self.client = client
-        self._on_connected = Event(inetwork,server_token)
-        self._on_disconnected = Event(inetwork,server_token)
+        self._on_connected = Event(inetwork, server_token)
+        self._on_disconnected = Event(inetwork, server_token)
 
     @property
     def on_connected(self) -> Event:
@@ -227,7 +227,7 @@ class network(inetwork):
         super().__init__(client)
         self.sockets: Dict[server_token, Tuple[socket, Thread]] = {}
         self.channels: Dict[str, channel] = {}
-        self._on_msg_pre_analyzed = Event(network,server_token,str,dict)
+        self._on_msg_pre_analyzed = Event(network, server_token, str, dict)
         self._lock = RLock()
         self._max_retry_time = 3
 

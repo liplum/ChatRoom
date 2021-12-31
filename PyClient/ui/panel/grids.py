@@ -97,7 +97,7 @@ class grid(panel):
         for c in self.elements:
             c.cache_layout()
 
-        if self._layout_changed:
+        if self.IsLayoutChanged:
             self.cache_layout()
         if self.top_margin > 0:
             buf.addtext(utils.repeat("\n", self.top_margin), end="")
@@ -123,9 +123,9 @@ class grid(panel):
         for c in self.elements:
             c.cache_layout()
 
-        if not self._layout_changed:
+        if not self.IsLayoutChanged:
             return
-        self._layout_changed = False
+        self.IsLayoutChanged = False
 
         w = 0
         h = 0
