@@ -21,17 +21,17 @@ class TextArea(text_control):
         self._maxInputsCount = unlimited
         self._locked = False
 
-        def onAppendOrDeleteOrReplace(_, _1, _2):
-            self.on_content_changed(self)
-            self.IsLayoutChanged = True
-
-        self.OnAppend.Add(onAppendOrDeleteOrReplace)
-        self.OnDelete.Add(onAppendOrDeleteOrReplace)
-        self.OnListReplaced.Add(onAppendOrDeleteOrReplace)
+        self.OnAppend.Add(self._onAppendOrDeleteOrReplace)
+        self.OnDelete.Add(self._onAppendOrDeleteOrReplace)
+        self.OnListReplaced.Add(self._onAppendOrDeleteOrReplace)
         self.OnCursorMove.Add(lambda _, _1, _2: self.on_content_changed(self))
 
         if init is not None:
             self.InputList = init
+
+    def _onAppendOrDeleteOrReplace(self, _, _1, _2):
+        self.on_content_changed(self)
+        self.IsLayoutChanged = True
 
     def Arrange(self, canvas: Canvas):
         if not self.IsLayoutChanged:
@@ -66,6 +66,9 @@ class TextArea(text_control):
 
     def on_input(self, char: chars.char) -> IsConsumed:
         return self.Append(str(char))
+
+    def getRenderInputList(self) -> Iterable[str]:
+        return self._inputList
 
     def Clear(self):
         if len(self._inputList) != 0:
@@ -103,6 +106,13 @@ class TextArea(text_control):
                     ch = self._inputList.pop(n)
                     self.OnDelete(self, self.Cursor, ch)
         return True
+
+    @property
+    def ShowCursor(self) -> bool:
+        if self.in_container:
+            return self.is_focused
+        else:
+            return True
 
     @property
     def Cursor(self):
@@ -159,8 +169,8 @@ class TextArea(text_control):
         former = self._inputList
         if not isinstance(value, list):
             value = list(value)
-        if self.max_inputs_count != unlimited:
-            value = value[0:self.max_inputs_count]
+        if self.MaxInputCount != unlimited:
+            value = value[0:self.MaxInputCount]
         self._inputList = value
         self.OnListReplaced(self, former, self._inputList)
         self.End()

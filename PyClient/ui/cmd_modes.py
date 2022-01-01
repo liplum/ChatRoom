@@ -152,7 +152,7 @@ class cmd_mode(ui_state):
     def on_en(self):
         self.cmd_sm.enter(self.hotkey_cmd_mode_type)
         self.client.mark_dirty()
-        self.textbox.clear()
+        self.textbox.Clear()
         self.cmd_manager: cmdmanager = self.client.cmd_manger
 
     def paint_on(self, buf: buffer):
@@ -170,7 +170,7 @@ class cmd_mode(ui_state):
 
     @property
     def is_long_cmd_mode(self) -> bool:
-        inputs = self.textbox.input_list
+        inputs = self.textbox.InputList
         return len(inputs) > 0 and inputs[0] == ':'
 
     def gen_context(self) -> Cmd_Context:
@@ -185,19 +185,19 @@ class cmd_mode(ui_state):
                 # display history
                 self.textbox.input_list = cur_his
                 self.last_cmd_history = cur_his
-                self.textbox.end()
+                self.textbox.End()
             elif self.cmd_history_index != -len(self.cmd_history):
                 self.last_cmd_history = None
         else:
             self.last_cmd_history = None
-            self.textbox.clear()
+            self.textbox.Clear()
 
     def on_input(self, char: chars.char):
         c = self.client
         tb = self.textbox
         # press quit to clear textbox
         if c.key_quit_text_mode == char:
-            self.textbox.clear()
+            self.textbox.Clear()
             return
 
         # browser command using history
@@ -321,7 +321,7 @@ class cmd_long_mode(cmd_state):
 
         mode.add_cmd_history(full_cmd)
         mode.cmd_history_index = 0
-        tb.clear()
+        tb.Clear()
 
     def on_input(self, char: chars.char) -> IsConsumed:
         mode = self.mode

@@ -62,7 +62,7 @@ class Canvas:
         pass
 
     @abstractmethod
-    def Str(self, x: int, y: int, string: Iterable[str]):
+    def Str(self, x: int, y: int, string: str):
         pass
 
     @abstractmethod
@@ -237,7 +237,7 @@ class SubViewer(Viewer):
 
 class StrWriter:
 
-    def __init__(self, canvas: Canvas, x: int, y: int, width: int = None, height: int = None, autoWrap=False):
+    def __init__(self, canvas: Canvas, x: int = 0, y: int = 0, width: int = None, height: int = None, autoWrap=False):
         """X in canvas"""
         self.X = max(x, 0)
         """Y in canvas"""
@@ -249,7 +249,12 @@ class StrWriter:
         self.canvas: Canvas = canvas
         self.AutoWrap = autoWrap
 
+    def NextLine(self):
+        self.yi += 1
+
     def Write(self, text: str, bk=None, fg=None):
+        if len(text) <= 0:
+            return
         width = self.Width
         height = self.Height
         if width == 0 or height == 0:
@@ -280,3 +285,58 @@ class StrWriter:
             xi += 1
         self.xi = xi
         self.yi = yi
+
+
+class DotPainter:
+    def __init__(self, canvas: Canvas, bk=None, fg=None):
+        self._bk = bk
+        self._fg = fg
+        self.canvas = canvas
+
+    @property
+    def BK(self):
+        return self._bk
+
+    @BK.setter
+    def BK(self, value):
+        self._bk = value
+
+    @property
+    def FG(self):
+        return self._bk
+
+    @FG.setter
+    def FG(self, value):
+        self._bk = value
+
+    def Char(self, x: int, y: int, char: Optional[str], useBoundColor=True, bk=None, fg=None):
+        if useBoundColor:
+            bk = self.BK
+            fg = self.FG
+
+        if char is not None:
+            if bk is None:
+                bk = BK.Black
+            if fg is None:
+                fg = FG.White
+            self.canvas.Char(x, y, char)
+        if not (fg is None or bk is None):
+            self.canvas.Color(x, y, bk, fg)
+
+    def Str(self, x: int, y: int, string: str, useBoundColor=True, bk=None, fg=None):
+        if useBoundColor:
+            bk = self.BK
+            fg = self.FG
+        if bk is None:
+            bk = BK.Black
+        if fg is None:
+            fg = FG.White
+
+        if char is not None:
+            if bk is None:
+                bk = BK.Black
+            if fg is None:
+                fg = FG.White
+            self.canvas.Str(x, y, string)
+        if not (fg is None or bk is None):
+            self.canvas.Colors(x, x + len(string), y, bk, fg)

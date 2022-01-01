@@ -70,9 +70,10 @@ class WinCanvas(Canvas):
             marks[y] = True
 
     def Clear(self, x: int, y: int):
+        NoColor = BK.Black | FG.White
         if 0 <= x < self.Width and 0 <= y < self.Height:
             self.buffer[y, x] = " "
-            self.colors[y, x] = 0
+            self.colors[y, x] = NoColor
             self.DirtyMarks[y] = True
 
     def ClearAll(self):
@@ -81,10 +82,11 @@ class WinCanvas(Canvas):
         buffer = self.buffer
         marks = self.DirtyMarks
         colors = self.colors
+        NoColor = BK.Black | FG.White
         for j in range(height):
             for i in range(width):
                 buffer[j, i] = " "
-                colors[j, i] = 0
+                colors[j, i] = NoColor
             marks[j] = True
 
     def ClearArea(self, x1: int, y1: int, x2: int, y2: int):
@@ -95,10 +97,11 @@ class WinCanvas(Canvas):
         buffer = self.buffer
         marks = self.DirtyMarks
         colors = self.colors
+        NoColor = BK.Black | FG.White
         for j in range(y1, y2):
             for i in range(x1, x2):
                 buffer[j, i] = " "
-                colors[j, i] = 0
+                colors[j, i] = NoColor
             marks[j] = True
 
 
@@ -132,7 +135,7 @@ class WinRender(IRender):
         if self.CharMatrix is None or self.CharMatrix.shape != size:
             self.CharMatrix = np.full(size, " ", dtype=str)
         if self.ColorMatrix is None or self.ColorMatrix.shape != size:
-            self.ColorMatrix = np.full(size, FG.White, dtype=int)
+            self.ColorMatrix = np.full(size, BK.Black | FG.White, dtype=int)
         if self.DirtyMarks is None or self.DirtyMarks.shape != heights:
             self.DirtyMarks = np.full(heights, False, dtype=bool)
         self.NeedRegen = False

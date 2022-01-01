@@ -22,11 +22,11 @@ class register_tab(tab):
         self.network: "inetwork" = self.client.network
         grid = gen_grid(5, [column(auto), column(15)])
         excepted_chars = {keys.k_enter, chars.c_tab_key}
-        self.t_ip = xtextbox(excepted_chars=excepted_chars)
-        self.t_port = xtextbox(only_allowed_chars=number_keys)
-        self.t_account = xtextbox(excepted_chars=excepted_chars)
-        self.t_password = xtextbox(excepted_chars=excepted_chars)
-        self.t_password_again = xtextbox(excepted_chars=excepted_chars)
+        self.t_ip = xtextbox(exceptedChars=excepted_chars)
+        self.t_port = xtextbox(onlyAllowedChars=number_keys)
+        self.t_account = xtextbox(exceptedChars=excepted_chars)
+        self.t_password = xtextbox(exceptedChars=excepted_chars)
+        self.t_password_again = xtextbox(exceptedChars=excepted_chars)
 
         grid[0, 0] = i18n_label("tabs.$shared$.labels.server_ip")
         grid[1, 0] = i18n_label("tabs.$shared$.labels.server_port")
@@ -46,11 +46,11 @@ class register_tab(tab):
         self.t_password.width = 16
         self.t_password_again.width = 16
 
-        self.t_ip.max_inputs_count = 63
-        self.t_port.max_inputs_count = 5
-        self.t_account.max_inputs_count = 16
-        self.t_password.max_inputs_count = 16
-        self.t_password_again.max_inputs_count = 16
+        self.t_ip.MaxInputCount = 63
+        self.t_port.MaxInputCount = 5
+        self.t_account.MaxInputCount = 16
+        self.t_password.MaxInputCount = 16
+        self.t_password_again.MaxInputCount = 16
 
         self.t_ip.space_placeholder = "_"
         self.t_port.space_placeholder = "_"
@@ -58,7 +58,7 @@ class register_tab(tab):
         self.t_password.space_placeholder = "_"
         self.t_password_again.space_placeholder = "_"
 
-        self.t_port.input_list = "25000"
+        self.t_port.InputList = "25000"
 
         dialog_stack = stack()
         dialog_stack.orientation = horizontal

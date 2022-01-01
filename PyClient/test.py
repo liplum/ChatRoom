@@ -50,7 +50,8 @@ def win_test():
     # test_traceback()
     # test_gen_2d_array()
     # test_i18n_folder()
-    test_version()
+    # test_version()
+    test_bind_property()
 
 
 def linux_test():
@@ -74,6 +75,26 @@ def test_final_attr():
     class Test:
         def __init__(self):
             self.a: Final[int] = 10
+
+
+def test_bind_property():
+    class A:
+        @property
+        def Prop1(self):
+            return 10
+
+        @Prop1.setter
+        def Prop1(self, value):
+            print(value)
+
+    a = A()
+
+    def P():
+        return 2
+
+    print(a.__dict__)
+    print(A.__dict__)
+    a.Prop1 = property(P)
 
 
 def test_version():
@@ -514,33 +535,33 @@ def test_textbox():
     tb.input_list = "apple"
     print("\nmove left\n")
     for i in range(10):
-        tb.left()
+        tb.Left()
         print(tb.distext)
     print("\nappend\n")
     for i in range(5):
-        tb.append("1")
+        tb.Append("1")
         print(tb.distext)
     print("\nmove left\n")
-    tb.left()
+    tb.Left()
     print(tb.distext)
-    tb.left()
+    tb.Left()
     print(tb.distext)
     print("\ndelete\n")
     for i in range(10):
-        tb.delete()
+        tb.Delete()
         print(tb.distext)
 
     print("\nmove right\n")
-    tb.right()
+    tb.Right()
     print(tb.distext)
-    tb.right()
+    tb.Right()
     print(tb.distext)
-    tb.right()
+    tb.Right()
     print(tb.distext)
 
     print("\ndelete\n")
     for i in range(3):
-        tb.delete()
+        tb.Delete()
         print(tb.distext)
 
     tb.input_list = "This is a very very long text to show how width limit works."
@@ -556,7 +577,7 @@ def test_textbox():
 
         for i in range(10):
             buf = displayer.gen_buffer()
-            tb.right()
+            tb.Right()
             tb.paint_on(buf)
             buf.addtext()
             displayer.render(buf)
@@ -587,9 +608,9 @@ def cmd_input():
                 elif ch_full == char_up:
                     print("Up")
                 elif ch_full == char_left:
-                    tb.left()
+                    tb.Left()
                 elif ch_full == char_right:
-                    tb.right()
+                    tb.Right()
             elif ch_number == f_keycode_1:
                 ch_full = f(ord(msvcrt.getwch()))
                 print(ch_full.keycode_2)

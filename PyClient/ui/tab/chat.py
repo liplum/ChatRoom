@@ -253,7 +253,7 @@ class chat_tab(tab):
                     i18n.trans("tabs.chat_tab.account_unverified", account=info.account, ip=self.connected.ip))
         else:
             self.logger.error(f"[Tab][{self}]Haven't connected a server yet.")
-        self.textbox.clear()
+        self.textbox.Clear()
 
     @property
     def joined(self) -> Optional[roomid]:
@@ -479,7 +479,7 @@ class text_mode(ui_state):
 
     def on_en(self):
         self.client.mark_dirty()
-        self.textbox.clear()
+        self.textbox.Clear()
 
     def paint_on(self, buf: buffer):
         tip = utils.fillto(f"{i18n.trans('modes.text_mode.name')}:", " ", 40)

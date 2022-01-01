@@ -151,7 +151,7 @@ _add_control(Style.AnyString, _Style_AnyString)
 def _Style_OnlyNumber(config: config, settings: settings) -> Ctrl_OnSave:
     prop = config.prop
     init_value = settings[config.key]
-    c = xtextbox(only_allowed_chars=number_keys)
+    c = xtextbox(onlyAllowedChars=number_keys)
     c.input_list = str(init_value)
     return c, _gen_on_textbox_save(config, settings, prop, c)
 
@@ -162,7 +162,7 @@ _add_control(Style.OnlyNumber, _Style_OnlyNumber)
 def _Style_OnlyAlphabet(config: config, settings: settings) -> Ctrl_OnSave:
     prop = config.prop
     init_value = settings[config.key]
-    c = xtextbox(only_allowed_chars=alphabet_keys)
+    c = xtextbox(onlyAllowedChars=alphabet_keys)
     c.input_list = init_value
     return c, _gen_on_textbox_save(config, settings, prop, c)
 
@@ -173,7 +173,7 @@ _add_control(Style.OnlyAlphabet, _Style_OnlyAlphabet)
 def _Style_OnlyNumberAlphabet(config: config, settings: settings) -> Ctrl_OnSave:
     prop = config.prop
     init_value = settings[config.key]
-    c = xtextbox(only_allowed_chars=number_alphabet_keys)
+    c = xtextbox(onlyAllowedChars=number_alphabet_keys)
     c.input_list = init_value
     return c, _gen_on_textbox_save(config, settings, prop, c)
 

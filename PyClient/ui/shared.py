@@ -32,7 +32,7 @@ class reloadable:
 
 class notifiable:
     def __init__(self):
-        self._on_content_changed = Event(notifiable)
+        self._onContentChanged = Event(notifiable)
 
     @property
     def on_content_changed(self) -> Event:
@@ -41,4 +41,13 @@ class notifiable:
 
         :return: Event(notifiable)
         """
-        return self._on_content_changed
+        return self._onContentChanged
+
+    @property
+    def OnContentChanged(self) -> Event:
+        """
+        Para 1:notifiable object
+
+        :return: Event(notifiable)
+        """
+        return self._onContentChanged
