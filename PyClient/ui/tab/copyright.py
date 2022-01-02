@@ -1,7 +1,7 @@
 import keys
 from ui.cmd_modes import common_hotkey
 from ui.control.display_boards import display_board
-from ui.panel.stacks import stack
+from ui.panel.Stacks import Stack
 from ui.tab.shared import *
 from ui.tabs import *
 from ui.themes import *
@@ -43,7 +43,7 @@ class copyright_tab(tab):
         self._copyright_texts: List[str] = []
         self.gen_copyright_texts()
         self.last_tab = None
-        main = stack()
+        main = Stack()
         self.main = main
         db = display_board(MCGT(lambda: self._copyright_texts), theme=rounded_rectangle)
         db.width = 40

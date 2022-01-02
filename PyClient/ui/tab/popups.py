@@ -1,5 +1,5 @@
 from ui.control.textblocks import *
-from ui.panel.stacks import align_left, horizontal, stack
+from ui.panel.Stacks import align_left, horizontal, Stack
 from ui.tab.shared import *
 from ui.tabs import *
 
@@ -45,12 +45,12 @@ class one_button_popup(text_popup):
         self._button_i18n_key = ""
 
     def on_added(self):
-        m = stack()
+        m = Stack()
         self.main = m
         m.on_content_changed.Add(lambda _: self.on_content_changed(self))
 
         l_title = label(self.get_title)
-        l_title.prop(stack.Horizontal_Alignment, align_left)
+        l_title.prop(Stack.Horizontal_Alignment, align_left)
         m.add(l_title)
 
         info = textblock(lambda: self._words)
@@ -112,7 +112,7 @@ class ok_cancel_popup(text_popup):
 
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
-        button_stack = stack()
+        button_stack = Stack()
         button_stack.orientation = horizontal
 
         b_ok = i18n_button("controls.ok", self._on_ok)
@@ -127,12 +127,12 @@ class ok_cancel_popup(text_popup):
         self.button_stack = button_stack
 
     def on_added(self):
-        m = stack()
+        m = Stack()
         self.main = m
         m.on_content_changed.Add(lambda _: self.on_content_changed(self))
 
         l_title = label(self.get_title)
-        l_title.prop(stack.Horizontal_Alignment, align_left)
+        l_title.prop(Stack.Horizontal_Alignment, align_left)
         m.add(l_title)
 
         info = textblock(lambda: self._words)
@@ -162,12 +162,12 @@ class waiting_popup(text_popup):
         self._state = None
 
     def on_added(self):
-        m = stack()
+        m = Stack()
         self.main = m
         m.on_content_changed.Add(lambda _: self.on_content_changed(self))
 
         l_title = label(self.get_title)
-        l_title.prop(stack.Horizontal_Alignment, align_left)
+        l_title.prop(Stack.Horizontal_Alignment, align_left)
         m.add(l_title)
 
         info = textblock(lambda: self._words)

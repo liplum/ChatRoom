@@ -49,24 +49,37 @@ class DisplayBoard(control):
             canvas.Char(0, h, theme.vertical)
             canvas.Char(rw - 1, h, theme.vertical)
 
-    def Arrange(self, canvas: Canvas):
+    def Arrange(self, canvas: Optional[Canvas]):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False
+        inner = self.Inner
+        if inner:
+            inner.Arrange(None)
         width = self.width
         height = self.height
         if width == auto:
-            self._rWidth = canvas.Width
+            if canvas:
+                self._rWidth = canvas.Width
+                if inner:
+                    inner.width = self.render_width - 2
+            else:
+                self._rWidth = inner.width + 2
         else:
             self._rWidth = width
+            if inner:
+                inner.width = self.render_width - 2
         if height == auto:
-            self._rHeight = canvas.Height
+            if canvas:
+                self._rHeight = canvas.Height
+                if inner:
+                    inner.height = self.render_height - 2
+            else:
+                self._rHeight = inner.height + 2
         else:
             self._rHeight = height
-        inner = self.Inner
-        if inner:
-            inner.width = self.render_width - 2
-            inner.height = self.render_height - 2
+            if inner:
+                inner.height = self.render_height - 2
 
     @property
     def render_height(self) -> int:

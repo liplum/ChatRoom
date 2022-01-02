@@ -19,6 +19,7 @@ class TestTab(tab):
         self.t_tbox = XtextWrapper(TextArea())
         self.t_tbox.on_content_changed.Add(lambda _: self.OnContentChanged(self))
         self.t_tbox.width = 10
+        self.t_tbox.height = 3
         self.db = DisplayBoard()
         self.db.Inner = self.t_tbox
         self.dx = 0

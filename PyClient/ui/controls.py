@@ -213,7 +213,7 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
         """Deprecated"""
         pass
 
-    def Arrange(self, canvas: Canvas):
+    def Arrange(self, canvas: Optional[Canvas]):
         pass
 
     def reload(self):

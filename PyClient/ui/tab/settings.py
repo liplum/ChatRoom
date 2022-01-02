@@ -4,8 +4,8 @@ from ui.control.checkboxes import checkbox
 from ui.control.numeric_up_downs import numeric_up_down
 from ui.control.textboxes import textbox
 from ui.control.xtbox import xtextbox
-from ui.panel.grids import gen_grid, column
-from ui.panel.stacks import horizontal, stack
+from ui.panel.Grids import gen_grid, column
+from ui.panel.Stacks import horizontal, Stack
 from ui.panels import *
 from ui.tab.shared import *
 from ui.tabs import *
@@ -37,7 +37,7 @@ class settings_tab(tab):
         super().__init__(client, tablist)
         self.last_tab = None
         self.ctrl2on_save = {}
-        main = stack()
+        main = Stack()
         main.on_content_changed.Add(lambda _: self.on_content_changed(self))
         main.left_margin = 3
         self.main = main
@@ -49,7 +49,7 @@ class settings_tab(tab):
         cancel = i18n_button("controls.cancel", self.quit_tab)
         cancel.width = 10
         self.b_cancel = cancel
-        save_cancel = stack()
+        save_cancel = Stack()
         save_cancel.orientation = horizontal
         save_cancel.add(save)
         save_cancel.add(cancel)

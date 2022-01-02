@@ -33,7 +33,7 @@ class TextArea(text_control):
         self.on_content_changed(self)
         self.IsLayoutChanged = True
 
-    def Arrange(self, canvas: Canvas):
+    def Arrange(self, canvas: Optional[Canvas]):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False

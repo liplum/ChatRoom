@@ -1,6 +1,6 @@
-import ui.panel.stacks
+import ui.panel.Stacks
 from ui.control.xtbox import xtextbox
-from ui.panel.stacks import stack
+from ui.panel.Stacks import Stack
 from ui.tab.shared import *
 from ui.tabs import *
 
@@ -9,7 +9,7 @@ class test_tab(tab):
 
     def __init__(self, client: "client", tablist: tablist):
         super().__init__(client, tablist)
-        self.stack = stack()
+        self.stack = Stack()
         button_content = "Button"
 
         def button_content_getter() -> str:
@@ -25,10 +25,10 @@ class test_tab(tab):
         self.stack.add(label("Label A"))
         self.account_tbox = xtextbox()
         self.account_tbox.space_placeholder = "_"
-        account_stack = stack()
+        account_stack = Stack()
         account_stack.add(label("Account"))
         account_stack.add(self.account_tbox)
-        account_stack.orientation = ui.panel.stacks.horizontal
+        account_stack.orientation = ui.panel.Stacks.horizontal
         self.stack.add(account_stack)
         self.stack.add(label("Test Label B"))
         self.stack.add(label("Test"))
@@ -42,7 +42,7 @@ class test_tab(tab):
         self.stack.add(button(CGT(button_content_getter), _click_button))
         self.stack.add(button(CGT(button_content_getter), _click_button))
         self.stack.add(button("Close", lambda: self.client.stop()))
-        # self.stack.orientation = panels.horizontal
+        # self.Stack.orientation = panels.horizontal
 
         self.stack.elemt_interval = 1
         self._stack_focused = True

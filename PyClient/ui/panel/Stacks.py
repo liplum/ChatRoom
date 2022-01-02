@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 import utils
+from ui.Renders import Canvas
 from ui.controls import auto, control, PROP
 from ui.outputs import buffer
 from ui.panels import panel
@@ -18,8 +19,15 @@ OverRange = str
 discard = "discard"
 
 
-class stack(panel):
-    Horizontal_Alignment: str = "stack.horizontal_alignment"
+class Stack(panel):
+    Horizontal_Alignment: str = "Stack.horizontal_alignment"
+
+    def PaintOn(self, canvas: Canvas):
+        super().PaintOn(canvas)
+
+    def Arrange(self, canvas: Optional[Canvas]):
+        for c in self.elements:
+            c.cache_layout()
 
     def cache_layout(self):
         for c in self.elements:
@@ -74,7 +82,7 @@ class stack(panel):
                     e.left_margin = 0
 
     def _get_final_horizontal_alignment(self, elemt: control) -> Alignment:
-        elemt_align = elemt.gprop(stack.Horizontal_Alignment)
+        elemt_align = elemt.gprop(Stack.Horizontal_Alignment)
         if elemt_align is not None:
             return elemt_align
         else:

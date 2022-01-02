@@ -31,7 +31,7 @@ class checkbox(control):
             fg = CmdFgColor.Black if self.is_focused else None
             buf.addtext(tintedtxt(s.getvalue(), fgcolor=fg, bkcolor=bk), end="")
 
-    def Arrange(self, canvas: Canvas):
+    def Arrange(self, canvas: Optional[Canvas]):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False

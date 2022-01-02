@@ -79,10 +79,16 @@ class label(control):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False
-        if self.width == auto:
-            self._r_width = min(len(self.content()), canvas.Width)
+        if canvas:
+            if self.width == auto:
+                self._r_width = min(len(self.content()), canvas.Width)
+            else:
+                self._r_width = min(self.width, canvas.Width)
         else:
-            self._r_width = min(self.width, canvas.Width)
+            if self.width == auto:
+                self._r_width = len(self.content())
+            else:
+                self._r_width = self.width
 
     @property
     def render_width(self) -> int:

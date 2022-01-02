@@ -4,8 +4,8 @@ from core.shared import *
 from net.msgs import register_result
 from ui.cmd_modes import common_hotkey
 from ui.control.xtbox import xtextbox
-from ui.panel.grids import gen_grid, column
-from ui.panel.stacks import horizontal, stack
+from ui.panel.Grids import gen_grid, column
+from ui.panel.Stacks import horizontal, Stack
 from ui.panels import *
 from ui.tab.popups import ok_popup_gen, waiting_popup
 from ui.tab.shared import *
@@ -60,7 +60,7 @@ class register_tab(tab):
 
         self.t_port.InputList = "25000"
 
-        dialog_stack = stack()
+        dialog_stack = Stack()
         dialog_stack.orientation = horizontal
 
         def on_cancel_pressed():
@@ -83,7 +83,7 @@ class register_tab(tab):
         dialog_stack.add(cancel)
         dialog_stack.elemt_interval = 1
 
-        main = stack()
+        main = Stack()
         self.main = main
         self.main.on_content_changed.Add(lambda _: self.on_content_changed(self))
         main.add(grid)

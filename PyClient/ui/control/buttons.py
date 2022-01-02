@@ -39,7 +39,7 @@ class button(text_control):
             tintedtxtIO(s, self.distext, fgcolor=fg, bkcolor=bk)
             buf.addtext(s.getvalue(), end='')
 
-    def Arrange(self, canvas: Canvas):
+    def Arrange(self, canvas: Optional[Canvas]):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False
@@ -47,7 +47,8 @@ class button(text_control):
         content_len = len(content)
         width = self.width
         if width != auto:
-            width = min(width, canvas.Width)
+            if canvas:
+                width = min(width, canvas.Width)
             self._r_width = width
             rest = width - content_len
             if rest <= 1:
@@ -55,7 +56,8 @@ class button(text_control):
             else:
                 self.margin = (rest + 1) // 2
         else:
-            width = canvas.Width
+            if canvas:
+                width = canvas.Width
             self._r_width = width
             rest = width - content_len
             if rest <= 1:

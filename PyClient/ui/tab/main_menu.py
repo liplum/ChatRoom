@@ -1,7 +1,7 @@
 from core.settings import entity
 from ui.cmd_modes import common_hotkey
 from ui.control.display_boards import display_board, DCenter, DRight
-from ui.panel.stacks import align_left, stack
+from ui.panel.Stacks import align_left, Stack
 from ui.panels import *
 from ui.tab.copyright import copyright_tab
 from ui.tab.language import language_tab
@@ -25,7 +25,7 @@ class main_menu_tab(tab):
     def __init__(self, client: iclient, tablist: tablist):
         super().__init__(client, tablist)
         self._title_texts = []
-        main = stack()
+        main = Stack()
 
         main_button_width = 14
         secondary_button_width = 14
@@ -77,7 +77,7 @@ class main_menu_tab(tab):
             tablist.replace(self, tab)
 
         b_info = i18n_button("controls.info", show_info)
-        b_info.prop(panel.No_Left_Margin, True).prop(stack.Horizontal_Alignment, align_left)
+        b_info.prop(panel.No_Left_Margin, True).prop(Stack.Horizontal_Alignment, align_left)
         b_info.width = secondary_button_width
         main.add(b_info)
 
@@ -86,7 +86,7 @@ class main_menu_tab(tab):
             tablist.replace(self, tab)
 
         b_language = i18n_button("controls.language", language)
-        b_language.prop(panel.No_Left_Margin, True).prop(stack.Horizontal_Alignment, align_left)
+        b_language.prop(panel.No_Left_Margin, True).prop(Stack.Horizontal_Alignment, align_left)
         b_language.width = secondary_button_width
         main.add(b_language)
 
@@ -95,7 +95,7 @@ class main_menu_tab(tab):
             tablist.replace(self, tab)
 
         b_settings = i18n_button("controls.settings", settings)
-        b_settings.prop(panel.No_Left_Margin, True).prop(stack.Horizontal_Alignment, align_left)
+        b_settings.prop(panel.No_Left_Margin, True).prop(Stack.Horizontal_Alignment, align_left)
         b_settings.width = secondary_button_width
         main.add(b_settings)
 

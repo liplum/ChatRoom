@@ -1,6 +1,6 @@
 from core.settings import entity
 from ui.cmd_modes import common_hotkey
-from ui.panel.stacks import stack
+from ui.panel.Stacks import Stack
 from ui.panels import *
 from ui.tab.shared import *
 from ui.tabs import *
@@ -24,10 +24,10 @@ class language_tab(tab):
 
     def on_added(self):
         self.gen_language_list()
-        main = stack()
+        main = Stack()
         self.main = main
         main.on_content_changed.Add(lambda _: self.on_content_changed(self))
-        lang_tabs = stack()
+        lang_tabs = Stack()
         main.add(lang_tabs)
         main.add(self.b_quit)
         main.left_margin = 10

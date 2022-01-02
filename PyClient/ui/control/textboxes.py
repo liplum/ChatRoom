@@ -23,7 +23,7 @@ class textbox(TextArea):
         else:
             self._rWidth = self.width
 
-    def Arrange(self, canvas: Canvas):
+    def Arrange(self, canvas: Optional[Canvas]):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False

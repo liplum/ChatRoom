@@ -25,7 +25,7 @@ class TestClient(iclient):
         self._running: bool = False
         self._dirty = True
         self.root_path = None
-        self.tps = timer.byFps(24)
+        self.rps = timer.byFps(30)  # Render
         self.task_runner = tasks.task_runner(step_mode=tasks.byPercent(0.2), safe_mode=False)
         self.render_ticks = 0
         self.input_ticks = 0
@@ -89,13 +89,13 @@ class TestClient(iclient):
             self.win.start()
             self.win.gen_default_tab()
             first_rendered = False
-            tps = self.tps
-            tps.reset()
+            rps = self.rps
+            rps.reset()
             while self._running:
                 self.main_loop_ticks += 1
-                if (self.need_update and tps.is_end) or (not first_rendered):
+                if (self.need_update and rps.is_end) or (not first_rendered):
                     self.render()
-                    tps.reset()
+                    rps.reset()
                     first_rendered = True
                 self.handle_input()
                 self.task_runner.run_step()

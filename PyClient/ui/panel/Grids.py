@@ -31,11 +31,11 @@ class _unit:
 
 
 FIndex = Tuple[int, int]
-Grid = List[List[Optional[control]]]
+GridMatrix = List[List[Optional[control]]]
 Units = List[List[_unit]]
 
 
-class grid(panel):
+class Grid(panel):
     """
     Example 1:
 
@@ -82,7 +82,7 @@ class grid(panel):
         self._elemt_interval_w = auto
         self._elemt_interval_h = auto
         self.gen_unit()
-        self._grid: Grid = utils.fill_2d_array(self.rowlen, self.columnlen, None)
+        self._grid: GridMatrix = utils.fill_2d_array(self.rowlen, self.columnlen, None)
         self._r_width = 0
         self._r_height = 0
         self._r_elemt_interval_w = 0
@@ -363,4 +363,4 @@ class grid(panel):
 
 
 def gen_grid(row_count: int, columns: [column]):
-    return grid(rows=[row() for i in range(row_count)], columns=columns)
+    return Grid(rows=[row() for i in range(row_count)], columns=columns)
