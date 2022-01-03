@@ -413,6 +413,9 @@ class tablist(notifiable, Painter, painter):
             buf.addtext()
             buf.addtext(separator.getvalue())
 
+    def Arrange(self, width: Optional[int] = None, height: Optional[int] = None):
+        pass
+
     def PaintOn(self, canvas: Canvas):
         tab_count = self.tabs_count
         cur = self.cur
@@ -477,12 +480,6 @@ class tab(notifiable, painter, Painter, reloadable, metaclass=metatab):
 
     def on_input(self, char: chars.char) -> Generator:
         yield Finished
-
-    def paint_on(self, buf: buffer):
-        pass
-
-    def PaintOn(self, canvas: Canvas):
-        pass
 
     @classmethod
     def deserialize(cls, data: dict, client: iclient, tablist: tablist) -> "tab":

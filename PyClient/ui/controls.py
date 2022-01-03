@@ -2,6 +2,7 @@ from typing import Callable, Collection, Dict, Union, Any
 
 import utils
 from GLOBAL import StringIO
+from NAryTrees import Node
 from ui.Renders import *
 from ui.shared import *
 
@@ -16,9 +17,10 @@ def IfAutoOr(prop, value):
     return prop
 
 
-class control(notifiable, painter, Painter, inputable, reloadable, ABC):
+class control(notifiable, painter, Painter, Node, inputable, reloadable, ABC):
     def __init__(self):
         super().__init__()
+        self._subControls: Collection["control"] = []
         self._in_container = False
         self._focused = False
         self._width = auto
@@ -30,6 +32,7 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
         self._onLayoutPropChanged = self._onPropChanged.Sub()
         self._onNormalPropChanged = self._onPropChanged.Sub()
         self._onExitFocus = Event(control)
+        self._onLayoutChanged = Event(control)
 
         def __onLayoutChangedHandler(self, prop_name):
             self.IsLayoutChanged = True
@@ -38,6 +41,15 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
         self._onPropChanged.Add(__onLayoutChangedHandler)
         self.IsLayoutChanged = True
         self._attachProps: Dict[str, T] = {}
+
+    def GetSubNodes(self) -> Collection["control"]:
+        return self._subControls
+
+    def AddNode(self, subControl: "control"):
+        self._subControls.append(subControl)
+
+    def Measure(self):
+        pass
 
     @property
     def OnPropChanged(self) -> Event:
@@ -71,6 +83,15 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
         :return: Event(control,str)
         """
         return self._onLayoutPropChanged
+
+    @property
+    def OnLayoutChanged(self) -> Event:
+        """
+        Para 1:control object
+
+        :return: Event(control)
+        """
+        return self._onLayoutChanged
 
     @property
     def OnNormalPropChanged(self) -> Event:
@@ -115,7 +136,7 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
     @property
     def width(self) -> PROP:
         """
-        Gets the current width of this control
+        Gets the current tw of this control
         :return:the column
         """
         return self._width
@@ -123,7 +144,7 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
     @width.setter
     def width(self, value: PROP):
         """
-        Sets the width of this control.
+        Sets the tw of this control.
         How it works depends on the subclass's implementation
         :param value: PROP
         """
@@ -132,7 +153,7 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
                 self._width = auto
             else:
                 self._width = max(0, value)
-                self._onLayoutPropChanged(self, "width")
+                self._onLayoutPropChanged(self, "tw")
 
     @property
     def render_height(self) -> int:
@@ -172,17 +193,6 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
                 self._height = max(0, value)
                 self._onLayoutPropChanged(self, "height")
 
-    def paint_on(self, buf: buffer):
-        """
-        Deprecated
-        Paint all content on the buffer
-        :param buf:screen buffer
-        """
-        pass
-
-    def PaintOn(self, canvas: Canvas):
-        pass
-
     @property
     @abstractmethod
     def focusable(self) -> bool:
@@ -211,9 +221,6 @@ class control(notifiable, painter, Painter, inputable, reloadable, ABC):
 
     def cache_layout(self):
         """Deprecated"""
-        pass
-
-    def Arrange(self, canvas: Optional[Canvas]):
         pass
 
     def reload(self):

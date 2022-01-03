@@ -1,3 +1,4 @@
+import math
 from typing import List
 
 from ui.controls import *
@@ -33,31 +34,44 @@ class TextArea(text_control):
         self.on_content_changed(self)
         self.IsLayoutChanged = True
 
-    def Arrange(self, canvas: Optional[Canvas]):
+    def Measure(self):
+        num = self.InputLength + len(self.CursorIcon)
+        dwidth = self.width
+        dheight = self.height
+        if dwidth == auto:
+            w = num
+        else:
+            w = dwidth
+        if dheight == auto:
+            h = math.ceil(num / w)
+        else:
+            h = dheight
+        self._rWidth = w
+        self._rHeight = h
+
+    def Arrange(self, width: int, height: int):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False
         num = self.InputLength + len(self.CursorIcon)
         dwidth = self.width
         dheight = self.height
+        oldw = self._rWidth
+        oldh = self._rHeight
         if dwidth == auto:
-            w = min(num, canvas.Width)
-            if dheight == auto:
-                h = min(int(num / w + 1), canvas.Height)
-            else:
-                h = min(dheight, canvas.Height)
+            w = min(num, width)
         else:
-            w = min(dwidth, canvas.Width)
-            if dheight == auto:
-                h = min(int(num / w + 1), canvas.Height)
-            else:
-                h = min(dheight, canvas.Height)
+            w = min(dwidth, width)
+        if dheight == auto:
+            h = min(math.ceil(num / w), height)
+        else:
+            h = min(dheight, height)
         self._rWidth = w
         self._rHeight = h
+        if oldw != w or oldh != h:
+            self.OnLayoutChanged(self)
 
     def PaintOn(self, canvas: Canvas):
-        if self.IsLayoutChanged:
-            self.Arrange(canvas)
         bk = BK.White if self.is_focused else None
         fg = FG.Black if self.is_focused else None
         drawn = self.InputString

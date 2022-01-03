@@ -25,7 +25,7 @@ class Stack(panel):
     def PaintOn(self, canvas: Canvas):
         super().PaintOn(canvas)
 
-    def Arrange(self, canvas: Optional[Canvas]):
+    def Arrange(self, width: Optional[int] = None, height: Optional[int] = None):
         for c in self.elements:
             c.cache_layout()
 

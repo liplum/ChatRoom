@@ -12,6 +12,11 @@ T = TypeVar('T')
 
 class painter:
     def paint_on(self, buf: buffer):
+        """
+        Deprecated
+        Paint all content on the buffer
+        :param buf:screen buffer
+        """
         pass
 
 

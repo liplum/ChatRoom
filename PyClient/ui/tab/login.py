@@ -216,10 +216,10 @@ class login_tab2(tab):
             i18n_label("tabs.login_tab.labels.password"),
             3, 0)
 
-        self.l_server_ip.width = 15
-        self.l_server_port.width = 15
-        self.l_account.width = 15
-        self.l_password.width = 15
+        self.l_server_ip.tw = 15
+        self.l_server_port.tw = 15
+        self.l_account.tw = 15
+        self.l_password.tw = 15
 
         self.t_server_ip: textbox = self.set(xtextbox(), 0, 1)
         self.t_server_port: textbox = self.set(xtextbox(), 1, 1)
@@ -227,21 +227,21 @@ class login_tab2(tab):
         self.t_password: textbox = self.set(xtextbox(), 3, 1)
 
         self.t_server_ip.space_placeholder = "_"
-        self.t_server_ip.width = 16
+        self.t_server_ip.tw = 16
         self.t_server_ip.max_inputs_count = 15
 
         self.t_server_port.input_list = "25000"
         self.t_server_port.space_placeholder = "_"
         self.t_server_port.end()
-        self.t_server_port.width = 8
+        self.t_server_port.tw = 8
         self.t_server_port.max_inputs_count = 7
 
         self.t_account.space_placeholder = "_"
-        self.t_account.width = 16
+        self.t_account.tw = 16
         self.t_account.max_inputs_count = 15
 
         self.t_password.space_placeholder = "_"
-        self.t_password.width = 16
+        self.t_password.tw = 16
         self.t_password.max_inputs_count = 15
 
         self._focused: Optional[CTRL] = None

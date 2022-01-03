@@ -96,8 +96,8 @@ class Canvas:
         raise NotImplementedError()
 
 
-def ColoredText(canvas: Canvas, text: str, x: int, y: int, bk, fg):
-    pass
+def WidthHeight(canvas: Canvas) -> Tuple[int, int]:
+    return canvas.Width, canvas.Height
 
 
 class IRender(ABC):
@@ -124,6 +124,9 @@ class IRender(ABC):
 
 class Painter:
     def PaintOn(self, canvas: Canvas):
+        pass
+
+    def Arrange(self, width: int, height: int):
         pass
 
 

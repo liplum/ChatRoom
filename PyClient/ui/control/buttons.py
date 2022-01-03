@@ -39,49 +39,34 @@ class button(text_control):
             tintedtxtIO(s, self.distext, fgcolor=fg, bkcolor=bk)
             buf.addtext(s.getvalue(), end='')
 
-    def Arrange(self, canvas: Optional[Canvas]):
+    def Arrange(self, width: Optional[int] = None, height: Optional[int] = None):
         if not self.IsLayoutChanged:
             return
-        self.IsLayoutChanged = False
+        if limited:
+            self.IsLayoutChanged = False
         content = self.content()
         content_len = len(content)
-        width = self.width
-        if width != auto:
-            if canvas:
-                width = min(width, canvas.Width)
-            self._r_width = width
-            rest = width - content_len
+        tw = self.width
+        if tw != auto:
+            if limited:
+                tw = min(tw, width)
+            self._r_width = tw
+            rest = tw - content_len
             if rest <= 1:
                 self.margin = 0
             else:
                 self.margin = (rest + 1) // 2
         else:
-            if canvas:
-                width = canvas.Width
-            self._r_width = width
-            rest = width - content_len
+            if limited:
+                tw = width
+            self._r_width = tw
+            rest = tw - content_len
             if rest <= 1:
                 self.margin = 0
             else:
                 self.margin = (rest + 1) // 2
-
-    def PreArrange(self):
-        content = self.content()
-        content_len = len(content)
-        width = self.width
-        if width != auto:
-            self._r_width = width
-            rest = width - content_len
-            if rest <= 1:
-                self.margin = 0
-            else:
-                self.margin = (rest + 1) // 2
-        else:
-            self._r_width = content_len + 2 * self.margin
 
     def PaintOn(self, canvas: Canvas):
-        if self.IsLayoutChanged:
-            self.Arrange(canvas)
         g = StrWriter(canvas, 0, 0, self.render_width, self.render_height)
         bk = BK.White if self.is_focused else None
         fg = FG.Black if self.is_focused else None
@@ -159,7 +144,7 @@ class button(text_control):
                 self._width = auto
             else:
                 self._width = max(0, value)
-                self.on_prop_changed(self, "width")
+                self.on_prop_changed(self, "tw")
 
     @property
     def height(self) -> int:

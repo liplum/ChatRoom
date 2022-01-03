@@ -44,8 +44,6 @@ class label(control):
         buf.addtext(content, end="")
 
     def PaintOn(self, canvas: Canvas):
-        if self.IsLayoutChanged:
-            self.Arrange(canvas)
         content = self.content()
         rw = self.render_width
         if rw < len(content):
@@ -61,7 +59,7 @@ class label(control):
                 self._width = auto
             else:
                 self._width = max(0, value)
-            self.on_prop_changed(self, "width")
+            self.on_prop_changed(self, "tw")
 
     def __repr__(self) -> str:
         return f"<label {self.content()}>"
@@ -75,15 +73,16 @@ class label(control):
         else:
             self._r_width = self.width
 
-    def Arrange(self, canvas: Canvas):
+    def Arrange(self, width: Optional[int] = None, height: Optional[int] = None):
         if not self.IsLayoutChanged:
             return
-        self.IsLayoutChanged = False
-        if canvas:
+        if limited:
+            self.IsLayoutChanged = False
+        if limited:
             if self.width == auto:
-                self._r_width = min(len(self.content()), canvas.Width)
+                self._r_width = min(len(self.content()), width)
             else:
-                self._r_width = min(self.width, canvas.Width)
+                self._r_width = min(self.width, width)
         else:
             if self.width == auto:
                 self._r_width = len(self.content())

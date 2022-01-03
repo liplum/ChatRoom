@@ -51,7 +51,9 @@ def win_test():
     # test_gen_2d_array()
     # test_i18n_folder()
     # test_version()
-    test_bind_property()
+    # test_bind_property()
+    # test_yield_recursion()
+    test_n_ary_tree()
 
 
 def linux_test():
@@ -75,6 +77,73 @@ def test_final_attr():
     class Test:
         def __init__(self):
             self.a: Final[int] = 10
+
+
+def test_n_ary_tree():
+    from NAryTrees import Node, PostIt, PreIt
+
+    class IntNode(Node):
+
+        def __init__(self, value, parent=None):
+            super().__init__(parent)
+            self.Value = value
+            self.SubNodes = []
+
+        def GetSubNodes(self) -> Collection["Node"]:
+            return self.SubNodes
+
+        def __repr__(self) -> str:
+            return f"Node {self.Value}"
+
+        def AddNode(self, subNode: "Node"):
+            self.SubNodes.append(subNode)
+
+    def Print(it, func: Callable[[object], object] = str):
+        for i in it:
+            print(func(i), end=",")
+        print()
+
+    """
+             1
+         /   |    \ 
+        2    3     4
+     /  |  \     /   \    
+    5   6   7   8     9
+
+    Pre:[1,2,5,6,7,3,4,8,9]
+    Post:[5,6,7,2,3,8,9,4,1]
+    """
+
+    def SubIntFrom(parent: Node, value: int) -> IntNode:
+        sub = IntNode(value, parent)
+        parent.AddNode(sub)
+        return sub
+
+    N1_1 = IntNode(1)
+
+    N2_1 = SubIntFrom(N1_1, 2)
+    N2_2 = SubIntFrom(N1_1, 3)
+    N2_3 = SubIntFrom(N1_1, 4)
+
+    N3_1 = SubIntFrom(N2_1, 5)
+    N3_2 = SubIntFrom(N2_1, 6)
+    N3_3 = SubIntFrom(N2_1, 7)
+    N3_4 = SubIntFrom(N2_3, 8)
+    N3_5 = SubIntFrom(N2_3, 9)
+    Print(PreIt(N1_1), lambda n: n.Value)
+    Print(PostIt(N1_1), lambda n: n.Value)
+
+
+def test_yield_recursion():
+    def decrease(i):
+        if i == 0:
+            yield 0
+        else:
+            yield i
+            yield from decrease(i - 1)
+
+    for n in decrease(10):
+        print(n)
 
 
 def test_bind_property():
@@ -564,7 +633,7 @@ def test_textbox():
         tb.Delete()
         print(tb.distext)
 
-    tb.input_list = "This is a very very long text to show how width limit works."
+    tb.input_list = "This is a very very long text to show how tw limit works."
     tb.width = 5
     tb.on_focused()
 

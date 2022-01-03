@@ -31,14 +31,21 @@ class checkbox(control):
             fg = CmdFgColor.Black if self.is_focused else None
             buf.addtext(tintedtxt(s.getvalue(), fgcolor=fg, bkcolor=bk), end="")
 
-    def Arrange(self, canvas: Optional[Canvas]):
+    def Arrange(self, width: Optional[int] = None, height: Optional[int] = None):
         if not self.IsLayoutChanged:
             return
-        self.IsLayoutChanged = False
-        if self.width == auto:
-            self._r_width = min(len(self.cur_render_icon), canvas.Width)
+        if limited:
+            self.IsLayoutChanged = False
+        if limited:
+            if self.width == auto:
+                self._r_width = min(len(self.cur_render_icon), width)
+            else:
+                self._r_width = min(self.width, width)
         else:
-            self._r_width = min(self.width, canvas.Width)
+            if self.width == auto:
+                self._r_width = len(self.cur_render_icon)
+            else:
+                self._r_width = self.width
 
     def PreArrange(self):
         if self.width == auto:
@@ -47,8 +54,6 @@ class checkbox(control):
             self._r_width = self.width
 
     def PaintOn(self, canvas: Canvas):
-        if self.IsLayoutChanged:
-            self.Arrange(canvas)
         bk = BK.White if self.is_focused else None
         fg = FG.Black if self.is_focused else None
         buf = StrWriter(canvas, 0, 0, self.render_width, self.render_height)

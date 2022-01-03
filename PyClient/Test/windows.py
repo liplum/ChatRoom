@@ -113,6 +113,7 @@ class TestWindow(iwindow):
         v.Y = 0
         v.Width = canvas.Width
         v.Height = 2
+        self.tablist.Arrange(canvas.Width, 2)
         self.tablist.PaintOn(v)
         cur_painter = self.cur_painter
         if cur_painter:
@@ -120,6 +121,7 @@ class TestWindow(iwindow):
             v.Y = 2
             v.Width = canvas.Width
             v.Height = canvas.Height - 2
+            cur_painter.Arrange(canvas.Width, canvas.Height - 2)
             cur_painter.PaintOn(v)
         self.render.Render(canvas)
 

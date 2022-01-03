@@ -40,10 +40,10 @@ class Grid(panel):
     Example 1:
 
     3*2:
-    interval width = 2
+    interval tw = 2
     interval height = 1
-    column[0] width = 4
-    column[1] width = 13
+    column[0] tw = 4
+    column[1] tw = 13
 
     Date__  1/1_______________
 
@@ -53,11 +53,11 @@ class Grid(panel):
     Example 2:
 
     6*3:
-    interval width = 1
+    interval tw = 1
     interval height = 0
-    column[0] width = 4
-    column[1] width = 13
-    column[2] width = 13
+    column[0] tw = 4
+    column[1] tw = 13
+    column[2] tw = 13
 
     Day_ Event________ With whom____
     1___ Nothing______ Only me______

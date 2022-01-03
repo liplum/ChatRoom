@@ -11,9 +11,6 @@ class textbox(TextArea):
         super().__init__(cursor_icon, init)
         self._space_placeholder = " "
 
-    def _onAppendOrDeleteOrReplace(self,_, _1, _2):
-        self.on_content_changed(self)
-
     def cache_layout(self):
         if not self.IsLayoutChanged:
             return
@@ -23,7 +20,7 @@ class textbox(TextArea):
         else:
             self._rWidth = self.width
 
-    def Arrange(self, canvas: Optional[Canvas]):
+    def Arrange(self, width: Optional[int] = None, height: Optional[int] = None):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False
@@ -48,8 +45,6 @@ class textbox(TextArea):
         buf.addtext(self._render_chars(drawn), end='', fgcolor=fg, bkcolor=bk)
 
     def PaintOn(self, canvas: Canvas):
-        if self.IsLayoutChanged:
-            self.Arrange(canvas)
         bk = BK.White if self.is_focused else None
         fg = FG.Black if self.is_focused else None
         drawn = self.limited_distext
