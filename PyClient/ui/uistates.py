@@ -1,6 +1,6 @@
 from states import *
 from ui.control.textboxes import textbox
-from ui.core import iclient
+from ui.Core import IClient
 from ui.shared import *
 from ui.tabs import tablist
 
@@ -19,7 +19,7 @@ class ui_smachine(smachine, painter, inputable):
 
 class ui_state(state, painter, inputable):
     textbox: textbox
-    client: iclient
+    client: IClient
     tablist: tablist
     sm: ui_smachine
 

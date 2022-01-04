@@ -1,6 +1,18 @@
-from typing import Collection, Iterable
+from typing import Collection, Iterable, Callable, TypeVar
 
 EmptyTuple = ()
+
+"""
+         1
+     /   |    \ 
+    2    3     4
+ /  |  \     /   \    
+5   6   7   8     9
+
+Pre:[1,2,5,6,7,3,4,8,9]
+Post:[5,6,7,2,3,8,9,4,1]
+Level:[1,2,3,4,5,6,7,8,9]
+"""
 
 
 class Node:
@@ -36,3 +48,102 @@ def PostIt(cur: Node) -> Iterable[Node]:
     for node in cur.GetSubNodes():
         yield from PostIt(node)
     yield cur
+
+
+def LevelIt(cur: Node) -> Iterable[Node]:
+    yield cur
+
+    def func(cur: Node):
+        subNodes = cur.GetSubNodes()
+        for sub in subNodes:
+            yield sub
+        for sub in subNodes:
+            yield from func(sub)
+
+    yield from func(cur)
+
+
+def LeafIt(cur: Node) -> Iterable[Node]:
+    for n in PostIt(cur):
+        if n.IsLeaf():
+            yield n
+
+
+def PrintTree(cur: Node, toStr: Callable[[Node], str] = str) -> Collection[str]:
+    res = []
+
+    def func(n: Node, level=0):
+        res.append("  " * level + toStr(n))
+        for child in n.GetSubNodes():
+            func(child, level + 1)
+        return res
+
+    return func(cur)
+
+
+NodeT = TypeVar("NodeT")
+
+
+def PreItGen(getSubNodes: Callable[[NodeT], Collection[NodeT]]) -> Callable[[NodeT], Iterable[NodeT]]:
+    def PreIt(cur: NodeT) -> Iterable[NodeT]:
+        yield cur
+        for node in getSubNodes(cur):
+            yield from PreIt(node)
+
+    return PreIt
+
+
+def PostItGen(getSubNodes: Callable[[NodeT], Collection[NodeT]]) -> Callable[[NodeT], Iterable[NodeT]]:
+    def PostIt(cur: NodeT) -> Iterable[NodeT]:
+        for node in getSubNodes(cur):
+            yield from PostIt(node)
+        yield cur
+
+    return PostIt
+
+
+def LevelItGen(getSubNodes: Callable[[NodeT], Collection[NodeT]]) -> Callable[[NodeT], Iterable[NodeT]]:
+    def LevelIt(cur: NodeT) -> Iterable[NodeT]:
+        yield cur
+
+        def func(cur: NodeT):
+            subNodes = getSubNodes(cur)
+            for sub in subNodes:
+                yield sub
+            for sub in subNodes:
+                yield from func(sub)
+
+        yield from func(cur)
+
+    return LevelIt
+
+
+def LeafItGen(getSubNodes: Callable[[NodeT], Collection[NodeT]],
+              isLeaf: Callable[[NodeT], bool]) -> Callable[[NodeT], Iterable[NodeT]]:
+    def PostIt(cur: NodeT) -> Iterable[NodeT]:
+        for node in getSubNodes(cur):
+            yield from PostIt(node)
+        yield cur
+
+    def Func():
+        for n in PostIt(cur):
+            if isLeaf(n):
+                yield n
+
+    return Func
+
+
+def PrintTreeGen(getSubNodes: Callable[[NodeT], Collection[NodeT]],
+                 toStr: Callable[[Node], str] = str) -> Callable[[NodeT], Collection[str]]:
+    def PrintTree(cur: Node) -> Collection[str]:
+        res = []
+
+        def func(n: Node, level=0):
+            res.append("  " * level + toStr(n))
+            for child in getSubNodes(n):
+                func(child, level + 1)
+            return res
+
+        return func(cur)
+
+    return PrintTree

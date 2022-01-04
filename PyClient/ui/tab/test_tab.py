@@ -59,7 +59,7 @@ class test_tab(tab):
         if GLOBAL.DEBUG:
             stak = self.stack
             c = stak.cur_focused
-            info = f"focused index= {stak.cur_focused_index}\nfocused control= {c}\n"
+            info = f"focused index= {stak.cur_focused_index}\nfocused Control= {c}\n"
             buf.addtext(info)
             if c:
                 pass

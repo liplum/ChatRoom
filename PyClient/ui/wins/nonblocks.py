@@ -4,7 +4,7 @@ from threading import Thread, RLock
 from typing import Optional, List
 
 import chars
-from ui.core import iclient
+from ui.Core import IClient
 from ui.inputs import inbinput
 from ui.outputs import ilogger
 
@@ -26,7 +26,7 @@ class nbinput(inbinput):
             self._lock = RLock()
 
     def init(self, container):
-        self.client: iclient = container.resolve(iclient)
+        self.client: IClient = container.resolve(IClient)
         self.logger: ilogger = container.resolve(ilogger)
 
     def _listen_input(self):

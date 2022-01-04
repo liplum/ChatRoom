@@ -3,7 +3,7 @@ import ui.tab.chat as chat
 from core.rooms import iroom_manager
 from core.shared import *
 from net.networks import msg, Context
-from ui.core import *
+from ui.Core import *
 from ui.outputs import CmdFgColor, tintedtxt
 from ui.tab.chat import fill_or_add_chat_tab
 from ui.tab.popups import waiting_popup, base_popup
@@ -63,7 +63,7 @@ class authentication_result(msg):
     def handle(self: "authentication_result", context: Context):
         client, channel, token, network = context
 
-        win: iwindow = client.win
+        win: iwindow = client.App
 
         def find_waiting_popup(p: base_popup):
             if isinstance(p, waiting_popup):
@@ -141,7 +141,7 @@ class register_result(msg):
     @staticmethod
     def handle(self: "register_result", context: Context):
         client, channel, token, network = context
-        win: iwindow = client.win
+        win: iwindow = client.App
 
         def find_waiting_popup(p: base_popup):
             if isinstance(p, waiting_popup):
@@ -330,7 +330,7 @@ class joined_rooms_info(msg):
                 rooms.append(chat_room(sr_info(token, room_id), name))
             except:
                 pass
-        win: iwindow = client.win
+        win: iwindow = client.App
         tablist: tablist = win.tablist
         for room in rooms:
             room_id = room.info.room_id

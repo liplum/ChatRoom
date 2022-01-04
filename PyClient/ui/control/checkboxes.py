@@ -1,5 +1,5 @@
 import keys
-from ui.controls import *
+from ui.Controls import *
 from ui.outputs import CmdBkColor, tintedtxt, CmdFgColor
 from ui.themes import check_theme
 
@@ -12,7 +12,7 @@ ballot_box_x = check_theme("[🗹]", "[❎]", "[ ]")
 bold_check = check_theme("[✅]", "[❌]", "[ ]")
 
 
-class checkbox(control):
+class checkbox(Control):
 
     def __init__(self, value: Optional[bool] = None, theme: check_theme = yes_or_no):
         super().__init__()

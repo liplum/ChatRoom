@@ -17,7 +17,7 @@ from core.operations import *
 from core.rooms import iroom_manager, room_manager
 from core.settings import entity as settings
 from timers import timer
-from ui.core import *
+from ui.Core import *
 from ui.k import cmdkey
 from ui.windows import window
 from utils import get
@@ -25,7 +25,7 @@ from utils import get
 system_type = platform.system()
 
 
-class client(iclient):
+class Client(IClient):
     def __init__(self):
         super().__init__()
         self._container: ioc.container = ioc.container()
@@ -50,7 +50,7 @@ class client(iclient):
 
     def init(self) -> None:
         ct = self.container
-        ct.register_instance(iclient, self)
+        ct.register_instance(IClient, self)
         ct.register_singleton(output.ilogger, output.cmd_logger)
         ct.register_singleton(output.idisplay, output.full_cmd_display)
         ct.register_instance(inetwork, net.network(self))
@@ -160,9 +160,9 @@ class client(iclient):
             inpt.initialize()
             self.auto_connection()
             # self.winsize_monitor.start()
-            self.win.start()
+            self.App.start()
             self.auto_login()
-            self.win.gen_default_tab()
+            self.App.gen_default_tab()
             first_rendered = False
             tps = self.tps
             tps.reset()
@@ -179,7 +179,7 @@ class client(iclient):
             self.stop()
         try:
             self.msg_manager.save_all()
-            self.win.stop()
+            self.App.stop()
         except Exception as e:
             self.logger.error(f"[Client]{e}\n{traceback.format_exc()}", Async=False)
         self.logger.close()
@@ -199,34 +199,34 @@ class client(iclient):
     def __handle_nonblocking_input(self, inpt):
         inpt.get_input()
         ch = inpt.consume_char()
-        if ch and self.win.accept_input:
+        if ch and self.App.accept_input:
             self.input_ticks += 1
-            self.win.on_input(ch)
+            self.App.on_input(ch)
         self.run_coroutine()
 
     def __handle_input_blocked(self, inpt):
         inpt.get_input()
         while True:
             ch = inpt.consume_char()
-            if ch and self.win.accept_input:
+            if ch and self.App.accept_input:
                 self.input_ticks += 1
-                self.win.on_input(ch)
+                self.App.on_input(ch)
                 self.run_coroutine()
             if inpt.is_end:
                 break
 
     def run_coroutine(self):
-        self.win.run_coroutine()
+        self.App.run_coroutine()
 
     def render(self):
         self.render_ticks += 1
         self.__clear_dirty()
-        self.win.update_screen()
+        self.App.update_screen()
         if GLOBAL.DEBUG:
             print(f"MTick={self.main_loop_ticks},RTick={self.render_ticks},ITick={self.input_ticks}")
 
     @property
-    def win(self) -> iwindow:
+    def App(self) -> IApp:
         return self._win
 
     @property

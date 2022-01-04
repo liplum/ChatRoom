@@ -1,8 +1,8 @@
-from ui.controls import *
+from ui.Controls import *
 from ui.outputs import buffer
 
 
-class label(control):
+class label(Control):
     def __init__(self, content: ContentGetter):
         super().__init__()
         if isinstance(content, str):

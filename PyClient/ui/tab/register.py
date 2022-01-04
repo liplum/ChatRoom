@@ -16,7 +16,7 @@ RR = register_result
 
 
 class register_tab(tab):
-    def __init__(self, client: iclient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: tablist):
         super().__init__(client, tablist)
         self.last_tab: Optional[tab] = None
         self.network: "inetwork" = self.client.network

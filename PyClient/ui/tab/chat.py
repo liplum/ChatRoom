@@ -191,7 +191,7 @@ class history_viewer(notifiable, painter):
 
 
 class chat_tab(tab):
-    def __init__(self, client: iclient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: tablist):
         super().__init__(client, tablist)
         self.textbox = xtextbox()
         configs = entity()
@@ -512,7 +512,7 @@ def find_best_incomplete(tablist: "tablist", server: server_token,
     return None
 
 
-def fill_or_add_chat_tab(win: iwindow, tab: Optional[chat_tab], token: server_token, account: userid,
+def fill_or_add_chat_tab(win: IApp, tab: Optional[chat_tab], token: server_token, account: userid,
                          room_id: Optional[roomid], vcode: int) -> chat_tab:
     if tab:
         tab.user_info = uentity(token, account, vcode)

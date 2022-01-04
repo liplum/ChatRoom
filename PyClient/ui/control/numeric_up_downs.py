@@ -1,5 +1,5 @@
 import keys
-from ui.controls import *
+from ui.Controls import *
 from ui.outputs import tintedtxt, CmdBkColor, CmdFgColor
 from ui.themes import plus_minus_theme
 
@@ -11,7 +11,7 @@ def sign(number: int):
     return 1 if number >= 0 else -1
 
 
-class numeric_up_down(control):
+class numeric_up_down(Control):
 
     def __init__(self, minv: Optional[int] = None, maxv: Optional[int] = None, pg_updown_step: Optional[int] = 10,
                  theme: plus_minus_theme = operator):

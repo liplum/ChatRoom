@@ -1,21 +1,21 @@
-from ui.controls import *
+from ui.Controls import *
 from ui.themes import theme, rounded_rectangle
 
 NoneType = type(None)
 
 
-class DisplayBoard(control):
+class DisplayBoard(Control):
     def __init__(self, theme: theme = rounded_rectangle):
         super().__init__()
         self.Theme = theme
-        self._onInnerChanged = Event(DisplayBoard, (control, NoneType), (control, NoneType))
+        self._onInnerChanged = Event(DisplayBoard, (Control, NoneType), (Control, NoneType))
         self.OnInnerChanged.Add(lambda _, _1, _2: self.on_content_changed)
         self._rWidth = 0
         self._rHeight = 0
-        self._inner: Optional[control] = None
+        self._inner: Optional[Control] = None
 
     @property
-    def Inner(self) -> Optional[control]:
+    def Inner(self) -> Optional[Control]:
         return self._inner
 
     def _onInnerLayoutChangedHandler(self, inner):
@@ -26,7 +26,7 @@ class DisplayBoard(control):
         self.OnContentChanged(self)
 
     @Inner.setter
-    def Inner(self, value: Optional[control]):
+    def Inner(self, value: Optional[Control]):
         old = self._inner
         if old != value:
             if old:
@@ -137,11 +137,11 @@ class DisplayBoard(control):
         """
         Para 1:DisplayBoard object
 
-        Para 2:old inner control
+        Para 2:old inner Control
 
-        Para 3:new inner control
+        Para 3:new inner Control
 
-        :return: Event(panel,Optional[control],Optional[control])
+        :return: Event(panel,Optional[Control],Optional[Control])
         """
         return self._onInnerChanged
 

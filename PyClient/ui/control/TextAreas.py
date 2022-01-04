@@ -1,7 +1,7 @@
 import math
 from typing import List
 
-from ui.controls import *
+from ui.Controls import *
 
 
 class TextArea(text_control):

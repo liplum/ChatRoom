@@ -11,7 +11,7 @@ from ui.tab.shared import *
 from ui.tabs import *
 
 OnSave = Callable[[], NoReturn]
-Ctrl_OnSave = Tuple[control, OnSave]
+Ctrl_OnSave = Tuple[Control, OnSave]
 OnSaveGen = Callable[[config, settings], Ctrl_OnSave]
 
 _style2control: Dict[Style, OnSaveGen] = {}
@@ -33,7 +33,7 @@ def config_control(tab: "settings_tab", config: config, settings: settings) -> C
 
 class settings_tab(tab):
 
-    def __init__(self, client: iclient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: tablist):
         super().__init__(client, tablist)
         self.last_tab = None
         self.ctrl2on_save = {}

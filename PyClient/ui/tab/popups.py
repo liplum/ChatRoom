@@ -10,9 +10,9 @@ _main_left_margin = 10
 
 class text_popup(base_popup):
 
-    def __init__(self, client: iclient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: tablist):
         super().__init__(client, tablist)
-        self.main: Optional[control] = None
+        self.main: Optional[Control] = None
         self.info: Optional[textblock] = None
         self._words: Words = []
 
@@ -39,7 +39,7 @@ class text_popup(base_popup):
 
 class one_button_popup(text_popup):
 
-    def __init__(self, client: iclient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: tablist):
         super().__init__(client, tablist)
         self._button_return_value: Optional[Any] = None
         self._button_i18n_key = ""
@@ -85,13 +85,13 @@ class one_button_popup(text_popup):
         self._button_i18n_key = value
 
 
-OneButtonPopupGen = Callable[[iclient, tablist], one_button_popup]
+OneButtonPopupGen = Callable[[IClient, tablist], one_button_popup]
 OneButtonPopupMetagen = Callable[[Words, TitleGetter], OneButtonPopupGen]
 
 
 def one_button_popup_metagen(i18n_key: str, return_value: Any):
     def one_button_popup_gen(words: Words, title: TitleGetter) -> OneButtonPopupGen:
-        def gen(client: iclient, tablist: tablist) -> one_button_popup:
+        def gen(client: IClient, tablist: tablist) -> one_button_popup:
             p = one_button_popup(client, tablist)
             p.words = words
             p.title_getter = title
@@ -110,7 +110,7 @@ cancel_popup_gen = one_button_popup_metagen("controls.cancel", False)
 
 class ok_cancel_popup(text_popup):
 
-    def __init__(self, client: iclient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: tablist):
         super().__init__(client, tablist)
         button_stack = Stack()
         button_stack.orientation = horizontal
@@ -155,7 +155,7 @@ OnStateChanged = Optional[Callable[[Any], NoReturn]]
 
 
 class waiting_popup(text_popup):
-    def __init__(self, client: iclient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: tablist):
         super().__init__(client, tablist)
         self._tag: Optional[Any] = None
         self._on_state_changed: OnStateChanged = None

@@ -1,7 +1,7 @@
 from itertools import islice
 
 from ui.control.TextAreas import TextArea
-from ui.controls import *
+from ui.Controls import *
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
 
 

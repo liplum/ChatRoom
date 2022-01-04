@@ -6,7 +6,7 @@ import GLOBAL
 import utils
 from GLOBAL import StringIO
 from ui.Renders import *
-from ui.core import *
+from ui.Core import *
 from ui.coroutines import Finished
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
 from utils import is_in
@@ -455,10 +455,10 @@ class metatab(ABCMeta):
 
 
 class tab(notifiable, painter, Painter, reloadable, metaclass=metatab):
-    def __init__(self, client: iclient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: tablist):
         super().__init__()
         self.tablist: tablist = tablist
-        self.client: iclient = client
+        self.client: IClient = client
         self._is_focused = False
         self._tab_priority = 1
         self._group_id = None
@@ -482,7 +482,7 @@ class tab(notifiable, painter, Painter, reloadable, metaclass=metatab):
         yield Finished
 
     @classmethod
-    def deserialize(cls, data: dict, client: iclient, tablist: tablist) -> "tab":
+    def deserialize(cls, data: dict, client: IClient, tablist: tablist) -> "tab":
         pass
 
     @classmethod
@@ -527,8 +527,8 @@ class tab(notifiable, painter, Painter, reloadable, metaclass=metatab):
         return popup_type(self.client, self.tablist, *args, **kwargs)
 
     @property
-    def win(self) -> iwindow:
-        return self.client.win
+    def win(self) -> IApp:
+        return self.client.App
 
     @property
     def group_id(self) -> Any:
@@ -580,7 +580,7 @@ TitleGetter = Optional[Callable[[], str]]
 
 
 class base_popup(tab, ABC):
-    def __init__(self, client: iclient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: tablist):
         super().__init__(client, tablist)
         self._return_value: Optional[Any] = None
         self._returned = False

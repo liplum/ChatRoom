@@ -1,7 +1,7 @@
 from typing import NoReturn
 
 import keys
-from ui.controls import *
+from ui.Controls import *
 from ui.outputs import buffer, CmdBkColor, CmdFgColor, tintedtxtIO
 from ui.shared import IsConsumed, Consumed, NotConsumed
 

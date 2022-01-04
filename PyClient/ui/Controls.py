@@ -1,142 +1,76 @@
-from typing import Callable, Collection, Dict, Union, Any
+from typing import Dict, Union, Any
 
 import utils
 from GLOBAL import StringIO
-from NAryTrees import Node
 from ui.Renders import *
 from ui.shared import *
 
-auto = "auto"
-PROP = TypeVar('PROP', str, int)
 unlimited = "unlimited"
+from ui.Elements import *
 
 
-def IfAutoOr(prop, value):
-    if prop == auto:
-        return value
-    return prop
-
-
-class control(notifiable, painter, Painter, Node, inputable, reloadable, ABC):
+class Control(VisualElement, notifiable, painter, LogicalElement, FocusElement, inputable, reloadable, ABC):
     def __init__(self):
         super().__init__()
-        self._subControls: Collection["control"] = []
         self._in_container = False
         self._focused = False
         self._width = auto
         self._height = auto
         """Deprecated"""
         self._left_margin = 0
-        self._onPropChanged = Event(control, str)
-        self._onAttachPropChanged = Event(control, str)
-        self._onLayoutPropChanged = self._onPropChanged.Sub()
-        self._onNormalPropChanged = self._onPropChanged.Sub()
-        self._onExitFocus = Event(control)
-        self._onLayoutChanged = Event(control)
+        self._onExitFocus = Event(Control)
+        self._onLayoutChanged = Event(Control)
 
         def __onLayoutChangedHandler(self, prop_name):
             self.IsLayoutChanged = True
             self.on_content_changed(self)
 
-        self._onPropChanged.Add(__onLayoutChangedHandler)
+        self.OnPropChanged.Add(__onLayoutChangedHandler)
         self.IsLayoutChanged = True
         self._attachProps: Dict[str, T] = {}
-
-    def GetSubNodes(self) -> Collection["control"]:
-        return self._subControls
-
-    def AddNode(self, subControl: "control"):
-        self._subControls.append(subControl)
-
-    def Measure(self):
-        pass
-
-    @property
-    def OnPropChanged(self) -> Event:
-        """
-        Para 1:control object
-
-        Para 2:property name
-
-        :return: Event(control,str)
-        """
-        return self._onPropChanged
-
-    @property
-    def OnAttachPropChanged(self) -> Event:
-        """
-        Para 1:control object
-
-        Para 2:property name
-
-        :return: Event(control,str)
-        """
-        return self._onAttachPropChanged
-
-    @property
-    def OnLayoutPropChanged(self) -> Event:
-        """
-        Para 1:control object
-
-        Para 2:property name
-
-        :return: Event(control,str)
-        """
-        return self._onLayoutPropChanged
 
     @property
     def OnLayoutChanged(self) -> Event:
         """
-        Para 1:control object
+        Para 1:Control object
 
-        :return: Event(control)
+        :return: Event(Control)
         """
         return self._onLayoutChanged
 
     @property
-    def OnNormalPropChanged(self) -> Event:
-        """
-        Para 1:control object
-
-        Para 2:property name
-
-        :return: Event(control,str)
-        """
-        return self._onNormalPropChanged
-
-    @property
     def on_prop_changed(self) -> Event:
         """
-        Para 1:control object
+        Para 1:Control object
 
         Para 2:property name
 
-        :return: Event(control,str)
+        :return: Event(Control,str)
         """
         return self._onPropChanged
 
     @property
     def on_exit_focus(self) -> Event:
         """
-        Para 1:control object
+        Para 1:Control object
 
-        :return: Event(control)
+        :return: Event(Control)
         """
         return self._onExitFocus
 
     @property
     def OnExitFocus(self) -> Event:
         """
-        Para 1:control object
+        Para 1:Control object
 
-        :return: Event(control)
+        :return: Event(Control)
         """
         return self._onExitFocus
 
     @property
     def width(self) -> PROP:
         """
-        Gets the current tw of this control
+        Gets the current tw of this Control
         :return:the column
         """
         return self._width
@@ -144,7 +78,7 @@ class control(notifiable, painter, Painter, Node, inputable, reloadable, ABC):
     @width.setter
     def width(self, value: PROP):
         """
-        Sets the tw of this control.
+        Sets the tw of this Control.
         How it works depends on the subclass's implementation
         :param value: PROP
         """
@@ -174,7 +108,7 @@ class control(notifiable, painter, Painter, Node, inputable, reloadable, ABC):
     @property
     def height(self) -> PROP:
         """
-        Gets the current height of this control
+        Gets the current height of this Control
         :return:the row
         """
         return self._height
@@ -182,7 +116,7 @@ class control(notifiable, painter, Painter, Node, inputable, reloadable, ABC):
     @height.setter
     def height(self, value: PROP):
         """
-        Sets the height of this control.
+        Sets the height of this Control.
         How it works depends on the subclass's implementation
         :param value: int(height)
         """
@@ -194,9 +128,8 @@ class control(notifiable, painter, Painter, Node, inputable, reloadable, ABC):
                 self._onLayoutPropChanged(self, "height")
 
     @property
-    @abstractmethod
     def focusable(self) -> bool:
-        pass
+        return False
 
     @property
     def in_container(self) -> bool:
@@ -241,7 +174,7 @@ class control(notifiable, painter, Painter, Node, inputable, reloadable, ABC):
             self._left_margin = value
             self.on_prop_changed(self, "left_margin")
 
-    def prop(self, key: str, value: T) -> "control":
+    def prop(self, key: str, value: T) -> "Control":
         if utils.get(self._attachProps, key) != value:
             self._attachProps[key] = value
             self.OnAttachPropChanged(self, key)
@@ -252,13 +185,13 @@ class control(notifiable, painter, Painter, Node, inputable, reloadable, ABC):
             return self._attachProps[key]
         return None
 
-    def delprop(self, key: str) -> "control":
+    def delprop(self, key: str) -> "Control":
         if key in self._attachProps:
             del self._attachProps[key]
         return self
 
 
-class text_control(control, ABC):
+class text_control(Control, ABC):
 
     def __init__(self):
         super().__init__()
@@ -349,3 +282,22 @@ class multi_contentX_getter:
 
 ContentsXGetter = Union[multi_contentX_getter, Collection[Tuple[str, Any]]]
 MCGXT = multi_contentX_getter
+
+def AutoAdd(parent:Control,sub:Control):
+    parent.AddVElem(sub)
+    parent.AddLElem(sub)
+    parent.AddFElem(sub)
+    sub.VElemParent = parent
+    sub.LElemParent = parent
+    sub.FElemParent = parent
+
+def AutoRemove(parent:Control,sub:Control):
+    parent.RemoveVElem(sub)
+    parent.RemoveLElem(sub)
+    parent.RemoveFElem(sub)
+    if sub.VElemParent == parent:
+        sub.VElemParent = None
+    if sub.LElemParent == parent:
+        sub.LElemParent = None
+    if sub.FElemParent == parent:
+        sub.FElemParent = None

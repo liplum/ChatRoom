@@ -1,7 +1,7 @@
 from typing import Tuple, List, Optional, Iterator
 
 import utils
-from ui.controls import PROP, control, auto
+from ui.Controls import PROP, Control, auto
 from ui.outputs import buffer
 from ui.panels import panel, CTRL
 
@@ -31,7 +31,7 @@ class _unit:
 
 
 FIndex = Tuple[int, int]
-GridMatrix = List[List[Optional[control]]]
+GridMatrix = List[List[Optional[Control]]]
 Units = List[List[_unit]]
 
 
@@ -191,7 +191,7 @@ class Grid(panel):
             if e and e.gprop(panel.No_Left_Margin) is not True:
                 e.left_margin = self.left_margin
 
-    def switch_to(self, elemt: control):
+    def switch_to(self, elemt: Control):
         if elemt.focusable:
             index = self.find(elemt)
             if index:
@@ -233,12 +233,12 @@ class Grid(panel):
         i, j = item
         return self._grid[i][j]
 
-    def __setitem__(self, key: Tuple[int, int], value: control):
+    def __setitem__(self, key: Tuple[int, int], value: Control):
         i, j = key
         self.set(i, j, value)
 
-    def set(self, i: int, j: int, ctrl: control) -> bool:
-        former: control = self._grid[i][j]
+    def set(self, i: int, j: int, ctrl: Control) -> bool:
+        former: Control = self._grid[i][j]
         if former:
             self.remove(former, (i, j))
         self._grid[i][j] = ctrl
@@ -284,7 +284,7 @@ class Grid(panel):
         self.cur_focused_index = None
         self.go_next_focusable()
 
-    def remove(self, elemt: control, index: Optional[FIndex] = None) -> bool:
+    def remove(self, elemt: Control, index: Optional[FIndex] = None) -> bool:
         if super().remove(elemt):
             if index is None:
                 index = self.find(elemt)
@@ -296,14 +296,14 @@ class Grid(panel):
                 return True
         return False
 
-    def find(self, elemt: Optional[control]) -> Optional[FIndex]:
+    def find(self, elemt: Optional[Control]) -> Optional[FIndex]:
         for i in range(self.rowlen):
             for j in range(self.columnlen):
                 if self._grid[i][j] == elemt:
                     return i, j
         return None
 
-    def all_next(self, start: FIndex) -> Iterator[Tuple[Optional[control], FIndex]]:
+    def all_next(self, start: FIndex) -> Iterator[Tuple[Optional[Control], FIndex]]:
         i, j = start
         i_end = self.rowlen - 1
         j_end = self.columnlen - 1
@@ -315,7 +315,7 @@ class Grid(panel):
                 j += 1
             yield self._grid[i][j], (i, j)
 
-    def all_pre(self, start: FIndex) -> Iterator[Tuple[Optional[control], FIndex]]:
+    def all_pre(self, start: FIndex) -> Iterator[Tuple[Optional[Control], FIndex]]:
         i, j = start
         j_end = self.columnlen - 1
         while i != 0 or j != 0:
@@ -326,7 +326,7 @@ class Grid(panel):
                 j -= 1
             yield self._grid[i][j], (i, j)
 
-    def add(self, elemt: control, index: Optional[FIndex] = None) -> bool:
+    def add(self, elemt: Control, index: Optional[FIndex] = None) -> bool:
         if index is None:
             index = self.find(None)
         if index:

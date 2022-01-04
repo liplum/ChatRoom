@@ -7,18 +7,18 @@ import ioc as ioc
 import tasks
 import ui.inputs as _input
 import ui.outputs as output
-from Test.windows import TestWindow
+from Test.windows import TestApp
 from core.chats import *
 from core.filer import ifiler, filer
 from core.operations import *
 from timers import timer
 from ui.Renders import IRender
-from ui.core import *
+from ui.Core import *
 
 system_type = platform.system()
 
 
-class TestClient(iclient):
+class TestClient(IClient):
     def __init__(self):
         super().__init__()
         self._container: ioc.container = ioc.container()
@@ -36,7 +36,7 @@ class TestClient(iclient):
 
     def init(self) -> None:
         ct = self.container
-        ct.register_instance(iclient, self)
+        ct.register_instance(IClient, self)
         ct.register_singleton(output.ilogger, output.cmd_logger)
         ct.register_singleton(output.idisplay, output.full_cmd_display)
         ct.register_singleton(ifiler, filer)
@@ -63,7 +63,7 @@ class TestClient(iclient):
         self.logger.msg("[Client]Service component initialized.")
         self.logger.msg(f"[Client]Client starts up on {system_type}.")
 
-        self._win = TestWindow(self)
+        self._win = TestApp(self)
 
     @property
     def need_update(self):
@@ -86,8 +86,8 @@ class TestClient(iclient):
         try:
             inpt = self.inpt
             inpt.initialize()
-            self.win.start()
-            self.win.gen_default_tab()
+            self.App.start()
+            self.App.gen_default_tab()
             first_rendered = False
             rps = self.rps
             rps.reset()
@@ -103,7 +103,7 @@ class TestClient(iclient):
             self.logger.error(f"[Client]{e}\n{traceback.format_exc()}", Async=False)
             self.stop()
         try:
-            self.win.stop()
+            self.App.stop()
         except Exception as e:
             self.logger.error(f"[Client]{e}\n{traceback.format_exc()}", Async=False)
         self.logger.close()
@@ -123,34 +123,34 @@ class TestClient(iclient):
     def __handle_nonblocking_input(self, inpt):
         inpt.get_input()
         ch = inpt.consume_char()
-        if ch and self.win.accept_input:
+        if ch and self.App.accept_input:
             self.input_ticks += 1
-            self.win.on_input(ch)
+            self.App.on_input(ch)
         self.run_coroutine()
 
     def __handle_input_blocked(self, inpt):
         inpt.get_input()
         while True:
             ch = inpt.consume_char()
-            if ch and self.win.accept_input:
+            if ch and self.App.accept_input:
                 self.input_ticks += 1
-                self.win.on_input(ch)
+                self.App.on_input(ch)
                 self.run_coroutine()
             if inpt.is_end:
                 break
 
     def run_coroutine(self):
-        self.win.run_coroutine()
+        self.App.run_coroutine()
 
     def render(self):
         self.render_ticks += 1
         self.__clear_dirty()
-        self.win.update_screen()
+        self.App.update_screen()
         if GLOBAL.DEBUG:
             print(f"MTick={self.main_loop_ticks},RTick={self.render_ticks},ITick={self.input_ticks}")
 
     @property
-    def win(self) -> iwindow:
+    def App(self) -> IApp:
         return self._win
 
     @property

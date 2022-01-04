@@ -5,7 +5,6 @@ from typing import Iterable, Tuple, Optional
 from numpy import ndarray
 
 Buffer = ndarray
-DirtyMarks = ndarray
 
 
 def Iterate2DRow(array2D: ndarray, row_index: int) -> Iterable:
@@ -124,9 +123,6 @@ class IRender(ABC):
 
 class Painter:
     def PaintOn(self, canvas: Canvas):
-        pass
-
-    def Arrange(self, width: int, height: int):
         pass
 
 
@@ -253,6 +249,7 @@ class StrWriter:
         self.AutoWrap = autoWrap
 
     def NextLine(self):
+        self.xi = 0
         self.yi += 1
 
     def Write(self, text: str, bk=None, fg=None):

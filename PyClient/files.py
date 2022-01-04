@@ -25,7 +25,7 @@ class File(FileSystemInfo):
     def __init__(self, full_path):
         super().__init__()
         self.FullPath = full_path
-        self.Folder, self.Full_name = os.path.split(full_path)
+        self.Folder, self.FullName = os.path.split(full_path)
         self.ParentDirectory: "Directory" = Directory(self.Folder)
         self.Name, self.Extension = os.path.splitext(self.FullPath)
 
@@ -79,14 +79,14 @@ class Directory(FileSystemInfo):
         return [Directory(f"{root}{sep}{d}") for root, ds, fs in os.walk(self.FullPath) for d in ds]
 
     def GetSubFiles(self, _filter: Filter = All) -> List[File]:
-        return [f for f in self.FilesIt if _filter(f.Name)]
+        return [f for f in self.FilesIt if _filter(f.FullName)]
 
     def GetSubDirectories(self, _filter: Filter = All) -> List["Directory"]:
         return [d for d in self.DirectoriesIt if _filter(d.Name)]
 
     def GetSubFilesIt(self, _filter: Filter = All) -> Iterable[File]:
         for f in self.FilesIt:
-            if _filter(f.Name):
+            if _filter(f.FullName):
                 yield f
 
     def GetSubDirectoriesIt(self, _filter: Filter = All) -> Iterable["Directory"]:

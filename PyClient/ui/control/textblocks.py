@@ -2,7 +2,7 @@ import math
 from collections import deque
 
 from ui.control.display_boards import horizontal_lineIO
-from ui.controls import *
+from ui.Controls import *
 from ui.outputs import buffer
 from ui.themes import theme, vanilla
 

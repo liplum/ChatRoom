@@ -74,8 +74,8 @@ def detect_debug_attach():
 def main():
     if GLOBAL.DEBUG:
         detect_debug_attach()
-    from ui.clients import client
-    _client = client()
+    from ui.Clients import Client
+    _client = Client()
     _client.on_service_register.Add(init_plugin)
     _client.on_cmd_register.Add(add_commands)
     _client.on_keymapping.Add(mapkeys)

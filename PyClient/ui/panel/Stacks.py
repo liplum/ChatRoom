@@ -2,7 +2,7 @@ from typing import List, Optional
 
 import utils
 from ui.Renders import Canvas
-from ui.controls import auto, control, PROP
+from ui.Controls import auto, Control, PROP
 from ui.outputs import buffer
 from ui.panels import panel
 
@@ -81,7 +81,7 @@ class Stack(panel):
                 else:
                     e.left_margin = 0
 
-    def _get_final_horizontal_alignment(self, elemt: control) -> Alignment:
+    def _get_final_horizontal_alignment(self, elemt: Control) -> Alignment:
         elemt_align = elemt.gprop(Stack.Horizontal_Alignment)
         if elemt_align is not None:
             return elemt_align
@@ -105,7 +105,7 @@ class Stack(panel):
                     h += self._r_elemt_interval
                 if self.height != auto and h >= self.height and self.over_range == discard:
                     break
-                elemt: control
+                elemt: Control
                 if elemt.render_height == 1:
                     halign = self._get_final_horizontal_alignment(elemt)
                     if halign == align_left:
@@ -129,7 +129,7 @@ class Stack(panel):
                     break
                 if self.left_margin > 0:
                     buf.addtext(utils.repeat(" ", self.left_margin), end="")
-                elemt: control
+                elemt: Control
                 elemt.paint_on(buf)
                 interval = utils.repeat(" ", self._r_elemt_interval)
                 buf.addtext(text=interval, end="")
@@ -138,7 +138,7 @@ class Stack(panel):
 
     def __init__(self):
         super().__init__()
-        self._elements_stack: List[control] = []
+        self._elements_stack: List[Control] = []
         self._elemt_interval = auto
         self._r_elemt_interval = 0
         self._orientation = vertical
@@ -165,7 +165,7 @@ class Stack(panel):
                 self._cur_focused_index = value
                 self.cur_focused = self._elements_stack[value]
 
-    def switch_to(self, elemt: control):
+    def switch_to(self, elemt: Control):
         if elemt.focusable:
             for i, e in enumerate(self.elements):
                 if e == elemt:
@@ -224,15 +224,15 @@ class Stack(panel):
                 return True
         return False
 
-    def insert(self, index, elemt: control):
+    def insert(self, index, elemt: Control):
         self._elements_stack.insert(index, elemt)
         return super().add(elemt)
 
-    def add(self, elemt: control):
+    def add(self, elemt: Control):
         self._elements_stack.append(elemt)
         return super().add(elemt)
 
-    def remove(self, elemt: control):
+    def remove(self, elemt: Control):
         try:
             self._elements_stack.remove(elemt)
         except:

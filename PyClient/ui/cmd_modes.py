@@ -15,7 +15,7 @@ from ui.uistates import ui_state
 main_menu_type = lazy(lambda: utils.get(tab_name2type, "main_menu_tab"))
 
 
-def common_hotkey(char: chars.char, tab: tab, client: iclient, tablist: tablist, win: iwindow):
+def common_hotkey(char: chars.char, tab: tab, client: IClient, tablist: tablist, win: IApp):
     """
 
     :param win:
@@ -174,7 +174,7 @@ class cmd_mode(ui_state):
         return len(inputs) > 0 and inputs[0] == ':'
 
     def gen_context(self) -> Cmd_Context:
-        contxt = Cmd_Context(self.client, self.client.win, self.tablist, self.client.network, self.tab,
+        contxt = Cmd_Context(self.client, self.client.App, self.tablist, self.client.network, self.tab,
                              self.cmd_manager)
         return contxt
 
@@ -376,9 +376,9 @@ class cmd_hotkey_mode(cmd_state):
         tb = mode.textbox
 
         if chars.c_colon == char:
-            tb.append(chars.c_colon)
+            tb.Append(chars.c_colon)
         else:
-            not_consumed = common_hotkey(char, mode.tab, mode.client, mode.tablist, mode.client.win)
+            not_consumed = common_hotkey(char, mode.tab, mode.client, mode.tablist, mode.client.App)
             if not_consumed:
                 return False
         return True

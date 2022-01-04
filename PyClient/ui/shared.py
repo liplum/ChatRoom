@@ -1,13 +1,6 @@
-from typing import TypeVar
-
-import chars
 from Events import Event
+from ui.Elements import *
 from ui.outputs import buffer
-
-IsConsumed = bool
-Consumed = True
-NotConsumed = False
-T = TypeVar('T')
 
 
 class painter:
@@ -37,6 +30,7 @@ class reloadable:
 
 class notifiable:
     def __init__(self):
+        super().__init__()
         self._onContentChanged = Event(notifiable)
 
     @property

@@ -12,7 +12,7 @@ import dictries
 import xautofill
 from chars import *
 from core import converts
-from ui.clients import *
+from ui.Clients import *
 from ui.control.textboxes import textbox
 from utils import *
 
@@ -80,7 +80,7 @@ def test_final_attr():
 
 
 def test_n_ary_tree():
-    from NAryTrees import Node, PostIt, PreIt
+    from NAryTrees import Node, PostIt, PreIt,LevelIt,PrintTree
 
     class IntNode(Node):
 
@@ -89,18 +89,21 @@ def test_n_ary_tree():
             self.Value = value
             self.SubNodes = []
 
-        def GetSubNodes(self) -> Collection["Node"]:
+        def GetSubNodes(self) -> Collection["IntNode"]:
             return self.SubNodes
 
         def __repr__(self) -> str:
             return f"Node {self.Value}"
 
-        def AddNode(self, subNode: "Node"):
+        def AddNode(self, subNode: "IntNode"):
             self.SubNodes.append(subNode)
 
-    def Print(it, func: Callable[[object], object] = str):
+        def __str__(self) -> str:
+            return repr(self)
+
+    def Print(it, func: Callable[[object], object] = str,end=","):
         for i in it:
-            print(func(i), end=",")
+            print(func(i), end=end)
         print()
 
     """
@@ -112,6 +115,7 @@ def test_n_ary_tree():
 
     Pre:[1,2,5,6,7,3,4,8,9]
     Post:[5,6,7,2,3,8,9,4,1]
+    Level:[1,2,3,4,5,6,7,8,9]
     """
 
     def SubIntFrom(parent: Node, value: int) -> IntNode:
@@ -130,9 +134,21 @@ def test_n_ary_tree():
     N3_3 = SubIntFrom(N2_1, 7)
     N3_4 = SubIntFrom(N2_3, 8)
     N3_5 = SubIntFrom(N2_3, 9)
+    print("N1_1 Pre :",end="")
     Print(PreIt(N1_1), lambda n: n.Value)
+    print("N1_1 Post :",end="")
     Print(PostIt(N1_1), lambda n: n.Value)
+    print("N1_1 Level :",end="")
+    Print(LevelIt(N1_1), lambda n: n.Value)
 
+    Print(PrintTree(N1_1),end="\n")
+
+    print("N2_1 Pre :",end="")
+    Print(PreIt(N2_1), lambda n: n.Value)
+    print("N2_1 Post :",end="")
+    Print(PostIt(N2_1), lambda n: n.Value)
+    print("N2_1 Level :",end="")
+    Print(LevelIt(N2_1), lambda n: n.Value)
 
 def test_yield_recursion():
     def decrease(i):
@@ -592,7 +608,7 @@ def test_input():
             if ch_number == f_keycode_1 or ch_number == control_keycode_1:
                 ch_2 = msvcrt.getwch()
                 ch_2_number = ord(ch_2)
-                print(f"control char is {ch_number}+{ch_2_number}")
+                print(f"Control char is {ch_number}+{ch_2_number}")
             else:
                 print(f"{ch} is {ch_number}")
 

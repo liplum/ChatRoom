@@ -1,4 +1,4 @@
-from ui.controls import *
+from ui.Controls import *
 from ui.outputs import buffer
 from ui.themes import vanilla, ThemeGetter, is_theme
 

@@ -22,7 +22,7 @@ def _get_theme_chaos_tube(): return chaos_tube
 
 class main_menu_tab(tab):
 
-    def __init__(self, client: iclient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: tablist):
         super().__init__(client, tablist)
         self._title_texts = []
         main = Stack()

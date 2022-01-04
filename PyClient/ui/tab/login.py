@@ -16,7 +16,7 @@ from utils import get
 
 class login_tab(tab):
 
-    def __init__(self, client: iclient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: tablist):
         super().__init__(client, tablist)
         self.last_tab: Optional[tab] = None
         self.network: i_network = self.client.network
@@ -197,7 +197,7 @@ class login_tab(tab):
 """
 class login_tab2(tab):
 
-    def __init__(self, client: iclient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: tablist):
         super().__init__(client, tablist)
         self.network: i_network = self.client.network
         self.container_row = 4
@@ -244,7 +244,7 @@ class login_tab2(tab):
         self.t_password.tw = 16
         self.t_password.max_inputs_count = 15
 
-        self._focused: Optional[CTRL] = None
+        self._isFocused: Optional[CTRL] = None
 
         self._textbox_index = 0
         self.textbox_index = 0
@@ -263,15 +263,15 @@ class login_tab2(tab):
 
     @property
     def focused(self) -> Optional[CTRL]:
-        return self._focused
+        return self._isFocused
 
     @focused.setter
     def focused(self, value: Optional[CTRL]):
-        if self._focused == value:
+        if self._isFocused == value:
             return
-        if self._focused:
-            self._focused.on_lost_focus()
-        self._focused = value
+        if self._isFocused:
+            self._isFocused.on_lost_focus()
+        self._isFocused = value
         if value and value.focusable:
             value.on_focused()
         # TODO:Change this
@@ -280,11 +280,11 @@ class login_tab2(tab):
     def mark_dirt(self):
         self.client.mark_dirty()
 
-    def set(self, control: control, i: int, j: int) -> T:
-        self.container[i][j] = control
-        control.on_content_changed.add(lambda _: self.mark_dirt())
-        control.in_container = True
-        return control
+    def set(self, Control: Control, i: int, j: int) -> T:
+        self.container[i][j] = Control
+        Control.on_content_changed.add(lambda _: self.mark_dirt())
+        Control.in_container = True
+        return Control
 
     def login(self):
         ip = self.t_server_ip.inputs.strip()
@@ -315,7 +315,7 @@ class login_tab2(tab):
                 tb: textbox = self.focused
                 tb.clear()
         else:
-            f: ctrl.control = self.focused
+            f: ctrl.Control = self.focused
             consumed = False
             if f:
                 consumed = f.on_input(char)
@@ -325,7 +325,7 @@ class login_tab2(tab):
         for i in range(self.container_row):
             buf.addtext("\t", end="")
             for j in range(self.container_column):
-                ct: control = self.container[i][j]
+                ct: Control = self.container[i][j]
                 if ct:
                     ct.paint_on(buf)
                 buf.addtext("  ", end="")

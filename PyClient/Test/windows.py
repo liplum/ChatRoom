@@ -25,9 +25,9 @@ class Frame:
         return iter((self.tab, self.coroutine))
 
 
-class TestWindow(iwindow):
+class TestApp(IApp):
 
-    def __init__(self, client: iclient):
+    def __init__(self, client: IClient):
         super().__init__(client)
         self.logger: "ilogger" = self.client.logger
         self._tablist: tablist = tablist()
@@ -113,7 +113,6 @@ class TestWindow(iwindow):
         v.Y = 0
         v.Width = canvas.Width
         v.Height = 2
-        self.tablist.Arrange(canvas.Width, 2)
         self.tablist.PaintOn(v)
         cur_painter = self.cur_painter
         if cur_painter:
@@ -121,7 +120,6 @@ class TestWindow(iwindow):
             v.Y = 2
             v.Width = canvas.Width
             v.Height = canvas.Height - 2
-            cur_painter.Arrange(canvas.Width, canvas.Height - 2)
             cur_painter.PaintOn(v)
         self.render.Render(canvas)
 

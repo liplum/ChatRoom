@@ -3,11 +3,11 @@ import random
 import ui.themes as themes
 from ui.control.buttons import button
 from ui.control.labels import label
-from ui.controls import *
+from ui.Controls import *
 from ui.outputs import *
 
 T = TypeVar('T')
-CTRL = TypeVar('CTRL', bound=control)
+CTRL = TypeVar('CTRL', bound=Control)
 
 
 def i18n_label(i18n_key: str, *i18n_args, **i18n_kwargs) -> label:

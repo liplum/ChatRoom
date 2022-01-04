@@ -8,15 +8,15 @@ from ui.k import cmdkey
 from ui.shared import *
 
 
-class iclient(ABC):
+class IClient(ABC):
     def __init__(self):
-        self._on_service_register = Event(iclient, container)
-        self._on_cmd_register = Event(iclient, cmdmanager)
-        self._on_keymapping = Event(iclient, cmdkey)
+        self._on_service_register = Event(IClient, container)
+        self._on_cmd_register = Event(IClient, cmdmanager)
+        self._on_keymapping = Event(IClient, cmdkey)
 
     @property
     @abstractmethod
-    def win(self) -> "iwindow":
+    def App(self) -> "IApp":
         raise NotImplementedError()
 
     @property
@@ -27,7 +27,7 @@ class iclient(ABC):
 
         Para 2:container
 
-        :return: Event(iclient,container)
+        :return: Event(IClient,container)
         """
         return self._on_service_register
 
@@ -36,7 +36,7 @@ class iclient(ABC):
         """
         Para 1:the manager of cmd
 
-        :return: Event(iclient,cmdmanager)
+        :return: Event(IClient,cmdmanager)
         """
         return self._on_cmd_register
 
@@ -48,7 +48,7 @@ class iclient(ABC):
 
         Para 1: key map
 
-        :return: Event(iclient,cmdkey)
+        :return: Event(IClient,cmdkey)
         """
         return self._on_keymapping
 
@@ -102,8 +102,8 @@ class iclient(ABC):
         raise NotImplementedError()
 
 
-class iwindow(inputable, reloadable):
-    def __init__(self, client: iclient):
+class IApp(inputable, reloadable):
+    def __init__(self, client: IClient):
         self.client = client
         self.displayer = self.client.displayer
 
