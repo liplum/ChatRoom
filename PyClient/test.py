@@ -27,7 +27,7 @@ elif system_type == "Linux":
 
 
 def win_test():
-    # test_input()
+    test_input()
     # cmd_input()
     # test_str()
     # test_textbox()
@@ -53,14 +53,14 @@ def win_test():
     # test_version()
     # test_bind_property()
     # test_yield_recursion()
-    test_n_ary_tree()
+    # test_n_ary_tree()
 
 
 def linux_test():
-    # nb_linux()
+    nb_linux()
     # linux_nb()
     # test_dictrie2()
-    test_mt_input()
+    #test_mt_input()
 
 
 test = None
@@ -80,7 +80,7 @@ def test_final_attr():
 
 
 def test_n_ary_tree():
-    from NAryTrees import Node, PostIt, PreIt,LevelIt,PrintTree
+    from NAryTrees import Node, PostIt, PreIt, LevelIt, PrintTree
 
     class IntNode(Node):
 
@@ -101,7 +101,7 @@ def test_n_ary_tree():
         def __str__(self) -> str:
             return repr(self)
 
-    def Print(it, func: Callable[[object], object] = str,end=","):
+    def Print(it, func: Callable[[object], object] = str, end=","):
         for i in it:
             print(func(i), end=end)
         print()
@@ -134,21 +134,22 @@ def test_n_ary_tree():
     N3_3 = SubIntFrom(N2_1, 7)
     N3_4 = SubIntFrom(N2_3, 8)
     N3_5 = SubIntFrom(N2_3, 9)
-    print("N1_1 Pre :",end="")
+    print("N1_1 Pre :", end="")
     Print(PreIt(N1_1), lambda n: n.Value)
-    print("N1_1 Post :",end="")
+    print("N1_1 Post :", end="")
     Print(PostIt(N1_1), lambda n: n.Value)
-    print("N1_1 Level :",end="")
+    print("N1_1 Level :", end="")
     Print(LevelIt(N1_1), lambda n: n.Value)
 
-    Print(PrintTree(N1_1),end="\n")
+    Print(PrintTree(N1_1), end="\n")
 
-    print("N2_1 Pre :",end="")
+    print("N2_1 Pre :", end="")
     Print(PreIt(N2_1), lambda n: n.Value)
-    print("N2_1 Post :",end="")
+    print("N2_1 Post :", end="")
     Print(PostIt(N2_1), lambda n: n.Value)
-    print("N2_1 Level :",end="")
+    print("N2_1 Level :", end="")
     Print(LevelIt(N2_1), lambda n: n.Value)
+
 
 def test_yield_recursion():
     def decrease(i):
@@ -223,17 +224,20 @@ def test_mt_input():
                         queue.append(char(cs[0]))
                     elif l > 1:
                         queue.append(lc.lc.from_tuple(cs))
-        except:
+        finally:
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
 
     def outputs():
-        while True:
-            if len(queue) > 0:
-                ch = queue.popleft()
-                print(str(ch) if ch.is_printable() else "Control")
-            else:
-                print("Empty")
-            sleep(0.1)
+        try:
+            while True:
+                if len(queue) > 0:
+                    ch = queue.popleft()
+                    print(str(ch) if ch.is_printable() else "Control")
+                else:
+                    print("Empty")
+                sleep(0.1)
+        finally:
+            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
 
     inputsT = Thread(target=inputs)
     inputsT.daemon = True
@@ -601,6 +605,7 @@ def linux_nb():
 
 
 def test_input():
+    input("Attach:")
     while True:
         if msvcrt.kbhit():
             ch = msvcrt.getwch()
@@ -608,9 +613,9 @@ def test_input():
             if ch_number == f_keycode_1 or ch_number == control_keycode_1:
                 ch_2 = msvcrt.getwch()
                 ch_2_number = ord(ch_2)
-                print(f"Control char is {ch_number}+{ch_2_number}")
+                print(f"Control char is {ch_number}+{ch_2_number},{ch_number:#X}+{ch_2_number:#X}")
             else:
-                print(f"{ch} is {ch_number}")
+                print(f"{ch} is {ch_number},{ch_number:#X}")
 
 
 def test_textbox():

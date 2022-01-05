@@ -33,6 +33,30 @@ def init_keys():
         keys.k_enter = chars.c_carriage_return
         keys.k_quit = chars.c_esc
 
+        keys.ctrl_a = chars.ctrl_a
+        keys.ctrl_b = chars.ctrl_b
+        keys.ctrl_c = chars.ctrl_c
+        keys.ctrl_d = chars.ctrl_d
+        keys.ctrl_e = chars.ctrl_e
+        keys.ctrl_f = chars.ctrl_f
+        keys.ctrl_g = chars.ctrl_g
+        keys.ctrl_h = chars.ctrl_h
+        keys.ctrl_i = chars.ctrl_i
+        keys.ctrl_j = chars.ctrl_j
+        keys.ctrl_k = chars.ctrl_k
+        keys.ctrl_l = chars.ctrl_l
+        keys.ctrl_m = chars.ctrl_m
+        keys.ctrl_n = chars.ctrl_n
+        keys.ctrl_o = chars.ctrl_o
+        keys.ctrl_p = chars.ctrl_p
+        keys.ctrl_r = chars.ctrl_r
+        keys.ctrl_t = chars.ctrl_t
+        keys.ctrl_u = chars.ctrl_u
+        keys.ctrl_v = chars.ctrl_v
+        keys.ctrl_w = chars.ctrl_w
+        keys.ctrl_x = chars.ctrl_x
+        keys.ctrl_y = chars.ctrl_y
+
     elif system_type == "Linux":
         import linuxchars
         keys.k_up = linuxchars.lc_up
@@ -60,6 +84,30 @@ def init_keys():
         keys.k_backspace = linuxchars.lc_backspace
         keys.k_enter = linuxchars.lc_line_end
         keys.k_quit = linuxchars.lc_eot
+
+        keys.ctrl_a = linuxchars.lctrl_a
+        keys.ctrl_b = linuxchars.lctrl_b
+        keys.ctrl_c = linuxchars.lctrl_c
+        keys.ctrl_d = linuxchars.lctrl_d
+        keys.ctrl_e = linuxchars.lctrl_e
+        keys.ctrl_f = linuxchars.lctrl_f
+        keys.ctrl_g = linuxchars.lctrl_g
+        keys.ctrl_h = linuxchars.lctrl_h
+        keys.ctrl_i = linuxchars.lctrl_i
+        keys.ctrl_j = linuxchars.lctrl_j
+        keys.ctrl_k = linuxchars.lctrl_k
+        keys.ctrl_l = linuxchars.lctrl_l
+        keys.ctrl_m = linuxchars.lctrl_m
+        keys.ctrl_n = linuxchars.lctrl_n
+        keys.ctrl_o = linuxchars.lctrl_o
+        keys.ctrl_p = linuxchars.lctrl_p
+        keys.ctrl_r = linuxchars.lctrl_r
+        keys.ctrl_t = linuxchars.lctrl_t
+        keys.ctrl_u = linuxchars.lctrl_u
+        keys.ctrl_v = linuxchars.lctrl_v
+        keys.ctrl_w = linuxchars.lctrl_w
+        keys.ctrl_x = linuxchars.lctrl_x
+        keys.ctrl_y = linuxchars.lctrl_y
 
 
 def init_colors():

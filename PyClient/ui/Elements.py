@@ -1,4 +1,4 @@
-from typing import Collection, Generator, Callable, Iterable, TypeVar, Optional, List
+from typing import Collection, Generator, Callable, Iterable, TypeVar, Optional, List, Tuple
 
 import chars
 from Events import Event
@@ -11,6 +11,10 @@ NotConsumed = False
 auto = "auto"
 PROP = TypeVar('PROP', str, int)
 T = TypeVar('T')
+
+
+class RoutedEvent:
+    pass
 
 
 class VisualElement(Painter):
@@ -28,6 +32,9 @@ class VisualElement(Painter):
         self._dHeight = 0
         self._renderWidth = 0
         self._renderHeight = 0
+
+    def OnAddedInfoVTree(self, parent: "VisualElement"):
+        self.VElemParent = parent
 
     @property
     def VElemParent(self) -> Optional["VisualElement"]:
@@ -146,7 +153,13 @@ class VisualElement(Painter):
     def Measure(self):
         pass
 
-    def Arrange(self, width: int, height: int):
+    def Arrange(self, width: int, height: int) -> Tuple[int, int]:
+        """
+
+        :param width:
+        :param height:
+        :return: (real width,real height)
+        """
         pass
 
 
@@ -156,7 +169,7 @@ PreItV: _VElemItType = PreItGen(VisualElement.GetSubVElems)
 PostItV: _VElemItType = PostItGen(VisualElement.GetSubVElems)
 LevelItV: _VElemItType = LevelItGen(VisualElement.GetSubVElems)
 LeafItV: _VElemItType = LeafItGen(VisualElement.GetSubVElems, VisualElement.IsVElemLeaf)
-PrintTreeV: Callable[[VisualElement], Collection[str]] = PrintTreeGen(VisualElement.GetSubVElems)
+PrintVTree: Callable[[VisualElement], Collection[str]] = PrintTreeGen(VisualElement.GetSubVElems)
 
 DefaultNotConsumed = (NotConsumed,)
 
@@ -166,6 +179,10 @@ class LogicalElement:
         super().__init__()
         self._subLElems: Collection["LogicalElement"] = []
         self._lElemParent = None
+        self._isFocused = False
+
+    def OnAddedInfoLTree(self, parent: "LogicalElement"):
+        self.LElemParent = parent
 
     def IsLElemLeaf(self) -> bool:
         return len(self.GetSubLElems()) == 0
@@ -195,47 +212,6 @@ class LogicalElement:
         """
         yield from DefaultNotConsumed
 
-
-def GetLElemsSubs(ve: LogicalElement):
-    return ve.GetSubVElems()
-
-
-_LElemItType = Callable[[LogicalElement], Iterable[LogicalElement]]
-
-PreItL: _LElemItType = PreItGen(LogicalElement.GetSubLElems)
-PostItL: _LElemItType = PostItGen(LogicalElement.GetSubLElems)
-LevelItL: _LElemItType = LevelItGen(LogicalElement.GetSubLElems)
-LeafItL: _LElemItType = LeafItGen(LogicalElement.GetSubLElems, LogicalElement.IsLElemLeaf)
-PrintTreeL: Callable[[LogicalElement], Collection[str]] = PrintTreeGen(LogicalElement.GetSubLElems)
-
-
-class FocusElement:
-    def __init__(self):
-        super().__init__()
-        self._subFElems: Collection["FocusElement"] = []
-        self._lElemParent = None
-        self._isFocused = False
-
-    def IsFElemLeaf(self) -> bool:
-        return len(self.GetSubFElems()) == 0
-
-    @property
-    def FElemParent(self) -> Optional["FocusElement"]:
-        return self._lElemParent
-
-    @FElemParent.setter
-    def FElemParent(self, value: Optional["FocusElement"]):
-        self._lElemParent = value
-
-    def GetSubFElems(self) -> Collection["FocusElement"]:
-        return self._subFElems
-
-    def AddFElem(self, subElem: "FocusElement"):
-        self._subFElems.append(subElem)
-
-    def RemoveFElem(self, subElem: "FocusElement"):
-        self._subFElems.remove(subElem)
-
     @property
     def Focusable(self) -> bool:
         return False
@@ -247,14 +223,78 @@ class FocusElement:
         self._isFocused = False
 
 
-def GetFElemsSubs(ve: FocusElement):
+def GetLElemsSubs(ve: LogicalElement):
     return ve.GetSubVElems()
 
 
-_FElemItType = Callable[[FocusElement], Iterable[FocusElement]]
+_LElemItType = Callable[[LogicalElement], Iterable[LogicalElement]]
 
-PreItF: _FElemItType = PreItGen(FocusElement.GetSubFElems)
-PostItF: _FElemItType = PostItGen(FocusElement.GetSubFElems)
-LevelItF: _FElemItType = LevelItGen(FocusElement.GetSubFElems)
-LeafItF: _FElemItType = LeafItGen(FocusElement.GetSubFElems, FocusElement.IsFElemLeaf)
-PrintTreeF: Callable[[FocusElement], Collection[str]] = PrintTreeGen(FocusElement.GetSubFElems)
+PreItL: _LElemItType = PreItGen(LogicalElement.GetSubLElems)
+PostItL: _LElemItType = PostItGen(LogicalElement.GetSubLElems)
+LevelItL: _LElemItType = LevelItGen(LogicalElement.GetSubLElems)
+LeafItL: _LElemItType = LeafItGen(LogicalElement.GetSubLElems, LogicalElement.IsLElemLeaf)
+PrintLTree: Callable[[LogicalElement], Collection[str]] = PrintTreeGen(LogicalElement.GetSubLElems)
+
+
+class FocusWalker:
+    def __init__(self):
+        super().__init__()
+        self._root: Optional[LogicalElement] = None
+        self.seq = []
+        self._curIndex: Optional[int] = None
+        self._curFocused: Optional[LogicalElement] = None
+
+    @property
+    def CurFocused(self) -> Optional[LogicalElement]:
+        return self._curFocused
+
+    @CurFocused.setter
+    def CurFocused(self, value: Optional[LogicalElement]):
+        old = self._curFocused
+        if old != value:
+            self._curFocused = value
+            if old:
+                old.OnLostFocused()
+            if value:
+                value.OnFocused()
+
+    @property
+    def CurIndex(self) -> Optional[int]:
+        return self._curIndex
+
+    @CurIndex.setter
+    def CurIndex(self, value: Optional[int]):
+        oldIndex = self._curIndex
+        if oldIndex != value:
+            seqLen = len(self.seq)
+            if seqLen == 0:
+                value = None
+            if value is None:
+                self._curIndex = None
+                self.CurFocused = None
+            else:
+                value %= seqLen
+                self._curIndex = value
+                self.CurFocused = self.seq[value]
+
+    @property
+    def Root(self) -> Optional[LogicalElement]:
+        return self._root
+
+    @Root.setter
+    def Root(self, value: Optional[LogicalElement]):
+        self._root = value
+
+    def Next(self):
+        if self.CurIndex is not None:
+            self.CurIndex += 1
+
+    def Back(self):
+        if self._curIndex is not None:
+            self.CurIndex -= 1
+
+    def ReGen(self):
+        root = self.Root
+        if root:
+            self.seq = list(elem for elem in LeafItL(root) if elem.Focusable)
+            self.CurIndex = 0

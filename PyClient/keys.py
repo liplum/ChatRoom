@@ -32,3 +32,27 @@ k_f10 = None
 k_f12 = None
 
 k_quit = None
+
+ctrl_a = None
+ctrl_b = None
+ctrl_c = None
+ctrl_d = None
+ctrl_e = None
+ctrl_f = None
+ctrl_g = None
+ctrl_h = None
+ctrl_i = None
+ctrl_j = None
+ctrl_k = None
+ctrl_l = None
+ctrl_m = None
+ctrl_n = None
+ctrl_o = None
+ctrl_p = None
+ctrl_r = None
+ctrl_t = None
+ctrl_u = None
+ctrl_v = None
+ctrl_w = None
+ctrl_x = None
+ctrl_y = None

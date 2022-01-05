@@ -9,7 +9,7 @@ unlimited = "unlimited"
 from ui.Elements import *
 
 
-class Control(VisualElement, notifiable, painter, LogicalElement, FocusElement, inputable, reloadable, ABC):
+class Control(VisualElement, notifiable, painter, LogicalElement, inputable, reloadable, ABC):
     def __init__(self):
         super().__init__()
         self._in_container = False
@@ -283,21 +283,18 @@ class multi_contentX_getter:
 ContentsXGetter = Union[multi_contentX_getter, Collection[Tuple[str, Any]]]
 MCGXT = multi_contentX_getter
 
-def AutoAdd(parent:Control,sub:Control):
+
+def AutoAdd(parent: Control, sub: Control):
     parent.AddVElem(sub)
     parent.AddLElem(sub)
-    parent.AddFElem(sub)
     sub.VElemParent = parent
     sub.LElemParent = parent
-    sub.FElemParent = parent
 
-def AutoRemove(parent:Control,sub:Control):
+
+def AutoRemove(parent: Control, sub: Control):
     parent.RemoveVElem(sub)
     parent.RemoveLElem(sub)
-    parent.RemoveFElem(sub)
     if sub.VElemParent == parent:
         sub.VElemParent = None
     if sub.LElemParent == parent:
         sub.LElemParent = None
-    if sub.FElemParent == parent:
-        sub.FElemParent = None

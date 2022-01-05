@@ -1,5 +1,4 @@
 import math
-from typing import List
 
 from ui.Controls import *
 
@@ -177,6 +176,10 @@ class TextArea(text_control):
     @property
     def InputList(self) -> List[str]:
         return self._inputList[:]
+
+    @property
+    def InputListRaw(self):
+        return self._inputList
 
     @InputList.setter
     def InputList(self, value: Iterable[str]):

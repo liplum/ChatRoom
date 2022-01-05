@@ -40,7 +40,7 @@ class TestTab(tab):
 
     def PaintOn(self, canvas: Canvas):
         w = StrWriter(canvas, autoWrap=True)
-        for v in PrintTreeV(self.t_container):
+        for v in PrintVTree(self.t_container):
             w.Write(v)
             w.NextLine()
         """

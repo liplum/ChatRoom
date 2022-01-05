@@ -116,3 +116,32 @@ lc_f10 = csi_3_end126(50, 49)
 lc_f12 = csi_3_end126(50, 52)
 
 lc_line_end = char(10)
+
+lctrl_a = char(1)
+lctrl_b = char(2)
+lctrl_c = char(3)
+lctrl_d = char(4)
+lctrl_e = char(5)
+lctrl_f = char(6)
+lctrl_g = char(7)
+lctrl_h = char(8)
+lctrl_i = char(9)
+lctrl_j = char(10)
+"""Ctrl+J and Ctrl+M are the same on Linux"""
+lctrl_k = char(11)
+lctrl_l = char(12)
+lctrl_m = char(10)
+"""Ctrl+J and Ctrl+M are the same on Linux"""
+lctrl_n = char(14)
+lctrl_o = char(15)
+lctrl_p = char(16)
+"""Ctrl+Q doesn't exist on Linux"""
+lctrl_r = char(18)
+"""Ctrl+S doesn't exist on Linux"""
+lctrl_t = char(20)
+lctrl_u = char(21)
+lctrl_v = char(22)
+lctrl_w = char(23)
+lctrl_x = char(24)
+lctrl_y = char(25)
+"""Ctrl+Z has a special function on Linux"""

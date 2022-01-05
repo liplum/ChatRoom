@@ -1,4 +1,4 @@
-from typing import Optional, Set, Iterable
+from typing import Set
 
 import keys
 from ui.control.TextAreas import TextArea
@@ -16,6 +16,33 @@ def XtextWrapper(textArea: TextArea,
 
     if exceptedChars and onlyAllowedChars:
         onlyAllowedChars = onlyAllowedChars - exceptedChars
+    lastOperatedStr = ""
+    lastOperatedIndex = 0
+    lastOperatedType = 0  # 0 is empty,1 for append,2 for delete
+
+    def OnAppend(tb, i, c):
+        nonlocal lastOperatedStr, lastOperatedType, lastOperatedIndex
+        lastOperatedStr = c
+        lastOperatedIndex = i
+        lastOperatedType = 1
+
+    def OnDelete(tb, i, c):
+        nonlocal lastOperatedStr, lastOperatedType, lastOperatedIndex
+        lastOperatedStr = c
+        lastOperatedIndex = i
+        lastOperatedType = 2
+
+    def Undo():
+        nonlocal lastOperatedType
+        if lastOperatedType == 2:
+            textArea.InputListRaw.insert(lastOperatedIndex, lastOperatedStr)
+        elif lastOperatedType == 1:
+            del textArea.InputListRaw[lastOperatedIndex]
+
+        lastOperatedType = 0
+
+    textArea.OnAppend.Add(OnAppend)
+    textArea.OnDelete.Add(OnDelete)
     kbs = kbinding()
     kbs.bind(keys.k_backspace, lambda c: textArea.Delete())
     kbs.bind(keys.k_delete, lambda c: textArea.Delete(left=False))
@@ -23,6 +50,7 @@ def XtextWrapper(textArea: TextArea,
     kbs.bind(keys.k_right, lambda c: textArea.Right())
     kbs.bind(keys.k_home, lambda c: textArea.Home())
     kbs.bind(keys.k_end, lambda c: textArea.End())
+    # kbs.bind(keys.ctrl_x, lambda c: Undo())
     kbs.bind(chars.c_esc, onExitFocusHandler)
     spapp = textArea.Append
     if onlyAllowedChars is not None:
