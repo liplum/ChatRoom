@@ -20,7 +20,6 @@ class TextArea(text_control):
         self._rHeight = 0
         self._maxInputsCount = unlimited
         self._locked = False
-
         self.OnAppend.Add(self._onAppendOrDeleteOrReplace)
         self.OnDelete.Add(self._onAppendOrDeleteOrReplace)
         self.OnListReplaced.Add(self._onAppendOrDeleteOrReplace)

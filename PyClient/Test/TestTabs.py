@@ -1,4 +1,3 @@
-from ui.Controls import *
 from ui.cmd_modes import common_hotkey
 from ui.control.TextAreas import TextArea
 from ui.control.buttons import button
@@ -43,6 +42,12 @@ class TestTab(tab):
         for v in PrintVTree(self.t_container):
             w.Write(v)
             w.NextLine()
+
+        w = StrWriter(canvas, 0, 10, autoWrap=True)
+        for v in PrintLTree(self.t_container):
+            w.Write(v)
+            w.NextLine()
+
         """
         v = Viewer.ByCanvas(canvas)
         self.t_label.PaintOn(v.Sub(0, 0, v.Width, 1))
