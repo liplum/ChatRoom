@@ -20,7 +20,7 @@ class TestTab(tab):
         self.t_button.width = 10
         self.t_checkbox = checkbox(True)
         self.t_tbox = XtextWrapper(TextArea())
-        self.t_tbox.on_content_changed.Add(lambda _: self.OnContentChanged(self))
+        self.t_tbox.on_content_changed.Add(lambda _: self.OnRenderContentChanged(self))
         self.t_tbox.width = 30
         self.t_tbox.height = auto
         self.db = DisplayBoard()
@@ -43,7 +43,7 @@ class TestTab(tab):
             w.Write(v)
             w.NextLine()
 
-        w = StrWriter(canvas, 0, 10, autoWrap=True)
+        w.NextLine()
         for v in PrintLTree(self.t_container):
             w.Write(v)
             w.NextLine()

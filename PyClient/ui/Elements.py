@@ -1,4 +1,4 @@
-from typing import Collection, Generator, Callable, Iterable, TypeVar, Optional, List, Tuple
+from typing import Collection, Generator, Callable, Iterable, TypeVar, Optional, List, Tuple, Type, Dict
 
 import chars
 from Events import Event
@@ -11,10 +11,7 @@ NotConsumed = False
 auto = "auto"
 PROP = TypeVar('PROP', str, int)
 T = TypeVar('T')
-
-
-class RoutedEvent:
-    pass
+from utils import multiget
 
 
 class VisualElement(Painter):
@@ -22,6 +19,7 @@ class VisualElement(Painter):
         super().__init__()
         self._subVElems: List["VisualElement"] = []
         self._vElemParent = None
+        self._onRenderContentChanged = Event(VisualElement)
         self._onPropChanged = Event(VisualElement, str)
         self._onAttachPropChanged = Event(VisualElement, str)
         self._onLayoutPropChanged = self._onPropChanged.Sub()
@@ -49,12 +47,26 @@ class VisualElement(Painter):
 
     def AddVElem(self, subElem: "VisualElement"):
         self._subVElems.append(subElem)
+        subElem.VElemParent = self
 
-    def RemoveVElem(self, subElem: "VisualElement"):
-        self._subVElems.remove(subElem)
+    def RemoveVElem(self, subElem: "VisualElement") -> bool:
+        try:
+            self._subVElems.remove(subElem)
+            return True
+        except:
+            return False
 
     def IsVElemLeaf(self) -> bool:
         return len(self.GetSubVElems()) == 0
+
+    @property
+    def OnRenderContentChanged(self) -> Event:
+        """
+        Para 1:VisualElement object
+
+        :return: Event(VisualElement)
+        """
+        return self._onRenderContentChanged
 
     @property
     def OnPropChanged(self) -> Event:
@@ -172,6 +184,8 @@ LeafItV: _VElemItType = LeafItGen(VisualElement.GetSubVElems, VisualElement.IsVE
 PrintVTree: Callable[[VisualElement], Collection[str]] = PrintTreeGen(VisualElement.GetSubVElems)
 
 DefaultNotConsumed = (NotConsumed,)
+EventHandlerType = Callable[["LogicalElement", "EventArgs"], None]
+EventHandlerMap = Dict["RoutedEventType", List[EventHandlerType]]
 
 
 class LogicalElement:
@@ -180,6 +194,33 @@ class LogicalElement:
         self._subLElems: Collection["LogicalElement"] = []
         self._lElemParent = None
         self._isFocused = False
+        self._eventHandlers: EventHandlerMap = {}
+
+    @property
+    def EventHandlers(self):
+        return self._eventHandlers
+
+    def TryCatchEvent(self, eventType: "RoutedEventType", sender: "LogicalElement", args: "RoutedEventArgs"):
+        handlers = multiget(self.EventHandlers, eventType)
+        for handler in handlers:
+            if args.IsHandled:
+                break
+            handler(sender, args)
+
+    def AddEventHandler(self, eventType: "RoutedEventType", handler: EventHandlerType):
+        handlers = multiget(self.EventHandlers, eventType)
+        handlers.append(handler)
+
+    def RemoveEventHandler(self, eventType: "RoutedEventType", handler: EventHandlerType) -> bool:
+        handlers = multiget(self.EventHandlers, eventType)
+        try:
+            handlers.remove(handler)
+            return True
+        except:
+            return False
+
+    def ClearEventHandler(self, eventType: "RoutedEventType"):
+        self.EventHandlers[eventType] = []
 
     def OnAddedInfoLTree(self, parent: "LogicalElement"):
         self.LElemParent = parent
@@ -200,9 +241,14 @@ class LogicalElement:
 
     def AddLElem(self, subElem: "LogicalElement"):
         self._subLElems.append(subElem)
+        subElem.LElemParent = self
 
-    def RemoveLElem(self, subElem: "LogicalElement"):
-        self._subLElems.remove(subElem)
+    def RemoveLElem(self, subElem: "LogicalElement") -> bool:
+        try:
+            self._subLElems.remove(subElem)
+            return True
+        except:
+            return False
 
     def OnInput(self, char: chars.char) -> Generator:
         """
@@ -298,3 +344,57 @@ class FocusWalker:
         if root:
             self.seq = list(elem for elem in LeafItL(root) if elem.Focusable)
             self.CurIndex = 0
+
+
+def BubbleParentChain(cur: LogicalElement) -> Tuple[LogicalElement]:
+    parents: List[LogicalElement] = []
+    while (parent := cur.LElemParent) is not None:
+        parents.append(parent)
+        cur = parent
+
+    return tuple(parents)
+
+
+def BubbleParentIt(cur: LogicalElement) -> Iterable[LogicalElement]:
+    while (parent := cur.LElemParent) is not None:
+        yield parent
+        cur = parent
+
+
+class RoutedEventType:
+    def __init__(self, eventType: Type["RoutedEventArgs"]):
+        super().__init__()
+        self._eventType: Type["RoutedEventArgs"] = eventType
+
+    def Raise(self, sender: LogicalElement, args: "RoutedEventArgs", chain: Iterable[LogicalElement]):
+        if not isinstance(args, self.EventType):
+            raise EventTypeError(f"{args},{type(args)} in type,doesn't match required type {self.EventType}.")
+        for elemt in chain:
+            if args.IsHandled:
+                break
+            elemt.TryCatchEvent(self, sender, args)
+
+    @property
+    def EventType(self) -> Type["RoutedEventArgs"]:
+        return self._eventType
+
+    def Bubble(self, sender: LogicalElement, args: "RoutedEventArgs"):
+        self.Raise(sender, args, BubbleParentChain(sender))
+
+    def Preview(self, sender: LogicalElement, args: "RoutedEventArgs"):
+        self.Raise(sender, args, reversed(BubbleParentChain(sender)))
+
+
+class RoutedEventArgs:
+    def __init__(self):
+        super().__init__()
+        self.IsHandled = False
+
+
+class EventTypeError(Exception):
+    def __init__(self, *args: object):
+        super().__init__(*args)
+
+
+class DpProp:
+    pass

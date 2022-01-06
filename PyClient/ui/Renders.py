@@ -19,18 +19,15 @@ def Iterate2DColumn(array2D: ndarray, column_index: int) -> Iterable:
         yield array2D[i, column_index]
 
 
-def get_winsize() -> Tuple[int, int]:
+def GetTerminalScreenSize() -> Tuple[int, int]:
     return os.get_terminal_size()
-
-
-def get_winsize_default() -> Tuple[int, int]:
-    return 180, 30
 
 
 try:
     os.get_terminal_size()
+    CanGetTerminalScreenSize = True
 except:
-    get_winsize = get_winsize_default
+    CanGetTerminalScreenSize = False
 
 
 class BK:

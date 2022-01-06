@@ -362,7 +362,7 @@ class cmd_display(idisplay):
             return self._height
 
     def gen_buffer(self) -> buffer:
-        size = get_winsize()
+        size = GetTerminalScreenSize()
         return cmd_display.cmd_buffer(self, size[0], size[1])
 
 
@@ -393,7 +393,7 @@ class full_cmd_display(idisplay):
             return self._height
 
     def gen_buffer(self) -> buffer:
-        size = get_winsize()
+        size = GetTerminalScreenSize()
         return full_cmd_display.buf(size[0], size[1])
 
     def render(self, buf: buffer) -> bool:

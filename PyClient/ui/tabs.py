@@ -10,7 +10,7 @@ from ui.Core import *
 from ui.coroutines import Finished
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
 from utils import is_in
-
+from ui.Controls import Control
 tab_name2type: Dict[str, type] = {}
 tab_type2name: Dict[type, str] = {}
 
@@ -70,7 +70,7 @@ class group:
         return f"group({self.identity})"
 
 
-class tablist(notifiable, Painter, painter):
+class tablist(Control):
     def __init__(self):
         super().__init__()
         self._cur: Optional["tab"] = None
@@ -454,7 +454,7 @@ class metatab(ABCMeta):
         _add_tabtype(name, cls)
 
 
-class tab(notifiable, painter, Painter, reloadable, metaclass=metatab):
+class tab(Control, metaclass=metatab):
     def __init__(self, client: IClient, tablist: tablist):
         super().__init__()
         self.tablist: tablist = tablist

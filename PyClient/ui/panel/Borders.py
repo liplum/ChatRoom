@@ -11,7 +11,7 @@ class Border(VisualElement):
         self.Theme = theme
         self._inner: Optional[Control] = None
         self._onInnerChanged = Event(Border, (Control, NoneType), (Control, NoneType))
-        self.OnInnerChanged.Add(lambda _, _1, _2: self.OnContentChanged)
+        self.OnInnerChanged.Add(lambda _, _1, _2: self.OnRenderContentChanged)
 
     @property
     def Inner(self) -> Optional[Control]:
@@ -22,13 +22,10 @@ class Border(VisualElement):
         old = self._inner
         if old != value:
             if old:
-                try:
-                    self._subVElems.remove(old)
-                except:
-                    pass
+                self.RemoveVElem(old)
             self._inner = value
             if value:
-                self._subVElems.append(value)
+                self.AddVElem(value)
             self.OnInnerChanged(self, old, value)
 
     @property

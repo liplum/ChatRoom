@@ -1,4 +1,3 @@
-from Events import Event
 from ui.Elements import *
 from ui.outputs import buffer
 
@@ -31,22 +30,22 @@ class reloadable:
 class notifiable:
     def __init__(self):
         super().__init__()
-        self._onContentChanged = Event(notifiable)
+        self._onRenderContentChanged = Event(notifiable)
+
+    @property
+    def OnRenderContentChanged(self) -> Event:
+        """
+        Para 1:VisualElement object
+
+        :return: Event(VisualElement)
+        """
+        return self._onRenderContentChanged
 
     @property
     def on_content_changed(self) -> Event:
         """
-        Para 1:notifiable object
+        Para 1:VisualElement object
 
-        :return: Event(notifiable)
+        :return: Event(VisualElement)
         """
-        return self._onContentChanged
-
-    @property
-    def OnContentChanged(self) -> Event:
-        """
-        Para 1:notifiable object
-
-        :return: Event(notifiable)
-        """
-        return self._onContentChanged
+        return self._onRenderContentChanged

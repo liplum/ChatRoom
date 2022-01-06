@@ -8,7 +8,7 @@ import GLOBAL
 import ioc as ioc
 import net.networks as net
 import tasks
-import ui.Renders as dis
+import ui.Renders as renders
 import ui.inputs as _input
 import ui.outputs as output
 from core.chats import *
@@ -97,9 +97,10 @@ class Client(IClient):
         for k in self.cmdkeys:
             self.on_keymapping(self, k)
 
-        self.winsize = dis.get_winsize()
-        self.winsize_monitor = Thread(target=self.monitor_winsize, name="SizeMonitor")
-        self.winsize_monitor.daemon = True
+        if renders.CanGetTerminalScreenSize:
+            self.winsize = renders.GetTerminalScreenSize()
+            self.winsize_monitor = Thread(target=self.monitor_winsize, name="SizeMonitor")
+            self.winsize_monitor.daemon = True
 
     def _init_channels(self):
         self.channel_user = self.network.new_channel("User")
@@ -117,7 +118,7 @@ class Client(IClient):
         self._dirty = False
 
     def monitor_winsize(self):
-        get_winsize = dis.get_winsize
+        get_winsize = renders.GetTerminalScreenSize
         while True:
             cur = get_winsize()
             if self.winsize != cur:

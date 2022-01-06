@@ -1,4 +1,4 @@
-from typing import Dict, Union, Any
+from typing import Union, Any
 
 import utils
 from GLOBAL import StringIO
@@ -9,7 +9,7 @@ unlimited = "unlimited"
 from ui.Elements import *
 
 
-class Control(VisualElement, notifiable, painter, LogicalElement, inputable, reloadable, ABC):
+class Control(VisualElement, painter, LogicalElement, inputable, reloadable, ABC):
     def __init__(self):
         super().__init__()
         self._in_container = False
@@ -28,6 +28,15 @@ class Control(VisualElement, notifiable, painter, LogicalElement, inputable, rel
         self.OnPropChanged.Add(__onLayoutChangedHandler)
         self.IsLayoutChanged = True
         self._attachProps: Dict[str, T] = {}
+
+    @property
+    def on_content_changed(self) -> Event:
+        """
+        Para 1:VisualElement object
+
+        :return: Event(VisualElement)
+        """
+        return self._onRenderContentChanged
 
     @property
     def OnLayoutChanged(self) -> Event:

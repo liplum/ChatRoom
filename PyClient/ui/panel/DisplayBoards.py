@@ -16,6 +16,19 @@ class DisplayBoard(Control):
     def OnAddedInfoVTree(self, parent: "VisualElement"):
         pass
 
+    @property
+    def Inner(self) -> Optional[Control]:
+        return self.border.Inner
+
+    @Inner.setter
+    def Inner(self, value: Optional[Control]):
+        old = self.border.Inner
+        if old != value:
+            self.RemoveLElem(old)
+            self.border.Inner = value
+            if value:
+                self.AddLElem(value)
+
     def PaintOn(self, canvas: Canvas):
         rw = self.render_width
         rh = self.render_height

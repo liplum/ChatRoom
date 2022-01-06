@@ -14,7 +14,8 @@ from core.operations import *
 from timers import timer
 from ui.Renders import IRender
 from ui.Core import *
-
+import ui.Renders as renders
+from threading import Thread
 system_type = platform.system()
 
 
@@ -64,6 +65,20 @@ class TestClient(IClient):
         self.logger.msg(f"[Client]Client starts up on {system_type}.")
 
         self._win = TestApp(self)
+
+        if renders.CanGetTerminalScreenSize:
+            self.winsize = renders.GetTerminalScreenSize()
+            self.winsize_monitor = Thread(target=self.monitor_winsize, name="SizeMonitor")
+            self.winsize_monitor.daemon = True
+
+    def monitor_winsize(self):
+        get_winsize = renders.GetTerminalScreenSize
+        while True:
+            cur = get_winsize()
+            if self.winsize != cur:
+                self.winsize = cur
+                self._render.OnResized()
+                self.mark_dirty()
 
     @property
     def need_update(self):
