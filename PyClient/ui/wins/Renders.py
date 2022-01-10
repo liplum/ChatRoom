@@ -136,14 +136,17 @@ class WinRender(IRender):
             colorm = canvas.colors
             buf = self.buffer
             for i in range(self.height):
-                line = utils.chain(Iterate2DRow(cm, i))
-                buf.WriteConsoleOutputCharacter(
-                    line, XY(0, i)
-                )
-                colors = Iterate2DRow(colorm, i)
-                buf.WriteConsoleOutputAttribute(
-                    colors, XY(0, i)
-                )
+                try:
+                    line = utils.chain(Iterate2DRow(cm, i))
+                    buf.WriteConsoleOutputCharacter(
+                        line, XY(0, i)
+                    )
+                    colors = Iterate2DRow(colorm, i)
+                    buf.WriteConsoleOutputAttribute(
+                        colors, XY(0, i)
+                    )
+                except:
+                    pass
 
     def Dispose(self):
         pass

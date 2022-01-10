@@ -1,6 +1,7 @@
-from typing import Collection, Generator, Callable, Iterable, TypeVar, Optional, List, Tuple, Type, Dict
+from typing import Collection, Generator, TypeVar, Tuple, Iterable
 
 import chars
+from DpProps import *
 from Events import Event
 from NAryTrees import PreItGen, PostItGen, LevelItGen, LeafItGen, PrintTreeGen
 from ui.Renders import Painter
@@ -11,17 +12,20 @@ NotConsumed = False
 auto = "auto"
 PROP = TypeVar('PROP', str, int)
 T = TypeVar('T')
-from utils import multiget
+
+DefaultNotConsumed = (NotConsumed,)
 
 
-class VisualElement(Painter):
+class UIElement(Painter, DpObj):
+    NeedReRenderEvent: RoutedEventType
+
     def __init__(self):
         super().__init__()
-        self._subVElems: List["VisualElement"] = []
-        self._vElemParent = None
-        self._onRenderContentChanged = Event(VisualElement)
-        self._onPropChanged = Event(VisualElement, str)
-        self._onAttachPropChanged = Event(VisualElement, str)
+        self._children: List["UIElement"] = []
+        self._parent = None
+        self._onRenderContentChanged = Event(UIElement)
+        self._onPropChanged = Event(UIElement, str)
+        self._onAttachPropChanged = Event(UIElement, str)
         self._onLayoutPropChanged = self._onPropChanged.Sub()
         self._onNormalPropChanged = self._onPropChanged.Sub()
         self._width = 0
@@ -30,85 +34,110 @@ class VisualElement(Painter):
         self._dHeight = 0
         self._renderWidth = 0
         self._renderHeight = 0
+        self._isFocused = False
 
-    def OnAddedInfoVTree(self, parent: "VisualElement"):
-        self.VElemParent = parent
+    def NeedReRender(self):
+        self.Raise(self.NeedReRenderEvent, self, RoutedEventArgs(False))
+
+    @classmethod
+    def Raise(cls, eventType: RoutedEventType, sender: "UIElement", args: RoutedEventArgs):
+        if eventType.Strategy == RoutedStrategy.Bubble:
+            chain = BubbleParentChain(sender)
+        elif eventType.Strategy == RoutedStrategy.Tunnel:
+            chain = reversed(BubbleParentChain(sender))
+        elif eventType.Strategy == RoutedStrategy.Tunnel:
+            chain = (sender,)
+        else:
+            chain = ()
+        if not isinstance(args, eventType.ArgsType):
+            raise EventTypeError(f"{args},{type(args)} in type,doesn't match required type {self.ArgsType}.")
+        for elemt in chain:
+            if args.Cancelable and args.IsHandled:
+                break
+            elemt.TryCatchEvent(eventType, sender, args)
+
+    def ShowInLTree(self) -> bool:
+        return True
+
+    def OnAddedIntoTree(self, parent: "UIElement"):
+        self.Parent = parent
 
     @property
-    def VElemParent(self) -> Optional["VisualElement"]:
-        return self._vElemParent
+    def Parent(self) -> Optional["UIElement"]:
+        return self._parent
 
-    @VElemParent.setter
-    def VElemParent(self, value: Optional["VisualElement"]):
-        self._vElemParent = value
+    @Parent.setter
+    def Parent(self, value: Optional["UIElement"]):
+        self._parent = value
 
-    def GetSubVElems(self) -> Collection["VisualElement"]:
-        return self._subVElems
+    def GetChildren(self) -> Collection["UIElement"]:
+        return self._children
 
-    def AddVElem(self, subElem: "VisualElement"):
-        self._subVElems.append(subElem)
-        subElem.VElemParent = self
+    def AddChild(self, subElem: "UIElement"):
+        self._children.append(subElem)
+        subElem.Parent = self
 
-    def RemoveVElem(self, subElem: "VisualElement") -> bool:
-        try:
-            self._subVElems.remove(subElem)
+    def RemoveChild(self, subElem: "UIElement") -> bool:
+        if subElem in self._children:
+            self._children.remove(subElem)
+            subElem.Parent = None
             return True
-        except:
+        else:
             return False
 
-    def IsVElemLeaf(self) -> bool:
-        return len(self.GetSubVElems()) == 0
+    def IsLeaf(self) -> bool:
+        return len(self.GetChildren()) == 0
 
     @property
     def OnRenderContentChanged(self) -> Event:
         """
-        Para 1:VisualElement object
+        Para 1:UIElement object
 
-        :return: Event(VisualElement)
+        :return: Event(UIElement)
         """
         return self._onRenderContentChanged
 
     @property
     def OnPropChanged(self) -> Event:
         """
-        Para 1:VisualElement object
+        Para 1:UIElement object
 
         Para 2:property name
 
-        :return: Event(VisualElement,str)
+        :return: Event(UIElement,str)
         """
         return self._onPropChanged
 
     @property
     def OnAttachPropChanged(self) -> Event:
         """
-        Para 1:VisualElement object
+        Para 1:UIElement object
 
         Para 2:property name
 
-        :return: Event(VisualElement,str)
+        :return: Event(UIElement,str)
         """
         return self._onAttachPropChanged
 
     @property
     def OnLayoutPropChanged(self) -> Event:
         """
-        Para 1:VisualElement object
+        Para 1:UIElement object
 
         Para 2:property name
 
-        :return: Event(VisualElement,str)
+        :return: Event(UIElement,str)
         """
         return self._onLayoutPropChanged
 
     @property
     def OnNormalPropChanged(self) -> Event:
         """
-        Para 1:VisualElement object
+        Para 1:UIElement object
 
         Para 2:property name
 
-        :return: Event(VisualElement,str)
+        :return: Event(UIElement,str)
         """
         return self._onNormalPropChanged
 
@@ -174,82 +203,6 @@ class VisualElement(Painter):
         """
         pass
 
-
-_VElemItType = Callable[[VisualElement], Iterable[VisualElement]]
-
-PreItV: _VElemItType = PreItGen(VisualElement.GetSubVElems)
-PostItV: _VElemItType = PostItGen(VisualElement.GetSubVElems)
-LevelItV: _VElemItType = LevelItGen(VisualElement.GetSubVElems)
-LeafItV: _VElemItType = LeafItGen(VisualElement.GetSubVElems, VisualElement.IsVElemLeaf)
-PrintVTree: Callable[[VisualElement], Collection[str]] = PrintTreeGen(VisualElement.GetSubVElems)
-
-DefaultNotConsumed = (NotConsumed,)
-EventHandlerType = Callable[["LogicalElement", "EventArgs"], None]
-EventHandlerMap = Dict["RoutedEventType", List[EventHandlerType]]
-
-
-class LogicalElement:
-    def __init__(self):
-        super().__init__()
-        self._subLElems: Collection["LogicalElement"] = []
-        self._lElemParent = None
-        self._isFocused = False
-        self._eventHandlers: EventHandlerMap = {}
-
-    @property
-    def EventHandlers(self):
-        return self._eventHandlers
-
-    def TryCatchEvent(self, eventType: "RoutedEventType", sender: "LogicalElement", args: "RoutedEventArgs"):
-        handlers = multiget(self.EventHandlers, eventType)
-        for handler in handlers:
-            if args.IsHandled:
-                break
-            handler(sender, args)
-
-    def AddEventHandler(self, eventType: "RoutedEventType", handler: EventHandlerType):
-        handlers = multiget(self.EventHandlers, eventType)
-        handlers.append(handler)
-
-    def RemoveEventHandler(self, eventType: "RoutedEventType", handler: EventHandlerType) -> bool:
-        handlers = multiget(self.EventHandlers, eventType)
-        try:
-            handlers.remove(handler)
-            return True
-        except:
-            return False
-
-    def ClearEventHandler(self, eventType: "RoutedEventType"):
-        self.EventHandlers[eventType] = []
-
-    def OnAddedInfoLTree(self, parent: "LogicalElement"):
-        self.LElemParent = parent
-
-    def IsLElemLeaf(self) -> bool:
-        return len(self.GetSubLElems()) == 0
-
-    @property
-    def LElemParent(self) -> Optional["LogicalElement"]:
-        return self._lElemParent
-
-    @LElemParent.setter
-    def LElemParent(self, value: Optional["LogicalElement"]):
-        self._lElemParent = value
-
-    def GetSubLElems(self) -> Collection["LogicalElement"]:
-        return self._subLElems
-
-    def AddLElem(self, subElem: "LogicalElement"):
-        self._subLElems.append(subElem)
-        subElem.LElemParent = self
-
-    def RemoveLElem(self, subElem: "LogicalElement") -> bool:
-        try:
-            self._subLElems.remove(subElem)
-            return True
-        except:
-            return False
-
     def OnInput(self, char: chars.char) -> Generator:
         """
         When user types a char
@@ -269,33 +222,47 @@ class LogicalElement:
         self._isFocused = False
 
 
-def GetLElemsSubs(ve: LogicalElement):
-    return ve.GetSubVElems()
+_ElemItType = Callable[[UIElement], Iterable[UIElement]]
 
 
-_LElemItType = Callable[[LogicalElement], Iterable[LogicalElement]]
+def GetChildren(elemt: UIElement) -> Collection[UIElement]:
+    return elemt.GetChildren()
 
-PreItL: _LElemItType = PreItGen(LogicalElement.GetSubLElems)
-PostItL: _LElemItType = PostItGen(LogicalElement.GetSubLElems)
-LevelItL: _LElemItType = LevelItGen(LogicalElement.GetSubLElems)
-LeafItL: _LElemItType = LeafItGen(LogicalElement.GetSubLElems, LogicalElement.IsLElemLeaf)
-PrintLTree: Callable[[LogicalElement], Collection[str]] = PrintTreeGen(LogicalElement.GetSubLElems)
+def IsLeaf(elemt: UIElement) -> bool:
+    return elemt.IsLeaf()
+
+
+def ShowInLTree(elemt: UIElement) -> bool:
+    return elemt.ShowInLTree()
+
+
+PreItV: _ElemItType = PreItGen(GetChildren)
+PostItV: _ElemItType = PostItGen(GetChildren)
+LevelItV: _ElemItType = LevelItGen(GetChildren)
+LeafItV: _ElemItType = LeafItGen(GetChildren, IsLeaf)
+PrintVTree: Callable[[UIElement], Collection[str]] = PrintTreeGen(UIElement.GetChildren)
+
+PreItL: _ElemItType = PreItGen(GetChildren, ShowInLTree)
+PostItL: _ElemItType = PostItGen(GetChildren, ShowInLTree)
+LevelItL: _ElemItType = LevelItGen(GetChildren, ShowInLTree)
+LeafItL: _ElemItType = LeafItGen(GetChildren, IsLeaf, ShowInLTree)
+PrintLTree: Callable[[UIElement], Collection[str]] = PrintTreeGen(GetChildren, ShowInLTree)
 
 
 class FocusWalker:
     def __init__(self):
         super().__init__()
-        self._root: Optional[LogicalElement] = None
+        self._root: Optional[UIElement] = None
         self.seq = []
         self._curIndex: Optional[int] = None
-        self._curFocused: Optional[LogicalElement] = None
+        self._curFocused: Optional[UIElement] = None
 
     @property
-    def CurFocused(self) -> Optional[LogicalElement]:
+    def CurFocused(self) -> Optional[UIElement]:
         return self._curFocused
 
     @CurFocused.setter
-    def CurFocused(self, value: Optional[LogicalElement]):
+    def CurFocused(self, value: Optional[UIElement]):
         old = self._curFocused
         if old != value:
             self._curFocused = value
@@ -324,11 +291,11 @@ class FocusWalker:
                 self.CurFocused = self.seq[value]
 
     @property
-    def Root(self) -> Optional[LogicalElement]:
+    def Root(self) -> Optional[UIElement]:
         return self._root
 
     @Root.setter
-    def Root(self, value: Optional[LogicalElement]):
+    def Root(self, value: Optional[UIElement]):
         self._root = value
 
     def Next(self):
@@ -346,55 +313,21 @@ class FocusWalker:
             self.CurIndex = 0
 
 
-def BubbleParentChain(cur: LogicalElement) -> Tuple[LogicalElement]:
-    parents: List[LogicalElement] = []
-    while (parent := cur.LElemParent) is not None:
+def BubbleParentChain(cur: UIElement) -> Tuple[UIElement]:
+    parents: List[UIElement] = []
+    while (parent := cur.Parent) is not None:
         parents.append(parent)
         cur = parent
 
     return tuple(parents)
 
 
-def BubbleParentIt(cur: LogicalElement) -> Iterable[LogicalElement]:
-    while (parent := cur.LElemParent) is not None:
+def BubbleParentIt(cur: UIElement) -> Iterable[UIElement]:
+    while (parent := cur.Parent) is not None:
         yield parent
         cur = parent
 
 
-class RoutedEventType:
-    def __init__(self, eventType: Type["RoutedEventArgs"]):
-        super().__init__()
-        self._eventType: Type["RoutedEventArgs"] = eventType
-
-    def Raise(self, sender: LogicalElement, args: "RoutedEventArgs", chain: Iterable[LogicalElement]):
-        if not isinstance(args, self.EventType):
-            raise EventTypeError(f"{args},{type(args)} in type,doesn't match required type {self.EventType}.")
-        for elemt in chain:
-            if args.IsHandled:
-                break
-            elemt.TryCatchEvent(self, sender, args)
-
-    @property
-    def EventType(self) -> Type["RoutedEventArgs"]:
-        return self._eventType
-
-    def Bubble(self, sender: LogicalElement, args: "RoutedEventArgs"):
-        self.Raise(sender, args, BubbleParentChain(sender))
-
-    def Preview(self, sender: LogicalElement, args: "RoutedEventArgs"):
-        self.Raise(sender, args, reversed(BubbleParentChain(sender)))
-
-
-class RoutedEventArgs:
-    def __init__(self):
-        super().__init__()
-        self.IsHandled = False
-
-
-class EventTypeError(Exception):
-    def __init__(self, *args: object):
-        super().__init__(*args)
-
-
-class DpProp:
-    pass
+UIElement.IsVisible = DpProp.Register("IsVisible", bool, UIElement, DpPropMeta())
+UIElement.NeedReRenderEvent = RoutedEventType.Register(
+    "NeedReRender", UIElement, RoutedEventArgs, RoutedStrategy.Bubble)

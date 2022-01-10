@@ -11,9 +11,9 @@ class DisplayBoard(Control):
         self._rWidth = 0
         self._rHeight = 0
         self.border = Border(theme)
-        self.AddVElem(self.border)
+        self.AddChild(self.border)
 
-    def OnAddedInfoVTree(self, parent: "VisualElement"):
+    def OnAddedIntoTree(self, parent: "UIElement"):
         pass
 
     @property
@@ -24,10 +24,10 @@ class DisplayBoard(Control):
     def Inner(self, value: Optional[Control]):
         old = self.border.Inner
         if old != value:
-            self.RemoveLElem(old)
+            self.RemoveChild(old)
             self.border.Inner = value
             if value:
-                self.AddLElem(value)
+                self.AddChild(value)
 
     def PaintOn(self, canvas: Canvas):
         rw = self.render_width

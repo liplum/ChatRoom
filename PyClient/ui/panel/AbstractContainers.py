@@ -11,10 +11,10 @@ class AbstractContainer(Control):
         pass
 
     def AddControl(self, control: Control):
-        AutoAdd(self,control)
+        self.AddChild(control)
 
-    def RemoveControl(self, control: Control):
-        AutoRemove(self,control)
+    def RemoveControl(self, control: Control) -> bool:
+        return self.RemoveChild(control)
 
     @property
     def SubControls(self):

@@ -4,7 +4,7 @@ from ui.themes import theme, rounded_rectangle
 NoneType = type(None)
 
 
-class Border(VisualElement):
+class Border(UIElement):
 
     def __init__(self, theme: theme = rounded_rectangle):
         super().__init__()
@@ -22,10 +22,10 @@ class Border(VisualElement):
         old = self._inner
         if old != value:
             if old:
-                self.RemoveVElem(old)
+                self.RemoveChild(old)
             self._inner = value
             if value:
-                self.AddVElem(value)
+                self.AddChild(value)
             self.OnInnerChanged(self, old, value)
 
     @property
@@ -40,3 +40,6 @@ class Border(VisualElement):
         :return: Event(Border,Optional[Control],Optional[Control])
         """
         return self._onInnerChanged
+
+    def ShowInLTree(self) -> bool:
+        return False

@@ -35,17 +35,17 @@ class notifiable:
     @property
     def OnRenderContentChanged(self) -> Event:
         """
-        Para 1:VisualElement object
+        Para 1:UIElement object
 
-        :return: Event(VisualElement)
+        :return: Event(UIElement)
         """
         return self._onRenderContentChanged
 
     @property
     def on_content_changed(self) -> Event:
         """
-        Para 1:VisualElement object
+        Para 1:UIElement object
 
-        :return: Event(VisualElement)
+        :return: Event(UIElement)
         """
         return self._onRenderContentChanged

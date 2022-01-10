@@ -9,6 +9,58 @@ from ui.panel.DisplayBoards import DisplayBoard
 from ui.tabs import *
 
 
+class TestTabA(tab):
+
+    def __init__(self, client: IClient, tablist: tablist):
+        super().__init__(client, tablist)
+        c = AbstractContainer()
+        self.t_container = c
+        self.t_label = label("Test")
+        self.t_button = button("Button", lambda: None)
+        self.t_button.width = 10
+        self.t_checkbox = checkbox(True)
+        self.t_tbox = XtextWrapper(TextArea())
+        self.t_tbox.on_content_changed.Add(lambda _: self.OnRenderContentChanged(self))
+        self.t_tbox.width = 30
+        self.t_tbox.height = auto
+        self.db = DisplayBoard()
+        self.db.Inner = self.t_tbox
+        self.dx = 0
+        self.dy = 0
+        c.AddControl(self.t_label)
+        c.AddControl(self.t_button)
+        c.AddControl(self.t_checkbox)
+        c.AddControl(self.t_tbox)
+        c.AddControl(self.db)
+        self.AddChild(self.t_container)
+
+        self.AddEventHandler(UIElement.NeedReRenderEvent, lambda sender, args: self.OnRenderContentChanged(self))
+
+    @property
+    def title(self) -> str:
+        return "Test"
+
+    def PaintOn(self, canvas: Canvas):
+        w = StrWriter(canvas, autoWrap=True)
+        for v in PrintVTree(self):
+            w.Write(v)
+            w.NextLine()
+
+        w.NextLine()
+        for v in PrintLTree(self):
+            w.Write(v)
+            w.NextLine()
+
+    def on_input(self, char: chars.char) -> Generator:
+        if chars.c_a == char:
+            common_hotkey(char, self, self.client, self.tablist, self.win)
+        elif chars.c_p == char:
+            self.t_tbox.Raise(UIElement.NeedReRenderEvent, self.t_tbox, RoutedEventArgs(False))
+        else:
+            self.t_tbox.on_input(char)
+        yield Finished
+
+
 class TestTab(tab):
 
     def __init__(self, client: IClient, tablist: tablist):
@@ -32,6 +84,16 @@ class TestTab(tab):
         c.AddControl(self.t_checkbox)
         c.AddControl(self.t_tbox)
         c.AddControl(self.db)
+        self.tta = TestTabA(client, tablist)
+        c.AddControl(self.tta)
+        self.AddChild(self.t_container)
+        self.ShowLogo = False
+
+        def switchShowLogo():
+            self.ShowLogo = not self.ShowLogo
+
+        self.AddEventHandler(UIElement.NeedReRenderEvent,
+                             lambda sender, args: self.OnRenderContentChanged(self) or switchShowLogo())
 
     @property
     def title(self) -> str:
@@ -39,38 +101,27 @@ class TestTab(tab):
 
     def PaintOn(self, canvas: Canvas):
         w = StrWriter(canvas, autoWrap=True)
-        for v in PrintVTree(self.t_container):
+        for v in PrintVTree(self):
             w.Write(v)
             w.NextLine()
 
         w.NextLine()
-        for v in PrintLTree(self.t_container):
+        for v in PrintLTree(self):
             w.Write(v)
             w.NextLine()
 
-        """
-        v = Viewer.ByCanvas(canvas)
-        self.t_label.PaintOn(v.Sub(0, 0, v.Width, 1))
-        self.t_button.PaintOn(v.Sub(0, 1, v.Width, 1))
-        self.t_checkbox.PaintOn(v.Sub(0, 2, v.Width, 1))
+        self.tta.PaintOn(Viewer(30, 30, 40, 20, canvas))
 
-        self.t_tbox.PaintOn(v.Sub(0, 3, 20, 8))
-        dbX = self.dx
-        dbY = self.dy + 5
-        if dbX >= canvas.Width + 20 or dbX <= 0:
-            self.dx = 0
-            dbX = 0
-        if dbY >= canvas.Height + 4 or dbY <= 0:
-            self.dy = 0
-            dbY = 0
-        self.db.PaintOn(v.Sub(dbX, dbY, 20, 8))
-        # self.dx += 1
-        # self.dy += 1
-        """
+        if self.ShowLogo:
+            for i in range(10, 20):
+                for j in range(10, 20):
+                    canvas.Char(i, j, "-")
 
     def on_input(self, char: chars.char) -> Generator:
         if chars.c_a == char:
             common_hotkey(char, self, self.client, self.tablist, self.win)
+        elif chars.c_p == char:
+            self.t_tbox.Raise(UIElement.NeedReRenderEvent, self.t_tbox, RoutedEventArgs(False))
         else:
             self.t_tbox.on_input(char)
         yield Finished
