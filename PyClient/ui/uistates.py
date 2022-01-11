@@ -1,6 +1,6 @@
 from states import *
-from ui.control.textboxes import textbox
 from ui.Core import IClient
+from ui.control.textboxes import textbox
 from ui.shared import *
 from ui.tabs import tablist
 

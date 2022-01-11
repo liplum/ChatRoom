@@ -199,6 +199,24 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
             del self._attachProps[key]
         return self
 
+    @property
+    def Width(self):
+        return self._width
+
+    @Width.setter
+    def Width(self, value: PROP):
+        if self._width != value:
+            self._width = value
+
+    @property
+    def Height(self):
+        return self._height
+
+    @Height.setter
+    def Height(self, value: PROP):
+        if self._height != value:
+            self._height = value
+
 
 class text_control(Control, ABC):
 

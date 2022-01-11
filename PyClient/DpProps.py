@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable, Dict, Optional,NoReturn
+from typing import Callable, Dict, Optional, NoReturn
 from typing import List, Type
 
 from Events import Event

@@ -1,8 +1,8 @@
 from typing import List, Optional
 
 import utils
-from ui.Renders import Canvas
 from ui.Controls import auto, Control, PROP
+from ui.Renders import Canvas
 from ui.outputs import buffer
 from ui.panels import panel
 

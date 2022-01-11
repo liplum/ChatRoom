@@ -75,17 +75,16 @@ class TestTab(tab):
         self.t_tbox.on_content_changed.Add(lambda _: self.OnRenderContentChanged(self))
         self.t_tbox.width = 30
         self.t_tbox.height = auto
+        self.t_tbox.InputList = "Test Input Box"
         self.db = DisplayBoard()
         self.db.Inner = self.t_tbox
         self.dx = 0
         self.dy = 0
-        c.AddControl(self.t_label)
         c.AddControl(self.t_button)
         c.AddControl(self.t_checkbox)
-        c.AddControl(self.t_tbox)
         c.AddControl(self.db)
-        self.tta = TestTabA(client, tablist)
-        c.AddControl(self.tta)
+        # self.tta = TestTabA(client, tablist)
+        # c.AddControl(self.tta)
         self.AddChild(self.t_container)
         self.ShowLogo = False
 
@@ -100,7 +99,8 @@ class TestTab(tab):
         return "Test"
 
     def PaintOn(self, canvas: Canvas):
-        w = StrWriter(canvas, autoWrap=True)
+
+        w = StrWriter(canvas, x=21, autoWrap=True)
         for v in PrintVTree(self):
             w.Write(v)
             w.NextLine()
@@ -110,8 +110,12 @@ class TestTab(tab):
             w.Write(v)
             w.NextLine()
 
-        self.tta.PaintOn(Viewer(15, 2, 40, 20, canvas))
+        for e in PostItV(self.db):
+            e.Measure()
+        self.db.Arrange(20, 20)
+        self.db.PaintOn(canvas)
 
+        # self.tta.PaintOn(Viewer(15, 2, 40, 20, canvas))
         if self.ShowLogo:
             for i in range(10, 20):
                 for j in range(10, 20):

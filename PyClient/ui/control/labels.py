@@ -43,15 +43,6 @@ class label(Control):
                 content = utils.fillto(content, " ", self.width)
         buf.addtext(content, end="")
 
-    def PaintOn(self, canvas: Canvas):
-        content = self.content()
-        rw = self.render_width
-        if rw < len(content):
-            content = content[0:self.width]
-        elif rw > len(content):
-            content = utils.fillto(content, " ", self.width)
-        canvas.Str(0, 0, content)
-
     @width.setter
     def width(self, value: int):
         if self.width != value:
@@ -73,21 +64,31 @@ class label(Control):
         else:
             self._r_width = self.width
 
-    def Arrange(self, width: Optional[int] = None, height: Optional[int] = None):
-        if not self.IsLayoutChanged:
-            return
-        if limited:
-            self.IsLayoutChanged = False
-        if limited:
-            if self.width == auto:
-                self._r_width = min(len(self.content()), width)
-            else:
-                self._r_width = min(self.width, width)
+    def Arrange(self, width: int, height: int) -> Tuple[int, int]:
+        if self.Width == auto:
+            self.RenderWidth = min(len(self.content()), width)
         else:
-            if self.width == auto:
-                self._r_width = len(self.content())
-            else:
-                self._r_width = self.width
+            self.RenderWidth = min(self.Width, width)
+        if self.Height == auto:
+            self.RenderHeight = 1
+        else:
+            self.RenderHeight = min(self.Height, height)
+        return self.RenderWidth, self.RenderHeight
+
+    def Measure(self):
+        if self.Width == auto:
+            self.DWidth = len(self.content())
+        else:
+            self.DWidth = self.Width
+        if self.Height == auto:
+            self.DHeight = 1
+        else:
+            self.DHeight = self.Height
+
+    def PaintOn(self, canvas: Canvas):
+        content = self.content()
+        sw = StrWriter(canvas)
+        sw.Write(content)
 
     @property
     def render_width(self) -> int:

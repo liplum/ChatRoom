@@ -1,5 +1,3 @@
-from typing import NoReturn
-
 import keys
 from ui.Controls import *
 from ui.outputs import buffer, CmdBkColor, CmdFgColor, tintedtxtIO

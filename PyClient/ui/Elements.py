@@ -142,54 +142,36 @@ class UIElement(Painter, DpObj):
         return self._onNormalPropChanged
 
     @property
-    def Width(self):
-        return self._width
-
-    @Width.setter
-    def Width(self, value: PROP):
-        if self._width != value:
-            self._width = value
-
-    @property
-    def Height(self):
-        return self._height
-
-    @Height.setter
-    def Height(self, value: PROP):
-        if self._height != value:
-            self._height = value
-
-    @property
     def DWidth(self):
-        return
+        return self._dWidth
 
     @DWidth.setter
     def DWidth(self, value):
-        pass
+        self._dWidth = value
 
     @property
     def DHeight(self):
-        return
+        return self._dHeight
 
     @DHeight.setter
     def DHeight(self, value):
-        pass
+        self._dHeight = value
 
     @property
     def RenderWidth(self):
-        return
+        return self._renderWidth
 
     @RenderWidth.setter
     def RenderWidth(self, value):
-        pass
+        self._renderWidth = value
 
     @property
     def RenderHeight(self):
-        return
+        return self._renderHeight
 
     @RenderHeight.setter
     def RenderHeight(self, value):
-        pass
+        self._renderHeight = value
 
     def Measure(self):
         pass
@@ -227,6 +209,7 @@ _ElemItType = Callable[[UIElement], Iterable[UIElement]]
 
 def GetChildren(elemt: UIElement) -> Collection[UIElement]:
     return elemt.GetChildren()
+
 
 def IsLeaf(elemt: UIElement) -> bool:
     return elemt.IsLeaf()

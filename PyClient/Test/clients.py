@@ -1,10 +1,12 @@
 import os
 import platform
 import traceback
+from threading import Thread
 
 import GLOBAL
 import ioc as ioc
 import tasks
+import ui.Renders as renders
 import ui.inputs as _input
 import ui.outputs as output
 from Test.windows import TestApp
@@ -12,10 +14,9 @@ from core.chats import *
 from core.filer import ifiler, filer
 from core.operations import *
 from timers import timer
-from ui.Renders import IRender
 from ui.Core import *
-import ui.Renders as renders
-from threading import Thread
+from ui.Renders import IRender
+
 system_type = platform.system()
 
 

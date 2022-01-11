@@ -1,9 +1,9 @@
 import random
 
 import ui.themes as themes
+from ui.Controls import *
 from ui.control.buttons import button
 from ui.control.labels import label
-from ui.Controls import *
 from ui.outputs import *
 
 T = TypeVar('T')

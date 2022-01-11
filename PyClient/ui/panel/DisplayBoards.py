@@ -24,96 +24,48 @@ class DisplayBoard(Control):
     def Inner(self, value: Optional[Control]):
         old = self.border.Inner
         if old != value:
-            self.RemoveChild(old)
             self.border.Inner = value
-            if value:
-                self.AddChild(value)
 
     def PaintOn(self, canvas: Canvas):
-        rw = self.render_width
-        rh = self.render_height
+        rw = self.RenderWidth
+        rh = self.RenderHeight
         if rw <= 0 and rh <= 0:
             return
-        theme = self.Theme
-        canvas.Char(0, 0, theme.LeftTop)  # left top
-        canvas.Char(0, rh - 1, theme.LeftBottom)  # left bottom
-        canvas.Char(rw - 1, 0, theme.RightTop)  # right top
-        canvas.Char(rw - 1, rh - 1, theme.RightBottom)  # right bottom
-        for w in range(1, rw - 1):
-            canvas.Char(w, 0, theme.Horizontal)
-            canvas.Char(w, rh - 1, theme.Horizontal)
-        for h in range(1, rh - 1):
-            canvas.Char(0, h, theme.Vertical)
-            canvas.Char(rw - 1, h, theme.Vertical)
-        if self.Inner:
-            innerViewer = Viewer(1, 1, rw - 2, rh - 2, canvas)
-            self.Inner.PaintOn(innerViewer)
+        self.border.PaintOn(Viewer.ByCanvas(canvas))
 
     def Measure(self):
-        dWidth = self.width
-        dHeight = self.height
-        inner = self.Inner
-        if inner and (dWidth == auto or dHeight == auto):
-            inner.Measure()
+        dWidth = self.Width
+        dHeight = self.Height
+        border = self.border
         if dWidth == auto:
-            w = inner.width + 2
+            w = border.DWidth
         else:
             w = dWidth
 
-        if inner:
-            inner.width = w - 2
-
         if dHeight == auto:
-            h = inner.height + 2
+            h = border.DHeight
         else:
             h = dHeight
+        self.DWidth = w
+        self.DHeight = h
 
-        if inner:
-            inner.height = h - 2
-
-        self._rWidth = w
-        self._rHeight = h
-
-    def Arrange(self, width: Optional[int] = None, height: Optional[int] = None):
-        dWidth = self.width
-        dHeight = self.height
-        inner = self.Inner
-        if inner and (dWidth == auto or dHeight == auto):
-            inner.Measure()
-        if not self.IsLayoutChanged:
-            return
-        if limited:
-            self.IsLayoutChanged = False
-        oldw = self._rWidth
-        oldh = self._rHeight
-
+    def Arrange(self, width: int, height: int) -> Tuple[int, int]:
+        dWidth = self.Width
+        dHeight = self.Height
+        border = self.border
         if dWidth == auto:
-            if limited:
-                w = min(inner.render_width + 2, width)
-            else:
-                w = inner.width + 2
+            bw = min(border.DWidth, width)
         else:
-            w = dWidth
-
-        if inner:
-            inner.width = w - 2
+            bw = min(border.Width, width, dWidth)
 
         if dHeight == auto:
-            if limited:
-                h = min(inner.render_height + 2, height)
-            else:
-                h = inner.height + 2
+            bh = min(border.DWidth, width)
         else:
-            h = dHeight
-
-        if inner:
-            inner.height = h - 2
-
-        self._rWidth = w
-        self._rHeight = h
-        if oldw != w or oldh != h:
-            self.OnLayoutChanged(self)
-            inner.Arrange(self.render_width - 2, self.render_height - 2)
+            bh = min(border.Width, width, dHeight)
+        rbw, rbh = border.Arrange(bw, bh)
+        self.RenderWidth = rbw
+        self.RenderHeight = rbh
+        return self.RenderWidth, self.RenderHeight
 
     @property
     def render_height(self) -> int:

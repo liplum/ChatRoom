@@ -1,16 +1,17 @@
 from abc import ABCMeta
 from threading import RLock
-from typing import List, Dict, Generator, Hashable, Set
+from typing import Hashable, Set
 
 import GLOBAL
 import utils
 from GLOBAL import StringIO
-from ui.Renders import *
+from ui.Controls import Control
 from ui.Core import *
+from ui.Renders import *
 from ui.coroutines import Finished
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
 from utils import is_in
-from ui.Controls import Control
+
 tab_name2type: Dict[str, type] = {}
 tab_type2name: Dict[type, str] = {}
 

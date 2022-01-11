@@ -1,6 +1,11 @@
 import math
+from io import StringIO
 
 from ui.Controls import *
+
+AreaExtendMode = str
+Extend = "Extend"
+Minimum = "Minimum"
 
 
 class TextArea(text_control):
@@ -18,6 +23,7 @@ class TextArea(text_control):
         self._onPreAppend = Event(TextArea, str, cancelable=True)
         self._rWidth = 0
         self._rHeight = 0
+        self._areaExtendMode: AreaExtendMode = Extend
         self._maxInputsCount = unlimited
         self._locked = False
         self.OnAppend.Add(self._onAppendOrDeleteOrReplace)
@@ -32,10 +38,18 @@ class TextArea(text_control):
         self.on_content_changed(self)
         self.IsLayoutChanged = True
 
+    @property
+    def AreaExtendMode(self):
+        return self._areaExtendMode
+
+    @AreaExtendMode.setter
+    def AreaExtendMode(self, value):
+        self._areaExtendMode = value
+
     def Measure(self):
         num = self.InputLength + len(self.CursorIcon)
-        dwidth = self.width
-        dheight = self.height
+        dwidth = self.Width
+        dheight = self.Height
         if dwidth == auto:
             w = num
         else:
@@ -44,30 +58,32 @@ class TextArea(text_control):
             h = math.ceil(num / w)
         else:
             h = dheight
-        self._rWidth = w
-        self._rHeight = h
+        self.DWidth = w
+        self.DHeight = h
 
-    def Arrange(self, width: int, height: int):
-        if not self.IsLayoutChanged:
-            return
-        self.IsLayoutChanged = False
+    def Arrange(self, width: int, height: int) -> Tuple[int, int]:
         num = self.InputLength + len(self.CursorIcon)
         dwidth = self.width
         dheight = self.height
-        oldw = self._rWidth
-        oldh = self._rHeight
         if dwidth == auto:
-            w = min(num, width)
+            mode = self.AreaExtendMode
+            if mode == Extend:
+                w = max(num, width)
+            elif mode == Minimum:
+                w = min(num, width)
         else:
             w = min(dwidth, width)
         if dheight == auto:
-            h = min(math.ceil(num / w), height)
+            if w != 0:
+                dh = math.ceil(num / w)
+            else:
+                dh = 1
+            h = min(dh, height)
         else:
             h = min(dheight, height)
-        self._rWidth = w
-        self._rHeight = h
-        if oldw != w or oldh != h:
-            self.OnLayoutChanged(self)
+        self.RenderWidth = w
+        self.RenderHeight = h
+        return self.RenderWidth, self.RenderHeight
 
     def PaintOn(self, canvas: Canvas):
         bk = BK.White if self.is_focused else None
@@ -193,7 +209,18 @@ class TextArea(text_control):
 
     @property
     def InputString(self) -> str:
-        return utils.compose(self._inputList, connector='')
+        with StringIO() as temp:
+            c = 0
+            cursor = self.Cursor
+            icon = self.CursorIcon
+            for res in self._inputList:
+                if c == cursor:
+                    temp.write(icon)
+                c += 1
+                temp.write(res)
+            if c == cursor:
+                temp.write(icon)
+            return temp.getvalue()
 
     def Lock(self):
         self._locked = True
