@@ -1,12 +1,12 @@
 from ui.Controls import *
-from ui.themes import theme, rounded_rectangle
+from ui.themes import BorderTheme, rounded_rectangle
 
 NoneType = type(None)
 
 
 class Border(UIElement):
 
-    def __init__(self, theme: theme = rounded_rectangle):
+    def __init__(self, theme: BorderTheme = rounded_rectangle):
         super().__init__()
         self.Theme = theme
         self._inner: Optional[Control] = None

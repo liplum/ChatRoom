@@ -1,6 +1,6 @@
 from ui.Controls import *
 from ui.outputs import buffer
-from ui.themes import vanilla, ThemeGetter, is_theme
+from ui.themes import vanilla, BorderThemeGetter, BorderTheme
 
 DisplayAlignment = int
 DCenter = 0
@@ -51,7 +51,7 @@ class display_board(text_control):
     """
 
     def __init__(self, contents: ContentsGetter, alignments: Union[AlignmentInfo, AlignmentList] = None,
-                 theme: ThemeGetter = vanilla):
+                 theme: BorderThemeGetter = vanilla):
         super().__init__()
         if isinstance(contents, Collection):
             self.contents = lambda: contents
@@ -61,7 +61,7 @@ class display_board(text_control):
             self.alignments: AlignmentInfo = AlignmentInfoWrap(alignments)
         else:
             self.alignments = alignments
-        if is_theme(theme):
+        if isinstance(theme, BorderTheme):
             self.theme = lambda: theme
         else:
             self.theme = theme
@@ -87,11 +87,11 @@ class display_board(text_control):
             end = self.render_height - 1
             for i in range(self.render_height):
                 utils.repeatIO(s, ' ', self.left_margin)
-                if i == start:  # first line-- a horizontal line
-                    horizontal_lineIO(s, render_width, theme.left_top, theme.right_top, theme.horizontal)
+                if i == start:  # first line-- a Horizontal line
+                    horizontal_lineIO(s, render_width, theme.LeftTop, theme.RightTop, theme.Horizontal)
                     s.write('\n')
-                elif i == end:  # last line -- a horizontal line
-                    horizontal_lineIO(s, render_width, theme.left_bottom, theme.right_bottom, theme.horizontal)
+                elif i == end:  # last line -- a Horizontal line
+                    horizontal_lineIO(s, render_width, theme.LeftBottom, theme.RightBottom, theme.Horizontal)
                     s.write('\n')
                 elif 0 <= i - self._vertical_margin - 1 < contents_len:  # content in the middle
                     index = i - self._vertical_margin - 1
@@ -99,11 +99,11 @@ class display_board(text_control):
                     content_len = len(content)
                     if content_len >= render_width - 2:
                         content = content[0:render_width - 2]
-                        s.write(theme.vertical)
+                        s.write(theme.Vertical)
                         self._render_charsIO(s, content)
-                        s.write(theme.vertical)
+                        s.write(theme.Vertical)
                     else:
-                        s.write(theme.vertical)
+                        s.write(theme.Vertical)
                         alignment = _GA(alignments, index, contents_len)
                         if alignment == DCenter:
                             cur_hor_margin = (render_width - content_len - 2) // 2
@@ -120,10 +120,10 @@ class display_board(text_control):
                             rest = render_width - 2 - content_len
                             utils.repeatIO(s, ' ', rest)
                             self._render_charsIO(s, content)
-                        s.write(theme.vertical)
+                        s.write(theme.Vertical)
                     s.write('\n')
                 else:  # blank line
-                    horizontal_lineIO(s, render_width, theme.vertical, theme.vertical, ' ')
+                    horizontal_lineIO(s, render_width, theme.Vertical, theme.Vertical, ' ')
                     s.write('\n')
             buf.addtext(s.getvalue(), end='')
 

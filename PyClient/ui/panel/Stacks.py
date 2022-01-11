@@ -13,8 +13,8 @@ align_right = "align_right"
 expend = "expend"
 center = "center"
 Orientation = str
-horizontal = "horizontal"
-vertical = "vertical"
+horizontal = "Horizontal"
+vertical = "Vertical"
 OverRange = str
 discard = "discard"
 
@@ -44,7 +44,7 @@ class Stack(panel):
                     self._r_elemt_interval = self.height // self.elemts_total_height
             else:
                 self._r_elemt_interval = self.elemt_interval
-        else:  # horizontal
+        else:  # Horizontal
             if self.elemt_interval == auto:
                 if self.width == auto:
                     self._r_elemt_interval = 1

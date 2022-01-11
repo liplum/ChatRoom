@@ -210,7 +210,7 @@ class cmd_mode(ui_state):
             self.cmd_history_index = 0
         if up_or_down:
             saved = False
-            if self.cmd_history_index == 0 and self.textbox.input_count > 0:
+            if self.cmd_history_index == 0 and self.textbox.InputLength > 0:
                 # save current text
                 input_list = self.textbox.input_list
                 cur_content = utils.compose(input_list, connector='')

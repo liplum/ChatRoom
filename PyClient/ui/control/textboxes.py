@@ -16,7 +16,7 @@ class textbox(TextArea):
             return
         self.IsLayoutChanged = False
         if self.width == auto:
-            self._rWidth = self.input_count + len(self.cursor_icon)
+            self._rWidth = self.InputLength + len(self.CursorIcon)
         else:
             self._rWidth = self.width
 

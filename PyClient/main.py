@@ -37,18 +37,6 @@ if "S" in extra:
 if IDE:
     utils.clear_screen = lambda: None
 
-import core.settings as settings
-import configs
-
-for config in configs.configs:
-    settings.add(config)
-
-settings.load()
-configurations = settings.entity()
-import i18n
-
-i18n.load(configurations.Language)
-
 server_ip = "127.0.0.1"
 port = 25000
 LOGIN = False
@@ -71,9 +59,23 @@ def detect_debug_attach():
     input("Attach the process and enter any text to start:")
 
 
+if GLOBAL.DEBUG:
+    detect_debug_attach()
+
+import core.settings as settings
+import configs
+
+for config in configs.configs:
+    settings.add(config)
+
+settings.load()
+configurations = settings.entity()
+import i18n
+
+i18n.load(configurations.Language)
+
+
 def main():
-    if GLOBAL.DEBUG:
-        detect_debug_attach()
     from ui.Clients import Client
     _client = Client()
     _client.on_service_register.Add(init_plugin)

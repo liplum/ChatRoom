@@ -4,7 +4,7 @@ from collections import deque
 from ui.control.display_boards import horizontal_lineIO
 from ui.Controls import *
 from ui.outputs import buffer
-from ui.themes import theme, vanilla
+from ui.themes import BorderTheme, vanilla
 
 Word = str
 Words = Iterable[str]
@@ -23,7 +23,7 @@ class textblock(text_control):
     └────────────────────────────────┘
     """
 
-    def __init__(self, words: WordsGetter, theme: theme = vanilla):
+    def __init__(self, words: WordsGetter, theme: BorderTheme = vanilla):
         super().__init__()
         if isinstance(words, Iterable):
             self.words = lambda: words
@@ -46,13 +46,13 @@ class textblock(text_control):
             words = deque(self.words())
             theme = self.theme
             utils.repeatIO(s, ' ', self.left_margin)
-            horizontal_lineIO(s, render_width, theme.left_top, theme.right_top, theme.horizontal)
+            horizontal_lineIO(s, render_width, theme.LeftTop, theme.RightTop, theme.Horizontal)
             if render_height == 1:
                 buf.addtext(s.getvalue(), end='')
                 return
             if render_height == 2:
                 utils.repeatIO(s, ' ', self.left_margin)
-                horizontal_lineIO(s, render_width, theme.left_bottom, theme.right_bottom, theme.horizontal)
+                horizontal_lineIO(s, render_width, theme.LeftBottom, theme.RightBottom, theme.Horizontal)
                 buf.addtext(s.getvalue(), end='')
                 return
 
@@ -76,23 +76,23 @@ class textblock(text_control):
             while len(words) > 0:
                 cur = words.popleft()
                 if cur_pos == text_area_width:
-                    s.write(theme.vertical)
+                    s.write(theme.Vertical)
                     s.write('\n')
                     cur_pos = 0
                 if cur_pos == 0:
                     utils.repeatIO(s, ' ', self.left_margin)
-                    s.write(theme.vertical)
+                    s.write(theme.Vertical)
                 used = write_word(cur)
                 if not used:
                     words.appendleft(cur)
 
             rest_len = text_area_width - cur_pos
             utils.repeatIO(s, ' ', rest_len)
-            s.write(theme.vertical)
+            s.write(theme.Vertical)
 
             s.write('\n')
             utils.repeatIO(s, ' ', self.left_margin)
-            horizontal_lineIO(s, render_width, theme.left_bottom, theme.right_bottom, theme.horizontal)
+            horizontal_lineIO(s, render_width, theme.LeftBottom, theme.RightBottom, theme.Horizontal)
 
             buf.addtext(s.getvalue(), end='')
 

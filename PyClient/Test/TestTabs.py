@@ -110,7 +110,7 @@ class TestTab(tab):
             w.Write(v)
             w.NextLine()
 
-        self.tta.PaintOn(Viewer(30, 30, 40, 20, canvas))
+        self.tta.PaintOn(Viewer(15, 2, 40, 20, canvas))
 
         if self.ShowLogo:
             for i in range(10, 20):

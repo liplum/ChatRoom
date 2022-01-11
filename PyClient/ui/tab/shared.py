@@ -71,14 +71,14 @@ def split_textblock_words(key: str, *args, **kwargs) -> List[str]:
             return [text]
 
 
-def tinted_theme(theme: themes.theme) -> themes.theme:
-    t = theme.copy()
-    t.left_top = tintedtxt(t.left_top, fgcolor=CmdFgColor.Blue)
-    t.right_top = tintedtxt(t.right_top, fgcolor=CmdFgColor.Blue)
-    t.left_bottom = tintedtxt(t.left_bottom, fgcolor=CmdFgColor.Blue)
-    t.right_bottom = tintedtxt(t.right_bottom, fgcolor=CmdFgColor.Blue)
-    t.horizontal = tintedtxt(t.horizontal, fgcolor=CmdFgColor.Red)
-    t.vertical = tintedtxt(t.vertical, fgcolor=CmdFgColor.Green)
+def tinted_theme(theme: themes.BorderTheme) -> themes.BorderTheme:
+    t = theme.Copy()
+    t.LeftTop = tintedtxt(t.LeftTop, fgcolor=CmdFgColor.Blue)
+    t.RightTop = tintedtxt(t.RightTop, fgcolor=CmdFgColor.Blue)
+    t.LeftBottom = tintedtxt(t.LeftBottom, fgcolor=CmdFgColor.Blue)
+    t.RightBottom = tintedtxt(t.RightBottom, fgcolor=CmdFgColor.Blue)
+    t.Horizontal = tintedtxt(t.Horizontal, fgcolor=CmdFgColor.Red)
+    t.Vertical = tintedtxt(t.Vertical, fgcolor=CmdFgColor.Green)
     return t
 
 
@@ -98,34 +98,34 @@ def random_style() -> CmdStyleEnum:
     return random.choice(CmdStyles)
 
 
-class chaos_theme(themes.packed_theme):
+class chaos_theme(themes.SimpleBorderTheme):
 
     @property
-    def left_top(self) -> str:
-        return tintedtxt(self._left_top, fgcolor=random_fgcolor())
+    def LeftTop(self) -> str:
+        return tintedtxt(self._leftTop, fgcolor=random_fgcolor())
 
     @property
-    def right_top(self) -> str:
-        return tintedtxt(self._right_top, fgcolor=random_fgcolor())
+    def RightTop(self) -> str:
+        return tintedtxt(self._rightTop, fgcolor=random_fgcolor())
 
     @property
-    def left_bottom(self) -> str:
-        return tintedtxt(self._left_bottom, fgcolor=random_fgcolor())
+    def LeftBottom(self) -> str:
+        return tintedtxt(self._leftBottom, fgcolor=random_fgcolor())
 
     @property
-    def right_bottom(self) -> str:
-        return tintedtxt(self._right_bottom, fgcolor=random_fgcolor())
+    def RightBottom(self) -> str:
+        return tintedtxt(self._rightBottom, fgcolor=random_fgcolor())
 
     @property
-    def horizontal(self) -> str:
+    def Horizontal(self) -> str:
         return tintedtxt(self._horizontal, fgcolor=random_fgcolor())
 
     @property
-    def vertical(self) -> str:
+    def Vertical(self) -> str:
         return tintedtxt(self._vertical, fgcolor=random_fgcolor())
 
 
-chaos_tube = themes.copy_packed_theme(themes.tube, chaos_theme)
+chaos_tube = chaos_theme.FromOther(themes.tube)
 
 
 def colorize(text: str) -> str:

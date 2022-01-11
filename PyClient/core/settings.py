@@ -141,13 +141,19 @@ def all_customizable() -> Dict[str, config]:
 
 class settings:
     def __init__(self, meta: Dict[str, config]):
-        self._meta = meta
+        self._meta: Dict[str, config] = meta
         self.all_settings: Dict[str, T] = {}
 
-    def __getattr__(self, item) -> Optional[T]:
+    def __getattr__(self, item) -> Optional[Any]:
         return self.get(item)
 
-    def get(self, item):
+    def __setattr__(self, key, value):
+        if key == "all_settings" or key == "_meta":
+            self.__dict__[key] = value
+        else:
+            self.set(key, value)
+
+    def get(self, item) -> Optional[Any]:
         item = str(item)
         if item in self.all_settings:
             return self.all_settings[item]
@@ -162,14 +168,12 @@ class settings:
 
     def set(self, key: str, value: T):
         self.all_settings[key] = value
-        self.__dict__[key] = value
 
     def __getitem__(self, item):
         return self.get(item)
 
     def __setitem__(self, key, value):
-        key = str(key)
-        self.set(key, value)
+        self.set(str(key), value)
 
 
 _settings: Optional[settings] = None

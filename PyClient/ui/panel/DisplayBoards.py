@@ -1,12 +1,12 @@
 from ui.Controls import *
-from ui.themes import theme, rounded_rectangle
+from ui.themes import BorderTheme, rounded_rectangle
 
 NoneType = type(None)
 from ui.panel.Borders import Border
 
 
 class DisplayBoard(Control):
-    def __init__(self, theme: theme = rounded_rectangle):
+    def __init__(self, theme: BorderTheme = rounded_rectangle):
         super().__init__()
         self._rWidth = 0
         self._rHeight = 0
@@ -35,16 +35,16 @@ class DisplayBoard(Control):
         if rw <= 0 and rh <= 0:
             return
         theme = self.Theme
-        canvas.Char(0, 0, theme.left_top)  # left top
-        canvas.Char(0, rh - 1, theme.left_bottom)  # left bottom
-        canvas.Char(rw - 1, 0, theme.right_top)  # right top
-        canvas.Char(rw - 1, rh - 1, theme.right_bottom)  # right bottom
+        canvas.Char(0, 0, theme.LeftTop)  # left top
+        canvas.Char(0, rh - 1, theme.LeftBottom)  # left bottom
+        canvas.Char(rw - 1, 0, theme.RightTop)  # right top
+        canvas.Char(rw - 1, rh - 1, theme.RightBottom)  # right bottom
         for w in range(1, rw - 1):
-            canvas.Char(w, 0, theme.horizontal)
-            canvas.Char(w, rh - 1, theme.horizontal)
+            canvas.Char(w, 0, theme.Horizontal)
+            canvas.Char(w, rh - 1, theme.Horizontal)
         for h in range(1, rh - 1):
-            canvas.Char(0, h, theme.vertical)
-            canvas.Char(rw - 1, h, theme.vertical)
+            canvas.Char(0, h, theme.Vertical)
+            canvas.Char(rw - 1, h, theme.Vertical)
         if self.Inner:
             innerViewer = Viewer(1, 1, rw - 2, rh - 2, canvas)
             self.Inner.PaintOn(innerViewer)

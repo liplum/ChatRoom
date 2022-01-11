@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Tuple, Callable, Union
 
 builtin_themes = set()
@@ -6,100 +6,150 @@ builtin_themes = set()
 ThemeTuple = Tuple[str, str, str, str, str, str]
 
 
-class theme:
-    def __init__(self, left_top: str, right_top: str, left_bottom: str, right_bottom: str, horizontal: str,
-                 vertical: str):
-        self.left_top: str = left_top
-        self.right_top: str = right_top
-        self.left_bottom: str = left_bottom
-        self.right_bottom: str = right_bottom
-        self.horizontal: str = horizontal
-        self.vertical: str = vertical
+class BorderTheme:
+    @property
+    @abstractmethod
+    def LeftTop(self) -> str:
+        pass
 
-    def copy(self) -> "theme":
-        return theme(self.left_top, self.right_top, self.left_bottom, self.right_bottom, self.horizontal, self.vertical)
+    @property
+    @abstractmethod
+    def RightTop(self) -> str:
+        pass
 
-    def tuple(self) -> ThemeTuple:
-        return self.left_top, self.right_top, self.left_bottom, self.right_bottom, self.horizontal, self.vertical
+    @property
+    @abstractmethod
+    def LeftBottom(self) -> str:
+        pass
 
-    @classmethod
-    def from_tuple(cls, t: ThemeTuple):
-        return theme(t[0], t[1], t[2], t[3], t[4], t[5])
+    @property
+    @abstractmethod
+    def RightBottom(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def Horizontal(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def Vertical(self) -> str:
+        pass
 
     def __eq__(self, other):
-        if isinstance(other, theme):
-            return self.tuple() == other.tuple()
+        if isinstance(other, BorderTheme):
+            return self.Tuple() == other.Tuple()
         return False
 
     def __hash__(self):
-        return hash(self.tuple())
+        return hash(self.Tuple())
+
+    Copy: Callable[[], "SimpleBorderTheme"]
+    Tuple: Callable[[], ThemeTuple]
+    FromTuple: Callable[[ThemeTuple], "SimpleBorderTheme"]
 
 
-theme_getter = Callable[[], theme]
-ThemeGetter = Union[theme_getter, theme]
+class SimpleBorderTheme(BorderTheme):
+    @classmethod
+    def FromOther(cls, theme: BorderTheme) -> "SimpleBorderTheme":
+        return cls(
+            theme.LeftTop, theme.RightTop, theme.LeftBottom, theme.RightBottom,
+            theme.Horizontal, theme.Vertical)
+
+    def __init__(self, left_top: str, right_top: str, left_bottom: str, right_bottom: str, horizontal: str,
+                 vertical: str):
+        self._leftTop: str = left_top
+        self._rightTop: str = right_top
+        self._leftBottom: str = left_bottom
+        self._rightBottom: str = right_bottom
+        self._horizontal: str = horizontal
+        self._vertical: str = vertical
+
+    @property
+    def LeftTop(self) -> str:
+        return self._leftTop
+
+    @LeftTop.setter
+    def LeftTop(self, value: str):
+        self._leftTop = value
+
+    @property
+    def RightTop(self) -> str:
+        return self._rightTop
+
+    @RightTop.setter
+    def RightTop(self, value: str):
+        self._rightTop = value
+
+    @property
+    def LeftBottom(self) -> str:
+        return self._leftBottom
+
+    @LeftBottom.setter
+    def LeftBottom(self, value: str):
+        self._leftBottom = value
+
+    @property
+    def RightBottom(self) -> str:
+        return self._rightBottom
+
+    @RightBottom.setter
+    def RightBottom(self, value: str):
+        self._rightBottom = value
+
+    @property
+    def Horizontal(self) -> str:
+        return self._horizontal
+
+    @Horizontal.setter
+    def Horizontal(self, value: str):
+        self._horizontal = value
+
+    @property
+    def Vertical(self) -> str:
+        return self._vertical
+
+    @Vertical.setter
+    def Vertical(self, value: str):
+        self._vertical = value
+
+
+def _borderThemeCopy(self) -> SimpleBorderTheme:
+    return SimpleBorderTheme(self.LeftTop, self.RightTop, self.LeftBottom, self.RightBottom, self.Horizontal,
+                             self.Vertical)
+
+
+BorderTheme.Copy = _borderThemeCopy
+
+
+def _borderThemeTuple(self) -> ThemeTuple:
+    return self.LeftTop, self.RightTop, self.LeftBottom, self.RightBottom, self.Horizontal, self.Vertical
+
+
+BorderTheme.Tuple = _borderThemeTuple
+
+
+def _borderThemeFromTuple(t: ThemeTuple) -> SimpleBorderTheme:
+    return SimpleBorderTheme(t[0], t[1], t[2], t[3], t[4], t[5])
+
+
+BorderTheme.FromTuple = _borderThemeFromTuple
+
+theme_getter = Callable[[], BorderTheme]
+BorderThemeGetter = Union[theme_getter, BorderTheme]
 
 
 def _builtin(left_top: str, right_top: str, left_bottom: str, right_bottom: str, horizontal: str,
-             vertical: str) -> theme:
-    t = theme(left_top, right_top, left_bottom, right_bottom, horizontal, vertical)
+             vertical: str) -> BorderTheme:
+    t = SimpleBorderTheme(left_top, right_top, left_bottom, right_bottom, horizontal, vertical)
     builtin_themes.add(t)
     return t
 
 
-def is_theme(obj):
-    return isinstance(obj, theme) or isinstance(obj, packed_theme)
-
-
-vanilla: theme = _builtin('┌', '┐', '└', '┘', '─', '│')
-tube: theme = _builtin('╔', '╗', '╚', '╝', '═', '║')
-rounded_rectangle: theme = _builtin('╭', '╮', '╰', '╯', '─', '│')
-
-
-class packed_theme(ABC):
-
-    def __init__(self, left_top: str, right_top: str, left_bottom: str, right_bottom: str, horizontal: str,
-                 vertical: str):
-        self._left_top = left_top
-        self._right_top = right_top
-        self._left_bottom = left_bottom
-        self._right_bottom = right_bottom
-        self._horizontal = horizontal
-        self._vertical = vertical
-
-    @property
-    @abstractmethod
-    def left_top(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def right_top(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def left_bottom(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def right_bottom(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def horizontal(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def vertical(self) -> str:
-        pass
-
-
-def copy_packed_theme(original: theme, theme_type: type, *args, **kwargs):
-    return theme_type(original.left_top, original.right_top, original.left_bottom, original.right_bottom,
-                      original.horizontal, original.vertical, *args, **kwargs)
+vanilla: BorderTheme = _builtin('┌', '┐', '└', '┘', '─', '│')
+tube: BorderTheme = _builtin('╔', '╗', '╚', '╝', '═', '║')
+rounded_rectangle: BorderTheme = _builtin('╭', '╮', '╰', '╯', '─', '│')
 
 
 class check_theme:

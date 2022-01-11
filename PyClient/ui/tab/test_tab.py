@@ -42,7 +42,7 @@ class test_tab(tab):
         self.stack.add(button(CGT(button_content_getter), _click_button))
         self.stack.add(button(CGT(button_content_getter), _click_button))
         self.stack.add(button("Close", lambda: self.client.stop()))
-        # self.Stack.orientation = panels.horizontal
+        # self.Stack.orientation = panels.Horizontal
 
         self.stack.elemt_interval = 1
         self._stack_focused = True

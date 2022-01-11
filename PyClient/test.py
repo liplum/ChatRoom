@@ -27,7 +27,7 @@ elif system_type == "Linux":
 
 
 def win_test():
-    test_input()
+    # test_input()
     # cmd_input()
     # test_str()
     # test_textbox()
@@ -54,13 +54,14 @@ def win_test():
     # test_bind_property()
     # test_yield_recursion()
     # test_n_ary_tree()
+    test_dynamic_obj()
 
 
 def linux_test():
     nb_linux()
     # linux_nb()
     # test_dictrie2()
-    #test_mt_input()
+    # test_mt_input()
 
 
 test = None
@@ -69,6 +70,25 @@ if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
+
+
+def test_dynamic_obj():
+    class DO:
+        def __init__(self):
+            self.allProps = {}
+
+        def __getattr__(self, item):
+            return self.allProps[item]
+
+        def __setattr__(self, key, value):
+            if key == "allProps":
+                self.__dict__[key] = value
+            else:
+                self.allProps[key] = value
+
+    obj = DO()
+    obj.ABC = 10
+    print(obj.ABC)
 
 
 def test_final_attr():
