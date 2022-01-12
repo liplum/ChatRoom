@@ -109,8 +109,6 @@ class TestApp(IApp):
         v = self.viewer
         canvas = self.cur_canvas
         v.Bind(canvas)
-        v.X = 0
-        v.Y = 0
         v.Width = canvas.Width
         v.Height = 2
         self.tablist.PaintOn(v)

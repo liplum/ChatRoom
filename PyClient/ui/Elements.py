@@ -17,7 +17,8 @@ DefaultNotConsumed = (NotConsumed,)
 
 
 class UIElement(Painter, DpObj):
-    NeedReRenderEvent: RoutedEventType
+    NeedRerenderEvent: RoutedEventType
+    IsVisibleProp: DpProp
 
     def __init__(self):
         super().__init__()
@@ -36,8 +37,16 @@ class UIElement(Painter, DpObj):
         self._renderHeight = 0
         self._isFocused = False
 
+    @property
+    def IsVisible(self) -> bool:
+        return self.GetValue(self.IsVisibleProp)
+
+    @IsVisible.setter
+    def IsVisible(self, value: bool):
+        self.SetValue(self.IsVisibleProp, value)
+
     def NeedReRender(self):
-        self.Raise(self.NeedReRenderEvent, self, RoutedEventArgs(False))
+        self.Raise(self.NeedRerenderEvent, self, RoutedEventArgs(False))
 
     @classmethod
     def Raise(cls, eventType: RoutedEventType, sender: "UIElement", args: RoutedEventArgs):
@@ -57,10 +66,7 @@ class UIElement(Painter, DpObj):
             elemt.TryCatchEvent(eventType, sender, args)
 
     def ShowInLTree(self) -> bool:
-        return True
-
-    def OnAddedIntoTree(self, parent: "UIElement"):
-        self.Parent = parent
+        return False
 
     @property
     def Parent(self) -> Optional["UIElement"]:
@@ -181,7 +187,7 @@ class UIElement(Painter, DpObj):
 
         :param width:
         :param height:
-        :return: (real width,real height)
+        :return: (real Width,real Height)
         """
         pass
 
@@ -202,6 +208,9 @@ class UIElement(Painter, DpObj):
 
     def OnLostFocused(self):
         self._isFocused = False
+
+    def IsFocused(self) -> bool:
+        return self._isFocused
 
 
 _ElemItType = Callable[[UIElement], Iterable[UIElement]]
@@ -311,6 +320,6 @@ def BubbleParentIt(cur: UIElement) -> Iterable[UIElement]:
         cur = parent
 
 
-UIElement.IsVisible = DpProp.Register("IsVisible", bool, UIElement, DpPropMeta())
-UIElement.NeedReRenderEvent = RoutedEventType.Register(
-    "NeedReRender", UIElement, RoutedEventArgs, RoutedStrategy.Bubble)
+UIElement.IsVisibleProp = DpProp.Register("IsVisible", bool, UIElement, DpPropMeta(True))
+UIElement.NeedRerenderEvent = RoutedEventType.Register(
+    "NeedRerender", UIElement, RoutedEventArgs, RoutedStrategy.Bubble)

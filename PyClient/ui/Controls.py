@@ -29,6 +29,9 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
         self.IsLayoutChanged = True
         self._attachProps: Dict[str, T] = {}
 
+    def ShowInLTree(self) -> bool:
+        return True
+
     @property
     def on_content_changed(self) -> Event:
         """
@@ -117,7 +120,7 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
     @property
     def height(self) -> PROP:
         """
-        Gets the current height of this Control
+        Gets the current Height of this Control
         :return:the row
         """
         return self._height
@@ -125,16 +128,16 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
     @height.setter
     def height(self, value: PROP):
         """
-        Sets the height of this Control.
+        Sets the Height of this Control.
         How it works depends on the subclass's implementation
-        :param value: int(height)
+        :param value: int(Height)
         """
         if self.height != value:
             if value == auto:
                 self._height = auto
             else:
                 self._height = max(0, value)
-                self._onLayoutPropChanged(self, "height")
+                self._onLayoutPropChanged(self, "Height")
 
     @property
     def focusable(self) -> bool:
@@ -216,6 +219,14 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
     def Height(self, value: PROP):
         if self._height != value:
             self._height = value
+
+    def OnFocused(self):
+        super().OnFocused()
+        self.Raise(UIElement.NeedRerenderEvent, self, RoutedEventArgs(False))
+
+    def OnLostFocused(self):
+        super().OnLostFocused()
+        self.Raise(UIElement.NeedRerenderEvent, self, RoutedEventArgs(False))
 
 
 class text_control(Control, ABC):

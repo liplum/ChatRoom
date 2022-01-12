@@ -40,11 +40,11 @@ class register_tab(tab):
         grid[3, 1] = self.t_password
         grid[4, 1] = self.t_password_again
 
-        self.t_ip.width = 15
-        self.t_port.width = 5
-        self.t_account.width = 16
-        self.t_password.width = 16
-        self.t_password_again.width = 16
+        self.t_ip.Width = 15
+        self.t_port.Width = 5
+        self.t_account.Width = 16
+        self.t_password.Width = 16
+        self.t_password_again.Width = 16
 
         self.t_ip.MaxInputCount = 63
         self.t_port.MaxInputCount = 5

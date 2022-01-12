@@ -1,9 +1,9 @@
+from collections import defaultdict
 from enum import Enum
 from typing import Callable, Dict, Optional, NoReturn
 from typing import List, Type
 
 from Events import Event
-from utils import multiget
 
 
 class DpKey:
@@ -19,11 +19,23 @@ class DpKey:
         return isinstance(o, DpKey) and self._name == o._name and self._ownerType == o._ownerType
 
 
-class DpPropMeta:
-    pass
-
-
 ValidateValueFuncType = Callable[[object], bool]
+
+
+class DpPropMeta:
+    def __init__(self, defaultValue: Optional[object],
+                 validateValueFunc: Optional[ValidateValueFuncType] = None):
+        super().__init__()
+        self._defaultValue: Optional[object] = defaultValue
+        self._validateValueFunc = validateValueFunc
+
+    @property
+    def DefaultValue(self):
+        return self._defaultValue
+
+    @property
+    def ValidateValueFunc(self) -> Optional[ValidateValueFuncType]:
+        return self._validateValueFunc
 
 
 class DpProp:
@@ -31,13 +43,12 @@ class DpProp:
 
     @classmethod
     def Register(cls, name: str, propType: type,
-                 ownerType: type, meta: DpPropMeta,
-                 validateValueFunc: Optional[ValidateValueFuncType] = None) -> "DpProp":
+                 ownerType: type, meta: DpPropMeta) -> "DpProp":
         key = DpKey(name, ownerType)
         if key in cls._PropertyFromName:
             raise ExistedDpKeyError(f"{name} and {ownerType} already exist", name, ownerType)
 
-        dp = DpProp(name, propType, ownerType, meta, validateValueFunc)
+        dp = DpProp(name, propType, ownerType, meta)
         cls._PropertyFromName[key] = dp
         return dp
 
@@ -46,8 +57,7 @@ class DpProp:
         pass
 
     def __init__(self, name: str, propType: type,
-                 ownerType: type, meta: DpPropMeta,
-                 validateValueFunc: Optional[ValidateValueFuncType]):
+                 ownerType: type, meta: DpPropMeta):
         """
         Private Constructor
         """
@@ -56,11 +66,23 @@ class DpProp:
         self._propType = propType
         self._ownerType = ownerType
         self._meta = meta
-        self._validateValueFunc = validateValueFunc
+
+    @property
+    def OwnerType(self) -> type:
+        return self._ownerType
+
+    @property
+    def Meta(self) -> DpPropMeta:
+        return self._meta
 
 
 EventHandlerType = Callable[["DpObj", "RoutedEventArgs"], NoReturn]
 EventHandlerMap = Dict["RoutedEventType", List[EventHandlerType]]
+
+
+def _GenDpPropDefaultValue(prop: DpProp) -> Optional[object]:
+    meta = prop.Meta
+    return meta.DefaultValue
 
 
 class DpObj:
@@ -68,14 +90,14 @@ class DpObj:
         super().__init__()
         self.DpPropValueEntries: Dict[DpProp, Optional[object]] = {}
         self._onDpPropChanged = Event(DpObj, DpProp, object, object)
-        self._eventHandlers: EventHandlerMap = {}
+        self._eventHandlers: EventHandlerMap = defaultdict(list)
 
-    def AddEventHandler(self, eventType: "RoutedEventType", handler: EventHandlerType):
-        handlers = multiget(self.EventHandlers, eventType)
+    def Subscribe(self, eventType: "RoutedEventType", handler: EventHandlerType):
+        handlers = self.EventHandlers[eventType]
         handlers.append(handler)
 
     def RemoveEventHandler(self, eventType: "RoutedEventType", handler: EventHandlerType) -> bool:
-        handlers = multiget(self.EventHandlers, eventType)
+        handlers = self.EventHandlers[eventType]
         try:
             handlers.remove(handler)
             return True
@@ -90,19 +112,33 @@ class DpObj:
         return self._eventHandlers
 
     def SetValue(self, prop: DpProp, value):
-        self.DpPropValueEntries[prop] = value
+        if not isinstance(self, prop.OwnerType):
+            raise NotHasDependencyPropertyError(self, prop)
+        validate = prop.Meta.ValidateValueFunc
+        if validate is None or validate(value):
+            self.DpPropValueEntries[prop] = value
 
     def GetValue(self, prop: DpProp):
-        if prop not in self.DpPropValueEntries:
-            self.DpPropValueEntries[prop] = None
-        return self.DpPropValueEntries[prop]
+        if not isinstance(self, prop.OwnerType):
+            raise NotHasDependencyPropertyError(self, prop)
+        if prop in self.DpPropValueEntries:
+            value = self.DpPropValueEntries[prop]
+        else:
+            value = _GenDpPropDefaultValue(prop)
+            self.DpPropValueEntries[prop] = value
+        return value
 
     def TryCatchEvent(self, eventType: "RoutedEventType", sender: "DpObj", args: "RoutedEventArgs"):
-        handlers = multiget(self.EventHandlers, eventType)
+        handlers = self.EventHandlers[eventType]
         for handler in handlers:
             if args.Cancelable and args.IsHandled:
                 break
             handler(sender, args)
+
+
+class NotHasDependencyPropertyError(Exception):
+    def __init__(self, *args: object):
+        super().__init__(*args)
 
 
 class ExistedDpKeyError(Exception):

@@ -37,37 +37,25 @@ class button(text_control):
             tintedtxtIO(s, self.distext, fgcolor=fg, bkcolor=bk)
             buf.addtext(s.getvalue(), end='')
 
-    def Arrange(self, width: Optional[int] = None, height: Optional[int] = None):
-        if not self.IsLayoutChanged:
-            return
-        if limited:
-            self.IsLayoutChanged = False
+    def Arrange(self, width: int, height: int) -> Tuple[int, int]:
+        if not self.IsVisible:
+            return 0, 0
         content = self.content()
-        content_len = len(content)
-        tw = self.width
-        if tw != auto:
-            if limited:
-                tw = min(tw, width)
-            self._r_width = tw
-            rest = tw - content_len
-            if rest <= 1:
-                self.margin = 0
-            else:
-                self.margin = (rest + 1) // 2
-        else:
-            if limited:
-                tw = width
-            self._r_width = tw
-            rest = tw - content_len
-            if rest <= 1:
-                self.margin = 0
-            else:
-                self.margin = (rest + 1) // 2
+        self.RenderWidth = min(len(content) + 2, width)
+        self.RenderHeight = min(1, height)
+        return self.RenderWidth, self.RenderHeight
+
+    def Measure(self):
+        if not self.IsVisible:
+            return
+        content = self.content()
+        self.DWidth = len(content) + 2
+        self.DHeight = 1
 
     def PaintOn(self, canvas: Canvas):
-        g = StrWriter(canvas, 0, 0, self.render_width, self.render_height)
-        bk = BK.White if self.is_focused else None
-        fg = FG.Black if self.is_focused else None
+        g = StrWriter(canvas, 0, 0, self.RenderWidth, self.RenderHeight)
+        bk = BK.White if self.IsFocused() else None
+        fg = FG.Black if self.IsFocused() else None
         g.Write(self.distext, bk, fg)
 
     @property

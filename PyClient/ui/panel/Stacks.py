@@ -1,10 +1,11 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import utils
 from ui.Controls import auto, Control, PROP
 from ui.Renders import Canvas
+from ui.Renders import Viewer
 from ui.outputs import buffer
-from ui.panels import panel
+from ui.panels import Panel
 
 Alignment = str
 Horizontal_Alignment = str
@@ -19,15 +20,69 @@ OverRange = str
 discard = "discard"
 
 
-class Stack(panel):
+class Stack(Panel):
     Horizontal_Alignment: str = "Stack.horizontal_alignment"
 
     def PaintOn(self, canvas: Canvas):
-        super().PaintOn(canvas)
+        elements = self.elements
+        dx = 0
+        dy = 0
+        if self.orientation == horizontal:
+            for e in elements:
+                if not e.IsVisible:
+                    continue
+                rew = e.RenderWidth
+                reh = e.RenderHeight
+                e.PaintOn(Viewer(dx, dy, rew, reh, canvas))
+                dx += rew
+        else:
+            for e in elements:
+                if not e.IsVisible:
+                    continue
+                rew = e.RenderWidth
+                reh = e.RenderHeight
+                e.PaintOn(Viewer(dx, dy, rew, reh, canvas))
+                dy += reh
 
-    def Arrange(self, width: Optional[int] = None, height: Optional[int] = None):
-        for c in self.elements:
-            c.cache_layout()
+    def Measure(self):
+        if not self.IsVisible:
+            return
+        if self.orientation == horizontal:
+            self.DWidth = sum(elem.DWidth for elem in self.elements if elem.IsVisible)
+            self.DHeight = max(elem.DHeight for elem in self.elements if elem.IsVisible)
+        else:
+            self.DWidth = max(elem.DWidth for elem in self.elements if elem.IsVisible)
+            self.DHeight = sum(elem.DHeight for elem in self.elements if elem.IsVisible)
+
+    def Arrange(self, width: int, height: int) -> Tuple[int, int]:
+        if not self.IsVisible:
+            return 0, 0
+        rw = width
+        rh = height
+        elements = self.elements
+        elen = len(elements)
+        formerElemtCount = 0
+        if self.orientation == horizontal:
+            for e in elements:
+                if not e.IsVisible:
+                    continue
+                dew = rw // (elen - formerElemtCount)
+                rew, reh = e.Arrange(dew, rh)
+                rw -= rew
+                self.RenderWidth = width - rw
+                self.RenderHeight = height
+                formerElemtCount += 1
+        else:
+            for e in elements:
+                if not e.IsVisible:
+                    continue
+                deh = rh // (elen - formerElemtCount)
+                rew, reh = e.Arrange(rw, deh)
+                rh -= reh
+                formerElemtCount += 1
+            self.RenderWidth = width
+            self.RenderHeight = height - rh
+        return self.RenderWidth, self.RenderHeight
 
     def cache_layout(self):
         for c in self.elements:
@@ -72,11 +127,11 @@ class Stack(panel):
 
         if self.orientation == vertical:
             for item in self._elements_stack:
-                if item.gprop(panel.No_Left_Margin) is not True:
+                if item.gprop(Panel.No_Left_Margin) is not True:
                     item.left_margin = self.left_margin
         else:
             for i, e in enumerate(self._elements_stack):
-                if i == 0 and e.gprop(panel.No_Left_Margin) is not True:
+                if i == 0 and e.gprop(Panel.No_Left_Margin) is not True:
                     e.left_margin = self.left_margin
                 else:
                     e.left_margin = 0

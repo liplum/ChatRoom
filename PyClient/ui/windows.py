@@ -7,7 +7,7 @@ from ui.coroutines import Suspend
 from ui.tab.chat import chat_tab
 from ui.tab.main_menu import main_menu_tab
 from ui.tabs import *
-from utils import multiget, get
+from utils import get
 
 Focusable = Union[base_popup, tab]
 CallStackItem = Tuple[Generator, Focusable]
@@ -96,12 +96,12 @@ class window(IApp):
     def store_unclosed_tabs(self):
         self.tablist.unite_like_tabs()
         configs = settings()
-        last_opened: Dict[str, List[dict]] = {}
+        last_opened: Dict[str, List[dict]] = defaultdict(list)
         for tab in self.tablist.tabs:
             tabtype = type(tab)
             if tabtype in tab_type2name:
                 if tabtype.serializable():
-                    li = multiget(last_opened, tab_type2name[tabtype])
+                    li = last_opened[tab_type2name[tabtype]]
                     try:
                         dic = tabtype.serialize(tab)
                     except CannotStoreTab:

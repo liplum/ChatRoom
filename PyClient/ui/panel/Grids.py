@@ -3,7 +3,7 @@ from typing import Tuple, List, Optional, Iterator
 import utils
 from ui.Controls import PROP, Control, auto
 from ui.outputs import buffer
-from ui.panels import panel, CTRL
+from ui.panels import Panel, CTRL
 
 
 class row:
@@ -35,13 +35,13 @@ GridMatrix = List[List[Optional[Control]]]
 Units = List[List[_unit]]
 
 
-class Grid(panel):
+class Grid(Panel):
     """
     Example 1:
 
     3*2:
     interval tw = 2
-    interval height = 1
+    interval Height = 1
     column[0] tw = 4
     column[1] tw = 13
 
@@ -54,7 +54,7 @@ class Grid(panel):
 
     6*3:
     interval tw = 1
-    interval height = 0
+    interval Height = 0
     column[0] tw = 4
     column[1] tw = 13
     column[2] tw = 13
@@ -188,7 +188,7 @@ class Grid(panel):
                     c.width = self._units[i][j].width
 
         for e in self.column_items(0):
-            if e and e.gprop(panel.No_Left_Margin) is not True:
+            if e and e.gprop(Panel.No_Left_Margin) is not True:
                 e.left_margin = self.left_margin
 
     def switch_to(self, elemt: Control):

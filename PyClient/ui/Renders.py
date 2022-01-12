@@ -133,11 +133,18 @@ class Viewer(Canvas):
         self._canvas: Optional[Canvas] = canvas
 
     @staticmethod
-    def ByCanvas(canvas: Canvas):
-        return Viewer(0, 0, canvas.Width, canvas.Height, canvas)
+    def ByCanvas(canvas: Canvas, x=None, y=None, width=None, height=None):
+        return Viewer(x or 0, y or 0,
+                      width or canvas.Width,
+                      height or canvas.Height,
+                      canvas)
 
     def Bind(self, canvas: Canvas):
         self._canvas = canvas
+        self.X = 0
+        self.Y = 0
+        self.Width = canvas.Width
+        self.Height = canvas.Height
 
     def Sub(self, dx, dy, width, height) -> "Viewer":
         return SubViewer(dx, dy, width, height, self)

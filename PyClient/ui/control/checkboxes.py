@@ -3,13 +3,13 @@ from ui.Controls import *
 from ui.outputs import CmdBkColor, tintedtxt, CmdFgColor
 from ui.themes import check_theme
 
-yes_or_no = check_theme("[Yes]", "[No]", "[  ]")
-simple_yes_or_no_ = check_theme("[Y]", "[N]", "[ ]")
-square_box = check_theme("[⬛]", "[⬜]", "[ ]")
-ballot_box = check_theme("[☑]", "[⬜]", "[ ]")
-check_and_x = check_theme("[☑]", "[☒]", "[ ]")
-ballot_box_x = check_theme("[🗹]", "[❎]", "[ ]")
-bold_check = check_theme("[✅]", "[❌]", "[ ]")
+yes_or_no = check_theme("Yes", "No", "  ")
+simple_yes_or_no_ = check_theme("Y", "N", " ")
+square_box = check_theme("⬛", "⬜", " ")
+ballot_box = check_theme("☑", "⬜", " ")
+check_and_x = check_theme("☑", "☒", " ")
+ballot_box_x = check_theme("🗹", "❎", " ")
+bold_check = check_theme("✅", "❌", " ")
 
 
 class checkbox(Control):
@@ -31,33 +31,26 @@ class checkbox(Control):
             fg = CmdFgColor.Black if self.is_focused else None
             buf.addtext(tintedtxt(s.getvalue(), fgcolor=fg, bkcolor=bk), end="")
 
-    def Arrange(self, width: Optional[int] = None, height: Optional[int] = None):
-        if not self.IsLayoutChanged:
-            return
-        if limited:
-            self.IsLayoutChanged = False
-        if limited:
-            if self.width == auto:
-                self._r_width = min(len(self.cur_render_icon), width)
-            else:
-                self._r_width = min(self.width, width)
-        else:
-            if self.width == auto:
-                self._r_width = len(self.cur_render_icon)
-            else:
-                self._r_width = self.width
+    def Arrange(self, width: int, height: int) -> Tuple[int, int]:
+        if not self.IsVisible:
+            return 0, 0
+        self.RenderWidth = min(len(self.cur_render_icon) + 2, width)
+        self.RenderHeight = min(self.DHeight, height)
+        return self.RenderWidth, self.RenderHeight
 
-    def PreArrange(self):
-        if self.width == auto:
-            self._r_width = len(self.cur_render_icon)
-        else:
-            self._r_width = self.width
+    def Measure(self):
+        if not self.IsVisible:
+            return
+        self.DWidth = len(self.cur_render_icon) + 2
+        self.DHeight = 1
 
     def PaintOn(self, canvas: Canvas):
-        bk = BK.White if self.is_focused else None
-        fg = FG.Black if self.is_focused else None
-        buf = StrWriter(canvas, 0, 0, self.render_width, self.render_height)
+        bk = BK.White if self.IsFocused() else None
+        fg = FG.Black if self.IsFocused() else None
+        buf = StrWriter(canvas, 0, 0, self.RenderWidth, self.RenderHeight)
+        buf.Write("[")
         buf.Write(self.cur_render_icon, bk, fg)
+        buf.Write("]")
 
     @property
     def checked(self) -> Optional[bool]:

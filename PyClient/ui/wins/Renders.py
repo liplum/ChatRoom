@@ -98,8 +98,8 @@ class WinRender(IRender):
         self.CharMatrix: Optional[Buffer] = None
         self.ColorMatrix: Optional[Buffer] = None
         self.buffer: Optional[CSBuffer] = None
-        self.width: int = 0
-        self.height: int = 0
+        self.Width: int = 0
+        self.Height: int = 0
         self.NeedRegen = True
 
     def Initialize(self):
@@ -113,9 +113,9 @@ class WinRender(IRender):
         buf.SetConsoleActiveScreenBuffer()
         info = buf.GetConsoleScreenBufferInfo()
         size = info["Size"]
-        self.width = size.X
-        self.height = size.Y
-        size = self.height, self.width
+        self.Width = size.X
+        self.Height = size.Y
+        size = self.Height, self.Width
         if self.CharMatrix is None or self.CharMatrix.shape != size:
             self.CharMatrix = np.full(size, " ", dtype=str)
         if self.ColorMatrix is None or self.ColorMatrix.shape != size:
@@ -128,14 +128,14 @@ class WinRender(IRender):
     def CreateCanvas(self) -> WinCanvas:
         if self.NeedRegen:
             self.RegenBuffer()
-        return WinCanvas(self.width, self.height, self.CharMatrix, self.ColorMatrix)
+        return WinCanvas(self.Width, self.Height, self.CharMatrix, self.ColorMatrix)
 
     def Render(self, canvas: Canvas):
         if isinstance(canvas, WinCanvas):
             cm = canvas.buffer
             colorm = canvas.colors
             buf = self.buffer
-            for i in range(self.height):
+            for i in range(self.Height):
                 try:
                     line = utils.chain(Iterate2DRow(cm, i))
                     buf.WriteConsoleOutputCharacter(

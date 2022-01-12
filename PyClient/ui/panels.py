@@ -6,16 +6,16 @@ from ui.Controls import *
 CTRL = TypeVar('CTRL', covariant=True, bound=Control)
 
 
-class panel(Control):
-    No_Left_Margin: str = "panel.no_left_margin"
+class Panel(Control):
+    No_Left_Margin: str = "Panel.no_left_margin"
 
     def __init__(self):
         super().__init__()
         self._elements: Set[CTRL] = set()
         self._focused = False
         self._cur_focused: Optional[CTRL] = None
-        self._on_elements_changed = Event(panel, bool, Control)
-        self._on_focused_changed = Event(panel, (Control, type(None)), (Control, type(None)))
+        self._on_elements_changed = Event(Panel, bool, Control)
+        self._on_focused_changed = Event(Panel, (Control, type(None)), (Control, type(None)))
         self._top_margin = 0
 
         self._on_elements_changed.Add(lambda _, _1, _2: self.on_content_changed(self))
@@ -34,6 +34,7 @@ class panel(Control):
 
     def add(self, elemt: Control) -> bool:
         if elemt and elemt not in self._elements:
+            self.AddChild(elemt)
             self._elements.add(elemt)
             elemt.in_container = True
             elemt.on_content_changed.Add(self._on_elemt_content_changed)
@@ -44,6 +45,7 @@ class panel(Control):
 
     def remove(self, elemt: Control) -> bool:
         if elemt and elemt in self._elements:
+            self.RemoveChild(elemt)
             self._elements.remove(elemt)
             elemt.in_container = False
             elemt.on_content_changed.Remove(self._on_elemt_content_changed)
@@ -62,26 +64,26 @@ class panel(Control):
     @property
     def on_elements_changed(self) -> Event:
         """
-        Para 1:panel object
+        Para 1:Panel object
 
         Para 2:True->Add,False->Remove
 
         Para 3:operated Control
 
-        :return: Event(panel,bool,Control)
+        :return: Event(Panel,bool,Control)
         """
         return self._on_elements_changed
 
     @property
     def on_focused_changed(self) -> Event:
         """
-        Para 1:panel object
+        Para 1:Panel object
 
         Para 2:former focused
 
         Para 3:current focused
 
-        :return: Event(panel,Optional[Control],Control)
+        :return: Event(Panel,Optional[Control],Control)
         """
         return self._on_focused_changed
 

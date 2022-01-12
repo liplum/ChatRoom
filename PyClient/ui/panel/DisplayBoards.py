@@ -13,9 +13,6 @@ class DisplayBoard(Control):
         self.border = Border(theme)
         self.AddChild(self.border)
 
-    def OnAddedIntoTree(self, parent: "UIElement"):
-        pass
-
     @property
     def Inner(self) -> Optional[Control]:
         return self.border.Inner
@@ -34,6 +31,8 @@ class DisplayBoard(Control):
         self.border.PaintOn(Viewer.ByCanvas(canvas))
 
     def Measure(self):
+        if not self.IsVisible:
+            return
         dWidth = self.Width
         dHeight = self.Height
         border = self.border
@@ -50,6 +49,8 @@ class DisplayBoard(Control):
         self.DHeight = h
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
+        if not self.IsVisible:
+            return 0, 0
         dWidth = self.Width
         dHeight = self.Height
         border = self.border

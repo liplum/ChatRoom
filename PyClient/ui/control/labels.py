@@ -65,6 +65,8 @@ class label(Control):
             self._r_width = self.width
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
+        if not self.IsVisible:
+            return 0, 0
         if self.Width == auto:
             self.RenderWidth = min(len(self.content()), width)
         else:
@@ -76,6 +78,8 @@ class label(Control):
         return self.RenderWidth, self.RenderHeight
 
     def Measure(self):
+        if not self.IsVisible:
+            return
         if self.Width == auto:
             self.DWidth = len(self.content())
         else:

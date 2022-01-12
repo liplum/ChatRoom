@@ -77,7 +77,7 @@ class main_menu_tab(tab):
             tablist.replace(self, tab)
 
         b_info = i18n_button("controls.info", show_info)
-        b_info.prop(panel.No_Left_Margin, True).prop(Stack.Horizontal_Alignment, align_left)
+        b_info.prop(Panel.No_Left_Margin, True).prop(Stack.Horizontal_Alignment, align_left)
         b_info.width = secondary_button_width
         main.add(b_info)
 
@@ -86,7 +86,7 @@ class main_menu_tab(tab):
             tablist.replace(self, tab)
 
         b_language = i18n_button("controls.language", language)
-        b_language.prop(panel.No_Left_Margin, True).prop(Stack.Horizontal_Alignment, align_left)
+        b_language.prop(Panel.No_Left_Margin, True).prop(Stack.Horizontal_Alignment, align_left)
         b_language.width = secondary_button_width
         main.add(b_language)
 
@@ -95,7 +95,7 @@ class main_menu_tab(tab):
             tablist.replace(self, tab)
 
         b_settings = i18n_button("controls.settings", settings)
-        b_settings.prop(panel.No_Left_Margin, True).prop(Stack.Horizontal_Alignment, align_left)
+        b_settings.prop(Panel.No_Left_Margin, True).prop(Stack.Horizontal_Alignment, align_left)
         b_settings.width = secondary_button_width
         main.add(b_settings)
 

@@ -29,8 +29,10 @@ class Border(UIElement):
             self.OnInnerChanged(self, old, value)
 
     def Measure(self):
+        if not self.IsVisible:
+            return
         inner = self.Inner
-        if inner:
+        if inner and inner.IsVisible:
             idw = inner.DWidth
             idh = inner.DHeight
             self.DWidth = idw + 2
@@ -40,8 +42,10 @@ class Border(UIElement):
             self.DHeight = 2
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
+        if not self.IsVisible:
+            return 0, 0
         inner = self.Inner
-        if inner:
+        if inner and inner.IsVisible:
             iw, ih = inner.Arrange(width - 2, height - 2)
             self.RenderWidth = iw + 2
             self.RenderHeight = ih + 2
@@ -81,6 +85,3 @@ class Border(UIElement):
         :return: Event(Border,Optional[Control],Optional[Control])
         """
         return self._onInnerChanged
-
-    def ShowInLTree(self) -> bool:
-        return False

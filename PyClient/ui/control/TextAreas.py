@@ -47,6 +47,8 @@ class TextArea(text_control):
         self._areaExtendMode = value
 
     def Measure(self):
+        if not self.IsVisible:
+            return
         num = self.InputLength + len(self.CursorIcon)
         dwidth = self.Width
         dheight = self.Height
@@ -62,6 +64,8 @@ class TextArea(text_control):
         self.DHeight = h
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
+        if not self.IsVisible:
+            return 0, 0
         num = self.InputLength + len(self.CursorIcon)
         dwidth = self.width
         dheight = self.height
