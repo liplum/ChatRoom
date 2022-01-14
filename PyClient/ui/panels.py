@@ -2,11 +2,12 @@ from typing import Set
 
 import keys
 from ui.Controls import *
+from ui.panel.AbstractContainers import AbstractContainer
 
 CTRL = TypeVar('CTRL', covariant=True, bound=Control)
 
 
-class Panel(Control):
+class Panel(AbstractContainer):
     No_Left_Margin: str = "Panel.no_left_margin"
 
     def __init__(self):
@@ -32,27 +33,33 @@ class Panel(Control):
             return True
         return False
 
-    def add(self, elemt: Control) -> bool:
-        if elemt and elemt not in self._elements:
-            self.AddChild(elemt)
-            self._elements.add(elemt)
-            elemt.in_container = True
-            elemt.on_content_changed.Add(self._on_elemt_content_changed)
-            self.on_elements_changed(self, True, elemt)
-            elemt.on_exit_focus.Add(self._on_elemt_exit_focus)
+    def AddControl(self, control: Control):
+        if control and control not in self._elements:
+            self.AddChild(control)
+            self._elements.add(control)
+            control.in_container = True
+            control.on_content_changed.Add(self._on_elemt_content_changed)
+            self.on_elements_changed(self, True, control)
+            control.on_exit_focus.Add(self._on_elemt_exit_focus)
             return True
         return False
 
-    def remove(self, elemt: Control) -> bool:
-        if elemt and elemt in self._elements:
-            self.RemoveChild(elemt)
-            self._elements.remove(elemt)
-            elemt.in_container = False
-            elemt.on_content_changed.Remove(self._on_elemt_content_changed)
-            self.on_elements_changed(self, False, elemt)
-            elemt.on_exit_focus.Remove(self._on_elemt_exit_focus)
+    def RemoveControl(self, control: Control) -> bool:
+        if control and control in self._elements:
+            self.RemoveChild(control)
+            self._elements.remove(control)
+            control.in_container = False
+            control.on_content_changed.Remove(self._on_elemt_content_changed)
+            self.on_elements_changed(self, False, control)
+            control.on_exit_focus.Remove(self._on_elemt_exit_focus)
             return True
         return False
+
+    def add(self, elemt: Control) -> bool:
+        return self.AddControl(elemt)
+
+    def remove(self, elemt: Control) -> bool:
+        return self.RemoveChild(elemt)
 
     def clear(self):
         for elemt in list(self._elements):

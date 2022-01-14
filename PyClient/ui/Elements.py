@@ -45,11 +45,11 @@ class UIElement(Painter, DpObj):
     def IsVisible(self, value: bool):
         self.SetValue(self.IsVisibleProp, value)
 
-    def NeedReRender(self):
+    def NeedRerender(self):
         self.Raise(self.NeedRerenderEvent, self, RoutedEventArgs(False))
 
-    @classmethod
-    def Raise(cls, eventType: RoutedEventType, sender: "UIElement", args: RoutedEventArgs):
+    @staticmethod
+    def Raise(eventType: RoutedEventType, sender: "UIElement", args: RoutedEventArgs):
         if eventType.Strategy == RoutedStrategy.Bubble:
             chain = BubbleParentChain(sender)
         elif eventType.Strategy == RoutedStrategy.Tunnel:
@@ -232,7 +232,16 @@ PreItV: _ElemItType = PreItGen(GetChildren)
 PostItV: _ElemItType = PostItGen(GetChildren)
 LevelItV: _ElemItType = LevelItGen(GetChildren)
 LeafItV: _ElemItType = LeafItGen(GetChildren, IsLeaf)
-PrintVTree: Callable[[UIElement], Collection[str]] = PrintTreeGen(UIElement.GetChildren)
+PrintVTree: Callable[[UIElement], Collection[str]] = PrintTreeGen(GetChildren)
+
+
+def isSelfSubVTreeShowInVisibleVTree(elemt: UIElement):
+    return elemt.IsVisible
+
+
+PrintVisibleVTree: Callable[[UIElement], Collection[str]] = PrintTreeGen(
+    GetChildren, isSelfSubTreeCanPrint=isSelfSubVTreeShowInVisibleVTree
+)
 
 PreItL: _ElemItType = PreItGen(GetChildren, ShowInLTree)
 PostItL: _ElemItType = PostItGen(GetChildren, ShowInLTree)
@@ -320,6 +329,12 @@ def BubbleParentIt(cur: UIElement) -> Iterable[UIElement]:
         cur = parent
 
 
-UIElement.IsVisibleProp = DpProp.Register("IsVisible", bool, UIElement, DpPropMeta(True))
+def _OnRenderPropChangedCallback(elemt: "UIElement", value):
+    elemt.NeedRerender()
+
+
+UIElement.IsVisibleProp = DpProp.Register(
+    "IsVisible", bool, UIElement,
+    DpPropMeta(True, propChangedCallback=_OnRenderPropChangedCallback))
 UIElement.NeedRerenderEvent = RoutedEventType.Register(
     "NeedRerender", UIElement, RoutedEventArgs, RoutedStrategy.Bubble)

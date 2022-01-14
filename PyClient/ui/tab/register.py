@@ -4,7 +4,7 @@ from core.shared import *
 from net.msgs import register_result
 from ui.cmd_modes import common_hotkey
 from ui.control.xtbox import xtextbox
-from ui.panel.Grids import gen_grid, column
+from ui.panel.Grids import gen_grid, Column
 from ui.panel.Stacks import horizontal, Stack
 from ui.panels import *
 from ui.tab.popups import ok_popup_gen, waiting_popup
@@ -20,7 +20,7 @@ class register_tab(tab):
         super().__init__(client, tablist)
         self.last_tab: Optional[tab] = None
         self.network: "inetwork" = self.client.network
-        grid = gen_grid(5, [column(auto), column(15)])
+        grid = gen_grid(5, [Column(auto), Column(15)])
         excepted_chars = {keys.k_enter, chars.c_tab_key}
         self.t_ip = xtextbox(exceptedChars=excepted_chars)
         self.t_port = xtextbox(onlyAllowedChars=number_keys)

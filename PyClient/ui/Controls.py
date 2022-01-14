@@ -83,7 +83,7 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
     def width(self) -> PROP:
         """
         Gets the current tw of this Control
-        :return:the column
+        :return:the Column
         """
         return self._width
 
@@ -121,7 +121,7 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
     def height(self) -> PROP:
         """
         Gets the current Height of this Control
-        :return:the row
+        :return:the Row
         """
         return self._height
 

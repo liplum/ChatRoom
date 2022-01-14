@@ -1,7 +1,6 @@
 from collections import defaultdict
 from enum import Enum
-from typing import Callable, Dict, Optional, NoReturn
-from typing import List, Type
+from typing import Callable, Dict, Optional, NoReturn, Any, List, Type, Union
 
 from Events import Event
 
@@ -19,23 +18,48 @@ class DpKey:
         return isinstance(o, DpKey) and self._name == o._name and self._ownerType == o._ownerType
 
 
-ValidateValueFuncType = Callable[[object], bool]
+ValidateValueCallbackType = Callable[[Any], bool]
+CoerceValueCallbackType = Callable[[Any, Any], Any]
+PropChangedCallbackType = Callable[[Any, Any], NoReturn]
 
 
 class DpPropMeta:
-    def __init__(self, defaultValue: Optional[object],
-                 validateValueFunc: Optional[ValidateValueFuncType] = None):
+    def __init__(self, defaultValue: Union[Any, Callable[[], Any]],
+                 allowSameValue=True,
+                 validateValueCallback: Optional[ValidateValueCallbackType] = None,
+                 propChangedCallback: Optional[PropChangedCallbackType] = None,
+                 coerceValueCallback: Optional[CoerceValueCallbackType] = None):
         super().__init__()
-        self._defaultValue: Optional[object] = defaultValue
-        self._validateValueFunc = validateValueFunc
+        if isinstance(defaultValue, Callable):
+            self._defaultValueGetter: Callable[[], Any] = defaultValue
+        elif isinstance(defaultValue, type):
+            self._defaultValueGetter: Callable[[], Any] = defaultValue
+        else:
+            self._defaultValueGetter: Callable[[], Any] = lambda: defaultValue
+        self._allowSameValue = allowSameValue
+        self._validateValueFunc: Optional[ValidateValueCallbackType] = validateValueCallback
+        self._propChangedCallback: Optional[PropChangedCallbackType] = propChangedCallback
+        self._coerceValueCallback: Optional[CoerceValueCallbackType] = coerceValueCallback
 
     @property
-    def DefaultValue(self):
-        return self._defaultValue
+    def DefaultValueGetter(self) -> Callable[[], Any]:
+        return self._defaultValueGetter
 
     @property
-    def ValidateValueFunc(self) -> Optional[ValidateValueFuncType]:
+    def AllowSameValue(self):
+        return self._allowSameValue
+
+    @property
+    def ValidateValueCallback(self) -> Optional[ValidateValueCallbackType]:
         return self._validateValueFunc
+
+    @property
+    def PropChangedCallback(self) -> Optional[PropChangedCallbackType]:
+        return self._propChangedCallback
+
+    @property
+    def CoerceValueCallback(self) -> Optional[CoerceValueCallbackType]:
+        return self._coerceValueCallback
 
 
 class DpProp:
@@ -43,7 +67,7 @@ class DpProp:
 
     @classmethod
     def Register(cls, name: str, propType: type,
-                 ownerType: type, meta: DpPropMeta) -> "DpProp":
+                 ownerType: Type["DpObj"], meta: DpPropMeta) -> "DpProp":
         key = DpKey(name, ownerType)
         if key in cls._PropertyFromName:
             raise ExistedDpKeyError(f"{name} and {ownerType} already exist", name, ownerType)
@@ -57,18 +81,18 @@ class DpProp:
         pass
 
     def __init__(self, name: str, propType: type,
-                 ownerType: type, meta: DpPropMeta):
+                 ownerType: Type["DpObj"], meta: DpPropMeta):
         """
         Private Constructor
         """
         super().__init__()
         self._name = name
         self._propType = propType
-        self._ownerType = ownerType
+        self._ownerType: Type["DpObj"] = ownerType
         self._meta = meta
 
     @property
-    def OwnerType(self) -> type:
+    def OwnerType(self) -> Type["DpObj"]:
         return self._ownerType
 
     @property
@@ -82,7 +106,7 @@ EventHandlerMap = Dict["RoutedEventType", List[EventHandlerType]]
 
 def _GenDpPropDefaultValue(prop: DpProp) -> Optional[object]:
     meta = prop.Meta
-    return meta.DefaultValue
+    return meta.DefaultValueGetter()
 
 
 class DpObj:
@@ -114,9 +138,17 @@ class DpObj:
     def SetValue(self, prop: DpProp, value):
         if not isinstance(self, prop.OwnerType):
             raise NotHasDependencyPropertyError(self, prop)
-        validate = prop.Meta.ValidateValueFunc
-        if validate is None or validate(value):
-            self.DpPropValueEntries[prop] = value
+        meta = prop.Meta
+        coerce = meta.CoerceValueCallback
+        if coerce:
+            value = coerce(self, value)
+        validate = meta.ValidateValueCallback
+        if meta.AllowSameValue or self.GetValue(prop) != value:
+            if validate is None or validate(value):
+                self.DpPropValueEntries[prop] = value
+                callback = meta.PropChangedCallback
+                if callback:
+                    callback(self, value)
 
     def GetValue(self, prop: DpProp):
         if not isinstance(self, prop.OwnerType):

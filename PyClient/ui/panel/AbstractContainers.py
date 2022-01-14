@@ -7,15 +7,13 @@ class AbstractContainer(Control):
         super().__init__()
         self._subControls = []
 
-    def Arrange(self, width: int, height: int):
-        pass
-
-    def AddControl(self, control: Control):
+    def AddControl(self, control: Control) -> bool:
         self.AddChild(control)
+        return True
 
     def RemoveControl(self, control: Control) -> bool:
         return self.RemoveChild(control)
 
     @property
     def SubControls(self):
-        return self.SubControls
+        return self._subControls

@@ -5,7 +5,6 @@ from ui.control.buttons import button
 from ui.control.checkboxes import checkbox
 from ui.control.labels import label
 from ui.control.xtbox import XtextWrapper
-from ui.panel.AbstractContainers import AbstractContainer
 from ui.panel.DisplayBoards import DisplayBoard
 from ui.panel.Stacks import Stack
 from ui.tabs import *
@@ -15,8 +14,6 @@ class TestTab(tab):
 
     def __init__(self, client: IClient, tablist: tablist):
         super().__init__(client, tablist)
-        c = AbstractContainer()
-        self.t_container = c
         self.t_label = label("Test")
 
         def switchFocusColor():
@@ -31,7 +28,6 @@ class TestTab(tab):
         self.t_button.width = 10
         self.t_checkbox = checkbox(True)
         self.t_tbox = XtextWrapper(TextArea())
-        self.t_tbox.on_content_changed.Add(lambda _: self.OnRenderContentChanged(self))
         self.t_tbox.Width = 40
         self.t_tbox.Height = auto
         self.t_tbox.InputList = "Test Input Box"
@@ -48,6 +44,7 @@ class TestTab(tab):
         # self.tta = TestTabA(client, tablist)
         # c.AddControl(self.tta)
         self.ShowLogo = False
+        self.IsShowVisualTreeOrVisibleVTree = True
 
         def switchShowLogo():
             self.ShowLogo = not self.ShowLogo
@@ -69,12 +66,21 @@ class TestTab(tab):
         pass
 
     def PaintOn(self, canvas: Canvas):
-
         w = StrWriter(canvas, x=40, autoWrap=True)
-        for v in PrintVTree(self):
-            w.Write(v)
+        if self.IsShowVisualTreeOrVisibleVTree:
+            w.Write("Visual Tree:")
             w.NextLine()
+            for v in PrintVTree(self):
+                w.Write(v)
+                w.NextLine()
+        else:
+            w.Write("Visible Tree:")
+            w.NextLine()
+            for v in PrintVisibleVTree(self):
+                w.Write(v)
+                w.NextLine()
 
+        w.Write("Logical Tree:")
         w.NextLine()
         for v in PrintLTree(self):
             w.Write(v)
@@ -98,6 +104,9 @@ class TestTab(tab):
             self.t_tbox.Raise(UIElement.NeedRerenderEvent, self.t_tbox, RoutedEventArgs(False))
         elif keys.k_enter == char:
             self.t_button.on_input(char)
+        elif chars.c_m == char:
+            self.IsShowVisualTreeOrVisibleVTree = not self.IsShowVisualTreeOrVisibleVTree
+            self.OnRenderContentChanged(self)
         else:
             self.t_tbox.on_input(char)
         yield Finished

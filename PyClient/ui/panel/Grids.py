@@ -1,23 +1,101 @@
+import re
 from typing import Tuple, List, Optional, Iterator
 
 import utils
 from ui.Controls import PROP, Control, auto
+from ui.Renders import Canvas
 from ui.outputs import buffer
 from ui.panels import Panel, CTRL
 
+"""
+1.
+Row:[10,*]<-FullWidth:100
+[Row 1]=10 ; [Row 2]=90
+2.
+Row:[35,*,2*,*]<-FullWidth:100
+[Row 1]=35 ; [Row 2]=16 ; [Row 3]=32 ; [Row 4]=17
+3.
+Row:[35,*,2*,10,*]<-FullWidth:100
+[Row 1]=35 ; [Row 3]=14 ; [Row 4]=26 ; [Row 5]=10 ; [Row 6]=15
+Prototype:
+First:Rest = Full - sum(abs for each value)
+Second:EveryParts = Rest // sum(proportion for each *)
+"""
+_MatchRowAndColumnProportion = re.compile("^[0-9]*(?=\*)")
 
-class row:
-    def __init__(self):
-        self.height: int = 1
+
+class Row:
+    @classmethod
+    def ByProportion(cls, heightProportion: int) -> "Row":
+        return Row(0, heightProportion, False)
+
+    @classmethod
+    def ByAbs(cls, heightAbs: int) -> "Row":
+        return Row(heightAbs)
+
+    @classmethod
+    def ByStr(cls, arg: str) -> "Row":
+        proportion = re.match(_MatchRowAndColumnProportion, arg)
+        if proportion is not None:
+            p = proportion.group()
+            if len(p) == 0:
+                return Row.ByProportion(1)
+            else:
+                try:
+                    p = int(p)
+                except:
+                    p = 1
+                return Row.ByProportion(p)
+        else:
+            try:
+                p = int(arg)
+            except:
+                p = 1
+            return Row.ByProportion(p)
+
+    def __init__(self, heightAbs: int, heightProportion: int = 0, isAbs: bool = True):
+        self.IsAbs = isAbs
+        self.HeightAbs: int = heightAbs
+        self.HeightProportion: int = heightProportion
 
 
-class column:
-    def __init__(self, width: PROP):
-        self.width: PROP = width
+class Column:
+    @classmethod
+    def ByProportion(cls, widthProportion: int) -> "Column":
+        return Column(0, widthProportion, False)
+
+    @classmethod
+    def ByAbs(cls, widthAbs: int) -> "Column":
+        return Column(widthAbs)
+
+    @classmethod
+    def ByStr(cls, arg: str) -> "Column":
+        proportion = re.match(_MatchRowAndColumnProportion, arg)
+        if proportion is not None:
+            p = proportion.group()
+            if len(p) == 0:
+                return Column.ByProportion(1)
+            else:
+                try:
+                    p = int(p)
+                except:
+                    p = 1
+                return Column.ByProportion(p)
+        else:
+            try:
+                p = int(arg)
+            except:
+                p = 1
+            return Column.ByProportion(p)
+
+    def __init__(self, widthAbs: int, widthProportion: int = 0, isAbs: bool = True):
+        self.IsAbs = isAbs
+        self.WidthAbs: int = widthAbs
+        self.WidthProportion: int = widthProportion
 
 
 class _unit:
-    def __init__(self, row: row, column: column):
+    def __init__(self, row: Row, column: Column):
         self.row = row
         self.column = column
 
@@ -27,7 +105,7 @@ class _unit:
 
     @property
     def height(self) -> int:
-        return self.row.height
+        return self.row.HeightAbs
 
 
 FIndex = Tuple[int, int]
@@ -42,8 +120,8 @@ class Grid(Panel):
     3*2:
     interval tw = 2
     interval Height = 1
-    column[0] tw = 4
-    column[1] tw = 13
+    Column[0] tw = 4
+    Column[1] tw = 13
 
     Date__  1/1_______________
 
@@ -55,9 +133,9 @@ class Grid(Panel):
     6*3:
     interval tw = 1
     interval Height = 0
-    column[0] tw = 4
-    column[1] tw = 13
-    column[2] tw = 13
+    Column[0] tw = 4
+    Column[1] tw = 13
+    Column[2] tw = 13
 
     Day_ Event________ With whom____
     1___ Nothing______ Only me______
@@ -67,7 +145,7 @@ class Grid(Panel):
     5___ Study________ Classmates___
     """
 
-    def __init__(self, rows: [row], columns: [column]):
+    def __init__(self, rows: [Row], columns: [Column]):
         super().__init__()
         self.rowlen = len(rows)
         self.columnlen = len(columns)
@@ -75,9 +153,9 @@ class Grid(Panel):
         self.columns = columns
 
         if self.rowlen == 0:
-            self.rows = [row()]
+            self.rows = [Row.ByProportion(1)]
         if self.columnlen == 0:
-            self.columns = [column(width=auto)]
+            self.columns = [Column.ByProportion(1)]
 
         self._elemt_interval_w = auto
         self._elemt_interval_h = auto
@@ -88,6 +166,15 @@ class Grid(Panel):
         self._r_elemt_interval_w = 0
         self._r_elemt_interval_h = 0
         self._cur_focused_index: Optional[FIndex] = (0, 0)
+
+    def Arrange(self, width: int, height: int) -> Tuple[int, int]:
+        return super().Arrange(width, height)
+
+    def Measure(self):
+        super().Measure()
+
+    def PaintOn(self, canvas: Canvas):
+        super().PaintOn(canvas)
 
     def gen_unit(self):
         self._units: Units = utils.gen_2d_arrayX(
@@ -240,9 +327,9 @@ class Grid(Panel):
     def set(self, i: int, j: int, ctrl: Control) -> bool:
         former: Control = self._grid[i][j]
         if former:
-            self.remove(former, (i, j))
+            self.RemoveControl(former, (i, j))
         self._grid[i][j] = ctrl
-        return super().add(ctrl)
+        return super().AddControl(ctrl)
 
     @property
     def render_height(self) -> int:
@@ -284,18 +371,6 @@ class Grid(Panel):
         self.cur_focused_index = None
         self.go_next_focusable()
 
-    def remove(self, elemt: Control, index: Optional[FIndex] = None) -> bool:
-        if super().remove(elemt):
-            if index is None:
-                index = self.find(elemt)
-            if index:
-                i, j = index
-                if j == 0:
-                    elemt.left_margin = 0
-                self._grid[i][j] = None
-                return True
-        return False
-
     def find(self, elemt: Optional[Control]) -> Optional[FIndex]:
         for i in range(self.rowlen):
             for j in range(self.columnlen):
@@ -326,15 +401,27 @@ class Grid(Panel):
                 j -= 1
             yield self._grid[i][j], (i, j)
 
-    def add(self, elemt: Control, index: Optional[FIndex] = None) -> bool:
+    def RemoveControl(self, control: Control, index: Optional[FIndex] = None) -> bool:
+        if super().RemoveControl(control):
+            if index is None:
+                index = self.find(control)
+            if index:
+                i, j = index
+                if j == 0:
+                    control.left_margin = 0
+                self._grid[i][j] = None
+                return True
+        return False
+
+    def AddControl(self, control: Control, index: Optional[FIndex] = None) -> bool:
         if index is None:
             index = self.find(None)
         if index:
             i, j = index
             former = self._grid[i][j]
             if former is None:
-                self._grid[i][j] = elemt
-                return super().add(elemt)
+                self._grid[i][j] = control
+                return super().AddControl(control)
         return False
 
     @property
@@ -362,5 +449,5 @@ class Grid(Panel):
         self.cur_focused = None
 
 
-def gen_grid(row_count: int, columns: [column]):
-    return Grid(rows=[row() for i in range(row_count)], columns=columns)
+def gen_grid(row_count: int, columns: [Column]):
+    return Grid(rows=[Row.ByAbs(1) for i in range(row_count)], columns=columns)

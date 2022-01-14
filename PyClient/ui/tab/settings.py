@@ -4,7 +4,7 @@ from ui.control.checkboxes import checkbox
 from ui.control.numeric_up_downs import numeric_up_down
 from ui.control.textboxes import textbox
 from ui.control.xtbox import xtextbox
-from ui.panel.Grids import gen_grid, column
+from ui.panel.Grids import gen_grid, Column
 from ui.panel.Stacks import horizontal, Stack
 from ui.panels import *
 from ui.tab.shared import *
@@ -72,7 +72,7 @@ class settings_tab(tab):
         self.ctrl2on_save = {}
         customizable_configs = all_customizable()
         rows = len(customizable_configs)
-        settings = gen_grid(rows, [column(30), column(15)])
+        settings = gen_grid(rows, [Column(30), Column(15)])
         settings.elemt_interval_w = 4
         configs = entity()
         for i, entry in enumerate(customizable_configs.items()):

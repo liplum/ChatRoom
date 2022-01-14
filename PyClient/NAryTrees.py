@@ -152,11 +152,14 @@ def LeafItGen(getSubNodes: Callable[[NodeT], Collection[NodeT]],
 
 def PrintTreeGen(getSubNodes: Callable[[NodeT], Collection[NodeT]],
                  canPrint: Callable[[NodeT], bool] = DefaultAcceptAll,
+                 isSelfSubTreeCanPrint: Callable[[NodeT], bool] = DefaultAcceptAll,
                  toStr: Callable[[Node], str] = str) -> Callable[[NodeT], Collection[str]]:
     def PrintTree(cur: Node) -> Collection[str]:
         res = []
 
         def func(n: Node, level=0):
+            if not isSelfSubTreeCanPrint(n):
+                return
             if canPrint(n):
                 res.append("  " * level + toStr(n))
             for child in getSubNodes(n):

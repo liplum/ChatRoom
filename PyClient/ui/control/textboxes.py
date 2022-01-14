@@ -10,6 +10,8 @@ class textbox(TextArea):
     def __init__(self, cursor_icon: str = "^", init: Optional[Iterable[str]] = None):
         super().__init__(cursor_icon, init)
         self._space_placeholder = " "
+        self._rWidth = 0
+        self._rHeight = 0
 
     def cache_layout(self):
         if not self.IsLayoutChanged:
@@ -72,7 +74,7 @@ class textbox(TextArea):
         if self.width == auto:
             return self.distext
         w = self.render_width
-        cursor_pos = self.Cursor
+        cursor_pos = self.CursorIndex
         start = cursor_pos - w // 2  # may be negative
         end = cursor_pos + w // 2  # may be over length of all inputs
         length = self.InputLength
@@ -105,7 +107,7 @@ class textbox(TextArea):
 
     @property
     def distext(self) -> str:
-        cursor_pos = self.Cursor
+        cursor_pos = self.CursorIndex
         show_cursor = self.ShowCursor
         cursor_icon = self.CursorIcon
         with StringIO() as s:
@@ -129,18 +131,18 @@ class textbox(TextArea):
         :param text:
         :return:
         """
-        self._inputList.insert(self.Cursor, text)
-        self.Cursor += len(text)
+        self.Text.insert(self.CursorIndex, text)
+        self.CursorIndex += len(text)
 
     def rmtext(self, count: int):
         if count <= 0:
             return
-        cursor_pos = self.Cursor
+        cursor_pos = self.CursorIndex
         while count > 0:
-            self._inputList.pop(cursor_pos)
+            self.Text.pop(cursor_pos)
             cursor_pos -= 1
             count -= 1
-        self.Cursor = cursor_pos
+        self.CursorIndex = cursor_pos
 
     def __repr__(self) -> str:
         return f"<textbox {self.inputs}>"

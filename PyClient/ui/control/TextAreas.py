@@ -9,34 +9,52 @@ Minimum = "Minimum"
 
 
 class TextArea(text_control):
+    TextProp: DpProp
+    CursorIndexProp: DpProp
 
     def __init__(self, cursor_icon: str = "^", init: Optional[Iterable[str]] = None):
         super().__init__()
-        self._inputList: List[str] = []
         self._cursorIcon = cursor_icon
-        self._cursor: int = 0
-        self._onCursorMove = Event(TextArea, int, int)
+        self._onCursorMove = Event(TextArea, int)
         self._onAppend = Event(TextArea, int, str)
         self._onDelete = Event(TextArea, int, str)
         self._onPreGenDistext = Event(TextArea, list)
         self._onListReplaced = Event(TextArea, list, list)
         self._onPreAppend = Event(TextArea, str, cancelable=True)
-        self._rWidth = 0
-        self._rHeight = 0
         self._areaExtendMode: AreaExtendMode = Extend
         self._maxInputsCount = unlimited
         self._locked = False
         self.OnAppend.Add(self._onAppendOrDeleteOrReplace)
         self.OnDelete.Add(self._onAppendOrDeleteOrReplace)
         self.OnListReplaced.Add(self._onAppendOrDeleteOrReplace)
-        self.OnCursorMove.Add(lambda _, _1, _2: self.on_content_changed(self))
+        self.OnCursorMove.Add(lambda _, _2: self.on_content_changed(self))
 
         if init is not None:
             self.InputList = init
 
+        self._rWidth = 0
+        self._rHeight = 0
+
     def _onAppendOrDeleteOrReplace(self, _, _1, _2):
         self.on_content_changed(self)
         self.IsLayoutChanged = True
+        self.NeedRerender()
+
+    @property
+    def CursorIndex(self) -> int:
+        return self.GetValue(self.CursorIndexProp)
+
+    @CursorIndex.setter
+    def CursorIndex(self, value: int):
+        self.SetValue(self.CursorIndexProp, value)
+
+    @property
+    def Text(self) -> List[str]:
+        return self.GetValue(self.TextProp)
+
+    @Text.setter
+    def Text(self, value: List[str]):
+        self.SetValue(self.TextProp, value)
 
     @property
     def AreaExtendMode(self):
@@ -92,7 +110,7 @@ class TextArea(text_control):
     def PaintOn(self, canvas: Canvas):
         bk = BK.White if self.is_focused else None
         fg = FG.Black if self.is_focused else None
-        drawn = self.InputString
+        drawn = self.DisplayedText()
         buf = StrWriter(canvas, 0, 0, self.render_width, self.render_height, autoWrap=True)
         buf.Write(drawn, bk, fg)
 
@@ -100,10 +118,10 @@ class TextArea(text_control):
         return self.Append(str(char))
 
     def getRenderInputList(self) -> Iterable[str]:
-        return self._inputList
+        return self.Text
 
     def Clear(self):
-        if len(self._inputList) != 0:
+        if len(self.Text) != 0:
             self.InputList = []
 
     def Append(self, char: str) -> IsConsumed:
@@ -117,26 +135,30 @@ class TextArea(text_control):
             return NotConsumed
         if self.OnPreAppend(self, char):
             return NotConsumed
-        self._inputList.insert(self.Cursor, char)
-        self.OnAppend(self, self.Cursor, char)
-        self.Cursor += 1
+        self.Text.insert(self.CursorIndex, char)
+        self.OnAppend(self, self.CursorIndex, char)
+        self.NeedRerender()
+        self.CursorIndex += 1
         return Consumed
 
     def Delete(self, left=True) -> bool:
         length = self.InputLength
+        if length == 0:
+            return False
         if left:
-            if self.Cursor > 0:
-                n = self.Cursor - 1
+            if self.CursorIndex > 0:
+                n = self.CursorIndex - 1
                 if n < length:
-                    ch = self._inputList.pop(n)
-                    self.OnDelete(self, self.Cursor, ch)
-                    self.Cursor -= 1
+                    ch = self.Text.pop(n)
+                    self.OnDelete(self, self.CursorIndex, ch)
+                    self.CursorIndex -= 1
         else:
-            if self.Cursor < length:
-                n = self.Cursor
+            if self.CursorIndex < length:
+                n = self.CursorIndex
                 if n < length:
-                    ch = self._inputList.pop(n)
-                    self.OnDelete(self, self.Cursor, ch)
+                    ch = self.Text.pop(n)
+                    self.OnDelete(self, self.CursorIndex, ch)
+        self.NeedRerender()
         return True
 
     @property
@@ -145,19 +167,6 @@ class TextArea(text_control):
             return self.is_focused
         else:
             return True
-
-    @property
-    def Cursor(self):
-        return self._cursor
-
-    @Cursor.setter
-    def Cursor(self, value):
-        list_len = self.InputLength
-        former = self._cursor
-        current = min(max(0, value), list_len)
-        if former != current:
-            self._cursor = current
-            self.OnCursorMove(self, former, current)
 
     @property
     def MaxInputCount(self) -> PROP:
@@ -173,51 +182,65 @@ class TextArea(text_control):
             self.OnNormalPropChanged(self, "MaxInputCount")
 
     def Home(self) -> bool:
-        self.Cursor = 0
+        self.CursorIndex = 0
         return True
 
     def Left(self, unit: int = 1) -> bool:
-        self.Cursor -= abs(unit)
+        self.CursorIndex -= abs(unit)
         return True
 
     def Right(self, unit: int = 1) -> bool:
-        self.Cursor += abs(unit)
+        self.CursorIndex += abs(unit)
         return True
 
     def End(self) -> bool:
-        self.Cursor = self.InputLength
+        self.CursorIndex = self.InputLength
         return True
 
     @property
     def InputLength(self) -> int:
-        return len(self._inputList)
+        return len(self.Text)
 
     @property
     def InputList(self) -> List[str]:
-        return self._inputList[:]
+        return self.Text[:]
 
     @property
     def InputListRaw(self):
-        return self._inputList
+        return self.Text
 
     @InputList.setter
     def InputList(self, value: Iterable[str]):
-        former = self._inputList
+        former = self.Text
         if not isinstance(value, list):
             value = list(value)
         if self.MaxInputCount != unlimited:
             value = value[0:self.MaxInputCount]
-        self._inputList = value
-        self.OnListReplaced(self, former, self._inputList)
+        self.Text = value
+        self.OnListReplaced(self, former, self.Text)
         self.End()
 
     @property
     def InputString(self) -> str:
         with StringIO() as temp:
             c = 0
-            cursor = self.Cursor
+            cursor = self.CursorIndex
             icon = self.CursorIcon
-            for res in self._inputList:
+            for res in self.Text:
+                if c == cursor:
+                    temp.write(icon)
+                c += 1
+                temp.write(res)
+            if c == cursor:
+                temp.write(icon)
+            return temp.getvalue()
+
+    def DisplayedText(self) -> str:
+        with StringIO() as temp:
+            c = 0
+            cursor = self.CursorIndex
+            icon = self.CursorIcon
+            for res in self.Text:
                 if c == cursor:
                     temp.write(icon)
                 c += 1
@@ -272,11 +295,9 @@ class TextArea(text_control):
         """
         Para 1:TextArea object
 
-        Para 2:former cursor position
+        Para 2:current cursor position
 
-        Para 3:current cursor position
-
-        :return: Event(TextArea,int,int)
+        :return: Event(TextArea,int)
         """
         return self._onCursorMove
 
@@ -329,3 +350,23 @@ class TextArea(text_control):
         :return: Event(TextArea,list,list)
         """
         return self._onListReplaced
+
+
+TextArea.TextProp = DpProp.Register("Text", list, TextArea, DpPropMeta(list))
+
+
+def _CursorIndexCoerceCallback(ta: TextArea, value):
+    return min(max(0, value), ta.InputLength)
+
+
+def _OnCursorIndexChangedCallback(elemt: "UIElement", value):
+    elemt.OnCursorMove(elemt, value)
+    elemt.NeedRerender()
+
+
+TextArea.CursorIndexProp = DpProp.Register(
+    "CursorIndex", int, TextArea,
+    DpPropMeta(
+        0, False,
+        coerceValueCallback=_CursorIndexCoerceCallback,
+        propChangedCallback=_OnCursorIndexChangedCallback))

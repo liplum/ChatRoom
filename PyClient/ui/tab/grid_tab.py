@@ -1,6 +1,6 @@
 import ui.panel.Stacks
 from ui.control.xtbox import xtextbox
-from ui.panel.Grids import column, gen_grid
+from ui.panel.Grids import Column, gen_grid
 from ui.panel.Stacks import Stack
 from ui.tab.shared import *
 from ui.tabs import *
@@ -10,7 +10,7 @@ class grid_tab(tab):
 
     def __init__(self, client: "client", tablist: tablist):
         super().__init__(client, tablist)
-        self.grid = gen_grid(3, [column(15), column(20), column(18)])
+        self.grid = gen_grid(3, [Column(15), Column(20), Column(18)])
         self.grid.on_content_changed.add(lambda _: self.client.mark_dirty())
         l1_1 = label("Label 1 1")
         l1_2 = label("Label 1 2")
