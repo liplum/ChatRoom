@@ -66,15 +66,17 @@ class TextArea(text_control):
 
     def Measure(self):
         if not self.IsVisible:
+            self.DWidth = 0
+            self.DHeight = 0
             return
         num = self.InputLength + len(self.CursorIcon)
         dwidth = self.Width
         dheight = self.Height
-        if dwidth == auto:
+        if dwidth == Auto:
             w = num
         else:
             w = dwidth
-        if dheight == auto:
+        if dheight == Auto:
             h = math.ceil(num / w)
         else:
             h = dheight
@@ -83,11 +85,13 @@ class TextArea(text_control):
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
         if not self.IsVisible:
+            self.RenderWidth = 0
+            self.RenderHeight = 0
             return 0, 0
         num = self.InputLength + len(self.CursorIcon)
-        dwidth = self.width
-        dheight = self.height
-        if dwidth == auto:
+        dwidth = self.Width
+        dheight = self.Height
+        if dwidth == Auto:
             mode = self.AreaExtendMode
             if mode == Extend:
                 w = max(num, width)
@@ -95,7 +99,7 @@ class TextArea(text_control):
                 w = min(num, width)
         else:
             w = min(dwidth, width)
-        if dheight == auto:
+        if dheight == Auto:
             if w != 0:
                 dh = math.ceil(num / w)
             else:
@@ -108,10 +112,10 @@ class TextArea(text_control):
         return self.RenderWidth, self.RenderHeight
 
     def PaintOn(self, canvas: Canvas):
-        bk = BK.White if self.is_focused else None
-        fg = FG.Black if self.is_focused else None
+        bk = BK.White if self.IsFocused else None
+        fg = FG.Black if self.IsFocused else None
         drawn = self.DisplayedText()
-        buf = StrWriter(canvas, 0, 0, self.render_width, self.render_height, autoWrap=True)
+        buf = StrWriter(canvas, 0, 0, self.RenderWidth, self.RenderHeight, autoWrap=True)
         buf.Write(drawn, bk, fg)
 
     def on_input(self, char: chars.char) -> IsConsumed:

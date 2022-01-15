@@ -1,5 +1,3 @@
-from typing import Union, Any
-
 import utils
 from GLOBAL import StringIO
 from ui.Renders import *
@@ -12,11 +10,8 @@ from ui.Elements import *
 class Control(UIElement, painter, inputable, reloadable, ABC):
     def __init__(self):
         super().__init__()
+        # ------------Legacy------------
         self._in_container = False
-        self._focused = False
-        self._width = auto
-        self._height = auto
-        """Deprecated"""
         self._left_margin = 0
         self._onExitFocus = Event(Control)
         self._onLayoutChanged = Event(Control)
@@ -28,9 +23,12 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
         self.OnLayoutPropChanged.Add(__onLayoutChangedHandler)
         self.IsLayoutChanged = True
         self._attachProps: Dict[str, T] = {}
+        # ------------Legacy------------
 
     def ShowInLTree(self) -> bool:
         return True
+
+    # ------------Legacy------------
 
     @property
     def on_content_changed(self) -> Event:
@@ -85,7 +83,7 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
         Gets the current tw of this Control
         :return:the Column
         """
-        return self._width
+        return self.Width
 
     @width.setter
     def width(self, value: PROP):
@@ -94,17 +92,12 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
         How it works depends on the subclass's implementation
         :param value: PROP
         """
-        if self.width != value:
-            if value == auto:
-                self._width = auto
-            else:
-                self._width = max(0, value)
-                self._onLayoutPropChanged(self, "tw")
+        self.Width = value
 
     @property
     def render_height(self) -> int:
         height = self.height
-        if height != auto:
+        if height != Auto:
             return height
         else:
             raise NotImplementedError()
@@ -112,7 +105,7 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
     @property
     def render_width(self) -> int:
         width = self.width
-        if width != auto:
+        if width != Auto:
             return width
         else:
             raise NotImplementedError()
@@ -123,7 +116,7 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
         Gets the current Height of this Control
         :return:the Row
         """
-        return self._height
+        return self.Height
 
     @height.setter
     def height(self, value: PROP):
@@ -132,12 +125,7 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
         How it works depends on the subclass's implementation
         :param value: int(Height)
         """
-        if self.height != value:
-            if value == auto:
-                self._height = auto
-            else:
-                self._height = max(0, value)
-                self._onLayoutPropChanged(self, "Height")
+        self.Height = value
 
     @property
     def focusable(self) -> bool:
@@ -151,26 +139,19 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
     def in_container(self, value: bool):
         self._in_container = value
 
-    def __hash__(self):
-        return id(self)
-
     @property
     def is_focused(self) -> bool:
-        return self._focused
+        return self.IsFocused
 
     def on_focused(self):
-        self._focused = True
+        self.OnFocused()
 
     def on_lost_focus(self):
-        self._focused = False
+        self.OnLostFocused()
 
     def cache_layout(self):
         """Deprecated"""
         pass
-
-    def reload(self):
-        self.IsLayoutChanged = True
-        self.cache_layout()
 
     @property
     def left_margin(self) -> int:
@@ -202,31 +183,14 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
             del self._attachProps[key]
         return self
 
-    @property
-    def Width(self):
-        return self._width
+    # ------------Legacy------------
 
-    @Width.setter
-    def Width(self, value: PROP):
-        if self._width != value:
-            self._width = value
+    def __hash__(self):
+        return id(self)
 
-    @property
-    def Height(self):
-        return self._height
-
-    @Height.setter
-    def Height(self, value: PROP):
-        if self._height != value:
-            self._height = value
-
-    def OnFocused(self):
-        super().OnFocused()
-        self.Raise(UIElement.NeedRerenderEvent, self, RoutedEventArgs(False))
-
-    def OnLostFocused(self):
-        super().OnLostFocused()
-        self.Raise(UIElement.NeedRerenderEvent, self, RoutedEventArgs(False))
+    def reload(self):
+        self.IsLayoutChanged = True
+        self.cache_layout()
 
 
 class text_control(Control, ABC):

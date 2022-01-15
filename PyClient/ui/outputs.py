@@ -1,16 +1,17 @@
 import sys
 import traceback
+from abc import ABC, abstractmethod
 from collections import deque
 from datetime import datetime
 from threading import Thread, currentThread
-from typing import NoReturn, List, Deque, Collection
+from typing import NoReturn, List, Deque, Collection, Optional
 
 import GLOBAL
 import i18n
 from GLOBAL import StringIO
 from core.filer import ifiler, Directory, File
 from files import EndsWith
-from ui.Renders import *
+from ui.Consoles import *
 
 
 class ilogger:
@@ -326,7 +327,7 @@ class cmd_display(idisplay):
             added_text = f"{text}{end}"
         else:
             added_text = tintedtxt(text, style, fgcolor, bkcolor, end)
-        buffer_list.Append(added_text)
+        buffer_list.append(added_text)
         return None
 
     def render(self, buf: buffer) -> bool:

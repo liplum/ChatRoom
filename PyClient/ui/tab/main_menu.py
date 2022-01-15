@@ -38,7 +38,7 @@ class main_menu_tab(tab):
         self.main = main
         self.main.on_content_changed.Add(lambda _: self.on_content_changed(self))
         db.width = 60
-        db.height = auto
+        db.height = Auto
 
         def start():
             tab = self.win.new_chat_tab()

@@ -1,8 +1,9 @@
-import os
 from abc import ABC, abstractmethod
-from typing import Iterable, Tuple, Optional
+from typing import Iterable, Optional
 
 from numpy import ndarray
+
+from ui.Consoles import *
 
 Buffer = ndarray
 
@@ -17,17 +18,6 @@ def Iterate2DColumn(array2D: ndarray, column_index: int) -> Iterable:
     row = array2D.shape[0]
     for j in range(row):
         yield array2D[i, column_index]
-
-
-def GetTerminalScreenSize() -> Tuple[int, int]:
-    return os.get_terminal_size()
-
-
-try:
-    os.get_terminal_size()
-    CanGetTerminalScreenSize = True
-except:
-    CanGetTerminalScreenSize = False
 
 
 class BK:
@@ -238,9 +228,18 @@ class SubViewer(Viewer):
 """
 
 
-class StrWriter:
+class Writer:
+    def NextLine(self):
+        pass
 
-    def __init__(self, canvas: Canvas, x: int = 0, y: int = 0, width: int = None, height: int = None, autoWrap=False):
+    def Write(self, text: str, bk=None, fg=None):
+        pass
+
+
+class StrWriter(Writer):
+
+    def __init__(self, canvas: Canvas, x: int = 0, y: int = 0, width: int = None, height: int = None, autoWrap=True):
+        super().__init__()
         """X in canvas"""
         self.X = max(x, 0)
         """Y in canvas"""
@@ -289,6 +288,64 @@ class StrWriter:
             xi += 1
         self.xi = xi
         self.yi = yi
+
+
+"""
+The quick brown fox jumps over the lazy dog.
+          ______________
+1         |      T      |
+3         |     he      |
+5         |    quick    |
+7         |   brown f   |
+9         |  ox jumps   |
+11        | over the la |
+13        |zy dog.      | 
+"""
+
+
+class PyramidWriter(Writer):
+
+    def __init__(self, canvas: Canvas, level: int, x: int = 0, y: int = 0, width: int = None, height: int = None):
+        super().__init__()
+        self.Level = level
+        self.Width = width or canvas.Width
+        self.Height = height or canvas.Height
+        self.curLevel = 0
+        self.curLevelMaxLength = 0
+        self.curLevelLeftMargin = 0
+        self.canvas = canvas
+        self.X = x
+        self.Y = y
+        self.curLevelDX = 0
+
+    def NextLine(self):
+        self.curLevel += 1
+
+    def Write(self, text: str, bk=None, fg=None):
+        if len(text) <= 0:
+            return
+        width = self.Width
+        height = self.Height
+        if width == 0 or height == 0:
+            return
+        x = self.X
+        y = self.Y
+        if bk is None:
+            bk = BK.Black
+        if fg is None:
+            fg = FG.White
+        cur_level = self.curLevel
+        cur_level_max_length = self.curLevelMaxLength
+        cur_level_left_margin = self.curLevelLeftMargin
+        canvas = self.canvas
+
+    @staticmethod
+    def CurLevelMaxLength(level: int):
+        return 2 * level - 1
+
+    def CurLevelTextLengthAndLeftMargin(self, level: int) -> Tuple[int, int]:
+        maxLength = PyramidWriter.CurLevelMaxLength(level)
+        return maxLength, (self.Width - maxLength) // 2
 
 
 class DotPainter:

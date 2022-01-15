@@ -33,6 +33,8 @@ class checkbox(Control):
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
         if not self.IsVisible:
+            self.RenderWidth = 0
+            self.RenderHeight = 0
             return 0, 0
         self.RenderWidth = min(len(self.cur_render_icon) + 2, width)
         self.RenderHeight = min(self.DHeight, height)
@@ -40,13 +42,15 @@ class checkbox(Control):
 
     def Measure(self):
         if not self.IsVisible:
+            self.DWidth = 0
+            self.DHeight = 0
             return
         self.DWidth = len(self.cur_render_icon) + 2
         self.DHeight = 1
 
     def PaintOn(self, canvas: Canvas):
-        bk = BK.White if self.IsFocused() else None
-        fg = FG.Black if self.IsFocused() else None
+        bk = BK.White if self.IsFocused else None
+        fg = FG.Black if self.IsFocused else None
         buf = StrWriter(canvas, 0, 0, self.RenderWidth, self.RenderHeight)
         buf.Write("[")
         buf.Write(self.cur_render_icon, bk, fg)
@@ -111,7 +115,7 @@ class checkbox(Control):
 
     @height.setter
     def height(self, value: PROP):
-        if value != auto:
+        if value != Auto:
             value = 1
         self._height = value
 
@@ -121,6 +125,6 @@ class checkbox(Control):
 
     @width.setter
     def width(self, value: PROP):
-        if value != auto:
+        if value != Auto:
             value = 1
         self._width = value

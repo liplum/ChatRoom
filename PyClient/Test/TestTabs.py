@@ -6,7 +6,7 @@ from ui.control.checkboxes import checkbox
 from ui.control.labels import label
 from ui.control.xtbox import XtextWrapper
 from ui.panel.DisplayBoards import DisplayBoard
-from ui.panel.Stacks import Stack
+from ui.panel.Stacks import Stack, vertical, OrientationType
 from ui.tabs import *
 
 
@@ -18,7 +18,7 @@ class TestTab(tab):
 
         def switchFocusColor():
             b = self.t_button
-            if b.IsFocused():
+            if b.IsFocused:
                 b.OnLostFocused()
             else:
                 b.OnFocused()
@@ -29,7 +29,7 @@ class TestTab(tab):
         self.t_checkbox = checkbox(True)
         self.t_tbox = XtextWrapper(TextArea())
         self.t_tbox.Width = 40
-        self.t_tbox.Height = auto
+        self.t_tbox.Height = Auto
         self.t_tbox.InputList = "Test Input Box"
         self.db = DisplayBoard()
         self.db.Inner = self.t_tbox
@@ -37,6 +37,7 @@ class TestTab(tab):
         self.dy = 0
         self.Main = DisplayBoard()
         self.StackPanel = Stack()
+        self.StackPanel.Orientation = vertical
         self.StackPanel.add(self.db)
         self.StackPanel.add(self.t_label)
         self.StackPanel.add(self.t_checkbox)
@@ -53,6 +54,7 @@ class TestTab(tab):
                        lambda sender, args: self.OnRenderContentChanged(self) or switchShowLogo())
         self.Main.Inner = self.StackPanel
         self.AddChild(self.Main)
+        self.UseNewRender = True
 
     @property
     def title(self) -> str:
@@ -107,6 +109,12 @@ class TestTab(tab):
         elif chars.c_m == char:
             self.IsShowVisualTreeOrVisibleVTree = not self.IsShowVisualTreeOrVisibleVTree
             self.OnRenderContentChanged(self)
+        elif keys.k_down == char:
+            o = self.StackPanel.Orientation
+            if o == OrientationType.Horizontal:
+                self.StackPanel.Orientation = OrientationType.Vertical
+            elif o == OrientationType.Vertical:
+                self.StackPanel.Orientation = OrientationType.Horizontal
         else:
             self.t_tbox.on_input(char)
         yield Finished

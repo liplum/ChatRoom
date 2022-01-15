@@ -65,7 +65,7 @@ class numeric_up_down(Control):
         return max(len(self._max_value_str), len(self._min_value_str))
 
     def cache_layout(self):
-        if self.width == auto:
+        if self.width == Auto:
             if self.max_value:
                 self._r_width = self.max_number_len + 2
             else:
@@ -183,7 +183,7 @@ class numeric_up_down(Control):
 
     @height.setter
     def height(self, value: int):
-        if value != auto:
+        if value != Auto:
             value = 1
         self._height = value
 

@@ -17,7 +17,7 @@ class textbox(TextArea):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False
-        if self.width == auto:
+        if self.width == Auto:
             self._rWidth = self.InputLength + len(self.CursorIcon)
         else:
             self._rWidth = self.width
@@ -26,7 +26,7 @@ class textbox(TextArea):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False
-        if self.width == auto:
+        if self.width == Auto:
             self._rWidth = min(self.InputLength + len(self.CursorIcon), canvas.Width)
         else:
             self._rWidth = min(self.width, canvas.Width)
@@ -71,7 +71,7 @@ class textbox(TextArea):
 
     @property
     def limited_distext(self):
-        if self.width == auto:
+        if self.width == Auto:
             return self.distext
         w = self.render_width
         cursor_pos = self.CursorIndex

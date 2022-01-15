@@ -28,7 +28,7 @@ class Frame:
         return iter((self.tab, self.coroutine))
 
 
-class window(IApp):
+class App(IApp):
 
     def __init__(self, client: IClient):
         super().__init__(client)

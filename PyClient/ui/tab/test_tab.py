@@ -28,7 +28,7 @@ class test_tab(tab):
         account_stack = Stack()
         account_stack.add(label("Account"))
         account_stack.add(self.account_tbox)
-        account_stack.orientation = ui.panel.Stacks.horizontal
+        account_stack.Orientation = ui.panel.Stacks.horizontal
         self.stack.add(account_stack)
         self.stack.add(label("Test Label B"))
         self.stack.add(label("Test"))
@@ -42,7 +42,7 @@ class test_tab(tab):
         self.stack.add(button(CGT(button_content_getter), _click_button))
         self.stack.add(button(CGT(button_content_getter), _click_button))
         self.stack.add(button("Close", lambda: self.client.stop()))
-        # self.Stack.orientation = panels.Horizontal
+        # self.Stack.Orientation = panels.Horizontal
 
         self.stack.elemt_interval = 1
         self._stack_focused = True

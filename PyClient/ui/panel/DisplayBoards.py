@@ -32,16 +32,18 @@ class DisplayBoard(Control):
 
     def Measure(self):
         if not self.IsVisible:
+            self.DWidth = 0
+            self.DHeight = 0
             return
         dWidth = self.Width
         dHeight = self.Height
         border = self.border
-        if dWidth == auto:
+        if dWidth == Auto:
             w = border.DWidth
         else:
             w = dWidth
 
-        if dHeight == auto:
+        if dHeight == Auto:
             h = border.DHeight
         else:
             h = dHeight
@@ -50,16 +52,18 @@ class DisplayBoard(Control):
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
         if not self.IsVisible:
+            self.RenderWidth = 0
+            self.RenderHeight = 0
             return 0, 0
         dWidth = self.Width
         dHeight = self.Height
         border = self.border
-        if dWidth == auto:
+        if dWidth == Auto:
             bw = min(border.DWidth, width)
         else:
             bw = min(border.Width, width, dWidth)
 
-        if dHeight == auto:
+        if dHeight == Auto:
             bh = min(border.DWidth, width)
         else:
             bh = min(border.Width, width, dHeight)

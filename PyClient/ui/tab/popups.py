@@ -113,7 +113,7 @@ class ok_cancel_popup(text_popup):
     def __init__(self, client: IClient, tablist: tablist):
         super().__init__(client, tablist)
         button_stack = Stack()
-        button_stack.orientation = horizontal
+        button_stack.Orientation = horizontal
 
         b_ok = i18n_button("controls.ok", self._on_ok)
         b_ok.width = _button_width

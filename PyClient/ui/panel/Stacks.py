@@ -1,7 +1,6 @@
-from typing import List, Optional, Tuple
-
 import utils
-from ui.Controls import auto, Control, PROP
+from ui.Controls import Control
+from ui.Elements import *
 from ui.Renders import Canvas
 from ui.Renders import Viewer
 from ui.outputs import buffer
@@ -14,20 +13,42 @@ align_right = "align_right"
 expend = "expend"
 center = "center"
 Orientation = str
-horizontal = "Horizontal"
-vertical = "Vertical"
 OverRange = str
 discard = "discard"
 
 
+class OrientationType(Enum):
+    Horizontal = 1
+    Vertical = 2
+
+
+horizontal = OrientationType.Horizontal
+vertical = OrientationType.Vertical
+
+
 class Stack(Panel):
     Horizontal_Alignment: str = "Stack.horizontal_alignment"
+    OrientationProp: DpProp
+
+    def __init__(self):
+        super().__init__()
+        self._elements_stack: List[Control] = []
+        # ------------Legacy------------
+        self._elemt_interval = Auto
+        self._r_elemt_interval = 0
+        self._orientation = vertical
+        self._over_range = discard
+        self._cur_focused_index = None
+        self._r_width = 0
+        self._r_height = 0
+        self._horizontal_alignment = center
+        # ------------Legacy------------
 
     def PaintOn(self, canvas: Canvas):
         elements = self.elements
         dx = 0
         dy = 0
-        if self.orientation == horizontal:
+        if self.Orientation == OrientationType.Horizontal:
             for e in elements:
                 if not e.IsVisible:
                     continue
@@ -46,8 +67,10 @@ class Stack(Panel):
 
     def Measure(self):
         if not self.IsVisible:
+            self.DWidth = 0
+            self.DHeight = 0
             return
-        if self.orientation == horizontal:
+        if self.Orientation == OrientationType.Horizontal:
             self.DWidth = sum(elem.DWidth for elem in self.elements if elem.IsVisible)
             self.DHeight = max(elem.DHeight for elem in self.elements if elem.IsVisible)
         else:
@@ -56,34 +79,57 @@ class Stack(Panel):
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
         if not self.IsVisible:
+            self.RenderWidth = 0
+            self.RenderHeight = 0
             return 0, 0
-        rw = width
-        rh = height
+        restw = width
+        resth = height
         elements = self.elements
         elen = len(elements)
         formerElemtCount = 0
-        if self.orientation == horizontal:
+        if self.Orientation == horizontal:
+            maxHeight = 0
             for e in elements:
                 if not e.IsVisible:
                     continue
-                dew = rw // (elen - formerElemtCount)
-                rew, reh = e.Arrange(dew, rh)
-                rw -= rew
-                self.RenderWidth = width - rw
+                dew = restw // (elen - formerElemtCount)
+                rew, reh = e.Arrange(dew, resth)
+                restw -= rew
+                if reh > maxHeight:
+                    maxHeight = reh
+                formerElemtCount += 1
+            self.RenderWidth = width - restw
+            if self.Height == Auto:
+                self.RenderHeight = maxHeight
+            else:
                 self.RenderHeight = height
-                formerElemtCount += 1
         else:
+            maxWidth = 0
             for e in elements:
                 if not e.IsVisible:
                     continue
-                deh = rh // (elen - formerElemtCount)
-                rew, reh = e.Arrange(rw, deh)
-                rh -= reh
+                deh = resth // (elen - formerElemtCount)
+                rew, reh = e.Arrange(restw, deh)
+                resth -= reh
+                if rew > maxWidth:
+                    maxWidth = rew
                 formerElemtCount += 1
-            self.RenderWidth = width
-            self.RenderHeight = height - rh
+            if self.Width == Auto:
+                self.RenderWidth = maxWidth
+            else:
+                self.RenderWidth = width
+            self.RenderHeight = height - resth
         return self.RenderWidth, self.RenderHeight
 
+    @property
+    def Orientation(self):
+        return self.GetValue(self.OrientationProp)
+
+    @Orientation.setter
+    def Orientation(self, value):
+        self.SetValue(self.OrientationProp, value)
+
+    # ------------Legacy------------
     def cache_layout(self):
         for c in self.elements:
             c.cache_layout()
@@ -91,17 +137,17 @@ class Stack(Panel):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False
-        if self.orientation == vertical:
-            if self.elemt_interval == auto:
-                if self.height == auto:
+        if self.Orientation == vertical:
+            if self.elemt_interval == Auto:
+                if self.height == Auto:
                     self._r_elemt_interval = 0
                 else:
                     self._r_elemt_interval = self.height // self.elemts_total_height
             else:
                 self._r_elemt_interval = self.elemt_interval
         else:  # Horizontal
-            if self.elemt_interval == auto:
-                if self.width == auto:
+            if self.elemt_interval == Auto:
+                if self.width == Auto:
                     self._r_elemt_interval = 1
                 else:
                     self._r_elemt_interval = self.width // self.elemts_total_width
@@ -110,14 +156,14 @@ class Stack(Panel):
         h = 0
         w = 0
         for i, elemt in enumerate(self._elements_stack):
-            if self.width != auto and w >= self.width and self.over_range == discard:
+            if self.width != Auto and w >= self.width and self.over_range == discard:
                 continue
-            if self.height != auto and h >= self.height and self.over_range == discard:
+            if self.height != Auto and h >= self.height and self.over_range == discard:
                 continue
             h += elemt.render_height
             w = max(elemt.render_width, w)
             if 0 < i < self.elemt_count - 1:
-                if self.orientation == horizontal:
+                if self.Orientation == horizontal:
                     h += self._r_elemt_interval
                 else:
                     w += self._r_elemt_interval
@@ -125,7 +171,7 @@ class Stack(Panel):
         self._r_width = w
         self._r_height = h
 
-        if self.orientation == vertical:
+        if self.Orientation == vertical:
             for item in self._elements_stack:
                 if item.gprop(Panel.No_Left_Margin) is not True:
                     item.left_margin = self.left_margin
@@ -150,7 +196,7 @@ class Stack(Panel):
         if self.IsLayoutChanged:
             self.cache_layout()
 
-        if self.orientation == vertical:
+        if self.Orientation == vertical:
             h = 0
             if self.top_margin > 0:
                 buf.addtext(utils.repeat("\n", self.top_margin), end="")
@@ -158,7 +204,7 @@ class Stack(Panel):
                 h += elemt.render_height
                 if i > 0:
                     h += self._r_elemt_interval
-                if self.height != auto and h >= self.height and self.over_range == discard:
+                if self.height != Auto and h >= self.height and self.over_range == discard:
                     break
                 elemt: Control
                 if elemt.render_height == 1:
@@ -180,7 +226,7 @@ class Stack(Panel):
                 w += elemt.render_width
                 if i > 0:
                     w += self._r_elemt_interval
-                if self.width != auto and w >= self.width and self.over_range == discard:
+                if self.width != Auto and w >= self.width and self.over_range == discard:
                     break
                 if self.left_margin > 0:
                     buf.addtext(utils.repeat(" ", self.left_margin), end="")
@@ -190,18 +236,6 @@ class Stack(Panel):
                 buf.addtext(text=interval, end="")
         if not self.in_container:
             buf.addtext()
-
-    def __init__(self):
-        super().__init__()
-        self._elements_stack: List[Control] = []
-        self._elemt_interval = auto
-        self._r_elemt_interval = 0
-        self._orientation = vertical
-        self._over_range = discard
-        self._cur_focused_index = None
-        self._r_width = 0
-        self._r_height = 0
-        self._horizontal_alignment = center
 
     @property
     def cur_focused_index(self) -> Optional[int]:
@@ -234,16 +268,6 @@ class Stack(Panel):
     def elemt_interval(self, value: PROP):
         self._elemt_interval = value
         self.on_prop_changed(self, "elemt_interval")
-
-    @property
-    def orientation(self) -> Orientation:
-        return self._orientation
-
-    @orientation.setter
-    def orientation(self, value: Orientation):
-        if self._orientation != value:
-            self._orientation = value
-            self.on_prop_changed(self, "orientation")
 
     @property
     def over_range(self) -> OverRange:
@@ -343,3 +367,9 @@ class Stack(Panel):
         if self._horizontal_alignment != value:
             self._horizontal_alignment = value
             self.on_prop_changed(self, "horizontal_alignment")
+    # ------------Legacy------------
+
+
+Stack.OrientationProp = DpProp.Register(
+    "Orientation", OrientationType, Stack,
+    DpPropMeta(OrientationType.Vertical, propChangedCallback=OnRenderPropChangedCallback))

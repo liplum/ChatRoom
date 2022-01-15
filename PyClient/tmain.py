@@ -56,10 +56,15 @@ def detect_debug_attach():
     input("Attach the process and enter any text to start:")
 
 
+import i18n
+
+i18n.load("en_us")
+
+
 def main():
     if GLOBAL.DEBUG:
         detect_debug_attach()
-    from Test.clients import TestClient
+    from Test.Clients import TestClient
     _client = TestClient()
     _client.on_service_register.Add(init_plugin)
     _client.init()

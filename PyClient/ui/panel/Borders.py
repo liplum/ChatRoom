@@ -30,6 +30,8 @@ class Border(UIElement):
 
     def Measure(self):
         if not self.IsVisible:
+            self.DWidth = 0
+            self.DHeight = 0
             return
         inner = self.Inner
         if inner and inner.IsVisible:
@@ -43,6 +45,8 @@ class Border(UIElement):
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
         if not self.IsVisible:
+            self.RenderWidth = 0
+            self.RenderHeight = 0
             return 0, 0
         inner = self.Inner
         if inner and inner.IsVisible:

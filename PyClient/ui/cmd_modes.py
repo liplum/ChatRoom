@@ -29,7 +29,8 @@ def common_hotkey(char: chars.char, tab: tab, client: IClient, tablist: tablist,
         menu_type = main_menu_type()
         if not isinstance(tab, menu_type):
             main_menu_i = tablist.find_first(lambda t: isinstance(t, menu_type))
-            if main_menu_i and (_, i := main_menu_i):
+            if main_menu_i:
+                _, i = main_menu_i
                 tablist.goto(i)
             else:
                 main_menu = win.newtab(menu_type)
@@ -330,17 +331,17 @@ class cmd_long_mode(cmd_state):
         # execute command
         if keys.k_enter == char:
             self.cmd_long_mode_execute_cmd()
-        # auto filling
+        # Auto filling
         elif chars.c_tab_key == char:
             return NotConsumed
             # TODO:Complete Autofilling
-            if mode.autofilling:  # press tab and already entered auto-filling mode
+            if mode.autofilling:  # press tab and already entered Auto-filling mode
                 # to next candidate
                 # cur_len = len(self.autofilling_cur)
                 # tb.rmtext(cur_len)
                 # self.autofilling_it = iter(self.autofilling_all)
                 pass
-            else:  # press tab but haven't enter auto-filling mode yet
+            else:  # press tab but haven't enter Auto-filling mode yet
                 self.autofilling = True
                 cmd_manager: cmdmanager = c.cmd_manager
                 inputs = tb.inputs[1:]
@@ -353,7 +354,7 @@ class cmd_long_mode(cmd_state):
                     tb.addtext(self.autofilling_cur)
         else:  # not enter and not tab
             consumed = tb.on_input(char)  # normally,add this char into textbox
-            if self.autofilling:  # if already entered auto-filling
+            if self.autofilling:  # if already entered Auto-filling
                 # update candidate list
                 self.autofilling_all = cmd_manager.prompts(inputs)
                 if len(all_prompts) == 0:

@@ -17,7 +17,7 @@ class button(text_control):
         content = self.content()
         content_len = len(content)
         width = self.width
-        if width != auto:
+        if width != Auto:
             self._r_width = width
             rest = width - content_len
             if rest <= 1:
@@ -39,6 +39,8 @@ class button(text_control):
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
         if not self.IsVisible:
+            self.RenderWidth = 0
+            self.RenderHeight = 0
             return 0, 0
         content = self.content()
         self.RenderWidth = min(len(content) + 2, width)
@@ -47,6 +49,8 @@ class button(text_control):
 
     def Measure(self):
         if not self.IsVisible:
+            self.DWidth = 0
+            self.DHeight = 0
             return
         content = self.content()
         self.DWidth = len(content) + 2
@@ -54,8 +58,8 @@ class button(text_control):
 
     def PaintOn(self, canvas: Canvas):
         g = StrWriter(canvas, 0, 0, self.RenderWidth, self.RenderHeight)
-        bk = BK.White if self.IsFocused() else None
-        fg = FG.Black if self.IsFocused() else None
+        bk = BK.White if self.IsFocused else None
+        fg = FG.Black if self.IsFocused else None
         g.Write(self.distext, bk, fg)
 
     @property
@@ -95,7 +99,7 @@ class button(text_control):
             self.content = content
         self._margin = 1
         self.on_press_func = on_press
-        self._width: PROP = auto
+        self._width: PROP = Auto
         self._r_width = 0
 
     def press(self):
@@ -126,8 +130,8 @@ class button(text_control):
     @width.setter
     def width(self, value: PROP):
         if self.width != value:
-            if value == auto:
-                self._width = auto
+            if value == Auto:
+                self._width = Auto
             else:
                 self._width = max(0, value)
                 self.on_prop_changed(self, "tw")
@@ -138,7 +142,7 @@ class button(text_control):
 
     @height.setter
     def height(self, value: int):
-        if value != auto:
+        if value != Auto:
             value = 1
         self._height = value
 

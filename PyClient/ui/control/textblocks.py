@@ -30,8 +30,8 @@ class textblock(text_control):
         else:
             self.words = words
         self.theme = theme
-        self._width = auto
-        self._height = auto
+        self._width = Auto
+        self._height = Auto
         self._r_width = 0
         self._r_height = 0
 
@@ -120,12 +120,12 @@ class textblock(text_control):
             max_width = max(max_width, word_len)
         a = math.sqrt(sum_len) / 7
 
-        if self.width == auto:
+        if self.width == Auto:
             self._r_width = max(round(a * 30), 2 + max_width)
         else:
             self._r_width = max(self.width, 2 + max_width)
 
-        if self.height == auto:
+        if self.height == Auto:
             self._r_height = round(a * 11)
         else:
             self._r_height = self.height

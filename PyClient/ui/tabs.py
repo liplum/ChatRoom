@@ -1,6 +1,5 @@
 from abc import ABCMeta
 from threading import RLock
-from typing import Hashable, Set
 
 import GLOBAL
 import utils
@@ -24,60 +23,11 @@ def _add_tabtype(name: str, tabtype: "metatab"):
 Need_Release_Resource = bool
 
 
-class group:
-
-    def __init__(self, identity: Any = None):
-        super().__init__()
-        self.identity = identity
-        self.tabs: List["tab"] = []
-        self.tabs_set: Set["tab"] = set()
-
-    def sort(self):
-        pass
-
-    def add(self, t: "tab") -> bool:
-        if t not in self.tabs_set:
-            self.tabs.append(t)
-            self.tabs_set.add(t)
-            return True
-        return False
-
-    def remove(self, t: "tab") -> bool:
-        if t in self.tabs_set:
-            self.tabs.remove(t)
-            self.tabs_set.remove(t)
-            return True
-        return False
-
-    def __eq__(self, other):
-        if isinstance(other, group):
-            return self.identity == other.identity
-        return False
-
-    def __hash__(self):
-        identity = self.identity
-        if isinstance(identity, Hashable):
-            return hash(identity)
-        else:
-            return super().__hash__()
-
-    def __len__(self) -> int:
-        return len(self.tabs)
-
-    def __iter__(self):
-        return iter(self.tabs)
-
-    def __repr__(self):
-        return f"group({self.identity})"
-
-
 class tablist(Control):
     def __init__(self):
         super().__init__()
         self._cur: Optional["tab"] = None
-        self.cur_group: Optional[group] = None
-        self.groups: List[group] = []
-        self.cur_group_index: Optional[int] = None
+        self._tabs: List["tab"] = []
         self.cur_index: Optional[int] = None
 
         self.view_history = []
@@ -87,29 +37,13 @@ class tablist(Control):
         self._on_tablist_changed = Event(tablist, bool, tab)
         self._lock = RLock()
 
-    def match_or_create_group(self, t: "tab") -> group:
-        for g in self.groups:
-            if t.group_id == g.identity:
-                return g
-        g = group(t.group_id)
-        self.groups.append(g)
-        return g
-
-    def match_group(self, t: "tab") -> Optional[group]:
-        for g in self.groups:
-            if t.group_id == g.identity:
-                return g
-        return None
-
     @property
     def tabs(self) -> List["tab"]:
-        return [t for g in self.groups for t in g]
+        return self._tabs
 
     @tabs.setter
     def tabs(self, value: List["tab"]):
-        self.groups = [group()]
-        for t in value:
-            self.add(t)
+        self._tabs = value
 
     def unite_like_tabs(self):
         with self._lock:
@@ -145,15 +79,12 @@ class tablist(Control):
         with self._lock:
             cur = self.cur
             if cur:
-                try:
-                    self.cur_index = self.get_index(cur)
-                except:
-                    pass
+                self.cur_index = self.GetIndex(cur)
 
     @property
     def tabs_count(self) -> int:
         with self._lock:
-            return sum(len(g) for g in self.groups)
+            return len(self.tabs)
 
     @property
     def on_curtab_changed(self) -> Event:
@@ -182,8 +113,7 @@ class tablist(Control):
         return self._on_tablist_changed
 
     def __len__(self) -> int:
-        with self._lock:
-            return len(self.tabs)
+        return self.tabs_count
 
     @property
     def cur(self) -> Optional["tab"]:
@@ -205,10 +135,7 @@ class tablist(Control):
 
     def add(self, t: "tab"):
         with self._lock:
-            g = self.match_or_create_group(t)
-            t.group = g
-            g.add(t)
-            t.on_group_id_changed.Add(self.__on_subtab_group_id_changed)
+            self.tabs.append(t)
             self.reset_index()
             self.on_tablist_changed(self, True, t)
             if self.cur is None:
@@ -216,44 +143,19 @@ class tablist(Control):
             t.on_added()
             t.on_content_changed.Add(self.on_subtab_content_changed)
 
-    def find_group_by_id(self, Id) -> Optional[group]:
-        for g in self.groups:
-            if g.identity == Id:
-                return g
-        return None
-
-    def __on_subtab_group_id_changed(self, subtab, old, new):
-        with self._lock:
-            oldg = self.find_group_by_id(old)
-            if oldg:
-                oldg.remove(subtab)
-            g = self.match_or_create_group(subtab)
-            subtab.group = g
-            g.add(subtab)
-
     def replace(self, old_tab: Union[int, "tab"], new_tab: "tab"):
         if isinstance(old_tab, int):
             if 0 <= old_tab < self.tabs_count:
-                removed: Optional["tab"] = self.get_by_index(item)
-                if removed is None:
-                    return
+                removed: "tab" = self.GetTabByIndex(old_tab)
+                self.DeleteTabByIndex(old_tab)
                 pos: int = old_tab
             else:
                 return
         elif isinstance(old_tab, tab):
-            removed: Optional["tab"] = old_tab
-            try:
-                pos: Optional[int] = self.get_index(removed)
-                if pos is None:
-                    return
-            except:
+            removed: "tab" = old_tab
+            pos: Optional[int] = self.GetIndex(removed)
+            if pos is None:
                 return
-
-        g = self.match_group(removed)
-        new_tab.group = g
-
-        g.add(new_tab)
-        g.remove(removed)
 
         new_tab.on_added()
         need_release_resource = new_tab.on_replaced(removed)
@@ -262,7 +164,7 @@ class tablist(Control):
             removed.on_removed()
 
         removed.on_content_changed.Remove(self.on_subtab_content_changed)
-        self.set_by_index(pos, new_tab)
+        self.SetTabByIndex(pos, new_tab)
 
         self.on_tablist_changed(self, False, removed)
         self.on_tablist_changed(self, True, new_tab)
@@ -274,55 +176,46 @@ class tablist(Control):
         with self._lock:
             self.on_content_changed(self)
 
-    def get_by_index(self, index: Optional[int]) -> Optional["tab"]:
-        if index is None:
+    def GetTabByIndex(self, index: Optional[int]) -> Optional["tab"]:
+        try:
+            return self.tabs[index]
+        except:
             return None
-        total = 0
-        for g in self.groups:
-            glen = len(g)
-            if total <= index < total + glen:
-                rindex = index - total
-                return g.tabs[rindex]
-            total += glen
-        return None
 
-    def get_index(self, t: Optional["tab"]) -> Optional[int]:
+    def GetIndex(self, t: Optional["tab"]) -> Optional[int]:
         if t is None:
             return None
-        total = 0
-        for g in self.groups:
-            try:
-                rindex = g.tabs.index(t)
-                return rindex + total
-            except:
-                pass
-            total += len(g)
-        return None
+        try:
+            return self.tabs.index(t)
+        except:
+            return None
 
-    def set_by_index(self, index: int, new_tab: "tab"):
-        total = 0
-        for g in self.groups:
-            glen = len(g)
-            if total <= index < total + glen:
-                rindex = index - total
-                g.tabs[rindex] = new_tab
+    def SetTabByIndex(self, index: int, new_tab: "tab"):
+        if 0 <= index < self.tabs_count:
+            self.tabs[index] = new_tab
+
+    def DeleteTabByIndex(self, index: int):
+        if 0 <= index < self.tabs_count:
+            del self.tabs[index]
+
+    def DeleteTab(self, t: "tab"):
+        if t in self.tabs:
+            self.tabs.remove(t)
+            return True
+        else:
+            return False
 
     def remove(self, item: Union[int, "tab"]):
         if isinstance(item, int):
             if 0 <= item < self.tabs_count:
-                removed = self.get_by_index(item)
-                if removed:
-                    g = t.group
-                    g.Remove(t)
-                else:
-                    return
+                removed: "tab" = self.GetTabByIndex(item)
+                self.DeleteTabByIndex(item)
             else:
                 return
         elif isinstance(item, tab):
-            removed = item
+            removed: "tab" = item
             try:
-                g = item.group
-                g.remove(item)
+                self.DeleteTab(removed)
             except:
                 return
         else:
@@ -340,8 +233,7 @@ class tablist(Control):
     def remove_cur(self):
         cur = self.cur
         if cur:
-            g = cur.group
-            g.remove(cur)
+            self.DeleteTab(cur)
         self.on_tablist_changed(self, False, cur)
 
         if self.tabs_count == 0:
@@ -363,24 +255,29 @@ class tablist(Control):
             number = max(number, 0)
             number = min(number, self.tabs_count - 1)
             origin = self.cur
-            target = self.get_by_index(number)
+            target = self.GetTabByIndex(number)
             if origin is target:
                 return
             self.cur = target
             self.add_view_history(number)
 
     def next(self):
-        with self._lock:
-            self.goto(self.cur_index + 1)
+        cur_index = self.cur_index
+        if cur_index is None:
+            self.goto(0)
+        else:
+            self.goto(cur_index + 1)
 
     def back(self):
-        with self._lock:
+        cur_index = self.cur_index
+        if cur_index is None:
+            self.goto(0)
+        else:
             self.goto(self.cur_index - 1)
 
     def clear(self):
-        with self._lock:
-            for t in list(self.tabs):
-                self.remove(t)
+        for t in self.tabs:
+            self.remove(t)
 
     def add_view_history(self, number: int):
         self.view_history.append(number)
@@ -396,7 +293,7 @@ class tablist(Control):
                 fg = CmdFgColor.Black if t is cur else CmdFgColor.Violet
                 title = t.title
                 if GLOBAL.DEBUG:
-                    displayed_title = f" [{t.group.identity}]{title} "
+                    displayed_title = f" {title} "
                 else:
                     displayed_title = f" {title} "
                 buf.addtext(displayed_title, fgcolor=fg, bkcolor=bk, end='')
@@ -427,7 +324,7 @@ class tablist(Control):
             fg = FG.Black if t is cur else FG.Violet
             title = t.title
             if GLOBAL.DEBUG:
-                displayed_title = f" [{t.group.identity}]{title} "
+                displayed_title = f" {title} "
             else:
                 displayed_title = f" {title} "
             names.Write(displayed_title, bk, fg)
@@ -532,31 +429,12 @@ class tab(Control, metaclass=metatab):
         return self.client.App
 
     @property
-    def group_id(self) -> Any:
-        return self._group_id
-
-    @group_id.setter
-    def group_id(self, value: Any):
-        old = self._group_id
-        if old != value:
-            self._group_id = value
-            self.on_group_id_changed(self, old, value)
-
-    @property
     def tab_priority(self) -> int:
         return self._tab_priority
 
     @tab_priority.setter
     def tab_priority(self, value: int):
         self._tab_priority = value
-
-    @property
-    def group(self) -> group:
-        return self._group
-
-    @group.setter
-    def group(self, value: group):
-        self._group = value
 
 
 class CannotRestoreTab(Exception):

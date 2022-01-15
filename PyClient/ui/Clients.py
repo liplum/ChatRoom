@@ -1,5 +1,4 @@
 import json
-import os
 import platform
 import traceback
 from threading import Thread
@@ -8,7 +7,6 @@ import GLOBAL
 import ioc as ioc
 import net.networks as net
 import tasks
-import ui.Renders as renders
 import ui.inputs as _input
 import ui.outputs as output
 from core.chats import *
@@ -17,9 +15,10 @@ from core.operations import *
 from core.rooms import iroom_manager, room_manager
 from core.settings import entity as settings
 from timers import timer
+from ui.Consoles import *
 from ui.Core import *
 from ui.k import cmdkey
-from ui.windows import window
+from ui.Apps import App
 from utils import get
 
 system_type = platform.system()
@@ -90,15 +89,15 @@ class Client(IClient):
 
             self.network.on_msg_pre_analyzed.Add(on_msg_pre_analyzed)
 
-        self._win = window(self)
+        self._win = App(self)
         self._init_channels()
         self.on_cmd_register(self, self.cmd_manger)
 
         for k in self.cmdkeys:
             self.on_keymapping(self, k)
 
-        if renders.CanGetTerminalScreenSize:
-            self.winsize = renders.GetTerminalScreenSize()
+        if CanGetTerminalScreenSize():
+            self.winsize = GetTerminalScreenSize()
             self.winsize_monitor = Thread(target=self.monitor_winsize, name="SizeMonitor")
             self.winsize_monitor.daemon = True
 
@@ -118,7 +117,7 @@ class Client(IClient):
         self._dirty = False
 
     def monitor_winsize(self):
-        get_winsize = renders.GetTerminalScreenSize
+        get_winsize = GetTerminalScreenSize
         while True:
             cur = get_winsize()
             if self.winsize != cur:

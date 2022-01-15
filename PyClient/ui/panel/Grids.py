@@ -2,7 +2,7 @@ import re
 from typing import Tuple, List, Optional, Iterator
 
 import utils
-from ui.Controls import PROP, Control, auto
+from ui.Controls import PROP, Control, Auto
 from ui.Renders import Canvas
 from ui.outputs import buffer
 from ui.panels import Panel, CTRL
@@ -157,8 +157,8 @@ class Grid(Panel):
         if self.columnlen == 0:
             self.columns = [Column.ByProportion(1)]
 
-        self._elemt_interval_w = auto
-        self._elemt_interval_h = auto
+        self._elemt_interval_w = Auto
+        self._elemt_interval_h = Auto
         self.gen_unit()
         self._grid: GridMatrix = utils.fill_2d_array(self.rowlen, self.columnlen, None)
         self._r_width = 0
@@ -168,10 +168,16 @@ class Grid(Panel):
         self._cur_focused_index: Optional[FIndex] = (0, 0)
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
-        return super().Arrange(width, height)
+        if not self.IsVisible:
+            self.RenderWidth = 0
+            self.RenderHeight = 0
+            return 0, 0
 
     def Measure(self):
-        super().Measure()
+        if not self.IsVisible:
+            self.DWidth = 0
+            self.DHeight = 0
+            return
 
     def PaintOn(self, canvas: Canvas):
         super().PaintOn(canvas)
@@ -216,8 +222,8 @@ class Grid(Panel):
 
         w = 0
         h = 0
-        if self.width == auto:
-            if self.elemt_interval_w == auto:
+        if self.width == Auto:
+            if self.elemt_interval_w == Auto:
                 self._r_elemt_interval_w = 1
             else:
                 self._r_elemt_interval_w = self.elemt_interval_w
@@ -240,7 +246,7 @@ class Grid(Panel):
                 w += max_width
                 occupied_width += max_width
 
-            if self.elemt_interval_w == auto:
+            if self.elemt_interval_w == Auto:
                 if columnlen == 1:
                     self._r_elemt_interval_w = 0
                 else:
@@ -250,13 +256,13 @@ class Grid(Panel):
 
         w += self._r_elemt_interval_w * (self.columnlen - 1)
 
-        if self.height == auto:
-            if self.elemt_interval_h == auto:
+        if self.height == Auto:
+            if self.elemt_interval_h == Auto:
                 self._r_elemt_interval_h = 0
             else:
                 self._r_elemt_interval_h = self.elemt_interval_h
         else:
-            if self.elemt_interval_h == auto:
+            if self.elemt_interval_h == Auto:
                 if self.rowlen == 1:
                     self._r_elemt_interval_w = 0
                 else:
@@ -298,7 +304,7 @@ class Grid(Panel):
 
     @elemt_interval_w.setter
     def elemt_interval_w(self, value: PROP):
-        if value != auto and value < 0:
+        if value != Auto and value < 0:
             value = 0
         if self._elemt_interval_w != value:
             self._elemt_interval_w = value
@@ -310,7 +316,7 @@ class Grid(Panel):
 
     @elemt_interval_h.setter
     def elemt_interval_h(self, value: PROP):
-        if value != auto and value < 0:
+        if value != Auto and value < 0:
             value = 0
         if self._elemt_interval_h != value:
             self._elemt_interval_h = value

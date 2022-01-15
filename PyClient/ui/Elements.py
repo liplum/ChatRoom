@@ -1,4 +1,4 @@
-from typing import Collection, Generator, TypeVar, Tuple, Iterable
+from typing import Collection, Generator, TypeVar, Iterable
 
 import chars
 from DpProps import *
@@ -9,7 +9,8 @@ from ui.Renders import Painter
 IsConsumed = bool
 Consumed = True
 NotConsumed = False
-auto = "auto"
+Auto = "Auto"
+WidthHeightType = Union[int, str]
 PROP = TypeVar('PROP', str, int)
 T = TypeVar('T')
 
@@ -19,23 +20,25 @@ DefaultNotConsumed = (NotConsumed,)
 class UIElement(Painter, DpObj):
     NeedRerenderEvent: RoutedEventType
     IsVisibleProp: DpProp
+    WidthProp: DpProp
+    HeightProp: DpProp
+    IsFocusedProp: DpProp
 
     def __init__(self):
         super().__init__()
         self._children: List["UIElement"] = []
         self._parent = None
+        self._dWidth = 0
+        self._dHeight = 0
+        self._renderWidth = 0
+        self._renderHeight = 0
+        # ------------Legacy------------
         self._onRenderContentChanged = Event(UIElement)
         self._onPropChanged = Event(UIElement, str)
         self._onAttachPropChanged = Event(UIElement, str)
         self._onLayoutPropChanged = self._onPropChanged.Sub()
         self._onNormalPropChanged = self._onPropChanged.Sub()
-        self._width = 0
-        self._height = 0
-        self._dWidth = 0
-        self._dHeight = 0
-        self._renderWidth = 0
-        self._renderHeight = 0
-        self._isFocused = False
+        # ------------Legacy------------
 
     @property
     def IsVisible(self) -> bool:
@@ -44,9 +47,28 @@ class UIElement(Painter, DpObj):
     @IsVisible.setter
     def IsVisible(self, value: bool):
         self.SetValue(self.IsVisibleProp, value)
+        for subElemt in PreItV(self):
+            subElemt.SetValue(UIElement.IsVisibleProp, value)
+
+    @property
+    def Width(self) -> WidthHeightType:
+        return self.GetValue(self.WidthProp)
+
+    @Width.setter
+    def Width(self, value: WidthHeightType):
+        self.SetValue(self.WidthProp, value)
+
+    @property
+    def Height(self) -> WidthHeightType:
+        return self.GetValue(self.HeightProp)
+
+    @Height.setter
+    def Height(self, value: WidthHeightType):
+        self.SetValue(self.HeightProp, value)
 
     def NeedRerender(self):
-        self.Raise(self.NeedRerenderEvent, self, RoutedEventArgs(False))
+        if self.IsVisible:
+            self.Raise(self.NeedRerenderEvent, self, RoutedEventArgs(False))
 
     @staticmethod
     def Raise(eventType: RoutedEventType, sender: "UIElement", args: RoutedEventArgs):
@@ -93,59 +115,6 @@ class UIElement(Painter, DpObj):
 
     def IsLeaf(self) -> bool:
         return len(self.GetChildren()) == 0
-
-    @property
-    def OnRenderContentChanged(self) -> Event:
-        """
-        Para 1:UIElement object
-
-        :return: Event(UIElement)
-        """
-        return self._onRenderContentChanged
-
-    @property
-    def OnPropChanged(self) -> Event:
-        """
-        Para 1:UIElement object
-
-        Para 2:property name
-
-        :return: Event(UIElement,str)
-        """
-        return self._onPropChanged
-
-    @property
-    def OnAttachPropChanged(self) -> Event:
-        """
-        Para 1:UIElement object
-
-        Para 2:property name
-
-        :return: Event(UIElement,str)
-        """
-        return self._onAttachPropChanged
-
-    @property
-    def OnLayoutPropChanged(self) -> Event:
-        """
-        Para 1:UIElement object
-
-        Para 2:property name
-
-        :return: Event(UIElement,str)
-        """
-        return self._onLayoutPropChanged
-
-    @property
-    def OnNormalPropChanged(self) -> Event:
-        """
-        Para 1:UIElement object
-
-        Para 2:property name
-
-        :return: Event(UIElement,str)
-        """
-        return self._onNormalPropChanged
 
     @property
     def DWidth(self):
@@ -204,13 +173,73 @@ class UIElement(Painter, DpObj):
         return False
 
     def OnFocused(self):
-        self._isFocused = True
+        self.IsFocused = True
 
     def OnLostFocused(self):
-        self._isFocused = False
+        self.IsFocused = False
 
+    @property
     def IsFocused(self) -> bool:
-        return self._isFocused
+        return self.GetValue(self.IsFocusedProp)
+
+    @IsFocused.setter
+    def IsFocused(self, value: bool):
+        self.SetValue(self.IsFocusedProp, value)
+
+    # ------------Legacy------------
+    @property
+    def OnRenderContentChanged(self) -> Event:
+        """
+        Para 1:UIElement object
+
+        :return: Event(UIElement)
+        """
+        return self._onRenderContentChanged
+
+    @property
+    def OnPropChanged(self) -> Event:
+        """
+        Para 1:UIElement object
+
+        Para 2:property name
+
+        :return: Event(UIElement,str)
+        """
+        return self._onPropChanged
+
+    @property
+    def OnAttachPropChanged(self) -> Event:
+        """
+        Para 1:UIElement object
+
+        Para 2:property name
+
+        :return: Event(UIElement,str)
+        """
+        return self._onAttachPropChanged
+
+    @property
+    def OnLayoutPropChanged(self) -> Event:
+        """
+        Para 1:UIElement object
+
+        Para 2:property name
+
+        :return: Event(UIElement,str)
+        """
+        return self._onLayoutPropChanged
+
+    @property
+    def OnNormalPropChanged(self) -> Event:
+        """
+        Para 1:UIElement object
+
+        Para 2:property name
+
+        :return: Event(UIElement,str)
+        """
+        return self._onNormalPropChanged
+    # ------------Legacy------------
 
 
 _ElemItType = Callable[[UIElement], Iterable[UIElement]]
@@ -329,12 +358,27 @@ def BubbleParentIt(cur: UIElement) -> Iterable[UIElement]:
         cur = parent
 
 
-def _OnRenderPropChangedCallback(elemt: "UIElement", value):
+def OnRenderPropChangedCallback(elemt: "UIElement", value):
     elemt.NeedRerender()
+
+
+def _WidthHeightCoerceCallback(elemt: "UIElement", value):
+    if isinstance(value, str):
+        return value
+    return max(value, 0)
 
 
 UIElement.IsVisibleProp = DpProp.Register(
     "IsVisible", bool, UIElement,
-    DpPropMeta(True, propChangedCallback=_OnRenderPropChangedCallback))
+    DpPropMeta(True, propChangedCallback=OnRenderPropChangedCallback))
+UIElement.IsFocusedProp = DpProp.Register(
+    "IsFocused", bool, UIElement,
+    DpPropMeta(False, propChangedCallback=OnRenderPropChangedCallback))
+UIElement.WidthProp = DpProp.Register(
+    "Width", (int, str), UIElement,
+    DpPropMeta(Auto, propChangedCallback=OnRenderPropChangedCallback, coerceValueCallback=_WidthHeightCoerceCallback))
+UIElement.HeightProp = DpProp.Register(
+    "Height", (int, str), UIElement,
+    DpPropMeta(Auto, propChangedCallback=OnRenderPropChangedCallback, coerceValueCallback=_WidthHeightCoerceCallback))
 UIElement.NeedRerenderEvent = RoutedEventType.Register(
     "NeedRerender", UIElement, RoutedEventArgs, RoutedStrategy.Bubble)

@@ -65,8 +65,8 @@ class display_board(text_control):
             self.theme = lambda: theme
         else:
             self.theme = theme
-        self._width = auto
-        self._height = auto
+        self._width = Auto
+        self._height = Auto
         self._r_width = 0
         self._r_height = 0
         self._horizontal_margin = 0
@@ -144,7 +144,7 @@ class display_board(text_control):
             return
         self.IsLayoutChanged = False
         contents = self.contents()
-        if self.width == auto:
+        if self.width == Auto:
             max_width = max(len(t) for t in contents)
             self._r_width = max_width + 2
             self._horizontal_margin = 0
@@ -158,7 +158,7 @@ class display_board(text_control):
                 self._horizontal_margin = 0
 
         contentlen = len(contents)
-        if self.height == auto:
+        if self.height == Auto:
             self._r_height = len(contents) + 2
             self._vertical_margin = 0
         else:

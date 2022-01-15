@@ -1,6 +1,6 @@
 from collections import defaultdict
 from enum import Enum
-from typing import Callable, Dict, Optional, NoReturn, Any, List, Type, Union
+from typing import Callable, Dict, Optional, NoReturn, Any, List, Type, Union, Tuple
 
 from Events import Event
 
@@ -66,7 +66,7 @@ class DpProp:
     _PropertyFromName: Dict[DpKey, "DpProp"] = {}
 
     @classmethod
-    def Register(cls, name: str, propType: type,
+    def Register(cls, name: str, propType: Union[type, Tuple],
                  ownerType: Type["DpObj"], meta: DpPropMeta) -> "DpProp":
         key = DpKey(name, ownerType)
         if key in cls._PropertyFromName:
@@ -80,7 +80,7 @@ class DpProp:
     def RegisterAttach(cls):
         pass
 
-    def __init__(self, name: str, propType: type,
+    def __init__(self, name: str, propType: Union[type, Tuple],
                  ownerType: Type["DpObj"], meta: DpPropMeta):
         """
         Private Constructor
@@ -98,6 +98,22 @@ class DpProp:
     @property
     def Meta(self) -> DpPropMeta:
         return self._meta
+
+    @property
+    def PropType(self):
+        return self._propType
+
+    @property
+    def Name(self):
+        return self._name
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        name = self.Name
+        fullName = name.replace("Prop", "") if name.endswith("Prop") else name
+        return f"{self.OwnerType}.{fullName}({self.PropType})"
 
 
 EventHandlerType = Callable[["DpObj", "RoutedEventArgs"], NoReturn]
@@ -145,10 +161,14 @@ class DpObj:
         validate = meta.ValidateValueCallback
         if meta.AllowSameValue or self.GetValue(prop) != value:
             if validate is None or validate(value):
-                self.DpPropValueEntries[prop] = value
-                callback = meta.PropChangedCallback
-                if callback:
-                    callback(self, value)
+                if isinstance(value, prop.PropType):
+                    self.DpPropValueEntries[prop] = value
+                    callback = meta.PropChangedCallback
+                    if callback:
+                        callback(self, value)
+                else:
+                    raise TypeError(
+                        f"{prop} doesn't accept {type(value)}.", prop, value)
 
     def GetValue(self, prop: DpProp):
         if not isinstance(self, prop.OwnerType):

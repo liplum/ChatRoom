@@ -1,4 +1,3 @@
-import os
 import platform
 import traceback
 from threading import Thread
@@ -6,14 +5,14 @@ from threading import Thread
 import GLOBAL
 import ioc as ioc
 import tasks
-import ui.Renders as renders
 import ui.inputs as _input
 import ui.outputs as output
-from Test.windows import TestApp
+from Test.Apps import TestApp
 from core.chats import *
 from core.filer import ifiler, filer
 from core.operations import *
 from timers import timer
+from ui.Consoles import *
 from ui.Core import *
 from ui.Renders import IRender
 
@@ -67,13 +66,13 @@ class TestClient(IClient):
 
         self._win = TestApp(self)
 
-        if renders.CanGetTerminalScreenSize:
-            self.winsize = renders.GetTerminalScreenSize()
+        if CanGetTerminalScreenSize():
+            self.winsize = GetTerminalScreenSize()
             self.winsize_monitor = Thread(target=self.monitor_winsize, name="SizeMonitor")
             self.winsize_monitor.daemon = True
 
     def monitor_winsize(self):
-        get_winsize = renders.GetTerminalScreenSize
+        get_winsize = GetTerminalScreenSize
         while True:
             cur = get_winsize()
             if self.winsize != cur:

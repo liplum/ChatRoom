@@ -9,7 +9,7 @@ class label(Control):
             self.content = lambda: content
         else:
             self.content = content
-        self._width: PROP = auto
+        self._width: PROP = Auto
         self._r_width = 0
 
     @property
@@ -22,7 +22,7 @@ class label(Control):
 
     @height.setter
     def height(self, value: int):
-        if value != auto:
+        if value != Auto:
             value = 1
         self._height = value
 
@@ -36,7 +36,7 @@ class label(Control):
         if self.left_margin > 0:
             buf.addtext(utils.repeat(' ', self.left_margin), end='')
         content = self.content()
-        if self.width != auto:
+        if self.width != Auto:
             if self.width < len(content):
                 content = content[0:self.width]
             elif self.width > len(content):
@@ -46,8 +46,8 @@ class label(Control):
     @width.setter
     def width(self, value: int):
         if self.width != value:
-            if value == auto:
-                self._width = auto
+            if value == Auto:
+                self._width = Auto
             else:
                 self._width = max(0, value)
             self.on_prop_changed(self, "tw")
@@ -59,19 +59,21 @@ class label(Control):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False
-        if self.width == auto:
+        if self.width == Auto:
             self._r_width = len(self.content())
         else:
             self._r_width = self.width
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
         if not self.IsVisible:
+            self.RenderWidth = 0
+            self.RenderHeight = 0
             return 0, 0
-        if self.Width == auto:
+        if self.Width == Auto:
             self.RenderWidth = min(len(self.content()), width)
         else:
             self.RenderWidth = min(self.Width, width)
-        if self.Height == auto:
+        if self.Height == Auto:
             self.RenderHeight = 1
         else:
             self.RenderHeight = min(self.Height, height)
@@ -79,12 +81,14 @@ class label(Control):
 
     def Measure(self):
         if not self.IsVisible:
+            self.DWidth = 0
+            self.DHeight = 0
             return
-        if self.Width == auto:
+        if self.Width == Auto:
             self.DWidth = len(self.content())
         else:
             self.DWidth = self.Width
-        if self.Height == auto:
+        if self.Height == Auto:
             self.DHeight = 1
         else:
             self.DHeight = self.Height

@@ -20,7 +20,7 @@ class login_tab(tab):
         super().__init__(client, tablist)
         self.last_tab: Optional[tab] = None
         self.network: i_network = self.client.network
-        grid = gen_grid(4, [Column(auto), Column(15)])
+        grid = gen_grid(4, [Column(Auto), Column(15)])
         excepted_chars = {keys.k_enter, chars.c_tab_key}
         self.t_ip = xtextbox(exceptedChars=excepted_chars)
         self.t_port = xtextbox(onlyAllowedChars=number_keys)
@@ -55,7 +55,7 @@ class login_tab(tab):
         self.t_port.InputList = "25000"
 
         dialog_stack = Stack()
-        dialog_stack.orientation = horizontal
+        dialog_stack.Orientation = horizontal
 
         def on_cancel_pressed():
             if self.last_tab:

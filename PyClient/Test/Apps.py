@@ -11,6 +11,8 @@ CallStackItem = Tuple[Generator, Focusable]
 
 NeedRemoveCurFrame = bool
 
+from ui.LegacyRenders import LegacyBufferSimulator
+
 
 class Frame:
 
@@ -118,7 +120,11 @@ class TestApp(IApp):
             v.Y = 2
             v.Width = canvas.Width
             v.Height = canvas.Height - 2
-            cur_painter.PaintOn(v)
+            if getattr(cur_painter, "UseNewRender", False):
+                cur_painter.PaintOn(v)
+            else:
+                sm = LegacyBufferSimulator(v)
+                cur_painter.paint_on(sm)
         self.render.Render(canvas)
 
     def run_coroutine(self):

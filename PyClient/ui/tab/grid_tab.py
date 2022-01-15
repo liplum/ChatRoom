@@ -22,7 +22,7 @@ class grid_tab(tab):
         account_stack.over_range = ui.panel.Stacks.expend
         account_stack.add(label("Account"))
         account_stack.add(account_tbox)
-        account_stack.orientation = ui.panel.Stacks.horizontal
+        account_stack.Orientation = ui.panel.Stacks.horizontal
         b = button("Button", lambda: None)
         b.margin = 2
         # self.Grid[0, 0] = account_stack

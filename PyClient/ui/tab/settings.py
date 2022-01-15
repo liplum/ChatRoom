@@ -50,7 +50,7 @@ class settings_tab(tab):
         cancel.width = 10
         self.b_cancel = cancel
         save_cancel = Stack()
-        save_cancel.orientation = horizontal
+        save_cancel.Orientation = horizontal
         save_cancel.add(save)
         save_cancel.add(cancel)
         self.save_cancel = save_cancel
