@@ -6,7 +6,7 @@ from ui.control.checkboxes import checkbox
 from ui.control.labels import label
 from ui.control.xtbox import XtextWrapper
 from ui.panel.DisplayBoards import DisplayBoard
-from ui.panel.Stacks import Stack, vertical, OrientationType
+from ui.panel.Stacks import Stack, vertical, OrientationType, AlignmentType
 from ui.tabs import *
 
 
@@ -38,14 +38,15 @@ class TestTab(tab):
         self.Main = DisplayBoard()
         self.StackPanel = Stack()
         self.StackPanel.Orientation = vertical
-        self.StackPanel.add(self.db)
-        self.StackPanel.add(self.t_label)
-        self.StackPanel.add(self.t_checkbox)
-        self.StackPanel.add(self.t_button)
+        self.StackPanel.AddControl(self.db)
+        self.StackPanel.AddControl(self.t_label)
+        self.StackPanel.AddControl(self.t_checkbox)
+        self.StackPanel.AddControl(self.t_button)
         # self.tta = TestTabA(client, tablist)
         # c.AddControl(self.tta)
         self.ShowLogo = False
         self.IsShowVisualTreeOrVisibleVTree = True
+        self.tick = 0
 
         def switchShowLogo():
             self.ShowLogo = not self.ShowLogo
@@ -100,6 +101,7 @@ class TestTab(tab):
                     canvas.Char(i, j, "-")
 
     def on_input(self, char: chars.char) -> Generator:
+        self.tick += 1
         if chars.c_a == char:
             common_hotkey(char, self, self.client, self.tablist, self.win)
         elif chars.c_p == char:
@@ -115,6 +117,13 @@ class TestTab(tab):
                 self.StackPanel.Orientation = OrientationType.Vertical
             elif o == OrientationType.Vertical:
                 self.StackPanel.Orientation = OrientationType.Horizontal
+        elif keys.k_pgdown == char:
+            if self.tick % 3 == 0:
+                Stack.SetVerticalAlignment(self.t_button, AlignmentType.Left)
+            elif self.tick % 3 == 1:
+                Stack.SetVerticalAlignment(self.t_button, AlignmentType.Center)
+            else:
+                Stack.SetVerticalAlignment(self.t_button, AlignmentType.Right)
         else:
             self.t_tbox.on_input(char)
         yield Finished

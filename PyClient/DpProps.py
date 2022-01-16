@@ -92,21 +92,21 @@ class DpProp:
         if key in cls._PropertyFromName:
             raise ExistedDpKeyError(f"{name} and {ownerType} already exist", name, ownerType)
 
-        dp = DpProp(name, propType, ownerType, meta)
+        dp = DpProp(name, propType, ownerType, meta, True)
         cls._PropertyFromName[key] = dp
 
-        def GetValue(owner: "DpObj"):
+        def GetAttachedPropValue(owner: "DpObj"):
             return owner.GetValue(dp)
 
-        def SetValue(owner: "DpObj", value: Any):
+        def SetAttachedPropValue(owner: "DpObj", value: Any):
             owner.SetValue(dp, value)
 
-        setattr(ownerType, f"Get{name}", GetValue)
-        setattr(ownerType, f"Set{name}", SetValue)
+        setattr(ownerType, f"Get{name}", GetAttachedPropValue)
+        setattr(ownerType, f"Set{name}", SetAttachedPropValue)
         return dp
 
     def __init__(self, name: str, propType: Union[type, Tuple],
-                 ownerType: Type["DpObj"], meta: DpPropMeta):
+                 ownerType: Type["DpObj"], meta: DpPropMeta, isAttached=False):
         """
         Private Constructor
         """
@@ -115,6 +115,11 @@ class DpProp:
         self._propType = propType
         self._ownerType: Type["DpObj"] = ownerType
         self._meta = meta
+        self._isAttached = isAttached
+
+    @property
+    def IsAttached(self):
+        return self._isAttached
 
     @property
     def OwnerType(self) -> Type["DpObj"]:
@@ -172,7 +177,7 @@ class DpObj:
         return self._eventHandlers
 
     def SetValue(self, prop: DpProp, value):
-        if not isinstance(self, prop.OwnerType):
+        if not prop.IsAttached and not isinstance(self, prop.OwnerType):
             raise NotHasDependencyPropertyError(self, prop)
         meta = prop.Meta
         coerce = meta.CoerceValueCallback
@@ -191,7 +196,7 @@ class DpObj:
                         f"{prop} doesn't accept {type(value)}.", prop, value)
 
     def GetValue(self, prop: DpProp):
-        if not isinstance(self, prop.OwnerType):
+        if not prop.IsAttached and not isinstance(self, prop.OwnerType):
             raise NotHasDependencyPropertyError(self, prop)
         if prop in self.DpPropValueEntries:
             value = self.DpPropValueEntries[prop]

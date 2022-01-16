@@ -53,7 +53,7 @@ class Stack(Panel):
         # ------------Legacy------------
 
     def PaintOn(self, canvas: Canvas):
-        elements = self.elements
+        elements = self._elements_stack
         dx = 0
         dy = 0
         width = self.RenderWidth
@@ -64,7 +64,14 @@ class Stack(Panel):
                     continue
                 rew = e.RenderWidth
                 reh = e.RenderHeight
-                e.PaintOn(Viewer(dx, dy, rew, reh, canvas))
+                alignment = Stack.GetVerticalAlignment(e)
+                if alignment == AlignmentType.Top:
+                    edy = 0
+                elif alignment == AlignmentType.Bottom:
+                    edy = height - reh
+                else:  # Default is "Center"
+                    edy = (height - reh) // 2
+                e.PaintOn(Viewer(dx, edy, rew, reh, canvas))
                 dx += rew
         else:
             for e in elements:
@@ -72,7 +79,7 @@ class Stack(Panel):
                     continue
                 rew = e.RenderWidth
                 reh = e.RenderHeight
-                alignment = self.GetVerticalAlignment(e)
+                alignment = Stack.GetVerticalAlignment(e)
                 if alignment == AlignmentType.Left:
                     edx = 0
                 elif alignment == AlignmentType.Right:
@@ -321,20 +328,20 @@ class Stack(Panel):
                 return True
         return False
 
-    def insert(self, index, elemt: Control):
-        self._elements_stack.insert(index, elemt)
-        return super().add(elemt)
+    def Insert(self, index, control: Control):
+        self._elements_stack.insert(index, control)
+        return super().add(control)
 
-    def add(self, elemt: Control):
-        self._elements_stack.append(elemt)
-        return super().add(elemt)
+    def AddControl(self, control: Control):
+        self._elements_stack.append(control)
+        return super().AddControl(control)
 
-    def remove(self, elemt: Control):
+    def RemoveControl(self, control: Control) -> bool:
         try:
-            self._elements_stack.remove(elemt)
+            self._elements_stack.remove(control)
         except:
             pass
-        return super().remove(elemt)
+        return super().RemoveControl(control)
 
     def _on_elemt_exit_focus(self, elemt) -> bool:
         if super()._on_elemt_exit_focus(elemt):
@@ -393,9 +400,9 @@ Stack.OrientationProp = DpProp.Register(
     DpPropMeta(OrientationType.Vertical, propChangedCallback=OnRenderPropChangedCallback))
 Stack.HorizontalAlignmentProp = DpProp.RegisterAttach(
     "HorizontalAlignment", AlignmentType, Stack,
-    DpPropMeta(AlignmentType.Center)
+    DpPropMeta(AlignmentType.Center, propChangedCallback=OnRenderPropChangedCallback)
 )
 Stack.VerticalAlignmentProp = DpProp.RegisterAttach(
     "VerticalAlignment", AlignmentType, Stack,
-    DpPropMeta(AlignmentType.Center)
+    DpPropMeta(AlignmentType.Center, propChangedCallback=OnRenderPropChangedCallback)
 )
