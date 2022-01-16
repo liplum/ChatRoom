@@ -13,6 +13,7 @@ class pef_monitor:
         self.interval = interval
         self.pid = os.getpid()
         self.process = psutil.Process(self.pid)
+        self.lastMemoryMB: int = 0
 
     def init(self, container: "container"):
         self.logger: ilogger = container.resolve(ilogger)
@@ -20,7 +21,7 @@ class pef_monitor:
 
     def start(self):
         if not self.monitor:
-            self.monitor = Thread(target=self._monitor)
+            self.monitor = Thread(target=self._monitor, name="PerMonitor")
             self.monitor.daemon = True
             self.monitor.start()
 
@@ -28,5 +29,8 @@ class pef_monitor:
         while True:
             info = self.process.memory_full_info()
             usage = info.uss / 1024 / 1024
-            self.logger.tip(f"[Monitor]Current Memory Usage: {usage} MB")
+            usageInt = int(usage)
+            if self.lastMemoryMB != usageInt:
+                self.lastMemoryMB = usageInt
+                self.logger.tip(f"[Monitor]Current Memory Usage: {usage} MB")
             sleep(self.interval)

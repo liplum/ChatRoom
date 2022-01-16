@@ -157,15 +157,17 @@ class Grid(Panel):
         if self.columnlen == 0:
             self.columns = [Column.ByProportion(1)]
 
+        # ------------Legacy------------
         self._elemt_interval_w = Auto
         self._elemt_interval_h = Auto
         self.gen_unit()
+
         self._grid: GridMatrix = utils.fill_2d_array(self.rowlen, self.columnlen, None)
-        self._r_width = 0
-        self._r_height = 0
         self._r_elemt_interval_w = 0
         self._r_elemt_interval_h = 0
         self._cur_focused_index: Optional[FIndex] = (0, 0)
+
+        # ------------Legacy------------
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
         if not self.IsVisible:
@@ -271,8 +273,8 @@ class Grid(Panel):
                 self._r_elemt_interval_h = self.elemt_interval_h
 
         h += self.rowlen + self._r_elemt_interval_h * (self.rowlen - 1)
-        self._r_width = w + self.left_margin
-        self._r_height = h + self.top_margin
+        self.RenderWidth = w + self.left_margin
+        self.RenderHeight = h + self.top_margin
 
         for i in range(self.rowlen):
             for j in range(self.columnlen):
@@ -336,14 +338,6 @@ class Grid(Panel):
             self.RemoveControl(former, (i, j))
         self._grid[i][j] = ctrl
         return super().AddControl(ctrl)
-
-    @property
-    def RenderHeight(self) -> int:
-        return self._r_height
-
-    @property
-    def RenderWidth(self) -> int:
-        return self._r_width
 
     def go_next_focusable(self) -> bool:
         index = self.cur_focused_index

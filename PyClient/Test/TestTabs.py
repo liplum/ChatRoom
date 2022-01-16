@@ -91,9 +91,8 @@ class TestTab(tab):
 
         for e in PostItV(self.Main):
             e.Measure()
-        self.Main.Arrange(40, 20)
-        self.Main.PaintOn(Viewer.ByCanvas(canvas))
-        """
+        # self.Main.Arrange(40, 20)
+        # self.Main.PaintOn(Viewer.ByCanvas(canvas))
         import random
         w = random.randint(10,50)
         h = random.randint(10,50)
@@ -103,7 +102,6 @@ class TestTab(tab):
             Viewer.ByCanvas(canvas,
                             x=random.randint(0,20),
                             y=random.randint(0,5)))
-        """
         # self.tta.PaintOn(Viewer(15, 2, 40, 20, canvas))
         if self.ShowLogo:
             for i in range(10, 20):

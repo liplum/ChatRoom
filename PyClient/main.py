@@ -112,7 +112,7 @@ def init_plugin(client, registry: container):
 
     if GLOBAL.MONITOR:
         from pef.monitor import pef_monitor
-        registry.register_instance(pef_monitor, pef_monitor(interval=0.1))
+        registry.register_instance(pef_monitor, pef_monitor(interval=0.5))
 
 
 import ui.k as uik

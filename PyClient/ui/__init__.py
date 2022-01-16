@@ -125,6 +125,7 @@ def init_colors():
         BK.Cyan = BACKGROUND_BLUE | BACKGROUND_GREEN
         BK.Black = 0
         BK.White = BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_GREEN
+
         FG.Blue = FOREGROUND_BLUE
         FG.Green = FOREGROUND_GREEN
         FG.Red = FOREGROUND_RED
@@ -134,7 +135,26 @@ def init_colors():
         FG.Black = 0
         FG.White = FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_RED
     elif system_type == "Linux":
-        pass
+        from curses import COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_WHITE, COLOR_BLACK, COLOR_YELLOW, COLOR_CYAN
+        BK.Blue = COLOR_BLUE
+        BK.White = COLOR_WHITE
+        BK.Yellow = COLOR_YELLOW
+        BK.Green = COLOR_GREEN
+        BK.Cyan = COLOR_CYAN
+        BK.Red = COLOR_RED
+        BK.Violet = COLOR_RED | COLOR_BLUE
+        BK.Black = COLOR_BLACK
+
+        FG.Blue = COLOR_BLUE
+        FG.White = COLOR_WHITE
+        FG.Yellow = COLOR_YELLOW
+        FG.Green = COLOR_GREEN
+        FG.Cyan = COLOR_CYAN
+        FG.Red = COLOR_RED
+        FG.Violet = COLOR_RED | COLOR_BLUE
+        FG.Black = COLOR_BLACK
+        print(BK.__dict__.items())
+        print(FG.__dict__.items())
 
 
 init_keys()

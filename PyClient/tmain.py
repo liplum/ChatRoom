@@ -99,10 +99,13 @@ def init_plugin(client, registry: container):
         if system_type == "Windows":
             from ui.wins.Renders import WinRender
             registry.register_singleton(IRender, WinRender)
+        elif system_type == "Linux":
+            from ui.linuxs.Renders import LinuxRender
+            registry.register_singleton(IRender, LinuxRender)
 
     if GLOBAL.MONITOR:
         from pef.monitor import pef_monitor
-        registry.register_instance(pef_monitor, pef_monitor(interval=0.1))
+        registry.register_instance(pef_monitor, pef_monitor(interval=0.5))
 
 
 if __name__ == '__main__':
