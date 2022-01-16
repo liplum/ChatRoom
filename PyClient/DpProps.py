@@ -17,6 +17,9 @@ class DpKey:
     def __eq__(self, o: object) -> bool:
         return isinstance(o, DpKey) and self._name == o._name and self._ownerType == o._ownerType
 
+    def __repr__(self) -> str:
+        return f"{self._ownerType}.{self._name}"
+
 
 ValidateValueCallbackType = Callable[[Any], bool]
 CoerceValueCallbackType = Callable[[Any, Any], Any]
@@ -24,13 +27,15 @@ PropChangedCallbackType = Callable[[Any, Any], NoReturn]
 
 
 class DpPropMeta:
-    def __init__(self, defaultValue: Union[Any, Callable[[], Any]],
+    def __init__(self, defaultValue: Union[Any, Callable[[], Any], None] = None,
                  allowSameValue=True,
                  validateValueCallback: Optional[ValidateValueCallbackType] = None,
                  propChangedCallback: Optional[PropChangedCallbackType] = None,
                  coerceValueCallback: Optional[CoerceValueCallbackType] = None):
         super().__init__()
-        if isinstance(defaultValue, Callable):
+        if defaultValue is None:
+            self._defaultValueGetter = None
+        elif isinstance(defaultValue, Callable):
             self._defaultValueGetter: Callable[[], Any] = defaultValue
         elif isinstance(defaultValue, type):
             self._defaultValueGetter: Callable[[], Any] = defaultValue
@@ -42,7 +47,7 @@ class DpPropMeta:
         self._coerceValueCallback: Optional[CoerceValueCallbackType] = coerceValueCallback
 
     @property
-    def DefaultValueGetter(self) -> Callable[[], Any]:
+    def DefaultValueGetter(self) -> Optional[Callable[[], Any]]:
         return self._defaultValueGetter
 
     @property
@@ -67,7 +72,9 @@ class DpProp:
 
     @classmethod
     def Register(cls, name: str, propType: Union[type, Tuple],
-                 ownerType: Type["DpObj"], meta: DpPropMeta) -> "DpProp":
+                 ownerType: Type["DpObj"], meta: DpPropMeta = None) -> "DpProp":
+        if meta is None:
+            meta = DpPropMeta()
         key = DpKey(name, ownerType)
         if key in cls._PropertyFromName:
             raise ExistedDpKeyError(f"{name} and {ownerType} already exist", name, ownerType)
@@ -77,8 +84,26 @@ class DpProp:
         return dp
 
     @classmethod
-    def RegisterAttach(cls):
-        pass
+    def RegisterAttach(cls, name: str, propType: Union[type, Tuple],
+                       ownerType: Type["DpObj"], meta: DpPropMeta) -> "DpProp":
+        if meta.DefaultValueGetter is None:
+            raise DpPropHasNoDefaultValueError(name, ownerType, meta)
+        key = DpKey(name, ownerType)
+        if key in cls._PropertyFromName:
+            raise ExistedDpKeyError(f"{name} and {ownerType} already exist", name, ownerType)
+
+        dp = DpProp(name, propType, ownerType, meta)
+        cls._PropertyFromName[key] = dp
+
+        def GetValue(owner: "DpObj"):
+            return owner.GetValue(dp)
+
+        def SetValue(owner: "DpObj", value: Any):
+            owner.SetValue(dp, value)
+
+        setattr(ownerType, f"Get{name}", GetValue)
+        setattr(ownerType, f"Set{name}", SetValue)
+        return dp
 
     def __init__(self, name: str, propType: Union[type, Tuple],
                  ownerType: Type["DpObj"], meta: DpPropMeta):
@@ -118,11 +143,6 @@ class DpProp:
 
 EventHandlerType = Callable[["DpObj", "RoutedEventArgs"], NoReturn]
 EventHandlerMap = Dict["RoutedEventType", List[EventHandlerType]]
-
-
-def _GenDpPropDefaultValue(prop: DpProp) -> Optional[object]:
-    meta = prop.Meta
-    return meta.DefaultValueGetter()
 
 
 class DpObj:
@@ -176,7 +196,12 @@ class DpObj:
         if prop in self.DpPropValueEntries:
             value = self.DpPropValueEntries[prop]
         else:
-            value = _GenDpPropDefaultValue(prop)
+            meta = prop.Meta
+            defaultGetter = meta.DefaultValueGetter
+            if defaultGetter:
+                value = meta.DefaultValueGetter()
+            else:
+                raise DpPropHasNoDefaultValueError(prop, meta)
             self.DpPropValueEntries[prop] = value
         return value
 
@@ -194,6 +219,11 @@ class NotHasDependencyPropertyError(Exception):
 
 
 class ExistedDpKeyError(Exception):
+    def __init__(self, *args: object):
+        super().__init__(*args)
+
+
+class DpPropHasNoDefaultValueError(Exception):
     def __init__(self, *args: object):
         super().__init__(*args)
 

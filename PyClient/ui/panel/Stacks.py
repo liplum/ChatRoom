@@ -22,6 +22,14 @@ class OrientationType(Enum):
     Vertical = 2
 
 
+class AlignmentType(Enum):
+    Left = 1
+    Right = 2
+    Top = 3
+    Bottom = 4
+    Center = 5
+
+
 horizontal = OrientationType.Horizontal
 vertical = OrientationType.Vertical
 
@@ -48,6 +56,8 @@ class Stack(Panel):
         elements = self.elements
         dx = 0
         dy = 0
+        width = self.RenderWidth
+        height = self.RenderHeight
         if self.Orientation == OrientationType.Horizontal:
             for e in elements:
                 if not e.IsVisible:
@@ -62,7 +72,15 @@ class Stack(Panel):
                     continue
                 rew = e.RenderWidth
                 reh = e.RenderHeight
-                e.PaintOn(Viewer(dx, dy, rew, reh, canvas))
+                alignment = self.GetVerticalAlignment(e)
+                if alignment == AlignmentType.Left:
+                    edx = 0
+                elif alignment == AlignmentType.Right:
+                    edx = width - rew
+                else:  # Default is "Center"
+                    edx = (width - rew) // 2
+
+                e.PaintOn(Viewer(edx, dy, rew, reh, canvas))
                 dy += reh
 
     def Measure(self):
@@ -373,3 +391,11 @@ class Stack(Panel):
 Stack.OrientationProp = DpProp.Register(
     "Orientation", OrientationType, Stack,
     DpPropMeta(OrientationType.Vertical, propChangedCallback=OnRenderPropChangedCallback))
+Stack.HorizontalAlignmentProp = DpProp.RegisterAttach(
+    "HorizontalAlignment", AlignmentType, Stack,
+    DpPropMeta(AlignmentType.Center)
+)
+Stack.VerticalAlignmentProp = DpProp.RegisterAttach(
+    "VerticalAlignment", AlignmentType, Stack,
+    DpPropMeta(AlignmentType.Center)
+)

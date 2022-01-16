@@ -46,7 +46,6 @@ class UIElement(Painter, DpObj):
 
     @IsVisible.setter
     def IsVisible(self, value: bool):
-        self.SetValue(self.IsVisibleProp, value)
         for subElemt in PreItV(self):
             subElemt.SetValue(UIElement.IsVisibleProp, value)
 
