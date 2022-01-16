@@ -1,5 +1,5 @@
 from ui.control.textblocks import *
-from ui.panel.Stacks import align_left, horizontal, Stack
+from ui.panel.Stacks import horizontal, Stack, AlignmentType
 from ui.tab.shared import *
 from ui.tabs import *
 
@@ -49,8 +49,8 @@ class one_button_popup(text_popup):
         self.main = m
         m.on_content_changed.Add(lambda _: self.on_content_changed(self))
 
-        l_title = label(self.get_title)
-        l_title.prop(Stack.Horizontal_Alignment, align_left)
+        l_title = Label(self.get_title)
+        Stack.SetHorizontalAlignment(l_title, AlignmentType.Left)
         m.add(l_title)
 
         info = textblock(lambda: self._words)
@@ -131,8 +131,8 @@ class ok_cancel_popup(text_popup):
         self.main = m
         m.on_content_changed.Add(lambda _: self.on_content_changed(self))
 
-        l_title = label(self.get_title)
-        l_title.prop(Stack.Horizontal_Alignment, align_left)
+        l_title = Label(self.get_title)
+        Stack.SetHorizontalAlignment(l_title, AlignmentType.Left)
         m.add(l_title)
 
         info = textblock(lambda: self._words)
@@ -166,8 +166,8 @@ class waiting_popup(text_popup):
         self.main = m
         m.on_content_changed.Add(lambda _: self.on_content_changed(self))
 
-        l_title = label(self.get_title)
-        l_title.prop(Stack.Horizontal_Alignment, align_left)
+        l_title = Label(self.get_title)
+        Stack.SetHorizontalAlignment(l_title, AlignmentType.Left)
         m.add(l_title)
 
         info = textblock(lambda: self._words)

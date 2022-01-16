@@ -32,9 +32,6 @@ class TextArea(text_control):
         if init is not None:
             self.InputList = init
 
-        self._rWidth = 0
-        self._rHeight = 0
-
     def _onAppendOrDeleteOrReplace(self, _, _1, _2):
         self.on_content_changed(self)
         self.IsLayoutChanged = True
@@ -270,14 +267,6 @@ class TextArea(text_control):
     @CursorIcon.setter
     def CursorIcon(self, value: str):
         self._cursorIcon = value
-
-    @property
-    def render_height(self) -> int:
-        return self._rHeight
-
-    @property
-    def render_width(self) -> int:
-        return self._rWidth
 
     @property
     def focusable(self) -> bool:

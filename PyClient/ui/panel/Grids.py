@@ -201,7 +201,7 @@ class Grid(Panel):
                 c = self._grid[i][j]
                 if c:
                     c.paint_on(buf)
-                    w = c.render_width
+                    w = c.RenderWidth
                     rest = self.columns[j].width - w
                     if rest > 0:
                         buf.addtext(utils.repeat(" ", rest), end="")
@@ -230,7 +230,7 @@ class Grid(Panel):
 
             for j, column in enumerate(self.columns):
                 try:
-                    max_width = max(c.render_width for c in self.column_items(j) if c)
+                    max_width = max(c.RenderWidth for c in self.column_items(j) if c)
                 except Exception as e:
                     max_width = column.width
                 column.width = max_width
@@ -239,7 +239,7 @@ class Grid(Panel):
             occupied_width = 0
             for j, column in enumerate(self.columns):
                 try:
-                    max_width = max(c.render_width for c in self.column_items(j) if c)
+                    max_width = max(c.RenderWidth for c in self.column_items(j) if c)
                 except:
                     max_width = column.width
                 column.width = max_width
@@ -338,11 +338,11 @@ class Grid(Panel):
         return super().AddControl(ctrl)
 
     @property
-    def render_height(self) -> int:
+    def RenderHeight(self) -> int:
         return self._r_height
 
     @property
-    def render_width(self) -> int:
+    def RenderWidth(self) -> int:
         return self._r_width
 
     def go_next_focusable(self) -> bool:

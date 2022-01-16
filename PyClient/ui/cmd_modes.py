@@ -282,7 +282,7 @@ class cmd_long_mode(cmd_state):
     def cmd_long_mode_execute_cmd(self):
         mode = self.mode
         tb = self.mode.textbox
-        input_list = tb.input_list
+        input_list = tb.Text
         full_cmd = utils.compose(input_list, connector='')
         cmd_args, quoted_indexes = analyze_cmd_args(full_cmd)
         full_cmd = compose_full_cmd(cmd_args, quoted_indexes)

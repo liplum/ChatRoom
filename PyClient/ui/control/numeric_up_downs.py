@@ -30,7 +30,6 @@ class numeric_up_down(Control):
         self.max_value = _max
         self._max_value_str = ""
         self._min_value_str = ""
-        self._r_width = 0
 
     @property
     def max_value(self) -> Optional[int]:
@@ -67,14 +66,15 @@ class numeric_up_down(Control):
     def cache_layout(self):
         if self.width == Auto:
             if self.max_value:
-                self._r_width = self.max_number_len + 2
+                self.RenderWidth = self.max_number_len + 2
             else:
-                self._r_width = 2 + 4
+                self.RenderWidth = 2 + 4
         else:
-            self._r_width = self.width
+            self.RenderWidth = self.width
+        self.RenderHeight = 1
 
     def paint_on(self, buf: buffer):
-        rw = self.render_width
+        rw = self.RenderWidth
         theme = self.theme
         if rw == 0:
             return
@@ -186,11 +186,3 @@ class numeric_up_down(Control):
         if value != Auto:
             value = 1
         self._height = value
-
-    @property
-    def render_height(self) -> int:
-        return 1
-
-    @property
-    def render_width(self) -> int:
-        return self._r_width

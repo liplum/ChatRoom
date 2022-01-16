@@ -67,16 +67,14 @@ class display_board(text_control):
             self.theme = theme
         self._width = Auto
         self._height = Auto
-        self._r_width = 0
-        self._r_height = 0
         self._horizontal_margin = 0
         self._vertical_margin = 0
 
     def paint_on(self, buf: buffer):
         if self.IsLayoutChanged:
             self.cache_layout()
-        render_width = self.render_width
-        if render_width == 0 or self.render_height == 0:
+        render_width = self.RenderWidth
+        if render_width == 0 or self.RenderHeight == 0:
             return
         with StringIO() as s:
             alignments = self.alignments if self.alignments else None
@@ -84,8 +82,8 @@ class display_board(text_control):
             contents_len = len(contents)
             theme = self.theme()
             start = 0
-            end = self.render_height - 1
-            for i in range(self.render_height):
+            end = self.RenderHeight - 1
+            for i in range(self.RenderHeight):
                 utils.repeatIO(s, ' ', self.left_margin)
                 if i == start:  # first line-- a Horizontal line
                     horizontal_lineIO(s, render_width, theme.LeftTop, theme.RightTop, theme.Horizontal)
@@ -131,14 +129,6 @@ class display_board(text_control):
     def focusable(self) -> bool:
         return False
 
-    @property
-    def render_height(self) -> int:
-        return self._r_height
-
-    @property
-    def render_width(self) -> int:
-        return self._r_width
-
     def cache_layout(self):
         if not self.IsLayoutChanged:
             return
@@ -146,10 +136,10 @@ class display_board(text_control):
         contents = self.contents()
         if self.width == Auto:
             max_width = max(len(t) for t in contents)
-            self._r_width = max_width + 2
+            self.RenderWidth = max_width + 2
             self._horizontal_margin = 0
         else:
-            self._r_width = self.width
+            self.RenderWidth = self.width
             max_width = max(len(t) for t in contents)
             difference = self.width - (max_width + 2)
             if difference >= 0:
@@ -159,10 +149,10 @@ class display_board(text_control):
 
         contentlen = len(contents)
         if self.height == Auto:
-            self._r_height = len(contents) + 2
+            self.RenderHeight = len(contents) + 2
             self._vertical_margin = 0
         else:
-            self._r_height = self.height
+            self.RenderHeight = self.height
             difference = self.height - (contentlen + 2)
             if difference >= 0:
                 self._vertical_margin = difference // 2

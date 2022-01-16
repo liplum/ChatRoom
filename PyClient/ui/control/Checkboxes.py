@@ -12,13 +12,12 @@ ballot_box_x = check_theme("🗹", "❎", " ")
 bold_check = check_theme("✅", "❌", " ")
 
 
-class checkbox(Control):
+class Checkbox(Control):
 
     def __init__(self, value: Optional[bool] = None, theme: check_theme = yes_or_no):
         super().__init__()
         self.theme = theme
         self._checked: Optional[bool] = value
-        self._r_width = 0
 
     def paint_on(self, buf: buffer):
         if self.IsLayoutChanged:
@@ -100,14 +99,6 @@ class checkbox(Control):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False
-
-    @property
-    def render_height(self) -> int:
-        return 1
-
-    @property
-    def render_width(self) -> int:
-        return self._r_width
 
     @property
     def height(self) -> PROP:

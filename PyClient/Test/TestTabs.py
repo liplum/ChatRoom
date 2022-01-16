@@ -1,9 +1,9 @@
 import keys
 from ui.cmd_modes import common_hotkey
+from ui.control.Buttons import Button
+from ui.control.Checkboxes import Checkbox
+from ui.control.Labels import Label
 from ui.control.TextAreas import TextArea
-from ui.control.buttons import button
-from ui.control.checkboxes import checkbox
-from ui.control.labels import label
 from ui.control.xtbox import XtextWrapper
 from ui.panel.DisplayBoards import DisplayBoard
 from ui.panel.Stacks import Stack, vertical, OrientationType, AlignmentType
@@ -14,7 +14,7 @@ class TestTab(tab):
 
     def __init__(self, client: IClient, tablist: tablist):
         super().__init__(client, tablist)
-        self.t_label = label("Test")
+        self.t_label = Label("Test")
 
         def switchFocusColor():
             b = self.t_button
@@ -24,9 +24,9 @@ class TestTab(tab):
                 b.OnFocused()
             self.db.IsVisible = not self.db.IsVisible
 
-        self.t_button = button("Button", switchFocusColor)
+        self.t_button = Button("Button", switchFocusColor)
         self.t_button.width = 10
-        self.t_checkbox = checkbox(True)
+        self.t_checkbox = Checkbox(True)
         self.t_tbox = XtextWrapper(TextArea())
         self.t_tbox.Width = 40
         self.t_tbox.Height = Auto
@@ -93,7 +93,17 @@ class TestTab(tab):
             e.Measure()
         self.Main.Arrange(40, 20)
         self.Main.PaintOn(Viewer.ByCanvas(canvas))
-
+        """
+        import random
+        w = random.randint(10,50)
+        h = random.randint(10,50)
+        self.OnRenderContentChanged(self)
+        self.Main.Arrange(w, h)
+        self.Main.PaintOn(
+            Viewer.ByCanvas(canvas,
+                            x=random.randint(0,20),
+                            y=random.randint(0,5)))
+        """
         # self.tta.PaintOn(Viewer(15, 2, 40, 20, canvas))
         if self.ShowLogo:
             for i in range(10, 20):
@@ -120,10 +130,13 @@ class TestTab(tab):
         elif keys.k_pgdown == char:
             if self.tick % 3 == 0:
                 Stack.SetVerticalAlignment(self.t_button, AlignmentType.Left)
+                Stack.SetHorizontalAlignment(self.t_button, AlignmentType.Top)
             elif self.tick % 3 == 1:
                 Stack.SetVerticalAlignment(self.t_button, AlignmentType.Center)
+                Stack.SetHorizontalAlignment(self.t_button, AlignmentType.Center)
             else:
                 Stack.SetVerticalAlignment(self.t_button, AlignmentType.Right)
+                Stack.SetHorizontalAlignment(self.t_button, AlignmentType.Bottom)
         else:
             self.t_tbox.on_input(char)
         yield Finished

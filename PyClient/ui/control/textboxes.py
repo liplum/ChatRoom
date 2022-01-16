@@ -10,26 +10,24 @@ class textbox(TextArea):
     def __init__(self, cursor_icon: str = "^", init: Optional[Iterable[str]] = None):
         super().__init__(cursor_icon, init)
         self._space_placeholder = " "
-        self._rWidth = 0
-        self._rHeight = 0
 
     def cache_layout(self):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False
         if self.width == Auto:
-            self._rWidth = self.InputLength + len(self.CursorIcon)
+            self.RenderWidth = self.InputLength + len(self.CursorIcon)
         else:
-            self._rWidth = self.width
+            self.RenderWidth = self.width
 
     def Arrange(self, width: Optional[int] = None, height: Optional[int] = None):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False
         if self.width == Auto:
-            self._rWidth = min(self.InputLength + len(self.CursorIcon), canvas.Width)
+            self.RenderWidth = min(self.InputLength + len(self.CursorIcon), canvas.Width)
         else:
-            self._rWidth = min(self.width, canvas.Width)
+            self.RenderWidth = min(self.width, canvas.Width)
 
     def paint_on(self, buf: buffer):
         if self.IsLayoutChanged:
@@ -40,9 +38,9 @@ class textbox(TextArea):
         fg = CmdFgColor.Black if self.is_focused else None
         drawn = self.limited_distext
         if self.MaxInputCount != unlimited:
-            max_render_width = min(self.MaxInputCount, self.render_width)
+            max_render_width = min(self.MaxInputCount, self.RenderWidth)
             drawn = utils.fillto(drawn, self.space_placeholder, max_render_width)
-        elif len(drawn) < self.render_width:
+        elif len(drawn) < self.RenderWidth:
             drawn = utils.fillto(drawn, self.space_placeholder, self.width)
         buf.addtext(self._render_chars(drawn), end='', fgcolor=fg, bkcolor=bk)
 
@@ -51,11 +49,11 @@ class textbox(TextArea):
         fg = FG.Black if self.is_focused else None
         drawn = self.limited_distext
         if self.MaxInputCount != unlimited:
-            max_render_width = min(self.MaxInputCount, self.render_width)
+            max_render_width = min(self.MaxInputCount, self.RenderWidth)
             drawn = utils.fillto(drawn, self.space_placeholder, max_render_width)
-        elif len(drawn) < self.render_width:
+        elif len(drawn) < self.RenderWidth:
             drawn = utils.fillto(drawn, self.space_placeholder, self.width)
-        buf = StrWriter(canvas, 0, 0, self.render_width, self.render_height, autoWrap=True)
+        buf = StrWriter(canvas, 0, 0, self.RenderWidth, self.RenderHeight, autoWrap=True)
         buf.Write(drawn, bk, fg)
 
     @property
@@ -73,7 +71,7 @@ class textbox(TextArea):
     def limited_distext(self):
         if self.width == Auto:
             return self.distext
-        w = self.render_width
+        w = self.RenderWidth
         cursor_pos = self.CursorIndex
         start = cursor_pos - w // 2  # may be negative
         end = cursor_pos + w // 2  # may be over length of all inputs

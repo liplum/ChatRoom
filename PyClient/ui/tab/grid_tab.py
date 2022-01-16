@@ -12,31 +12,31 @@ class grid_tab(tab):
         super().__init__(client, tablist)
         self.grid = gen_grid(3, [Column(15), Column(20), Column(18)])
         self.grid.on_content_changed.add(lambda _: self.client.mark_dirty())
-        l1_1 = label("Label 1 1")
-        l1_2 = label("Label 1 2")
-        l2_1 = label("Label 2 1")
-        l2_2 = label("Label 2 2")
+        l1_1 = Label("Label 1 1")
+        l1_2 = Label("Label 1 2")
+        l2_1 = Label("Label 2 1")
+        l2_2 = Label("Label 2 2")
         account_tbox = xtextbox(excepted_chars={keys.k_enter})
         account_tbox.space_placeholder = "_"
         account_stack = Stack()
         account_stack.over_range = ui.panel.Stacks.expend
-        account_stack.add(label("Account"))
+        account_stack.add(Label("Account"))
         account_stack.add(account_tbox)
         account_stack.Orientation = ui.panel.Stacks.horizontal
-        b = button("Button", lambda: None)
+        b = Button("Button", lambda: None)
         b.margin = 2
         # self.Grid[0, 0] = account_stack
         self.grid[0, 0] = l1_1
-        self.grid[0, 1] = button("A", lambda: None)
-        self.grid[0, 2] = button("Button B", lambda: None)
+        self.grid[0, 1] = Button("A", lambda: None)
+        self.grid[0, 2] = Button("Button B", lambda: None)
 
         self.grid[1, 0] = l2_1
         self.grid[1, 1] = b
-        self.grid[1, 2] = button("A", lambda: None)
+        self.grid[1, 2] = Button("A", lambda: None)
 
-        self.grid[2, 0] = label("Label 3 1")
-        self.grid[2, 1] = button("A", lambda: None)
-        self.grid[2, 2] = button("Close", lambda: self.client.stop())
+        self.grid[2, 0] = Label("Label 3 1")
+        self.grid[2, 1] = Button("A", lambda: None)
+        self.grid[2, 2] = Button("Close", lambda: self.client.stop())
 
         self.grid.elemt_interval_w = 5
         self.grid.elemt_interval_h = 1

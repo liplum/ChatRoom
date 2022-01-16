@@ -1,6 +1,6 @@
 from core.settings import *
 from ui.cmd_modes import common_hotkey
-from ui.control.checkboxes import checkbox
+from ui.control.Checkboxes import Checkbox
 from ui.control.numeric_up_downs import numeric_up_down
 from ui.control.textboxes import textbox
 from ui.control.xtbox import xtextbox
@@ -109,7 +109,7 @@ class settings_tab(tab):
 def _Style_CheckBox(config: config, settings: settings) -> Ctrl_OnSave:
     prop = config.prop
     init_value = settings[config.key]
-    c = checkbox(init_value, theme=turn_on_off_check_theme)
+    c = Checkbox(init_value, theme=turn_on_off_check_theme)
 
     def on_checkbox_save():
         checked = c.checked

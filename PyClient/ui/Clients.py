@@ -15,10 +15,10 @@ from core.operations import *
 from core.rooms import iroom_manager, room_manager
 from core.settings import entity as settings
 from timers import timer
+from ui.Apps import App
 from ui.Consoles import *
 from ui.Core import *
 from ui.k import cmdkey
-from ui.Apps import App
 from utils import get
 
 system_type = platform.system()

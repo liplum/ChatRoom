@@ -2,20 +2,20 @@ import random
 
 import ui.themes as themes
 from ui.Controls import *
-from ui.control.buttons import button
-from ui.control.labels import label
+from ui.control.Buttons import Button
+from ui.control.Labels import Label
 from ui.outputs import *
 
 T = TypeVar('T')
 CTRL = TypeVar('CTRL', bound=Control)
 
 
-def i18n_label(i18n_key: str, *i18n_args, **i18n_kwargs) -> label:
-    return label(CGT(lambda: i18n.trans(i18n_key, *i18n_args, **i18n_kwargs)))
+def i18n_label(i18n_key: str, *i18n_args, **i18n_kwargs) -> Label:
+    return Label(CGT(lambda: i18n.trans(i18n_key, *i18n_args, **i18n_kwargs)))
 
 
-def i18n_button(i18n_key: str, on_press: Callable[[], NoReturn], *i18n_args, **i18n_kwargs) -> button:
-    return button(CGT(lambda: i18n.trans(i18n_key, *i18n_args, **i18n_kwargs)), on_press)
+def i18n_button(i18n_key: str, on_press: Callable[[], NoReturn], *i18n_args, **i18n_kwargs) -> Button:
+    return Button(CGT(lambda: i18n.trans(i18n_key, *i18n_args, **i18n_kwargs)), on_press)
 
 
 number_keys = frozenset(
@@ -51,7 +51,7 @@ class i18n_theme(themes.check_theme):
 
 
 turn_on_off_check_theme = i18n_theme(
-    "controls.checkbox.turn_on", "controls.checkbox.turn_off", "controls.checkbox.null"
+    "controls.Checkbox.turn_on", "controls.Checkbox.turn_off", "controls.Checkbox.null"
 )
 
 _word_separator_key = "controls.textblock.word_separator"

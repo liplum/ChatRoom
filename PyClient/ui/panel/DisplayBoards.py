@@ -8,8 +8,6 @@ from ui.panel.Borders import Border
 class DisplayBoard(Control):
     def __init__(self, theme: BorderTheme = rounded_rectangle):
         super().__init__()
-        self._rWidth = 0
-        self._rHeight = 0
         self.border = Border(theme)
         self.AddChild(self.border)
 
@@ -71,14 +69,6 @@ class DisplayBoard(Control):
         self.RenderWidth = rbw
         self.RenderHeight = rbh
         return self.RenderWidth, self.RenderHeight
-
-    @property
-    def render_height(self) -> int:
-        return self._rHeight
-
-    @property
-    def render_width(self) -> int:
-        return self._rWidth
 
     @property
     def focusable(self) -> bool:

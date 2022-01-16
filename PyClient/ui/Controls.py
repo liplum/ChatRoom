@@ -95,22 +95,6 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
         self.Width = value
 
     @property
-    def render_height(self) -> int:
-        height = self.height
-        if height != Auto:
-            return height
-        else:
-            raise NotImplementedError()
-
-    @property
-    def render_width(self) -> int:
-        width = self.width
-        if width != Auto:
-            return width
-        else:
-            raise NotImplementedError()
-
-    @property
     def height(self) -> PROP:
         """
         Gets the current Height of this Control

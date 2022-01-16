@@ -6,12 +6,7 @@ from ui.Renders import Viewer
 from ui.outputs import buffer
 from ui.panels import Panel
 
-Alignment = str
-Horizontal_Alignment = str
-align_left = "align_left"
-align_right = "align_right"
 expend = "expend"
-center = "center"
 Orientation = str
 OverRange = str
 discard = "discard"
@@ -32,11 +27,17 @@ class AlignmentType(Enum):
 
 horizontal = OrientationType.Horizontal
 vertical = OrientationType.Vertical
+center = AlignmentType.Center
+align_left = AlignmentType.Left
+align_right = AlignmentType.Right
 
 
 class Stack(Panel):
-    Horizontal_Alignment: str = "Stack.horizontal_alignment"
     OrientationProp: DpProp
+    GetHorizontalAlignment: Callable[[DpObj], AlignmentType]
+    SetHorizontalAlignment: Callable[[DpObj, AlignmentType], NoReturn]
+    GetVerticalAlignment: Callable[[DpObj], AlignmentType]
+    SetVerticalAlignment: Callable[[DpObj, AlignmentType], NoReturn]
 
     def __init__(self):
         super().__init__()
@@ -44,11 +45,8 @@ class Stack(Panel):
         # ------------Legacy------------
         self._elemt_interval = Auto
         self._r_elemt_interval = 0
-        self._orientation = vertical
         self._over_range = discard
         self._cur_focused_index = None
-        self._r_width = 0
-        self._r_height = 0
         self._horizontal_alignment = center
         # ------------Legacy------------
 
@@ -64,7 +62,7 @@ class Stack(Panel):
                     continue
                 rew = e.RenderWidth
                 reh = e.RenderHeight
-                alignment = Stack.GetVerticalAlignment(e)
+                alignment = Stack.GetHorizontalAlignment(e)
                 if alignment == AlignmentType.Top:
                     edy = 0
                 elif alignment == AlignmentType.Bottom:
@@ -112,7 +110,7 @@ class Stack(Panel):
         elements = self.elements
         elen = len(elements)
         formerElemtCount = 0
-        if self.Orientation == horizontal:
+        if self.Orientation == OrientationType.Horizontal:
             maxHeight = 0
             for e in elements:
                 if not e.IsVisible:
@@ -162,7 +160,7 @@ class Stack(Panel):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False
-        if self.Orientation == vertical:
+        if self.Orientation == OrientationType.Vertical:
             if self.elemt_interval == Auto:
                 if self.height == Auto:
                     self._r_elemt_interval = 0
@@ -185,18 +183,18 @@ class Stack(Panel):
                 continue
             if self.height != Auto and h >= self.height and self.over_range == discard:
                 continue
-            h += elemt.render_height
-            w = max(elemt.render_width, w)
+            h += elemt.RenderHeight
+            w = max(elemt.RenderWidth, w)
             if 0 < i < self.elemt_count - 1:
-                if self.Orientation == horizontal:
+                if self.Orientation == OrientationType.Horizontal:
                     h += self._r_elemt_interval
                 else:
                     w += self._r_elemt_interval
 
-        self._r_width = w
-        self._r_height = h
+        self.RenderWidth = w
+        self.RenderHeight = h
 
-        if self.Orientation == vertical:
+        if self.Orientation == OrientationType.Vertical:
             for item in self._elements_stack:
                 if item.gprop(Panel.No_Left_Margin) is not True:
                     item.left_margin = self.left_margin
@@ -207,12 +205,8 @@ class Stack(Panel):
                 else:
                     e.left_margin = 0
 
-    def _get_final_horizontal_alignment(self, elemt: Control) -> Alignment:
-        elemt_align = elemt.gprop(Stack.Horizontal_Alignment)
-        if elemt_align is not None:
-            return elemt_align
-        else:
-            return self.horizontal_alignment
+    def _get_final_horizontal_alignment(self, elemt: Control) -> AlignmentType:
+        return Stack.GetHorizontalAlignment(elemt)
 
     def paint_on(self, buf: buffer):
         for c in self.elements:
@@ -221,25 +215,25 @@ class Stack(Panel):
         if self.IsLayoutChanged:
             self.cache_layout()
 
-        if self.Orientation == vertical:
+        if self.Orientation == OrientationType.Vertical:
             h = 0
             if self.top_margin > 0:
                 buf.addtext(utils.repeat("\n", self.top_margin), end="")
             for i, elemt in enumerate(self._elements_stack):
-                h += elemt.render_height
+                h += elemt.RenderHeight
                 if i > 0:
                     h += self._r_elemt_interval
                 if self.height != Auto and h >= self.height and self.over_range == discard:
                     break
                 elemt: Control
-                if elemt.render_height == 1:
+                if elemt.RenderHeight == 1:
                     halign = self._get_final_horizontal_alignment(elemt)
-                    if halign == align_left:
+                    if halign == AlignmentType.Left:
                         cur_left_margin = 0
-                    elif halign == center:
-                        cur_left_margin = (self.render_width - elemt.render_width) // 2
+                    elif halign == AlignmentType.Center:
+                        cur_left_margin = (self.RenderWidth - elemt.RenderWidth) // 2
                     else:  # align right
-                        cur_left_margin = self.render_width - elemt.render_width
+                        cur_left_margin = self.RenderWidth - elemt.RenderWidth
                     buf.addtext(utils.repeat(' ', cur_left_margin), end='')
                 elemt.paint_on(buf)
                 buf.addtext(utils.repeat("\n", self._r_elemt_interval))
@@ -248,7 +242,7 @@ class Stack(Panel):
             if self.top_margin > 0:
                 buf.addtext(utils.repeat("\n", self.top_margin), end="")
             for i, elemt in enumerate(self._elements_stack):
-                w += elemt.render_width
+                w += elemt.RenderWidth
                 if i > 0:
                     w += self._r_elemt_interval
                 if self.width != Auto and w >= self.width and self.over_range == discard:
@@ -351,14 +345,6 @@ class Stack(Panel):
             return True
         return False
 
-    @property
-    def render_height(self) -> int:
-        return self._r_height
-
-    @property
-    def render_width(self) -> int:
-        return self._r_width
-
     def on_focused(self):
         super().on_focused()
         self.switch_to_first_or_default_item()
@@ -382,16 +368,6 @@ class Stack(Panel):
         if self._left_margin != value:
             self._left_margin = value
             self.on_prop_changed(self, "left_margin")
-
-    @property
-    def horizontal_alignment(self) -> Horizontal_Alignment:
-        return self._horizontal_alignment
-
-    @horizontal_alignment.setter
-    def horizontal_alignment(self, value: Horizontal_Alignment):
-        if self._horizontal_alignment != value:
-            self._horizontal_alignment = value
-            self.on_prop_changed(self, "horizontal_alignment")
     # ------------Legacy------------
 
 

@@ -21,27 +21,27 @@ class test_tab(tab):
             self.client.mark_dirty()
 
         self.stack.on_content_changed.Add(lambda _: self.on_content_changed(self))
-        self.stack.add(button(CGT(button_content_getter), _click_button))
-        self.stack.add(label("Label A"))
+        self.stack.add(Button(CGT(button_content_getter), _click_button))
+        self.stack.add(Label("Label A"))
         self.account_tbox = xtextbox()
         self.account_tbox.space_placeholder = "_"
         account_stack = Stack()
-        account_stack.add(label("Account"))
+        account_stack.add(Label("Account"))
         account_stack.add(self.account_tbox)
         account_stack.Orientation = ui.panel.Stacks.horizontal
         self.stack.add(account_stack)
-        self.stack.add(label("Test Label B"))
-        self.stack.add(label("Test"))
+        self.stack.add(Label("Test Label B"))
+        self.stack.add(Label("Test"))
         self.input_box = xtextbox()
         self.input_box.space_placeholder = "_"
         self.stack.add(self.input_box)
 
-        self.button = button(CGT(button_content_getter), _click_button)
+        self.button = Button(CGT(button_content_getter), _click_button)
         self.button.margin = 2
         self.stack.add(self.button)
-        self.stack.add(button(CGT(button_content_getter), _click_button))
-        self.stack.add(button(CGT(button_content_getter), _click_button))
-        self.stack.add(button("Close", lambda: self.client.stop()))
+        self.stack.add(Button(CGT(button_content_getter), _click_button))
+        self.stack.add(Button(CGT(button_content_getter), _click_button))
+        self.stack.add(Button("Close", lambda: self.client.stop()))
         # self.Stack.Orientation = panels.Horizontal
 
         self.stack.elemt_interval = 1

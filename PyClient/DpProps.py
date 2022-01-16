@@ -176,7 +176,7 @@ class DpObj:
     def EventHandlers(self):
         return self._eventHandlers
 
-    def SetValue(self, prop: DpProp, value):
+    def SetValue(self, prop: DpProp, value) -> "DpObj":
         if not prop.IsAttached and not isinstance(self, prop.OwnerType):
             raise NotHasDependencyPropertyError(self, prop)
         meta = prop.Meta
@@ -194,6 +194,7 @@ class DpObj:
                 else:
                     raise TypeError(
                         f"{prop} doesn't accept {type(value)}.", prop, value)
+        return self
 
     def GetValue(self, prop: DpProp):
         if not prop.IsAttached and not isinstance(self, prop.OwnerType):

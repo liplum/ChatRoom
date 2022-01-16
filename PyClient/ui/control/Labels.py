@@ -2,7 +2,7 @@ from ui.Controls import *
 from ui.outputs import buffer
 
 
-class label(Control):
+class Label(Control):
     def __init__(self, content: ContentGetter):
         super().__init__()
         if isinstance(content, str):
@@ -10,7 +10,6 @@ class label(Control):
         else:
             self.content = content
         self._width: PROP = Auto
-        self._r_width = 0
 
     @property
     def width(self) -> PROP:
@@ -53,16 +52,16 @@ class label(Control):
             self.on_prop_changed(self, "tw")
 
     def __repr__(self) -> str:
-        return f"<label {self.content()}>"
+        return f"<Label {self.content()}>"
 
     def cache_layout(self):
         if not self.IsLayoutChanged:
             return
         self.IsLayoutChanged = False
         if self.width == Auto:
-            self._r_width = len(self.content())
+            self.RenderWidth = len(self.content())
         else:
-            self._r_width = self.width
+            self.RenderWidth = self.width
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
         if not self.IsVisible:
@@ -97,7 +96,3 @@ class label(Control):
         content = self.content()
         sw = StrWriter(canvas)
         sw.Write(content)
-
-    @property
-    def render_width(self) -> int:
-        return self._r_width

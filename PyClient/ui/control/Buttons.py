@@ -4,7 +4,17 @@ from ui.outputs import buffer, CmdBkColor, CmdFgColor, tintedtxtIO
 from ui.shared import IsConsumed, Consumed, NotConsumed
 
 
-class button(text_control):
+class Button(text_control):
+
+    def __init__(self, content: ContentGetter, on_press: Callable[[], NoReturn]):
+        super().__init__()
+        if isinstance(content, str):
+            self.content = lambda: content
+        else:
+            self.content = content
+        self._margin = 1
+        self.on_press_func = on_press
+        self._width: PROP = Auto
 
     def reload(self):
         self.IsLayoutChanged = True
@@ -18,14 +28,14 @@ class button(text_control):
         content_len = len(content)
         width = self.width
         if width != Auto:
-            self._r_width = width
+            self.RenderWidth = width
             rest = width - content_len
             if rest <= 1:
                 self.margin = 0
             else:
                 self.margin = (rest + 1) // 2
         else:
-            self._r_width = content_len + 2 * self.margin
+            self.RenderWidth = content_len + 2 * self.margin
 
     def paint_on(self, buf: buffer):
         if self.IsLayoutChanged:
@@ -67,7 +77,7 @@ class button(text_control):
         with StringIO() as s:
             content = self.content()
             content_len = len(content)
-            render_width = self.render_width
+            render_width = self.RenderWidth
             is_odd = content_len % 2 == 1
             margin = self.margin
             if margin > 0:
@@ -90,17 +100,6 @@ class button(text_control):
             else:
                 s.write(content[0:render_width])
             return s.getvalue()
-
-    def __init__(self, content: ContentGetter, on_press: Callable[[], NoReturn]):
-        super().__init__()
-        if isinstance(content, str):
-            self.content = lambda: content
-        else:
-            self.content = content
-        self._margin = 1
-        self.on_press_func = on_press
-        self._width: PROP = Auto
-        self._r_width = 0
 
     def press(self):
         self.on_press_func()
@@ -151,8 +150,4 @@ class button(text_control):
         return True
 
     def __repr__(self) -> str:
-        return f"<button {self.content()}>"
-
-    @property
-    def render_width(self) -> int:
-        return self._r_width
+        return f"<Button {self.content()}>"

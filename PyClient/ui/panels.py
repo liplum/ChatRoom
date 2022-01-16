@@ -144,11 +144,11 @@ class Panel(AbstractContainer):
 
     @property
     def elemts_total_width(self):
-        return sum(elemt.render_width for elemt in self.elements)
+        return sum(elemt.RenderWidth for elemt in self.elements)
 
     @property
     def elemts_total_height(self):
-        return sum(elemt.render_height for elemt in self.elements)
+        return sum(elemt.RenderHeight for elemt in self.elements)
 
     @abstractmethod
     def go_next_focusable(self) -> bool:

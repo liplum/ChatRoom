@@ -32,7 +32,7 @@ class language_tab(tab):
         main.add(self.b_quit)
         main.left_margin = 10
         configs = entity()
-        self.cur_lang_button: Optional[button] = None
+        self.cur_lang_button: Optional[Button] = None
 
         def gen(lang):
             def on_change():

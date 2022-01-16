@@ -203,16 +203,16 @@ class login_tab2(tab):
         self.container_row = 4
         self.container_column = 2
         self.container: List[List[CTRL]] = fill_2d_array(self.container_row, self.container_column, None)
-        self.l_server_ip: label = self.set(
+        self.l_server_ip: Label = self.set(
             i18n_label("tabs.login_tab.labels.server_ip"),
             0, 0)
-        self.l_server_port: label = self.set(
+        self.l_server_port: Label = self.set(
             i18n_label("tabs.login_tab.labels.server_port"),
             1, 0)
-        self.l_account: label = self.set(
+        self.l_account: Label = self.set(
             i18n_label("tabs.login_tab.labels.account"),
             2, 0)
-        self.l_password: label = self.set(
+        self.l_password: Label = self.set(
             i18n_label("tabs.login_tab.labels.password"),
             3, 0)
 

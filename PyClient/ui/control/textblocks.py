@@ -32,14 +32,12 @@ class textblock(text_control):
         self.theme = theme
         self._width = Auto
         self._height = Auto
-        self._r_width = 0
-        self._r_height = 0
 
     def paint_on(self, buf: buffer):
         if self.IsLayoutChanged:
             self.cache_layout()
-        render_width = self.render_width
-        render_height = self.render_height
+        render_width = self.RenderWidth
+        render_height = self.RenderHeight
         if render_width == 0 or render_height == 0:
             return
         with StringIO() as s:
@@ -100,14 +98,6 @@ class textblock(text_control):
     def focusable(self) -> bool:
         return False
 
-    @property
-    def render_height(self) -> int:
-        return self._r_height
-
-    @property
-    def render_width(self) -> int:
-        return self._r_width
-
     def cache_layout(self):
         if not self.IsLayoutChanged:
             return
@@ -121,11 +111,11 @@ class textblock(text_control):
         a = math.sqrt(sum_len) / 7
 
         if self.width == Auto:
-            self._r_width = max(round(a * 30), 2 + max_width)
+            self.RenderWidth = max(round(a * 30), 2 + max_width)
         else:
-            self._r_width = max(self.width, 2 + max_width)
+            self.RenderWidth = max(self.width, 2 + max_width)
 
         if self.height == Auto:
-            self._r_height = round(a * 11)
+            self.RenderHeight = round(a * 11)
         else:
-            self._r_height = self.height
+            self.RenderHeight = self.height
