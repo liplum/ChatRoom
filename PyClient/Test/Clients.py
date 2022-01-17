@@ -16,8 +16,6 @@ from ui.Consoles import *
 from ui.Core import *
 from ui.Renders import IRender
 
-system_type = platform.system()
-
 
 class TestClient(IClient):
     def __init__(self):
@@ -58,11 +56,17 @@ class TestClient(IClient):
         self.logger.output_to_cmd = False
         self.logger.startup_screen = GLOBAL.LOGO
         self.logger.initialize()
+        systemType = platform.system()
+        systemVersion = platform.version()
+        pythonImplementation = platform.python_implementation()
+        pythonVersion = platform.python_version()
+        pythonCompiler = platform.python_compiler()
+        self.logger.tip(
+            f"[Client]Client starts on {systemType} {systemVersion} by {pythonImplementation} {pythonVersion} compiled by {pythonCompiler}")
         self._render = ct.resolve(IRender)
-        self._render.Initialize()
+        self._render.InitRender()
         self._displayer: output.idisplay = ct.resolve(output.idisplay)
         self.logger.msg("[Client]Service component initialized.")
-        self.logger.msg(f"[Client]Client starts up on {system_type}.")
 
         self._win = TestApp(self)
 
@@ -100,7 +104,7 @@ class TestClient(IClient):
         self._running = True
         try:
             inpt = self.inpt
-            inpt.initialize()
+            inpt.InitInput()
             self.App.start()
             self.App.gen_default_tab()
             first_rendered = False

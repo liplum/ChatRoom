@@ -21,25 +21,27 @@ def Iterate2DColumn(array2D: ndarray, column_index: int) -> Iterable:
 
 
 class BK:
-    Red = None
-    Green = None
-    Blue = None
-    Yellow = None
-    Violet = None
-    White = None
-    Black = None
-    Cyan = None
+    Red: int
+    Green: int
+    Blue: int
+    Yellow: int
+    Violet: int
+    White: int
+    Black: int
+    Cyan: int
+    AllColors: list
 
 
 class FG:
-    Red = None
-    Green = None
-    Blue = None
-    Yellow = None
-    Violet = None
-    White = None
-    Black = None
-    Cyan = None
+    Red: int
+    Green: int
+    Blue: int
+    Yellow: int
+    Violet: int
+    White: int
+    Black: int
+    Cyan: int
+    AllColors: list
 
 
 class Canvas:
@@ -88,7 +90,7 @@ def WidthHeight(canvas: Canvas) -> Tuple[int, int]:
 
 class IRender(ABC):
     @abstractmethod
-    def Initialize(self):
+    def InitRender(self):
         pass
 
     @abstractmethod

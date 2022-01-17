@@ -79,29 +79,24 @@ from ioc import container
 
 def init_plugin(client, registry: container):
     from ui.inputs import iinput
+    from ui.Renders import IRender
     if IDE:
         from ui.cmdprompt import cmd_input
         registry.register_singleton(iinput, cmd_input)
     else:
         if system_type == "Windows":
             from ui.wins import nonblocks
+            from ui.wins.Renders import WinRender
             registry.register_singleton(iinput, nonblocks.nbinput)
+            registry.register_singleton(IRender, WinRender)
         elif system_type == "Linux":
             from ui.linuxs import nonblocks
-            registry.register_singleton(iinput, nonblocks.nbinput)
+            from ui.linuxs.Renders import LinuxColoredRender
+            registry.register_singleton(iinput, LinuxColoredRender)
+            registry.register_singleton(IRender, LinuxColoredRender)
         else:
             from ui.cmdprompt import cmd_input
             registry.register_singleton(iinput, cmd_input)
-    from ui.Renders import IRender
-    if IDE:
-        raise NotImplementedError()
-    else:
-        if system_type == "Windows":
-            from ui.wins.Renders import WinRender
-            registry.register_singleton(IRender, WinRender)
-        elif system_type == "Linux":
-            from ui.linuxs.Renders import LinuxRender
-            registry.register_singleton(IRender, LinuxRender)
 
     if GLOBAL.MONITOR:
         from pef.monitor import pef_monitor

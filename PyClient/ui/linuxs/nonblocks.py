@@ -19,7 +19,7 @@ class nbinput(inbinput):
         self._lock = RLock()
         self.old_settings = termios.tcgetattr(sys.stdin)
 
-    def initialize(self):
+    def InitInput(self):
         if self.input_thread is None:
             self.input_thread = Thread(target=self._listen_input, name="Input")
             self.input_thread.daemon = True
@@ -27,7 +27,7 @@ class nbinput(inbinput):
             self._lock = RLock()
 
     def get_input(self, tip: str = None):
-        self.initialize()
+        self.InitInput()
 
     def _listen_input(self):
         try:

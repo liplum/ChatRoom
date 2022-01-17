@@ -55,10 +55,11 @@ class WinCanvas(Canvas):
         width = self.Width
         height = self.Height
         colors = self.colors
+        color = bk | fg
         for i, char in enumerate(string):
             nx = x + i
             if 0 <= nx < width and 0 <= y < height:
-                colors[y, nx] = bk | fg
+                colors[y, nx] = color
 
     def Clear(self, x: int, y: int):
         NoColor = BK.Black | FG.White
@@ -102,7 +103,7 @@ class WinRender(IRender):
         self.Height: int = 0
         self.NeedRegen = True
 
-    def Initialize(self):
+    def InitRender(self):
         pass
 
     def RegenBuffer(self):
@@ -135,7 +136,8 @@ class WinRender(IRender):
             cm = canvas.buffer
             colorm = canvas.colors
             buf = self.buffer
-            for i in range(self.Height):
+            height = min(self.Height, canvas.Height)
+            for i in range(height):
                 try:
                     line = utils.chain(Iterate2DRow(cm, i))
                     buf.WriteConsoleOutputCharacter(

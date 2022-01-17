@@ -21,8 +21,6 @@ from ui.Core import *
 from ui.k import cmdkey
 from utils import get
 
-system_type = platform.system()
-
 
 class Client(IClient):
     def __init__(self):
@@ -76,11 +74,16 @@ class Client(IClient):
         self.logger.output_to_cmd = False
         self.logger.startup_screen = GLOBAL.LOGO
         self.logger.initialize()
-
+        systemType = platform.system()
+        systemVersion = platform.version()
+        pythonImplementation = platform.python_implementation()
+        pythonVersion = platform.python_version()
+        pythonCompiler = platform.python_compiler()
+        self.logger.tip(
+            f"[Client]Client starts on {systemType} {systemVersion} by {pythonImplementation} {pythonVersion} compiled by {pythonCompiler}")
         self._displayer: output.idisplay = ct.resolve(output.idisplay)
         self.cmd_manger: cmdmanager = ct.resolve(cmdmanager)
         self.logger.msg("[Client]Service component initialized.")
-        self.logger.msg(f"[Client]Client starts up on {system_type}.")
         self._msg_manager: imsgmager = ct.resolve(imsgmager)
 
         if GLOBAL.DEBUG:
@@ -157,7 +160,7 @@ class Client(IClient):
         self._running = True
         try:
             inpt = self.inpt
-            inpt.initialize()
+            inpt.InitInput()
             self.auto_connection()
             # self.winsize_monitor.start()
             self.App.start()

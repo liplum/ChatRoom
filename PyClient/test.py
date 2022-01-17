@@ -54,7 +54,8 @@ def win_test():
     # test_bind_property()
     # test_yield_recursion()
     # test_n_ary_tree()
-    test_dynamic_obj()
+    #test_dynamic_obj()
+    test_print_cls()
 
 
 def linux_test():
@@ -70,6 +71,20 @@ if system_type == "Windows":
     test = win_test
 elif system_type == "Linux":
     test = linux_test
+
+
+def test_print_cls():
+    def Print(title, cls):
+        print(title)
+        for k, v in cls.__dict__.items():
+            if not k.startswith("_") and not k.endswith("_"):
+                print(f"{k}:{v}")
+
+    class A:
+        a = 1
+        b = 2
+
+    Print("A", A)
 
 
 def test_dynamic_obj():

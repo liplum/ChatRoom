@@ -45,7 +45,7 @@ class iinput(ABC):
         else:
             return self._input_list.popleft()
 
-    def initialize(self):
+    def InitInput(self):
         pass
 
     @property

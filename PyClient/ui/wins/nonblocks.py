@@ -18,7 +18,7 @@ class nbinput(inbinput):
         super().__init__()
         self.input_thread = None
 
-    def initialize(self):
+    def InitInput(self):
         if self.input_thread is None:
             self.input_thread = Thread(target=self._listen_input, name="Input")
             self.input_thread.daemon = True
@@ -61,7 +61,7 @@ class nbinput(inbinput):
             return first
 
     def get_input(self, tip: str = None):
-        self.initialize()
+        self.InitInput()
 
     @property
     def input_list(self) -> List[chars.char]:
