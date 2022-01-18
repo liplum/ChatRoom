@@ -83,6 +83,9 @@ def init_plugin(client, registry: container):
     if IDE:
         from ui.cmdprompt import cmd_input
         registry.register_singleton(iinput, cmd_input)
+        if system_type == "Linux":
+            from ui.linuxs.Renders import LinuxColoredRender
+            registry.register_singleton(IRender, LinuxColoredRender)
     else:
         if system_type == "Windows":
             from ui.wins import nonblocks
@@ -90,9 +93,9 @@ def init_plugin(client, registry: container):
             registry.register_singleton(iinput, nonblocks.nbinput)
             registry.register_singleton(IRender, WinRender)
         elif system_type == "Linux":
-            from ui.linuxs import nonblocks
+            from ui.linuxs.nonblocks import nbinput
             from ui.linuxs.Renders import LinuxColoredRender
-            registry.register_singleton(iinput, LinuxColoredRender)
+            registry.register_singleton(iinput, nbinput)
             registry.register_singleton(IRender, LinuxColoredRender)
         else:
             from ui.cmdprompt import cmd_input

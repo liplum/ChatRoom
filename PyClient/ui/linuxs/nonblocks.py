@@ -50,7 +50,8 @@ class nbinput(inbinput):
                             c3: str = sys.stdin.read(1)
                             nc3 = ord(c3)
                             cs.append(nc3)
-
+                    if nc1 == linux_126:
+                        continue
                     l = len(cs)
                     if l == 1:
                         self._input_new(char(cs[0]))

@@ -300,17 +300,17 @@ class login_tab2(tab):
             self.tablist.replace(self, chat)
             op.login(self.network, token, account, password)
 
-    def on_input(self, char: chars.char) -> Generator:
-        if keys.k_up == char:
+    def on_input(self, Char: chars.Char) -> Generator:
+        if keys.k_up == Char:
             self.textbox_index -= 1
-        elif keys.k_down == char or chars.c_table == char:
+        elif keys.k_down == Char or chars.c_table == Char:
             self.textbox_index += 1
-        elif keys.k_enter == char:
+        elif keys.k_enter == Char:
             if self.textbox_index < self.container_row - 1:
                 self.textbox_index += 1
             else:
                 self.login()
-        elif chars.c_esc == char:
+        elif chars.c_esc == Char:
             if isinstance(self.focused, textbox):
                 tb: textbox = self.focused
                 tb.clear()
@@ -318,7 +318,7 @@ class login_tab2(tab):
             f: ctrl.Control = self.focused
             consumed = False
             if f:
-                consumed = f.on_input(char)
+                consumed = f.on_input(Char)
         yield Finished
 
     def paint_on(self, buf: buffer):

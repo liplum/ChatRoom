@@ -23,7 +23,7 @@ def common_hotkey(char: chars.char, tab: tab, client: IClient, tablist: tablist,
     :param char:
     :param client:
     :param tablist:
-    :return: (True | None) Whether the char wasn't consumed
+    :return: (True | None) Whether the Char wasn't consumed
     """
     if chars.c_q == char:
         menu_type = main_menu_type()
@@ -353,7 +353,7 @@ class cmd_long_mode(cmd_state):
                     self.autofilling_cur = next(self.autofilling_it)
                     tb.addtext(self.autofilling_cur)
         else:  # not enter and not tab
-            consumed = tb.on_input(char)  # normally,add this char into textbox
+            consumed = tb.on_input(char)  # normally,add this Char into textbox
             if self.autofilling:  # if already entered Auto-filling
                 # update candidate list
                 self.autofilling_all = cmd_manager.prompts(inputs)

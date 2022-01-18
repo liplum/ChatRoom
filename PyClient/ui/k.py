@@ -41,9 +41,9 @@ class cmdkey:
         """
         Para 1:cmdkey object
 
-        Para 2:mapped char
+        Para 2:mapped Char
 
-        :return: Event(cmdkey,char)
+        :return: Event(cmdkey,Char)
         """
         return self._on_map
 
@@ -52,9 +52,9 @@ class cmdkey:
         """
         Para 1:cmdkey object
 
-        Para 2:demapped char
+        Para 2:demapped Char
 
-        :return: Event(cmdkey,char)
+        :return: Event(cmdkey,Char)
         """
         return self._on_demap
 

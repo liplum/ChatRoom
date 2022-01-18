@@ -27,11 +27,11 @@ class iinput(ABC):
         """
         Para 1:iinput object
 
-        Para 2:char object
+        Para 2:Char object
 
         Canceled:The behavior will be determined by it's implement
 
-        :return: Event(iinput,char)
+        :return: Event(iinput,Char)
         """
         return self._on_input
 

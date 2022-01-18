@@ -238,7 +238,7 @@ def separate(text: str, separator: str, number: int = None, allow_emptychar: boo
     :param text:
     :param separator:the character used to be separate.
     :param number:the max separation count.
-    :param allow_emptychar:If true,it skips the empty char.Otherwise the item which result contains can be a empty char.
+    :param allow_emptychar:If true,it skips the empty Char.Otherwise the item which result contains can be a empty Char.
     :return:
     """
     if len(separator) > 1:
@@ -274,7 +274,7 @@ def separate(text: str, separator: str, number: int = None, allow_emptychar: boo
             if rest_len > 0:
                 res.append(text[-rest_len:])
 
-    else:  # not allow empty char
+    else:  # not allow empty Char
         for char in text:
             if number <= 0:
                 finished = True

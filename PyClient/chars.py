@@ -9,7 +9,7 @@ class char:
         self.keycode_1: int = keycode_1
         self.keycode_2: Optional[int] = keycode_2
 
-    def __eq__(self, other: Union["char", str, bytes, int, Tuple[int, int]]):
+    def __eq__(self, other: Union["Char", str, bytes, int, Tuple[int, int]]):
         if isinstance(other, char):
             if self.keycode_1 == other.keycode_1:
                 if self.keycode_2 is not None and other.keycode_2 is not None:
@@ -101,7 +101,7 @@ def is_key(char: Union[str, bytes, bytearray], key: Union[str, bytes]):
 
 def to_str(ch: char) -> str:
     """
-    Transfer a char object to a character
+    Transfer a Char object to a character
     :param ch:
     :return:
     """

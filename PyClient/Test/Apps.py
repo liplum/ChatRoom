@@ -71,6 +71,7 @@ class TestApp(IApp):
         t = self.newtab(TestTab)
         self.tablist.add(self.newtab(main_menu_tab))
         self.tablist.add(t)
+        self.tablist.goto(2)
 
     def stop(self):
         pass

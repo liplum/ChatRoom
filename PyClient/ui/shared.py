@@ -15,9 +15,9 @@ class painter:
 class inputable:
     def on_input(self, char: chars.char) -> IsConsumed:
         """
-        When user types a char
+        When user types a Char
         :param char: which be typed
-        :return:whether this object consumed the char
+        :return:whether this object consumed the Char
         """
         return NotConsumed
 

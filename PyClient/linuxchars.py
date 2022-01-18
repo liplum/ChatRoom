@@ -75,26 +75,41 @@ def o_1(keycode_3: int) -> linux_control:
 
 lc_eot = char(4)
 
-# 27 91 65
+# 27 91 XX
 # esc [ code
 lc_up = csi_1(65)
 lc_down = csi_1(66)
 lc_right = csi_1(67)
 lc_left = csi_1(68)
 
-# 27 91 54 126
+# 27 79 XX
+lc_curse_up = o_1(65)
+lc_curse_down = o_1(66)
+lc_curse_right = o_1(67)
+lc_curse_left = o_1(68)
+
+# 27 91 XX 126
 lc_pgdown = csi_2_end126(54)
+lc_curse_pgdown = csi_1(54)
 
-# 27 91 53 126
+# 27 91 XX 126
 lc_pgup = csi_2_end126(53)
+lc_curse_pgup = csi_1(53)
 
-# 27 91 70
+# 27 91 XX
 lc_end = csi_1(70)
 lc_home = csi_1(72)
 
-# 27 91 50 126
+# 27 79 XX
+lc_curse_end = o_1(70)
+lc_curse_home = o_1(72)
+
+# 27 91 XX 126
 lc_insert = csi_2_end126(50)
 lc_delete = csi_2_end126(51)
+
+# 27 91 XX
+lc_curse_delete = csi_1(51)
 
 lc_backspace = char(127)
 

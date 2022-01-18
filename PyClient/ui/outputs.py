@@ -394,7 +394,10 @@ class full_cmd_display(idisplay):
             return self._height
 
     def gen_buffer(self) -> buffer:
-        size = GetTerminalScreenSize()
+        if CanGetTerminalScreenSize():
+            size = GetTerminalScreenSize()
+        else:
+            size = 120,30
         return full_cmd_display.buf(size[0], size[1])
 
     def render(self, buf: buffer) -> bool:

@@ -165,7 +165,7 @@ class TestClient(IClient):
         self.render_ticks += 1
         self.__clear_dirty()
         self.App.update_screen()
-        if GLOBAL.DEBUG:
+        if GLOBAL.DEBUG and False:
             print(f"MTick={self.main_loop_ticks},RTick={self.render_ticks},ITick={self.input_ticks}")
 
     @property

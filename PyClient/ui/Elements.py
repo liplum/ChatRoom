@@ -161,9 +161,9 @@ class UIElement(Painter, DpObj):
 
     def OnInput(self, char: chars.char) -> Generator:
         """
-        When user types a char
+        When user types a Char
         :param char: which be typed
-        :return:whether this object consumed the char
+        :return:whether this object consumed the Char
         """
         yield from DefaultNotConsumed
 

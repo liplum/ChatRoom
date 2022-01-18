@@ -6,6 +6,7 @@ from ui.control.Labels import Label
 from ui.control.TextAreas import TextArea
 from ui.control.xtbox import XtextWrapper
 from ui.panel.DisplayBoards import DisplayBoard
+from ui.panel.Grids import gen_grid, Column
 from ui.panel.Stacks import Stack, vertical, OrientationType, AlignmentType
 from ui.tabs import *
 
@@ -29,6 +30,7 @@ class TestTab(tab):
         self.t_checkbox = Checkbox(True)
         self.t_tbox = XtextWrapper(TextArea())
         self.t_tbox.Width = 40
+        # self.t_tbox.Height = 10
         self.t_tbox.Height = Auto
         self.t_tbox.InputList = "Test Input Box"
         self.db = DisplayBoard()
@@ -37,11 +39,15 @@ class TestTab(tab):
         self.dy = 0
         self.Main = DisplayBoard()
         self.StackPanel = Stack()
-        self.StackPanel.Orientation = vertical
+        self.grid = gen_grid(2, [Column()])
+        self.grid[0, 0] = Button("GridButton", lambda: None)
+        self.grid[1, 0] = Button("Grid2", lambda: None)
+        self.StackPanel.Orientation = OrientationType.Vertical
         self.StackPanel.AddControl(self.db)
         self.StackPanel.AddControl(self.t_label)
         self.StackPanel.AddControl(self.t_checkbox)
         self.StackPanel.AddControl(self.t_button)
+
         # self.tta = TestTabA(client, tablist)
         # c.AddControl(self.tta)
         self.ShowLogo = False
@@ -91,8 +97,9 @@ class TestTab(tab):
 
         for e in PostItV(self.Main):
             e.Measure()
-        # self.Main.Arrange(40, 20)
-        # self.Main.PaintOn(Viewer.ByCanvas(canvas))
+        self.Main.Arrange(40, 20)
+        self.Main.PaintOn(Viewer.ByCanvas(canvas))
+        """
         import random
         w = random.randint(10,50)
         h = random.randint(10,50)
@@ -103,6 +110,7 @@ class TestTab(tab):
                             x=random.randint(0,20),
                             y=random.randint(0,5)))
         # self.tta.PaintOn(Viewer(15, 2, 40, 20, canvas))
+        """
         if self.ShowLogo:
             for i in range(10, 20):
                 for j in range(10, 20):
@@ -136,5 +144,8 @@ class TestTab(tab):
                 Stack.SetVerticalAlignment(self.t_button, AlignmentType.Right)
                 Stack.SetHorizontalAlignment(self.t_button, AlignmentType.Bottom)
         else:
-            self.t_tbox.on_input(char)
+            if not self.t_tbox.on_input(char):
+                t = f"{char=}"
+                self.t_tbox.Text.extend(t)
+                self.OnRenderContentChanged(self)
         yield Finished

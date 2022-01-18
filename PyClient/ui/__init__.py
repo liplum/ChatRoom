@@ -63,6 +63,7 @@ def init_keys():
         keys.k_down = linuxchars.lc_down
         keys.k_left = linuxchars.lc_left
         keys.k_right = linuxchars.lc_right
+
         keys.k_pgdown = linuxchars.lc_pgdown
         keys.k_pgup = linuxchars.lc_pgup
         keys.k_end = linuxchars.lc_end

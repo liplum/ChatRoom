@@ -648,7 +648,7 @@ def test_input():
             if ch_number == f_keycode_1 or ch_number == control_keycode_1:
                 ch_2 = msvcrt.getwch()
                 ch_2_number = ord(ch_2)
-                print(f"Control char is {ch_number}+{ch_2_number},{ch_number:#X}+{ch_2_number:#X}")
+                print(f"Control Char is {ch_number}+{ch_2_number},{ch_number:#X}+{ch_2_number:#X}")
             else:
                 print(f"{ch} is {ch_number},{ch_number:#X}")
 
@@ -889,7 +889,7 @@ while True:
     if is_key(c, b'\x1b'):
         sys.exit()
     elif c != "":
-        print(f"char is {c} and {c.encode()}")
+        print(f"Char is {c} and {c.encode()}")
 """"""
 while True:
     number = ord(msvcrt.getwch())

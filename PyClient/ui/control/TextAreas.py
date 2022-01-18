@@ -299,7 +299,7 @@ class TextArea(text_control):
         """
         Para 1:TextArea object
 
-        Para 2:char appended
+        Para 2:Char appended
 
         :return: Event(TextArea,str)
         """
@@ -312,7 +312,7 @@ class TextArea(text_control):
 
         Para 2:cursor position
 
-        Para 3:char appended
+        Para 3:Char appended
 
         :return: Event(TextArea,int,str)
         """
@@ -325,7 +325,7 @@ class TextArea(text_control):
 
         Para 2:cursor position
 
-        Para 3:char deleted
+        Para 3:Char deleted
 
         :return: Event(TextArea,int,str)
         """

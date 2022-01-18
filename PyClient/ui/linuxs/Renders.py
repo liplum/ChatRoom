@@ -6,6 +6,7 @@ import numpy as np
 
 import chars
 import utils
+from chars import char
 from ui.Renders import *
 from ui.inputs import inbinput
 
@@ -16,6 +17,25 @@ y 1 2 3 4 5 6 7
 | 2 3 4 5 6 7 8
 v 3 4 5 6 7 8 9
 """
+
+
+def InitCurseKey():
+    import keys
+    import linuxchars
+    import chars
+    keys.k_up = linuxchars.lc_curse_up
+    keys.k_down = linuxchars.lc_curse_down
+    keys.k_left = linuxchars.lc_curse_left
+    keys.k_right = linuxchars.lc_curse_right
+
+    keys.k_pgdown = linuxchars.lc_curse_pgdown
+    keys.k_pgup = linuxchars.lc_curse_pgup
+
+    keys.k_enter = chars.c_carriage_return
+
+    keys.k_end = linuxchars.lc_curse_end
+    keys.k_home = linuxchars.lc_curse_home
+    keys.k_delete = linuxchars.lc_curse_delete
 
 
 def ToColorPair(bk, fg):
@@ -120,20 +140,20 @@ class LinuxRender(IRender, inbinput):
     def init(self, container):
         self.logger: "ilogger" = container.resolve("ilogger")
 
-    def _GetCurScreen(self)->window:
+    def _GetCurScreen(self) -> window:
         return self.Screen
 
     def _ListenInput(self):
         try:
             while True:
-                scr = self._GetCurScreen()
-                self.logger.msg(f"{scr=}")
+                scr = self.Screen
                 if scr is not None:
-                    self.logger.msg("Get begins")
-                    ch = scr.get_wch()
-                    self.logger.msg("Get ends")
-                    self.logger.msg(ch)
-                    self.InputNew(chars.printable(ch))
+                    try:
+                        ch = scr.get_wch()
+                        self.logger.msg(ch)
+                        self.InputNew(chars.printable(ch))
+                    except:
+                        pass
         except Exception as e:
             self.logger.error(e)
 
@@ -142,6 +162,16 @@ class LinuxRender(IRender, inbinput):
             self._input_list.append(char)
             self.on_input(self, char)
 
+    def consume_char(self) -> Optional[char]:
+        with self._lock:
+            if len(self._input_list) == 0:
+                return None
+            first = self._input_list.popleft()
+            return first
+
+    def get_input(self, tip: str = None):
+        self.InitInput()
+
     def RegenScreen(self):
         scr = self.Screen
         curses.noecho()
@@ -149,6 +179,7 @@ class LinuxRender(IRender, inbinput):
         scr.keypad(True)
         scr.nodelay(True)
         scr.clear()
+        # self.InitInput()
         size = GetTerminalScreenSize()
         self.Width = size.columns
         self.Height = size.lines
@@ -162,7 +193,7 @@ class LinuxRender(IRender, inbinput):
 
     def InitRender(self):
         self.Screen = curses.initscr()
-        self.logger.msg(f"{self.Screen=}")
+        InitCurseKey()
 
     def CreateCanvas(self) -> LinuxCanvas:
         if self.NeedRegen:
