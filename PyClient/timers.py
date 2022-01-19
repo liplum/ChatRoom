@@ -12,6 +12,7 @@ def now_seconds() -> float:
 class timer:
     def __init__(self, seconds: float):
         self.time = seconds
+        self.start_time = None
 
     @staticmethod
     def byMilisecs(milisecs: int):
@@ -25,6 +26,8 @@ class timer:
         self.start_time = now_seconds()
 
     def delay(self):
+        if self.start_time is None:
+            raise TimerNotResetError(self)
         cur_time = now_seconds()
         duration = cur_time - self.start_time
         interval = duration - self.time
@@ -34,6 +37,8 @@ class timer:
 
     @property
     def is_end(self) -> bool:
+        if self.start_time is None:
+            raise TimerNotResetError(self)
         cur_time = now_seconds()
         duration = cur_time - self.start_time
         interval = duration - self.time
@@ -41,3 +46,8 @@ class timer:
             return True
         else:
             return False
+
+
+class TimerNotResetError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

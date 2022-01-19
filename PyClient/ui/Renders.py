@@ -120,8 +120,8 @@ class Viewer(Canvas):
     def __init__(self, x=0, y=0, width=0, height=0, canvas: Canvas = None):
         self.X = x
         self.Y = y
-        self._width = width
-        self._height = height
+        self._width = max(width, 0)
+        self._height = max(height, 0)
         self._canvas: Optional[Canvas] = canvas
 
     @staticmethod
@@ -138,8 +138,11 @@ class Viewer(Canvas):
         self.Width = canvas.Width
         self.Height = canvas.Height
 
-    def Sub(self, dx, dy, width, height) -> "Viewer":
-        return SubViewer(dx, dy, width, height, self)
+    def Sub(self, dx=0, dy=0, width=None, height=None) -> "Viewer":
+        return SubViewer(dx, dy,
+                         self.Width if width is None else width,
+                         self.Height if height is None else height,
+                         self)
 
     def Char(self, x: int, y: int, char: str):
         canvas = self.Canvas

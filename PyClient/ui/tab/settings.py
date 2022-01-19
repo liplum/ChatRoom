@@ -33,7 +33,7 @@ def config_control(tab: "settings_tab", config: config, settings: settings) -> C
 
 class settings_tab(tab):
 
-    def __init__(self, client: IClient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
         self.last_tab = None
         self.ctrl2on_save = {}

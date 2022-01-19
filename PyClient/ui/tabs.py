@@ -21,9 +21,12 @@ def _add_tabtype(name: str, tabtype: "metatab"):
 
 
 Need_Release_Resource = bool
+from ui.LegacyRenders import LegacyBufferSimulator
 
 
-class tablist(Control):
+class Tablist(Control):
+    ShowTabBarProp: DpProp
+
     def __init__(self):
         super().__init__()
         self._cur: Optional["tab"] = None
@@ -33,9 +36,17 @@ class tablist(Control):
         self.view_history = []
         self.max_view_history = 5
 
-        self._on_curtab_changed = Event(tablist, (int, type(None)), (tab, type(None)))
-        self._on_tablist_changed = Event(tablist, bool, tab)
+        self._on_curtab_changed = Event(Tablist, (int, type(None)), (tab, type(None)))
+        self._on_tablist_changed = Event(Tablist, bool, tab)
         self._lock = RLock()
+
+    @property
+    def ShowTabBar(self) -> bool:
+        return self.GetValue(self.ShowTabBarProp)
+
+    @ShowTabBar.setter
+    def ShowTabBar(self, value: bool):
+        self.SetValue(self.ShowTabBarProp, value)
 
     @property
     def tabs(self) -> List["tab"]:
@@ -89,26 +100,26 @@ class tablist(Control):
     @property
     def on_curtab_changed(self) -> Event:
         """
-        Para 1:tablist object
+        Para 1:Tablist object
 
         Para 2:index of current tab (nullable)
 
         Para 3:current tab (nullable)
 
-        :return: Event(tablist,Optional[int],Optional[tab])
+        :return: Event(Tablist,Optional[int],Optional[tab])
         """
         return self._on_curtab_changed
 
     @property
     def on_tablist_changed(self) -> Event:
         """
-        Para 1:tablist object
+        Para 1:Tablist object
 
         Para 2:change type: True->add ; False->remove
 
         Para 3:operated tab
 
-        :return: Event(tablist,bool,tab)
+        :return: Event(Tablist,bool,tab)
         """
         return self._on_tablist_changed
 
@@ -136,6 +147,7 @@ class tablist(Control):
     def add(self, t: "tab"):
         with self._lock:
             self.tabs.append(t)
+            t.Parent = self
             self.reset_index()
             self.on_tablist_changed(self, True, t)
             if self.cur is None:
@@ -157,6 +169,7 @@ class tablist(Control):
             if pos is None:
                 return
 
+        new_tab.Parent = self
         new_tab.on_added()
         need_release_resource = new_tab.on_replaced(removed)
         new_tab.on_content_changed.Add(self.on_subtab_content_changed)
@@ -193,14 +206,17 @@ class tablist(Control):
     def SetTabByIndex(self, index: int, new_tab: "tab"):
         if 0 <= index < self.tabs_count:
             self.tabs[index] = new_tab
+            new_tab.Parent = self
 
     def DeleteTabByIndex(self, index: int):
         if 0 <= index < self.tabs_count:
+            self.tabs[index].Parent = None
             del self.tabs[index]
 
     def DeleteTab(self, t: "tab"):
         if t in self.tabs:
             self.tabs.remove(t)
+            t.Parent = None
             return True
         else:
             return False
@@ -311,22 +327,100 @@ class tablist(Control):
             buf.addtext()
             buf.addtext(separator.getvalue())
 
-    def Arrange(self, width: Optional[int] = None, height: Optional[int] = None):
+    def GetChildren(self) -> Collection["UIElement"]:
+        return (self.cur,) if self.cur else EmptyTuple
+
+    def AddChild(self, subElem: "UIElement"):
         pass
 
-    def PaintOn(self, canvas: Canvas):
+    def RemoveChild(self, subElem: "UIElement") -> bool:
+        pass
+
+    def Arrange(self, width: int, height: int) -> Tuple[int, int]:
+        if self.IsVisible:
+            self.RenderWidth = 0
+            self.RenderHeight = 0
+            return 0, 0
+
+        cur = self.cur
+        w = self.Width
+        h = self.Height
+        show_tab_bar = self.ShowTabBar
+
+        if w == Auto:
+            rw = width
+        else:
+            rw = min(width, w)
+        if rw <= 0:
+            self.RenderWidth = 0
+            self.RenderHeight = 0
+            return 0, 0
+
+        if h == Auto:
+            rh = height
+        else:
+            rh = min(height, h)
+
+        if rh <= 0:
+            self.RenderWidth = 0
+            self.RenderHeight = 0
+            return 0, 0
+
+        if cur:
+            if show_tab_bar:
+                if rh > 2:
+                    crw, crh = cur.Arrange(rw, rh - 2)
+                else:
+                    crw, crh = cur.Arrange(0, 0)
+            else:
+                crw, crh = cur.Arrange(rw, rh)
+
+        self.RenderWidth = rw
+        self.RenderHeight = rh
+        return self.RenderWidth, self.RenderHeight
+
+    def Measure(self):
+        if self.IsVisible:
+            self.DWidth = 0
+            self.DHeight = 0
+            return
+        cur = self.cur
+        w = self.Width
+        h = self.Height
+        dw = 0
+        dh = 0
+        show_tab_bar = self.ShowTabBar
+
+        if w == Auto:
+            if cur:
+                dw = cur.DWidth
+        else:
+            if cur:
+                dw = min(w, cur.DWidth)
+            else:
+                dw = w
+
+        if h == Auto:
+            if show_tab_bar:
+                dh += 2
+
+            if cur:
+                dh += cur.DHeight
+        else:
+            dh = h
+
+        self.DWidth = dw
+        self.DHeight = dh
+
+    def PaintTabBar(self, canvas: Canvas):
         tab_count = self.tabs_count
         cur = self.cur
-        names = StrWriter(canvas, 0, 0, canvas.Width, 1)
-        separator = StrWriter(canvas, 0, 1, canvas.Width, 1)
+        names = StrWriter(canvas, 0, 0, canvas.Width, 1, autoWrap=False)
+        separator = StrWriter(canvas, 0, 1, canvas.Width, 1, autoWrap=False)
         for i, t in enumerate(self.tabs):
             bk = BK.Yellow if t is cur else BK.Green
             fg = FG.Black if t is cur else FG.Violet
-            title = t.title
-            if GLOBAL.DEBUG:
-                displayed_title = f" {title} "
-            else:
-                displayed_title = f" {title} "
+            displayed_title = f" {t.title} "
             names.Write(displayed_title, bk, fg)
             repeated = " " if t is cur else "─"
             second_line = utils.repeat(repeated, len(displayed_title))
@@ -340,9 +434,36 @@ class tablist(Control):
                 else:
                     separator.Write("┴")
 
+    def PaintCurTab(self, canvas: Canvas):
+        cur = self.cur
+        if cur:
+            if getattr(cur, "UseNewRender", False):
+                cur.PaintOn(canvas)
+            else:
+                sm = LegacyBufferSimulator(canvas)
+                cur.paint_on(sm)
+
+    def PaintOn(self, canvas: Canvas):
+        show_tab_bar = self.ShowTabBar
+        if not show_tab_bar and self.cur is None:
+            return
+        v = Viewer.ByCanvas(canvas)
+        if show_tab_bar:
+            self.PaintTabBar(v.Sub(height=2))
+        if self.cur:
+            if show_tab_bar:
+                v = v.Sub(dy=2, height=canvas.Height - 2)
+            self.PaintCurTab(v)
+
     def __iter__(self):
         with self._lock:
             return iter(self.tabs)
+
+
+Tablist.ShowTabBarProp = DpProp.Register(
+    "ShowTabBar", bool, Tablist,
+    DpPropMeta(True, propChangedCallback=OnRenderPropChangedCallback)
+)
 
 
 class metatab(ABCMeta):
@@ -353,7 +474,7 @@ class metatab(ABCMeta):
 
 
 class tab(Control, metaclass=metatab):
-    def __init__(self, client: IClient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: Tablist):
         super().__init__()
         self.tablist: tablist = tablist
         self.client: IClient = client
@@ -380,7 +501,7 @@ class tab(Control, metaclass=metatab):
         yield Finished
 
     @classmethod
-    def deserialize(cls, data: dict, client: IClient, tablist: tablist) -> "tab":
+    def deserialize(cls, data: dict, client: IClient, tablist: Tablist) -> "tab":
         pass
 
     @classmethod
@@ -459,7 +580,7 @@ TitleGetter = Optional[Callable[[], str]]
 
 
 class base_popup(tab, ABC):
-    def __init__(self, client: IClient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
         self._return_value: Optional[Any] = None
         self._returned = False

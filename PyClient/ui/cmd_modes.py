@@ -15,7 +15,7 @@ from ui.uistates import ui_state
 main_menu_type = lazy(lambda: utils.get(tab_name2type, "main_menu_tab"))
 
 
-def common_hotkey(char: chars.char, tab: tab, client: IClient, tablist: tablist, win: IApp):
+def common_hotkey(char: chars.char, tab: tab, client: IClient, tablist: Tablist, win: IApp):
     """
 
     :param win:
@@ -53,7 +53,7 @@ def common_hotkey(char: chars.char, tab: tab, client: IClient, tablist: tablist,
         return True
 
 
-Cmd_Context = namedtuple("Cmd_Context", ["client", "win", "tablist", "network", "tab", "cmd_manager"])
+Cmd_Context = namedtuple("Cmd_Context", ["client", "win", "Tablist", "network", "tab", "cmd_manager"])
 
 
 def gen_cmd_error_text(cmd_name: str, args: List[str], full_cmd: str, pos: int, msg: str,

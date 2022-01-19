@@ -6,6 +6,7 @@ from Events import Event
 from NAryTrees import PreItGen, PostItGen, LevelItGen, LeafItGen, PrintTreeGen
 from ui.Renders import Painter
 
+EmptyTuple = ()
 IsConsumed = bool
 Consumed = True
 NotConsumed = False

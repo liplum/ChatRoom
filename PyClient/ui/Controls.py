@@ -28,6 +28,10 @@ class Control(UIElement, painter, inputable, reloadable, ABC):
     def ShowInLTree(self) -> bool:
         return True
 
+    def NeedRerender(self):
+        super().NeedRerender()
+        self.OnRenderContentChanged(self)
+
     # ------------Legacy------------
 
     @property

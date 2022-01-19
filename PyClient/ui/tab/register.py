@@ -16,7 +16,7 @@ RR = register_result
 
 
 class register_tab(tab):
-    def __init__(self, client: IClient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
         self.last_tab: Optional[tab] = None
         self.network: "inetwork" = self.client.network
@@ -200,7 +200,7 @@ class register_tab(tab):
         return d
 
     @classmethod
-    def deserialize(cls, data: dict, client: "client", tablist: "tablist") -> "tab":
+    def deserialize(cls, data: dict, client: "client", tablist: "Tablist") -> "tab":
         ip = get(data, "ip")
         port = get(data, "port")
         account = get(data, "account")

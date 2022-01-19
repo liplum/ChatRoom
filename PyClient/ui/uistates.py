@@ -2,7 +2,7 @@ from states import *
 from ui.Core import IClient
 from ui.control.textboxes import textbox
 from ui.shared import *
-from ui.tabs import tablist
+from ui.tabs import Tablist
 
 
 class ui_smachine(smachine, painter, inputable):
@@ -20,7 +20,7 @@ class ui_smachine(smachine, painter, inputable):
 class ui_state(state, painter, inputable):
     textbox: textbox
     client: IClient
-    tablist: tablist
+    tablist: Tablist
     sm: ui_smachine
 
     def __init__(self):

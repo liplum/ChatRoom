@@ -8,7 +8,7 @@ from ui.tabs import *
 
 class grid_tab(tab):
 
-    def __init__(self, client: "client", tablist: tablist):
+    def __init__(self, client: "client", tablist: Tablist):
         super().__init__(client, tablist)
         self.grid = gen_grid(3, [Column(15), Column(20), Column(18)])
         self.grid.on_content_changed.add(lambda _: self.client.mark_dirty())

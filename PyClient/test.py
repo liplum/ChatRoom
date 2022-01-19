@@ -54,7 +54,7 @@ def win_test():
     # test_bind_property()
     # test_yield_recursion()
     # test_n_ary_tree()
-    #test_dynamic_obj()
+    # test_dynamic_obj()
     test_print_cls()
 
 

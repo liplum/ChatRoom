@@ -7,13 +7,13 @@ from ui.control.TextAreas import TextArea
 from ui.control.xtbox import XtextWrapper
 from ui.panel.DisplayBoards import DisplayBoard
 from ui.panel.Grids import gen_grid, Column
-from ui.panel.Stacks import Stack, vertical, OrientationType, AlignmentType
+from ui.panel.Stacks import Stack, OrientationType, AlignmentType
 from ui.tabs import *
 
 
 class TestTab(tab):
 
-    def __init__(self, client: IClient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
         self.t_label = Label("Test")
 
@@ -24,6 +24,7 @@ class TestTab(tab):
             else:
                 b.OnFocused()
             self.db.IsVisible = not self.db.IsVisible
+            self.tablist.ShowTabBar = not self.tablist.ShowTabBar
 
         self.t_button = Button("Button", switchFocusColor)
         self.t_button.width = 10
@@ -48,7 +49,7 @@ class TestTab(tab):
         self.StackPanel.AddControl(self.t_checkbox)
         self.StackPanel.AddControl(self.t_button)
 
-        # self.tta = TestTabA(client, tablist)
+        # self.tta = TestTabA(client, Tablist)
         # c.AddControl(self.tta)
         self.ShowLogo = False
         self.IsShowVisualTreeOrVisibleVTree = True
@@ -58,7 +59,8 @@ class TestTab(tab):
             self.ShowLogo = not self.ShowLogo
 
         self.Subscribe(UIElement.NeedRerenderEvent,
-                       lambda sender, args: self.OnRenderContentChanged(self) or switchShowLogo())
+                       lambda sender, args:
+                       self.OnRenderContentChanged(self) or switchShowLogo())
         self.Main.Inner = self.StackPanel
         self.AddChild(self.Main)
         self.UseNewRender = True
@@ -79,13 +81,13 @@ class TestTab(tab):
         if self.IsShowVisualTreeOrVisibleVTree:
             w.Write("Visual Tree:")
             w.NextLine()
-            for v in PrintVTree(self):
+            for v in PrintVTree(self.tablist):
                 w.Write(v)
                 w.NextLine()
         else:
             w.Write("Visible Tree:")
             w.NextLine()
-            for v in PrintVisibleVTree(self):
+            for v in PrintVisibleVTree(self.tablist):
                 w.Write(v)
                 w.NextLine()
 
@@ -144,8 +146,5 @@ class TestTab(tab):
                 Stack.SetVerticalAlignment(self.t_button, AlignmentType.Right)
                 Stack.SetHorizontalAlignment(self.t_button, AlignmentType.Bottom)
         else:
-            if not self.t_tbox.on_input(char):
-                t = f"{char=}"
-                self.t_tbox.Text.extend(t)
-                self.OnRenderContentChanged(self)
+            self.t_tbox.on_input(char)
         yield Finished

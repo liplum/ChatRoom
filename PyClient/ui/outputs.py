@@ -397,7 +397,7 @@ class full_cmd_display(idisplay):
         if CanGetTerminalScreenSize():
             size = GetTerminalScreenSize()
         else:
-            size = 120,30
+            size = 120, 30
         return full_cmd_display.buf(size[0], size[1])
 
     def render(self, buf: buffer) -> bool:

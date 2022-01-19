@@ -16,7 +16,7 @@ from utils import get
 
 class login_tab(tab):
 
-    def __init__(self, client: IClient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
         self.last_tab: Optional[tab] = None
         self.network: i_network = self.client.network
@@ -156,7 +156,7 @@ class login_tab(tab):
         self.main.paint_on(buf)
 
     @classmethod
-    def deserialize(cls, data: dict, client: "client", tablist: "tablist") -> "tab":
+    def deserialize(cls, data: dict, client: "client", tablist: "Tablist") -> "tab":
         ip = get(data, "ip")
         port = get(data, "port")
         account = get(data, "account")
@@ -197,8 +197,8 @@ class login_tab(tab):
 """
 class login_tab2(tab):
 
-    def __init__(self, client: IClient, tablist: tablist):
-        super().__init__(client, tablist)
+    def __init__(self, client: IClient, Tablist: Tablist):
+        super().__init__(client, Tablist)
         self.network: i_network = self.client.network
         self.container_row = 4
         self.container_column = 2
@@ -294,10 +294,10 @@ class login_tab2(tab):
         password = self.t_password.inputs.strip()
         token = server_token.by(full)
         if token:
-            chat = chat_tab(self.client, self.tablist)
+            chat = chat_tab(self.client, self.Tablist)
             chat.connect(token)
             chat.user_info = uentity(token, account)
-            self.tablist.replace(self, chat)
+            self.Tablist.replace(self, chat)
             op.login(self.network, token, account, password)
 
     def on_input(self, Char: chars.Char) -> Generator:

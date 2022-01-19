@@ -191,7 +191,7 @@ class history_viewer(notifiable, painter):
 
 
 class chat_tab(tab):
-    def __init__(self, client: IClient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
         self.textbox = xtextbox()
         configs = entity()
@@ -392,7 +392,7 @@ class chat_tab(tab):
         self.msg_manager.on_received.Remove(self._on_received_msg)
 
     @classmethod
-    def deserialize(cls, data: dict, client: "client", tablist: "tablist") -> "chat_tab":
+    def deserialize(cls, data: dict, client: "client", tablist: "Tablist") -> "chat_tab":
         server = get(data, "server")
         room_id = get(data, "room_id")
         account = get(data, "account")
@@ -497,7 +497,7 @@ class text_mode(ui_state):
             return True
 
 
-def find_best_incomplete(tablist: "tablist", server: server_token,
+def find_best_incomplete(tablist: "Tablist", server: server_token,
                          account: userid, room: Optional[roomid], vcode: Optional[int]) -> Optional["chat_tab"]:
     for t in tablist.it_all_tabs_is(chat_tab):
         if t.authenticated and t.user_info.vcode != vcode:

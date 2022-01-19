@@ -126,6 +126,10 @@ class IApp(inputable, reloadable):
         pass
 
     @abstractmethod
+    def OnTick(self):
+        pass
+
+    @abstractmethod
     def gen_default_tab(self):
         pass
 
@@ -140,7 +144,7 @@ class IApp(inputable, reloadable):
 
     @property
     @abstractmethod
-    def tablist(self) -> "tablist":
+    def tablist(self) -> "Tablist":
         pass
 
     def add_string(self, string: str):

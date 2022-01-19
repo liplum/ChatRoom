@@ -34,7 +34,7 @@ class App(IApp):
         super().__init__(client)
         self.logger: "ilogger" = self.client.logger
         self.network: "inetwork" = self.client.network
-        self._tablist: tablist = tablist()
+        self._tablist: Tablist = Tablist()
         self.screen_buffer: Optional[buffer] = None
         self.tablist.on_content_changed.Add(lambda _: self.client.mark_dirty())
         self.tablist.on_tablist_changed.Add(lambda li, mode, t: self.client.mark_dirty())
@@ -142,6 +142,9 @@ class App(IApp):
             buf.addtext(str(self.tablist.tabs))
             buf.addtext(f"Focused={self.tablist.cur}")
 
+    def OnTick(self):
+        pass
+
     def update_screen(self):
         self.prepare()
         self.tablist.paint_on(self.screen_buffer)
@@ -231,7 +234,7 @@ class App(IApp):
             return None
 
     @property
-    def tablist(self) -> "tablist":
+    def tablist(self) -> "Tablist":
         return self._tablist
 
     def find_first_popup(self, predicate: Callable[["base_popup"], bool]) -> Optional["base_popup"]:

@@ -7,7 +7,7 @@ from ui.tabs import *
 
 class test_tab(tab):
 
-    def __init__(self, client: "client", tablist: tablist):
+    def __init__(self, client: "client", tablist: Tablist):
         super().__init__(client, tablist)
         self.stack = Stack()
         button_content = "Button"

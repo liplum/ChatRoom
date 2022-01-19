@@ -75,7 +75,7 @@ class authentication_result(msg):
             if popup:
                 popup.notify(self.vcode)
             else:
-                tablist = win.tablist
+                tablist = win.Tablist
                 tab = chat.find_best_incomplete(tablist, token, self.account, None, self.vcode)
                 fill_or_add_chat_tab(win, tab, token, self.account, None, self.vcode)
         else:
@@ -331,7 +331,7 @@ class joined_rooms_info(msg):
             except:
                 pass
         win: iwindow = client.App
-        tablist: tablist = win.tablist
+        tablist: tablist = win.Tablist
         for room in rooms:
             room_id = room.info.room_id
             is_new = manager.add_room(token, room)

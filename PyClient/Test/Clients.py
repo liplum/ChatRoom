@@ -25,6 +25,7 @@ class TestClient(IClient):
         self._dirty = True
         self.root_path = None
         self.rps = timer.byFps(30)  # Render
+        self.tps = timer.byFps(30)  # update
         self.task_runner = tasks.task_runner(step_mode=tasks.byPercent(0.2), safe_mode=False)
         self.render_ticks = 0
         self.input_ticks = 0
@@ -110,8 +111,13 @@ class TestClient(IClient):
             first_rendered = False
             rps = self.rps
             rps.reset()
+            tps = self.tps
+            tps.reset()
             while self._running:
                 self.main_loop_ticks += 1
+                if tps.is_end:
+                    self.Tick()
+                    tps.reset()
                 if (self.need_update and rps.is_end) or (not first_rendered):
                     self.render()
                     rps.reset()
@@ -128,6 +134,9 @@ class TestClient(IClient):
         self.logger.close()
         self.logger.tip("[Client]Programme quited.", Async=False)
         return
+
+    def Tick(self):
+        self.App.OnTick()
 
     def stop(self):
         self._running = False

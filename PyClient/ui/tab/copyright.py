@@ -38,7 +38,7 @@ def _value(key: str) -> str:
 
 class copyright_tab(tab):
 
-    def __init__(self, client: IClient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
         self._copyright_texts: List[str] = []
         self.gen_copyright_texts()
@@ -99,7 +99,7 @@ class copyright_tab(tab):
         return False
 
     @classmethod
-    def deserialize(cls, data: dict, client: IClient, tablist: tablist) -> "tab":
+    def deserialize(cls, data: dict, client: IClient, tablist: Tablist) -> "tab":
         return copyright_tab(client, tablist)
 
     @classmethod

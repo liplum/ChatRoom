@@ -8,7 +8,7 @@ from ui.tabs import *
 
 class language_tab(tab):
 
-    def __init__(self, client: IClient, tablist: tablist):
+    def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
         self.main: Optional[Control] = None
         self.last_tab = None
@@ -87,7 +87,7 @@ class language_tab(tab):
             self.main.reload()
 
     @classmethod
-    def deserialize(cls, data: dict, client: IClient, tablist: tablist) -> "tab":
+    def deserialize(cls, data: dict, client: IClient, tablist: Tablist) -> "tab":
         return language_tab(client, tablist)
 
     @classmethod

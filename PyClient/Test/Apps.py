@@ -11,8 +11,6 @@ CallStackItem = Tuple[Generator, Focusable]
 
 NeedRemoveCurFrame = bool
 
-from ui.LegacyRenders import LegacyBufferSimulator
-
 
 class Frame:
 
@@ -32,7 +30,7 @@ class TestApp(IApp):
     def __init__(self, client: IClient):
         super().__init__(client)
         self.logger: "ilogger" = self.client.logger
-        self._tablist: tablist = tablist()
+        self._tablist: Tablist = Tablist()
         self.render: IRender = self.client.Render
         self.screen_buffer: Optional[buffer] = None
         self.tablist.on_content_changed.Add(lambda _: self.client.mark_dirty())
@@ -107,14 +105,16 @@ class TestApp(IApp):
             buf.addtext(str(self.tablist.tabs))
             buf.addtext(f"Focused={self.tablist.cur}")
 
+    def OnTick(self):
+        pass
+
     def update_screen(self):
         self.prepare()
         v = self.viewer
         canvas = self.cur_canvas
         v.Bind(canvas)
-        v.Width = canvas.Width
-        v.Height = 2
         self.tablist.PaintOn(v)
+        """
         cur_painter = self.cur_painter
         if cur_painter:
             v.X = 0
@@ -126,6 +126,7 @@ class TestApp(IApp):
             else:
                 sm = LegacyBufferSimulator(v)
                 cur_painter.paint_on(sm)
+        """
         self.render.Render(canvas)
 
     def run_coroutine(self):
@@ -207,7 +208,7 @@ class TestApp(IApp):
             return None
 
     @property
-    def tablist(self) -> "tablist":
+    def tablist(self) -> "Tablist":
         return self._tablist
 
     def find_first_popup(self, predicate: Callable[["base_popup"], bool]) -> Optional["base_popup"]:
