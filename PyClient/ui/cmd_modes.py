@@ -15,10 +15,10 @@ from ui.uistates import ui_state
 main_menu_type = lazy(lambda: utils.get(tab_name2type, "main_menu_tab"))
 
 
-def common_hotkey(char: chars.char, tab: tab, client: IClient, tablist: Tablist, win: IApp):
+def common_hotkey(char: chars.char, tab: Tab, client: IClient, tablist: Tablist, app: IApp):
     """
 
-    :param win:
+    :param app:
     :param tab:
     :param char:
     :param client:
@@ -33,7 +33,7 @@ def common_hotkey(char: chars.char, tab: tab, client: IClient, tablist: Tablist,
                 _, i = main_menu_i
                 tablist.goto(i)
             else:
-                main_menu = win.newtab(menu_type)
+                main_menu = app.newtab(menu_type)
                 tablist.replace(tab, main_menu)
     elif chars.c_a == char:
         tablist.back()
@@ -42,18 +42,18 @@ def common_hotkey(char: chars.char, tab: tab, client: IClient, tablist: Tablist,
     elif chars.c_d == char:
         tablist.next()
     elif chars.c_x == char:
-        uiop.close_cur_tab(tablist, win, tab)
+        uiop.close_cur_tab(tablist, app, tab)
     elif chars.c_n == char:
-        chat = win.new_chat_tab()
+        chat = app.new_chat_tab()
         tablist.add(chat)
     elif chars.c_m == char:
-        main_menu = win.newtab(main_menu_type())
+        main_menu = app.newtab(main_menu_type())
         tablist.add(main_menu)
     else:
         return True
 
 
-Cmd_Context = namedtuple("Cmd_Context", ["client", "win", "Tablist", "network", "tab", "cmd_manager"])
+Cmd_Context = namedtuple("Cmd_Context", ["client", "App", "Tablist", "network", "Tab", "cmd_manager"])
 
 
 def gen_cmd_error_text(cmd_name: str, args: List[str], full_cmd: str, pos: int, msg: str,
@@ -335,13 +335,13 @@ class cmd_long_mode(cmd_state):
         elif chars.c_tab_key == char:
             return NotConsumed
             # TODO:Complete Autofilling
-            if mode.autofilling:  # press tab and already entered Auto-filling mode
+            if mode.autofilling:  # press Tab and already entered Auto-filling mode
                 # to next candidate
                 # cur_len = len(self.autofilling_cur)
                 # tb.rmtext(cur_len)
                 # self.autofilling_it = iter(self.autofilling_all)
                 pass
-            else:  # press tab but haven't enter Auto-filling mode yet
+            else:  # press Tab but haven't enter Auto-filling mode yet
                 self.autofilling = True
                 cmd_manager: cmdmanager = c.cmd_manager
                 inputs = tb.inputs[1:]
@@ -352,7 +352,7 @@ class cmd_long_mode(cmd_state):
                     self.autofilling_it = iter(autofilling_all)
                     self.autofilling_cur = next(self.autofilling_it)
                     tb.addtext(self.autofilling_cur)
-        else:  # not enter and not tab
+        else:  # not enter and not Tab
             consumed = tb.on_input(char)  # normally,add this Char into textbox
             if self.autofilling:  # if already entered Auto-filling
                 # update candidate list

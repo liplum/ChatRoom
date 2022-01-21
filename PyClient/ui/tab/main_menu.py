@@ -20,7 +20,7 @@ def _get_theme_tube(): return tube
 def _get_theme_chaos_tube(): return chaos_tube
 
 
-class main_menu_tab(tab):
+class main_menu_tab(Tab):
 
     def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
@@ -41,7 +41,7 @@ class main_menu_tab(tab):
         db.height = Auto
 
         def start():
-            tab = self.win.new_chat_tab()
+            tab = self.App.new_chat_tab()
             tablist.replace(self, tab)
 
         b_start = i18n_button("controls.start", start)
@@ -49,7 +49,7 @@ class main_menu_tab(tab):
         b_start.width = main_button_width
 
         def login():
-            tab = self.win.newtab(login_tab)
+            tab = self.App.newtab(login_tab)
             tablist.replace(self, tab)
 
         b_login = i18n_button("controls.login", login)
@@ -57,7 +57,7 @@ class main_menu_tab(tab):
         b_login.width = main_button_width
 
         def register():
-            tab = self.win.newtab(register_tab)
+            tab = self.App.newtab(register_tab)
             tablist.replace(self, tab)
 
         b_register = i18n_button("controls.register", register)
@@ -73,7 +73,7 @@ class main_menu_tab(tab):
         b_quit.width = main_button_width
 
         def show_info():
-            tab = self.win.newtab(copyright_tab)
+            tab = self.App.newtab(copyright_tab)
             tablist.replace(self, tab)
 
         b_info = i18n_button("controls.info", show_info)
@@ -83,7 +83,7 @@ class main_menu_tab(tab):
         main.add(b_info)
 
         def language():
-            tab = self.win.newtab(language_tab)
+            tab = self.App.newtab(language_tab)
             tablist.replace(self, tab)
 
         b_language = i18n_button("controls.language", language)
@@ -93,7 +93,7 @@ class main_menu_tab(tab):
         main.add(b_language)
 
         def settings():
-            tab = self.win.newtab(settings_tab)
+            tab = self.App.newtab(settings_tab)
             tablist.replace(self, tab)
 
         b_settings = i18n_button("controls.settings", settings)
@@ -131,18 +131,18 @@ class main_menu_tab(tab):
             if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
                 self.main.switch_to_first_or_default_item()
             else:
-                consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
+                consumed = not common_hotkey(char, self, self.client, self.tablist, self.App)
         if self._on_quited:
             p = self.new_popup(ok_cancel_popup)
             p.words = split_textblock_words("tabs.main_menu_tab.quit_tip")
             p.title_getter = lambda: i18n.trans("controls.warning")
             yield p
-            v = self.win.retrieve_popup(p)
+            v = self.App.retrieve_popup(p)
             if v is True:
                 self.client.stop()
             self._on_quited = False
 
-    def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
+    def on_replaced(self, last_tab: "Tab") -> Need_Release_Resource:
         self.main.switch_to_first_or_default_item()
         return True
 

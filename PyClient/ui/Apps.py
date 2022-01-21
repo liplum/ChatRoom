@@ -9,7 +9,7 @@ from ui.tab.main_menu import main_menu_tab
 from ui.tabs import *
 from utils import get
 
-Focusable = Union[base_popup, tab]
+Focusable = Union[base_popup, Tab]
 CallStackItem = Tuple[Generator, Focusable]
 
 NeedRemoveCurFrame = bool
@@ -17,8 +17,8 @@ NeedRemoveCurFrame = bool
 
 class Frame:
 
-    def __init__(self, t: tab, co: Optional[Generator]):
-        self.tab: tab = t
+    def __init__(self, t: Tab, co: Optional[Generator]):
+        self.tab: Tab = t
         self.coroutine: Optional[Generator] = co
 
     def __repr__(self):
@@ -87,7 +87,7 @@ class App(IApp):
                         except CannotRestoreTab:
                             continue
                         except Exception as e:
-                            self.client.logger.warn(f"[Window]{e}\n{traceback.format_exc()}")
+                            self.client.logger.warn(f"[App]{e}\n{traceback.format_exc()}")
                             continue
                         if tab is not None:
                             self.tablist.add(tab)
@@ -107,7 +107,7 @@ class App(IApp):
                     except CannotStoreTab:
                         continue
                     except Exception as e:
-                        self.client.logger.warn(f"[Window]{e}\n{traceback.format_exc()}")
+                        self.client.logger.warn(f"[App]{e}\n{traceback.format_exc()}")
                         continue
                     if dic is not None:
                         li.append(dic)

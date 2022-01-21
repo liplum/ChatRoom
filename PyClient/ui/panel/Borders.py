@@ -1,42 +1,25 @@
 from ui.Controls import *
+from ui.panel.ContentControls import ContentControl
 from ui.themes import BorderTheme, rounded_rectangle
 
 NoneType = type(None)
 
 
-class Border(UIElement):
+class Border(ContentControl):
 
     def __init__(self, theme: BorderTheme = rounded_rectangle):
         super().__init__()
         self.Theme = theme
-        self._inner: Optional[Control] = None
-        self._onInnerChanged = Event(Border, (Control, NoneType), (Control, NoneType))
-        self.OnInnerChanged.Add(lambda _, _1, _2: self.OnRenderContentChanged)
-
-    @property
-    def Inner(self) -> Optional[Control]:
-        return self._inner
-
-    @Inner.setter
-    def Inner(self, value: Optional[Control]):
-        old = self._inner
-        if old != value:
-            if old:
-                self.RemoveChild(old)
-            self._inner = value
-            if value:
-                self.AddChild(value)
-            self.OnInnerChanged(self, old, value)
 
     def Measure(self):
         if not self.IsVisible:
             self.DWidth = 0
             self.DHeight = 0
             return
-        inner = self.Inner
-        if inner and inner.IsVisible:
-            idw = inner.DWidth
-            idh = inner.DHeight
+        content = self.Content
+        if content and content.IsVisible:
+            idw = content.DWidth
+            idh = content.DHeight
             self.DWidth = idw + 2
             self.DHeight = idh + 2
         else:
@@ -48,9 +31,9 @@ class Border(UIElement):
             self.RenderWidth = 0
             self.RenderHeight = 0
             return 0, 0
-        inner = self.Inner
-        if inner and inner.IsVisible:
-            iw, ih = inner.Arrange(width - 2, height - 2)
+        content = self.Content
+        if content and content.IsVisible:
+            iw, ih = content.Arrange(width - 2, height - 2)
             self.RenderWidth = iw + 2
             self.RenderHeight = ih + 2
         else:
@@ -74,18 +57,6 @@ class Border(UIElement):
         for h in range(1, rh - 1):
             canvas.Char(0, h, theme.Vertical)
             canvas.Char(rw - 1, h, theme.Vertical)
-        if self.Inner:
-            self.Inner.PaintOn(Viewer(1, 1, rw - 2, rh - 2, canvas))
-
-    @property
-    def OnInnerChanged(self) -> Event:
-        """
-        Para 1:Border object
-
-        Para 2:old inner Control
-
-        Para 3:new inner Control
-
-        :return: Event(Border,Optional[Control],Optional[Control])
-        """
-        return self._onInnerChanged
+        content = self.Content
+        if content:
+            content.PaintOn(Viewer(1, 1, rw - 2, rh - 2, canvas))

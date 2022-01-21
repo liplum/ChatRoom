@@ -36,7 +36,7 @@ def _value(key: str) -> str:
     return i18n.trans(f"info.copyright.{key}")
 
 
-class copyright_tab(tab):
+class copyright_tab(Tab):
 
     def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
@@ -89,21 +89,21 @@ class copyright_tab(tab):
                 self.main.switch_to_first_or_default_item()
                 yield Finished
             else:
-                consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
+                consumed = not common_hotkey(char, self, self.client, self.tablist, self.App)
                 yield Finished
         else:
             yield Finished
 
-    def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
+    def on_replaced(self, last_tab: "Tab") -> Need_Release_Resource:
         self.last_tab = last_tab
         return False
 
     @classmethod
-    def deserialize(cls, data: dict, client: IClient, tablist: Tablist) -> "tab":
+    def deserialize(cls, data: dict, client: IClient, tablist: Tablist) -> "Tab":
         return copyright_tab(client, tablist)
 
     @classmethod
-    def serialize(cls, self: "tab") -> dict:
+    def serialize(cls, self: "Tab") -> dict:
         return {}
 
     @classmethod

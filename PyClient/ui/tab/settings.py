@@ -31,7 +31,7 @@ def config_control(tab: "settings_tab", config: config, settings: settings) -> C
         raise KeyError(config.key)
 
 
-class settings_tab(tab):
+class settings_tab(Tab):
 
     def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
@@ -98,10 +98,10 @@ class settings_tab(tab):
             if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
                 self.main.switch_to_first_or_default_item()
             else:
-                consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
+                consumed = not common_hotkey(char, self, self.client, self.tablist, self.App)
         yield Finished
 
-    def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
+    def on_replaced(self, last_tab: "Tab") -> Need_Release_Resource:
         self.last_tab = last_tab
         return False
 

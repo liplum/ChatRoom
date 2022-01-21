@@ -12,6 +12,11 @@ OverRange = str
 discard = "discard"
 
 
+class FitMode(Enum):
+    Fit = 1
+    Stretch = 2
+
+
 class OrientationType(Enum):
     Horizontal = 1
     Vertical = 2
@@ -34,6 +39,7 @@ align_right = AlignmentType.Right
 
 class Stack(Panel):
     OrientationProp: DpProp
+    FitModeProp: DpProp
     GetHorizontalAlignment: Callable[[DpObj], AlignmentType]
     SetHorizontalAlignment: Callable[[DpObj, AlignmentType], NoReturn]
     GetVerticalAlignment: Callable[[DpObj], AlignmentType]
@@ -93,12 +99,13 @@ class Stack(Panel):
             self.DWidth = 0
             self.DHeight = 0
             return
+        elements = self._elements_stack
         if self.Orientation == OrientationType.Horizontal:
-            self.DWidth = sum(elem.DWidth for elem in self.elements if elem.IsVisible)
-            self.DHeight = max(elem.DHeight for elem in self.elements if elem.IsVisible)
+            self.DWidth = sum(elem.DWidth for elem in elements if elem.IsVisible)
+            self.DHeight = max(elem.DHeight for elem in elements if elem.IsVisible)
         else:
-            self.DWidth = max(elem.DWidth for elem in self.elements if elem.IsVisible)
-            self.DHeight = sum(elem.DHeight for elem in self.elements if elem.IsVisible)
+            self.DWidth = max(elem.DWidth for elem in elements if elem.IsVisible)
+            self.DHeight = sum(elem.DHeight for elem in elements if elem.IsVisible)
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
         if not self.IsVisible:
@@ -107,7 +114,7 @@ class Stack(Panel):
             return 0, 0
         restw = width
         resth = height
-        elements = self.elements
+        elements = self._elements_stack
         elen = len(elements)
         formerElemtCount = 0
         if self.Orientation == OrientationType.Horizontal:
@@ -374,6 +381,9 @@ class Stack(Panel):
 Stack.OrientationProp = DpProp.Register(
     "Orientation", OrientationType, Stack,
     DpPropMeta(OrientationType.Vertical, propChangedCallback=OnRenderPropChangedCallback))
+Stack.FitModeProp = DpProp.Register(
+    "FitMode", FitMode, Stack,
+    DpPropMeta(FitMode.Fit, propChangedCallback=OnRenderPropChangedCallback))
 Stack.HorizontalAlignmentProp = DpProp.RegisterAttach(
     "HorizontalAlignment", AlignmentType, Stack,
     DpPropMeta(AlignmentType.Center, propChangedCallback=OnRenderPropChangedCallback)

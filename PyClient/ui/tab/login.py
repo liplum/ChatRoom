@@ -14,11 +14,11 @@ from ui.tabs import *
 from utils import get
 
 
-class login_tab(tab):
+class login_tab(Tab):
 
     def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
-        self.last_tab: Optional[tab] = None
+        self.last_tab: Optional[Tab] = None
         self.network: i_network = self.client.network
         grid = gen_grid(4, [Column(Auto), Column(15)])
         excepted_chars = {keys.k_enter, chars.c_tab_key}
@@ -108,7 +108,7 @@ class login_tab(tab):
         op.login(self.network, token, account, password)
         return token, account
 
-    def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
+    def on_replaced(self, last_tab: "Tab") -> Need_Release_Resource:
         self.last_tab = last_tab
         return False
 
@@ -122,7 +122,7 @@ class login_tab(tab):
             if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
                 self.main.switch_to_first_or_default_item()
             else:
-                consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
+                consumed = not common_hotkey(char, self, self.client, self.tablist, self.App)
         if self._login_pressed:
             self._login_pressed = False
             result = self.login()
@@ -143,7 +143,7 @@ class login_tab(tab):
 
                 p.on_state_changed = on_p_state_changed
                 yield p
-                v = self.win.retrieve_popup(p)
+                v = self.App.retrieve_popup(p)
                 self.tablist.remove(self)
                 yield Finished
             elif isinstance(result, str):
@@ -156,7 +156,7 @@ class login_tab(tab):
         self.main.paint_on(buf)
 
     @classmethod
-    def deserialize(cls, data: dict, client: "client", tablist: "Tablist") -> "tab":
+    def deserialize(cls, data: dict, client: "client", tablist: "Tablist") -> "Tab":
         ip = get(data, "ip")
         port = get(data, "port")
         account = get(data, "account")
@@ -195,7 +195,7 @@ class login_tab(tab):
 
 
 """
-class login_tab2(tab):
+class login_tab2(Tab):
 
     def __init__(self, client: IClient, Tablist: Tablist):
         super().__init__(client, Tablist)

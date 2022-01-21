@@ -2,11 +2,12 @@ from collections import deque
 from typing import Deque
 
 from ui.coroutines import Suspend
+from ui.panel.Stacks import Stack
 from ui.tab.main_menu import main_menu_tab
 from ui.tabs import *
 from utils import get
-
-Focusable = Union[base_popup, tab]
+from ui.panel.Windows import Window
+Focusable = Union[base_popup, Tab]
 CallStackItem = Tuple[Generator, Focusable]
 
 NeedRemoveCurFrame = bool
@@ -14,8 +15,8 @@ NeedRemoveCurFrame = bool
 
 class Frame:
 
-    def __init__(self, t: tab, co: Optional[Generator]):
-        self.tab: tab = t
+    def __init__(self, t: Tab, co: Optional[Generator]):
+        self.tab: Tab = t
         self.coroutine: Optional[Generator] = co
 
     def __repr__(self):
@@ -30,7 +31,12 @@ class TestApp(IApp):
     def __init__(self, client: IClient):
         super().__init__(client)
         self.logger: "ilogger" = self.client.logger
+        self.WindowStack: Stack = Stack()
         self._tablist: Tablist = Tablist()
+        self.MainWindow = Window()
+        self.MainWindow.Content = self._tablist
+        self.WindowStack.AddControl(self.MainWindow)
+
         self.render: IRender = self.client.Render
         self.screen_buffer: Optional[buffer] = None
         self.tablist.on_content_changed.Add(lambda _: self.client.mark_dirty())
@@ -113,7 +119,12 @@ class TestApp(IApp):
         v = self.viewer
         canvas = self.cur_canvas
         v.Bind(canvas)
-        self.tablist.PaintOn(v)
+        windows = self.WindowStack
+        for e in PostItV(windows):
+            e.Measure()
+        windows.Arrange(v.Width, v.Height)
+        windows.PaintOn(v)
+        # self.tablist.PaintOn(v)
         """
         cur_painter = self.cur_painter
         if cur_painter:
@@ -183,7 +194,7 @@ class TestApp(IApp):
             self.client.mark_dirty()
 
     @property
-    def cur_painter(self) -> Optional[tab]:
+    def cur_painter(self) -> Optional[Tab]:
         frame = self.cur_frame
         if frame:
             return frame.tab

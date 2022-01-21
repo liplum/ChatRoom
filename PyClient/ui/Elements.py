@@ -358,11 +358,11 @@ def BubbleParentIt(cur: UIElement) -> Iterable[UIElement]:
         cur = parent
 
 
-def OnRenderPropChangedCallback(elemt: "UIElement", value):
+def OnRenderPropChangedCallback(elemt: UIElement, value):
     elemt.NeedRerender()
 
 
-def _WidthHeightCoerceCallback(elemt: "UIElement", value):
+def _WidthHeightCoerceCallback(elemt: UIElement, value):
     if isinstance(value, str):
         return value
     return max(value, 0)

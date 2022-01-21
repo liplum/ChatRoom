@@ -5,7 +5,7 @@ from ui.tab.shared import *
 from ui.tabs import *
 
 
-class test_tab(tab):
+class test_tab(Tab):
 
     def __init__(self, client: "client", tablist: Tablist):
         super().__init__(client, tablist)

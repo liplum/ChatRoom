@@ -6,7 +6,7 @@ from ui.tab.shared import *
 from ui.tabs import *
 
 
-class grid_tab(tab):
+class grid_tab(Tab):
 
     def __init__(self, client: "client", tablist: Tablist):
         super().__init__(client, tablist)
@@ -49,7 +49,7 @@ class grid_tab(tab):
 
     @property
     def title(self) -> str:
-        return "Grid tab"
+        return "Grid Tab"
 
     def on_input(self, char: chars.char) -> Generator:
         consumed = self.grid.handle_input(char)

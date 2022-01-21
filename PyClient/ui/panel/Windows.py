@@ -1,7 +1,7 @@
 from ui.Controls import *
+from ui.panel.ContentControls import ContentControl
 
 
-class Window(Control):
-    @property
-    def focusable(self) -> bool:
-        return True
+class Window(ContentControl):
+    def __init__(self):
+        super().__init__()

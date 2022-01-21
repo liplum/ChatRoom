@@ -10,7 +10,7 @@ from ui.Renders import *
 from ui.coroutines import Finished
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
 from utils import is_in
-
+from ui.panel.ContentControls import ContentControl
 tab_name2type: Dict[str, type] = {}
 tab_type2name: Dict[type, str] = {}
 
@@ -29,15 +29,14 @@ class Tablist(Control):
 
     def __init__(self):
         super().__init__()
-        self._cur: Optional["tab"] = None
-        self._tabs: List["tab"] = []
+        self._cur: Optional["Tab"] = None
+        self._tabs: List["Tab"] = []
         self.cur_index: Optional[int] = None
-
         self.view_history = []
         self.max_view_history = 5
 
-        self._on_curtab_changed = Event(Tablist, (int, type(None)), (tab, type(None)))
-        self._on_tablist_changed = Event(Tablist, bool, tab)
+        self._on_curtab_changed = Event(Tablist, (int, type(None)), (Tab, type(None)))
+        self._on_tablist_changed = Event(Tablist, bool, Tab)
         self._lock = RLock()
 
     @property
@@ -49,11 +48,11 @@ class Tablist(Control):
         self.SetValue(self.ShowTabBarProp, value)
 
     @property
-    def tabs(self) -> List["tab"]:
+    def tabs(self) -> List["Tab"]:
         return self._tabs
 
     @tabs.setter
-    def tabs(self, value: List["tab"]):
+    def tabs(self, value: List["Tab"]):
         self._tabs = value
 
     def unite_like_tabs(self):
@@ -74,7 +73,7 @@ class Tablist(Control):
         with self._lock:
             return (t for t in self.tabs if isinstance(t, tabtype))
 
-    def find_first(self, predicate: Callable[["tab"], bool]) -> Optional[Tuple["tab", int]]:
+    def find_first(self, predicate: Callable[["Tab"], bool]) -> Optional[Tuple["Tab", int]]:
         with self._lock:
             i = 0
             for t in self.tabs:
@@ -102,11 +101,11 @@ class Tablist(Control):
         """
         Para 1:Tablist object
 
-        Para 2:index of current tab (nullable)
+        Para 2:index of current Tab (nullable)
 
-        Para 3:current tab (nullable)
+        Para 3:current Tab (nullable)
 
-        :return: Event(Tablist,Optional[int],Optional[tab])
+        :return: Event(Tablist,Optional[int],Optional[Tab])
         """
         return self._on_curtab_changed
 
@@ -117,9 +116,9 @@ class Tablist(Control):
 
         Para 2:change type: True->add ; False->remove
 
-        Para 3:operated tab
+        Para 3:operated Tab
 
-        :return: Event(Tablist,bool,tab)
+        :return: Event(Tablist,bool,Tab)
         """
         return self._on_tablist_changed
 
@@ -127,12 +126,12 @@ class Tablist(Control):
         return self.tabs_count
 
     @property
-    def cur(self) -> Optional["tab"]:
+    def cur(self) -> Optional["Tab"]:
         with self._lock:
             return self._cur
 
     @cur.setter
-    def cur(self, value: Optional["tab"]):
+    def cur(self, value: Optional["Tab"]):
         with self._lock:
             changed = self._cur is not value
             if changed:
@@ -144,7 +143,7 @@ class Tablist(Control):
                     self._cur.on_focused()
                 self.on_curtab_changed(self, self.cur_index, value)
 
-    def add(self, t: "tab"):
+    def add(self, t: "Tab"):
         with self._lock:
             self.tabs.append(t)
             t.Parent = self
@@ -155,16 +154,16 @@ class Tablist(Control):
             t.on_added()
             t.on_content_changed.Add(self.on_subtab_content_changed)
 
-    def replace(self, old_tab: Union[int, "tab"], new_tab: "tab"):
+    def replace(self, old_tab: Union[int, "Tab"], new_tab: "Tab"):
         if isinstance(old_tab, int):
             if 0 <= old_tab < self.tabs_count:
-                removed: "tab" = self.GetTabByIndex(old_tab)
+                removed: "Tab" = self.GetTabByIndex(old_tab)
                 self.DeleteTabByIndex(old_tab)
                 pos: int = old_tab
             else:
                 return
-        elif isinstance(old_tab, tab):
-            removed: "tab" = old_tab
+        elif isinstance(old_tab, Tab):
+            removed: "Tab" = old_tab
             pos: Optional[int] = self.GetIndex(removed)
             if pos is None:
                 return
@@ -189,13 +188,13 @@ class Tablist(Control):
         with self._lock:
             self.on_content_changed(self)
 
-    def GetTabByIndex(self, index: Optional[int]) -> Optional["tab"]:
+    def GetTabByIndex(self, index: Optional[int]) -> Optional["Tab"]:
         try:
             return self.tabs[index]
         except:
             return None
 
-    def GetIndex(self, t: Optional["tab"]) -> Optional[int]:
+    def GetIndex(self, t: Optional["Tab"]) -> Optional[int]:
         if t is None:
             return None
         try:
@@ -203,7 +202,7 @@ class Tablist(Control):
         except:
             return None
 
-    def SetTabByIndex(self, index: int, new_tab: "tab"):
+    def SetTabByIndex(self, index: int, new_tab: "Tab"):
         if 0 <= index < self.tabs_count:
             self.tabs[index] = new_tab
             new_tab.Parent = self
@@ -213,7 +212,7 @@ class Tablist(Control):
             self.tabs[index].Parent = None
             del self.tabs[index]
 
-    def DeleteTab(self, t: "tab"):
+    def DeleteTab(self, t: "Tab"):
         if t in self.tabs:
             self.tabs.remove(t)
             t.Parent = None
@@ -221,15 +220,15 @@ class Tablist(Control):
         else:
             return False
 
-    def remove(self, item: Union[int, "tab"]):
+    def remove(self, item: Union[int, "Tab"]):
         if isinstance(item, int):
             if 0 <= item < self.tabs_count:
-                removed: "tab" = self.GetTabByIndex(item)
+                removed: "Tab" = self.GetTabByIndex(item)
                 self.DeleteTabByIndex(item)
             else:
                 return
-        elif isinstance(item, tab):
-            removed: "tab" = item
+        elif isinstance(item, Tab):
+            removed: "Tab" = item
             try:
                 self.DeleteTab(removed)
             except:
@@ -337,7 +336,7 @@ class Tablist(Control):
         pass
 
     def Arrange(self, width: int, height: int) -> Tuple[int, int]:
-        if self.IsVisible:
+        if not self.IsVisible:
             self.RenderWidth = 0
             self.RenderHeight = 0
             return 0, 0
@@ -380,7 +379,7 @@ class Tablist(Control):
         return self.RenderWidth, self.RenderHeight
 
     def Measure(self):
-        if self.IsVisible:
+        if not self.IsVisible:
             self.DWidth = 0
             self.DHeight = 0
             return
@@ -444,6 +443,8 @@ class Tablist(Control):
                 cur.paint_on(sm)
 
     def PaintOn(self, canvas: Canvas):
+        if not self.IsVisible:
+            return
         show_tab_bar = self.ShowTabBar
         if not show_tab_bar and self.cur is None:
             return
@@ -473,7 +474,7 @@ class metatab(ABCMeta):
         _add_tabtype(name, cls)
 
 
-class tab(Control, metaclass=metatab):
+class Tab(ContentControl, metaclass=metatab):
     def __init__(self, client: IClient, tablist: Tablist):
         super().__init__()
         self.tablist: tablist = tablist
@@ -482,18 +483,18 @@ class tab(Control, metaclass=metatab):
         self._tab_priority = 1
         self._group_id = None
         self._group = None
-        self._on_group_id_changed = Event(tab, object, object)
+        self._on_group_id_changed = Event(Tab, object, object)
 
     @property
     def on_group_id_changed(self) -> Event:
         """
-        Para 1:tab object
+        Para 1:Tab object
 
         Para 2:old group id
 
         Para 3:new group id
 
-        :return: Event(tab,object,object)
+        :return: Event(Tab,object,object)
         """
         return self._on_group_id_changed
 
@@ -501,11 +502,11 @@ class tab(Control, metaclass=metatab):
         yield Finished
 
     @classmethod
-    def deserialize(cls, data: dict, client: IClient, tablist: Tablist) -> "tab":
+    def deserialize(cls, data: dict, client: IClient, tablist: Tablist) -> "Tab":
         pass
 
     @classmethod
-    def serialize(cls, self: "tab") -> dict:
+    def serialize(cls, self: "Tab") -> dict:
         pass
 
     @classmethod
@@ -526,7 +527,7 @@ class tab(Control, metaclass=metatab):
     def on_removed(self):
         pass
 
-    def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
+    def on_replaced(self, last_tab: "Tab") -> Need_Release_Resource:
         return True
 
     def on_focused(self):
@@ -539,14 +540,14 @@ class tab(Control, metaclass=metatab):
     def is_focused(self) -> bool:
         return self._is_focused
 
-    def equals(self, tab: "tab"):
+    def equals(self, tab: "Tab"):
         return id(self) == id(tab)
 
     def new_popup(self, popup_type: Type[T], *args, **kwargs) -> T:
         return popup_type(self.client, self.tablist, *args, **kwargs)
 
     @property
-    def win(self) -> IApp:
+    def App(self) -> IApp:
         return self.client.App
 
     @property
@@ -559,13 +560,13 @@ class tab(Control, metaclass=metatab):
 
 
 class CannotRestoreTab(Exception):
-    def __init__(self, tabtype: Type[tab]):
+    def __init__(self, tabtype: Type[Tab]):
         super().__init__()
         self.tabtype = tabtype
 
 
 class CannotStoreTab(Exception):
-    def __init__(self, tab: tab):
+    def __init__(self, tab: Tab):
         super().__init__()
         self.tab = tab
 
@@ -579,7 +580,7 @@ class TabTypeNotFound(Exception):
 TitleGetter = Optional[Callable[[], str]]
 
 
-class base_popup(tab, ABC):
+class base_popup(Tab, ABC):
     def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
         self._return_value: Optional[Any] = None

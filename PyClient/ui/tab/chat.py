@@ -190,7 +190,7 @@ class history_viewer(notifiable, painter):
             self.on_content_changed(self)
 
 
-class chat_tab(tab):
+class chat_tab(Tab):
     def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
         self.textbox = xtextbox()
@@ -441,7 +441,7 @@ class chat_tab(tab):
         a = f"-{self.user_info.account}" if self.user_info else ""
         return f"<chat_tab{c}{j}{a}>"
 
-    def equals(self, tab: "tab") -> bool:
+    def equals(self, Tab: "Tab") -> bool:
         if isinstance(tab, chat_tab):
             return self.connected == tab.connected and self.joined == tab.joined and self.user_info == tab.user_info
         else:
@@ -512,7 +512,7 @@ def find_best_incomplete(tablist: "Tablist", server: server_token,
     return None
 
 
-def fill_or_add_chat_tab(win: IApp, tab: Optional[chat_tab], token: server_token, account: userid,
+def fill_or_add_chat_tab(win: IApp, Tab: Optional[chat_tab], token: server_token, account: userid,
                          room_id: Optional[roomid], vcode: int) -> chat_tab:
     if tab:
         tab.user_info = uentity(token, account, vcode)

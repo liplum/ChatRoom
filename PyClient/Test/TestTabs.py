@@ -11,7 +11,7 @@ from ui.panel.Stacks import Stack, OrientationType, AlignmentType
 from ui.tabs import *
 
 
-class TestTab(tab):
+class TestTab(Tab):
 
     def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
@@ -38,7 +38,8 @@ class TestTab(tab):
         self.db.Inner = self.t_tbox
         self.dx = 0
         self.dy = 0
-        self.Main = DisplayBoard()
+        Main = DisplayBoard()
+        self.Content = Main
         self.StackPanel = Stack()
         self.grid = gen_grid(2, [Column()])
         self.grid[0, 0] = Button("GridButton", lambda: None)
@@ -61,23 +62,15 @@ class TestTab(tab):
         self.Subscribe(UIElement.NeedRerenderEvent,
                        lambda sender, args:
                        self.OnRenderContentChanged(self) or switchShowLogo())
-        self.Main.Inner = self.StackPanel
-        self.AddChild(self.Main)
+        Main.Inner = self.StackPanel
         self.UseNewRender = True
 
     @property
     def title(self) -> str:
         return "Test"
 
-    def Arrange(self, width: int, height: int) -> Tuple[int, int]:
-        # self.StackPanel.Arrange(Width, Height)
-        return width, height
-
-    def Measure(self):
-        pass
-
     def PaintOn(self, canvas: Canvas):
-        w = StrWriter(canvas, x=40, autoWrap=True)
+        w = StrWriter(canvas, x=0, autoWrap=True)
         if self.IsShowVisualTreeOrVisibleVTree:
             w.Write("Visual Tree:")
             w.NextLine()
@@ -97,10 +90,10 @@ class TestTab(tab):
             w.Write(v)
             w.NextLine()
 
-        for e in PostItV(self.Main):
-            e.Measure()
-        self.Main.Arrange(40, 20)
-        self.Main.PaintOn(Viewer.ByCanvas(canvas))
+        # for e in PostItV(self.Main):
+        #     e.Measure()
+        # self.Content.Arrange(40, 20)
+        self.Content.PaintOn(Viewer.ByCanvas(canvas))
         """
         import random
         w = random.randint(10,50)
@@ -121,7 +114,7 @@ class TestTab(tab):
     def on_input(self, char: chars.char) -> Generator:
         self.tick += 1
         if chars.c_a == char:
-            common_hotkey(char, self, self.client, self.tablist, self.win)
+            common_hotkey(char, self, self.client, self.tablist, self.App)
         elif chars.c_p == char:
             self.t_tbox.Raise(UIElement.NeedRerenderEvent, self.t_tbox, RoutedEventArgs(False))
         elif keys.k_enter == char:

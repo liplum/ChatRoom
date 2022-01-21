@@ -339,7 +339,7 @@ class joined_rooms_info(msg):
                 tab = chat.find_best_incomplete(tablist, token, account, room_id, self.vcode)
                 fill_or_add_chat_tab(win, tab, token, self.account, room_id, self.vcode)
             else:
-                def predicate(t: "tab"):
+                def predicate(t: "Tab"):
                     if isinstance(t, chat.chat_tab):
                         return t.connected == token and t.joined == room_id and t.user_info.verified and \
                                t.user_info.account == account

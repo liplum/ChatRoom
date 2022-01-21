@@ -6,7 +6,7 @@ from ui.tab.shared import *
 from ui.tabs import *
 
 
-class language_tab(tab):
+class language_tab(Tab):
 
     def __init__(self, client: IClient, tablist: Tablist):
         super().__init__(client, tablist)
@@ -42,7 +42,7 @@ class language_tab(tab):
                 except:
                     succeed = False
                 if succeed:
-                    self.win.reload()
+                    self.App.reload()
                     configs.set("Language", lang)
 
             return on_change
@@ -64,7 +64,7 @@ class language_tab(tab):
     def gen_language_list(self):
         self.all_languages = i18n.all_languages()
 
-    def on_replaced(self, last_tab: "tab") -> Need_Release_Resource:
+    def on_replaced(self, last_tab: "Tab") -> Need_Release_Resource:
         self.last_tab = last_tab
         return False
 
@@ -79,7 +79,7 @@ class language_tab(tab):
                 if keys.k_down == char or keys.k_enter == char or chars.c_tab_key == char:
                     self.main.switch_to_first_or_default_item()
                 else:
-                    consumed = not common_hotkey(char, self, self.client, self.tablist, self.win)
+                    consumed = not common_hotkey(char, self, self.client, self.tablist, self.App)
         yield Finished
 
     def reload(self):
@@ -87,11 +87,11 @@ class language_tab(tab):
             self.main.reload()
 
     @classmethod
-    def deserialize(cls, data: dict, client: IClient, tablist: Tablist) -> "tab":
+    def deserialize(cls, data: dict, client: IClient, tablist: Tablist) -> "Tab":
         return language_tab(client, tablist)
 
     @classmethod
-    def serialize(cls, self: "tab") -> dict:
+    def serialize(cls, self: "Tab") -> dict:
         return {}
 
     @classmethod

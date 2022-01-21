@@ -69,7 +69,7 @@ def _help_show_usage(tab, name):
 def _help(context: Cmd_Context, args: [str]):
     argslen = len(args)
     manager: cmdmanager = context.cmd_manager
-    tab: tabs.tab = context.tab
+    tab: tabs.Tab = context.tab
     if argslen == 0:
         for name, cmd in manager:
             _help_show_usage(tab, name)
@@ -140,21 +140,21 @@ def _join(context: Cmd_Context, argTypes: [str]):
             room_id = roomid(int(argTypes[1]))
         except:
             raise WrongUsageError(i18n.trans("cmds.$common$.invalid_room_id", argTypes[1]), 1)
-        tab: chat_tab = context.tab
-        if tab.joined:
+        Tab: chat_tab = context.Tab
+        if Tab.joined:
             raise CmdError(i18n.trans("cmds.join.already_joined", room_id))
-        tab.join(room_id)
+        Tab.join(room_id)
     elif argslen == 1:
         try:
             room_id = roomid(int(argTypes[0]))
         except:
             raise WrongUsageError(i18n.trans("cmds.$common$.invalid_room_id", argTypes[0]), 1)
-        tab: chat_tab = context.tab
-        if tab.connected is None:
+        Tab: chat_tab = context.Tab
+        if Tab.connected is None:
             raise WrongUsageError(i18n.trans("cmds.$common$.cur_tab_unconnected"), -1)
-        if tab.joined:
+        if Tab.joined:
             raise CmdError(i18n.trans("cmds.join.already_joined", room_id))
-        tab.join(room_id)
+        Tab.join(room_id)
     else:
         raise WrongUsageError(i18n.trans("cmds.join.usage"), -1)
 
