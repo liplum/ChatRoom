@@ -64,13 +64,14 @@ class TestTab(Tab):
                        self.OnRenderContentChanged(self) or switchShowLogo())
         Main.Inner = self.StackPanel
         self.UseNewRender = True
+        self.Width=40
 
     @property
     def title(self) -> str:
         return "Test"
 
     def PaintOn(self, canvas: Canvas):
-        w = StrWriter(canvas, x=0, autoWrap=True)
+        w = StrWriter(canvas, x=40, autoWrap=True)
         if self.IsShowVisualTreeOrVisibleVTree:
             w.Write("Visual Tree:")
             w.NextLine()

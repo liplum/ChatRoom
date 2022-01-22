@@ -119,7 +119,7 @@ class TestApp(IApp):
         v = self.viewer
         canvas = self.cur_canvas
         v.Bind(canvas)
-        windows = self.WindowStack
+        windows = self._tablist
         for e in PostItV(windows):
             e.Measure()
         windows.Arrange(v.Width, v.Height)

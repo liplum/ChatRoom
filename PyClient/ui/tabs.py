@@ -10,7 +10,7 @@ from ui.Renders import *
 from ui.coroutines import Finished
 from ui.outputs import buffer, CmdBkColor, CmdFgColor
 from utils import is_in
-from ui.panel.ContentControls import ContentControl
+from ui.panel.ContentControls import *
 tab_name2type: Dict[str, type] = {}
 tab_type2name: Dict[type, str] = {}
 
@@ -484,6 +484,7 @@ class Tab(ContentControl, metaclass=metatab):
         self._group_id = None
         self._group = None
         self._on_group_id_changed = Event(Tab, object, object)
+        self.Fit = FitMode.Stretch
 
     @property
     def on_group_id_changed(self) -> Event:

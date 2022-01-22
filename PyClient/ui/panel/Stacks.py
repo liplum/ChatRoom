@@ -6,15 +6,8 @@ from ui.Renders import Viewer
 from ui.outputs import buffer
 from ui.panels import Panel
 
-expend = "expend"
-Orientation = str
 OverRange = str
 discard = "discard"
-
-
-class FitMode(Enum):
-    Fit = 1
-    Stretch = 2
 
 
 class OrientationType(Enum):
@@ -39,7 +32,6 @@ align_right = AlignmentType.Right
 
 class Stack(Panel):
     OrientationProp: DpProp
-    FitModeProp: DpProp
     GetHorizontalAlignment: Callable[[DpObj], AlignmentType]
     SetHorizontalAlignment: Callable[[DpObj, AlignmentType], NoReturn]
     GetVerticalAlignment: Callable[[DpObj], AlignmentType]
@@ -152,11 +144,11 @@ class Stack(Panel):
         return self.RenderWidth, self.RenderHeight
 
     @property
-    def Orientation(self):
+    def Orientation(self) -> OrientationType:
         return self.GetValue(self.OrientationProp)
 
     @Orientation.setter
-    def Orientation(self, value):
+    def Orientation(self, value: OrientationType):
         self.SetValue(self.OrientationProp, value)
 
     # ------------Legacy------------
@@ -381,9 +373,7 @@ class Stack(Panel):
 Stack.OrientationProp = DpProp.Register(
     "Orientation", OrientationType, Stack,
     DpPropMeta(OrientationType.Vertical, propChangedCallback=OnRenderPropChangedCallback))
-Stack.FitModeProp = DpProp.Register(
-    "FitMode", FitMode, Stack,
-    DpPropMeta(FitMode.Fit, propChangedCallback=OnRenderPropChangedCallback))
+
 Stack.HorizontalAlignmentProp = DpProp.RegisterAttach(
     "HorizontalAlignment", AlignmentType, Stack,
     DpPropMeta(AlignmentType.Center, propChangedCallback=OnRenderPropChangedCallback)

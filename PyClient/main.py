@@ -97,7 +97,7 @@ from ioc import container
 def init_plugin(client, registry: container):
     from ui.inputs import iinput
     if IDE:
-        from ui.cmdprompt import cmd_input
+        from ui.cmds.cmdprompt import cmd_input
         registry.register_singleton(iinput, cmd_input)
     else:
         if system_type == "Windows":
@@ -107,7 +107,7 @@ def init_plugin(client, registry: container):
             from ui.linuxs import nonblocks
             registry.register_singleton(iinput, nonblocks.nbinput)
         else:
-            from ui.cmdprompt import cmd_input
+            from ui.cmds.cmdprompt import cmd_input
             registry.register_singleton(iinput, cmd_input)
 
     if GLOBAL.MONITOR:

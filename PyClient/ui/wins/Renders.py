@@ -5,6 +5,7 @@ from win32console import PyConsoleScreenBufferType, PyCOORDType
 
 import utils
 from ui.Renders import *
+from ui import InitColors
 
 XY = PyCOORDType
 CSBuffer = PyConsoleScreenBufferType
@@ -21,6 +22,7 @@ v 3 4 5 6 7 8 9
 class WinCanvas(Canvas):
 
     def __init__(self, width: int, height: int, buffer: Buffer, colors: Buffer):
+        super().__init__()
         self.__width = width
         self.__height = height
         self.buffer: Buffer = buffer
@@ -104,7 +106,7 @@ class WinRender(IRender):
         self.NeedRegen = True
 
     def InitRender(self):
-        pass
+        InitColors()
 
     def RegenBuffer(self):
         self.buffer = win32console.CreateConsoleScreenBuffer(

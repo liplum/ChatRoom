@@ -3,7 +3,7 @@ import platform
 system_type = platform.system()
 
 
-def init_keys():
+def InitKeys():
     import keys
     if system_type == "Windows":
         import chars
@@ -111,7 +111,7 @@ def init_keys():
         keys.ctrl_y = linuxchars.lctrl_y
 
 
-def init_colors():
+def InitColors():
     import ui.Renders
     BK = ui.Renders.BK
     FG = ui.Renders.FG
@@ -156,16 +156,6 @@ def init_colors():
         FG.Red = COLOR_RED
         FG.Violet = COLOR_MAGENTA
         FG.Black = COLOR_BLACK
-        """
-        Black:0
-        Red:1
-        Green:2
-        Yellow:3
-        Blue:4
-        Violet:5
-        Cyan:6
-        White:7
-        """
 
     BK.AllColors = [
         BK.Blue, BK.Green, BK.Yellow, BK.Red, BK.Cyan, BK.Violet, BK.White, BK.Black
@@ -173,44 +163,3 @@ def init_colors():
     FG.AllColors = [
         FG.Blue, FG.Green, FG.Yellow, FG.Red, FG.Cyan, FG.Violet, FG.White, FG.Black
     ]
-    """
-    def Colors(colorTray):
-        for k, v in colorTray.__dict__.items():
-            if not k.startswith("_") and not k.endswith("_"):
-                if k != "AllColors":
-                    yield k, v
-
-    if system_type == "Linux":
-        def Print(title, cls):
-            print(title)
-            for k,v in Colors(cls):
-                print(f"{k}:{v}")
-
-        Print("BK", BK)
-        Print("FG", FG)
-
-        def C(bk, fg):
-            return bk | (fg << 3)
-
-        colors = {}
-        for bk, bv in Colors(BK):
-            for fk, fv in Colors(FG):
-                c = C(bv, fv)
-                colors[bk, fk] = c
-                print(f"{bk}({bv})+{fk}({fv})={c}")
-        print(f"Forward:{len(colors)}")
-        for k, v in colors.items():
-            print(k, v)
-
-        def reflect(dic: dict) -> dict:
-            return {v: k for k, v in dic.items()}
-
-        backColors = reflect(colors)
-        print(f"Backward:{len(backColors)}")
-
-        input()
-    """
-
-
-init_keys()
-init_colors()

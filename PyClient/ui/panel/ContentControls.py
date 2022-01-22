@@ -1,8 +1,14 @@
 from ui.Controls import *
 
 
+class FitMode(Enum):
+    Fit = 1
+    Stretch = 2
+
+
 class ContentControl(Control):
     ContentProp: DpProp
+    FitProp: DpProp
 
     def GetChildren(self) -> Collection["UIElement"]:
         c = self.Content
@@ -28,21 +34,33 @@ class ContentControl(Control):
         dWidth = self.Width
         dHeight = self.Height
         content = self.Content
-        if dWidth == Auto:
-            if content:
+        fit = self.Fit
+        if content:
+            if dWidth == Auto:
                 w = content.DWidth
             else:
-                w = 0
-        else:
-            w = dWidth
-
-        if dHeight == Auto:
-            if content:
+                if fit == FitMode.Fit:
+                    w = min(content.DWidth, dWidth)
+                else:  # Stretch
+                    w = dWidth
+            if dHeight == Auto:
                 h = content.DHeight
             else:
+                if fit == FitMode.Fit:
+                    w = min(content.DHeight, dHeight)
+                else:  # Stretch
+                    w = dHeight
+        else:  # No content
+            if dWidth == Auto:
+                w = 0
+            else:
+                w = dWidth
+
+            if dHeight == Auto:
                 h = 0
-        else:
-            h = dHeight
+            else:
+                w = dHeight
+
         self.DWidth = w
         self.DHeight = h
 
@@ -54,16 +72,26 @@ class ContentControl(Control):
         dWidth = self.Width
         dHeight = self.Height
         content = self.Content
+        fit = self.Fit
         if content:
+            cdw = content.DWidth
+            cdh = content.DHeight
             if dWidth == Auto:
-                bw = min(content.DWidth, width)
+                bw = min(cdw, width)
             else:
-                bw = min(content.Width, width, dWidth)
+                if fit == FitMode.Fit:
+                    bw = min(cdw, width, dWidth)
+                else:  # Stretch
+                    bw = width
 
             if dHeight == Auto:
-                bh = min(content.DWidth, height)
+                bh = min(cdh, height)
             else:
-                bh = min(content.DHeight, height, dHeight)
+                if fit == FitMode.Fit:
+                    bh = min(cdh, height, dHeight)
+                else:
+                    bh = height
+            bw, bh = content.Arrange(bw, bh)
         else:
             if dWidth == Auto:
                 bw = width
@@ -74,9 +102,8 @@ class ContentControl(Control):
                 bh = height
             else:
                 bh = min(height, dHeight)
-        rbw, rbh = content.Arrange(bw, bh)
-        self.RenderWidth = rbw
-        self.RenderHeight = rbh
+        self.RenderWidth = bw
+        self.RenderHeight = bh
         return self.RenderWidth, self.RenderHeight
 
     @property
@@ -86,6 +113,14 @@ class ContentControl(Control):
     @Content.setter
     def Content(self, value: UIElement):
         self.SetValue(self.ContentProp, value)
+
+    @property
+    def Fit(self) -> FitMode:
+        return self.GetValue(self.FitProp)
+
+    @Fit.setter
+    def Fit(self, value: FitMode):
+        self.SetValue(self.FitProp, value)
 
 
 def OnContentControlContentPropChangedCallback(elemt: ContentControl, value: UIElement):
@@ -98,3 +133,7 @@ ContentControl.ContentProp = DpProp.Register(
     DpPropMeta(lambda: None, allowSameValue=False,
                propChangedCallback=OnContentControlContentPropChangedCallback)
 )
+ContentControl.FitProp = DpProp.Register(
+    "Fit", FitMode, ContentControl,
+    DpPropMeta(FitMode.Fit,
+               propChangedCallback=OnRenderPropChangedCallback))

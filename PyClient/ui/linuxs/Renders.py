@@ -65,6 +65,7 @@ def InitColorPairs():
 class LinuxCanvas(Canvas):
 
     def __init__(self, width: int, height: int, buffer: Buffer):
+        super().__init__()
         self.__width = width
         self.__height = height
         self.buffer: Buffer = buffer

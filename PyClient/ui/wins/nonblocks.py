@@ -7,6 +7,7 @@ import chars
 from ui.Core import IClient
 from ui.inputs import inbinput
 from ui.outputs import ilogger
+from ui import InitKeys
 
 
 class nbinput(inbinput):
@@ -20,6 +21,7 @@ class nbinput(inbinput):
 
     def InitInput(self):
         if self.input_thread is None:
+            InitKeys()
             self.input_thread = Thread(target=self._listen_input, name="Input")
             self.input_thread.daemon = True
             self.input_thread.start()

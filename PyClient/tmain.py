@@ -81,11 +81,10 @@ def init_plugin(client, registry: container):
     from ui.inputs import iinput
     from ui.Renders import IRender
     if IDE:
-        from ui.cmdprompt import cmd_input
+        from ui.cmds.cmdprompt import cmd_input
         registry.register_singleton(iinput, cmd_input)
-        if system_type == "Linux":
-            from ui.linuxs.Renders import LinuxColoredRender
-            registry.register_singleton(IRender, LinuxColoredRender)
+        from ui.cmds.Renders import CmdRender
+        registry.register_singleton(IRender, CmdRender)
     else:
         if system_type == "Windows":
             from ui.wins import nonblocks
@@ -98,8 +97,10 @@ def init_plugin(client, registry: container):
             registry.register_singleton(iinput, nbinput)
             registry.register_singleton(IRender, LinuxColoredRender)
         else:
-            from ui.cmdprompt import cmd_input
+            from ui.cmds.cmdprompt import cmd_input
+            from ui.cmds.Renders import CmdRender
             registry.register_singleton(iinput, cmd_input)
+            registry.register_singleton(IRender, CmdRender)
 
     if GLOBAL.MONITOR:
         from pef.monitor import pef_monitor

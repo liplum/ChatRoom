@@ -2,6 +2,7 @@ from typing import Optional, NoReturn
 
 import ui.Renders as r
 import ui.outputs as o
+from ui.Renders import Canvas
 
 
 def TranslateLegacyRender(canvas: r.Canvas, text: str, bk=None, fg=None):
@@ -22,24 +23,34 @@ def TranslateLegacyRenderW(writer: r.Writer, text: str, bk=None, fg=None):
 
 
 class LegacyBufferSimulator(r.StrWriter, o.buffer):
-    BKMap = {
-        o.CmdBkColor.Blue: r.BK.Blue,
-        o.CmdBkColor.Red: r.BK.Red,
-        o.CmdBkColor.Black: r.BK.Black,
-        o.CmdBkColor.White: r.BK.White,
-        o.CmdBkColor.Cyan: r.BK.Cyan,
-        o.CmdBkColor.Yellow: r.BK.Yellow,
-        o.CmdBkColor.Violet: r.BK.Violet,
-    }
-    FGMap = {
-        o.CmdFgColor.Blue: r.FG.Blue,
-        o.CmdFgColor.Red: r.FG.Red,
-        o.CmdFgColor.Black: r.FG.Black,
-        o.CmdFgColor.White: r.FG.White,
-        o.CmdFgColor.Cyan: r.FG.Cyan,
-        o.CmdFgColor.Yellow: r.FG.Yellow,
-        o.CmdFgColor.Violet: r.FG.Violet,
-    }
+    Inited = False
+
+    @classmethod
+    def Init(cls):
+        cls.BKMap = {
+            o.CmdBkColor.Blue: r.BK.Blue,
+            o.CmdBkColor.Red: r.BK.Red,
+            o.CmdBkColor.Black: r.BK.Black,
+            o.CmdBkColor.White: r.BK.White,
+            o.CmdBkColor.Cyan: r.BK.Cyan,
+            o.CmdBkColor.Yellow: r.BK.Yellow,
+            o.CmdBkColor.Violet: r.BK.Violet,
+        }
+        cls.FGMap = {
+            o.CmdFgColor.Blue: r.FG.Blue,
+            o.CmdFgColor.Red: r.FG.Red,
+            o.CmdFgColor.Black: r.FG.Black,
+            o.CmdFgColor.White: r.FG.White,
+            o.CmdFgColor.Cyan: r.FG.Cyan,
+            o.CmdFgColor.Yellow: r.FG.Yellow,
+            o.CmdFgColor.Violet: r.FG.Violet,
+        }
+        cls.Inited = True
+
+    def __init__(self, canvas: Canvas, x: int = 0, y: int = 0, width: int = None, height: int = None, autoWrap=True):
+        super().__init__(canvas, x, y, width, height, autoWrap)
+        if not self.Inited:
+            self.Init()
 
     def addtext(self, text: str = "", style: o.CmdStyleEnum = o.CmdStyle.Default,
                 fgcolor: Optional[o.CmdFgColorEnum] = None,
