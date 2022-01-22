@@ -133,22 +133,28 @@ def tintedtxt(text: str, style: CmdStyleEnum = CmdStyle.Default, fgcolor: Option
         return s.getvalue()
 
 
-def tintedtxtIO(IO, text: str, style: Optional[CmdStyleEnum] = None, fgcolor: Optional[CmdFgColorEnum] = None,
-                bkcolor: Optional[CmdBkColorEnum] = None,
-                end=None):
-    IO.write("\033[")
-    if style:
-        IO.write(style)
-    if fgcolor:
-        IO.write(fgcolor)
-    if bkcolor:
-        IO.write(bkcolor)
-    IO.write('m')
-    IO.write(text)
-    IO.write("\033[0m")
-    if end:
-        IO.write(end)
+if GLOBAL.USE_NEW_RENDER:
+    def tintedtxtIO(IO, text: str, style: Optional[CmdStyleEnum] = None, fgcolor: Optional[CmdFgColorEnum] = None,
+                    bkcolor: Optional[CmdBkColorEnum] = None,
+                    end=None):
+        IO.write(text)
 
+else:
+    def tintedtxtIO(IO, text: str, style: Optional[CmdStyleEnum] = None, fgcolor: Optional[CmdFgColorEnum] = None,
+                    bkcolor: Optional[CmdBkColorEnum] = None,
+                    end=None):
+        IO.write("\033[")
+        if style:
+            IO.write(style)
+        if fgcolor:
+            IO.write(fgcolor)
+        if bkcolor:
+            IO.write(bkcolor)
+        IO.write('m')
+        IO.write(text)
+        IO.write("\033[0m")
+        if end:
+            IO.write(end)
 
 Content = str
 Color = str

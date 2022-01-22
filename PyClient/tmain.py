@@ -39,6 +39,8 @@ elif match_arg("-ide"):
 elif match_arg(""):
     pass
 
+GLOBAL.USE_NEW_RENDER = True
+
 if "M" in extra:
     GLOBAL.MONITOR = True
 if "S" in extra:

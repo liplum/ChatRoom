@@ -1,5 +1,6 @@
 DEBUG = False
 MONITOR = False
+USE_NEW_RENDER = False
 StringIO = None
 PLAIN_LOGO = (
     "  ______ _                    _             ",
