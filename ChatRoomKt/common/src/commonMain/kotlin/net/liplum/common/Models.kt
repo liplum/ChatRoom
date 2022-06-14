@@ -1,26 +1,27 @@
 package net.liplum.common
 
-class ChatMsg {
-    var userID = ""
-    var text = ""
-    var time = 0L
-
+data class ChatMsg(
+    val userID: String = "",
+    val text: String = "",
+    val time: Long = 0L,
+) {
     companion object {
         val X = ChatMsg()
     }
 }
 
-class ChatRoom {
-    var id = 0
-
+data class ChatRoom(
+    val id: Int = 0,
+) {
     companion object {
         val X = ChatRoom()
     }
 }
 
-class User {
-    var userID = ""
-    companion object{
+data class User(
+    val userID: String = "",
+) {
+    companion object {
         val X = User()
     }
 }
