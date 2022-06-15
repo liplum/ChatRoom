@@ -8,16 +8,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun App() {
-    val appVm = AppVM()
-    ChattingScreen(appVm)
+fun App(vm: AppVM) {
+    ChattingScreen(vm)
 }
+
 @Composable
 fun ChattingScreen(
     vm: AppVM,
@@ -26,16 +28,29 @@ fun ChattingScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
+            TopAppBar {
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    var isLightMode by remember { vm.isLightMode }
+                    IconButton(onClick = { isLightMode = !isLightMode }) {
+                        Icon(Icons.Default.Face, contentDescription = "Theme")
+                    }
+                }
+            }
         },
         bottomBar = {
         },
         isFloatingActionButtonDocked = true,
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                vm.sendMsg(text)
-                text = ""
+                if (text.isNotBlank()) {
+                    vm.sendMsg(text)
+                    text = ""
+                }
             }) {
-                Icon(Icons.Filled.Send, "")
+                Icon(Icons.Filled.Send, "Send message")
             }
         }
     ) {
@@ -47,6 +62,7 @@ fun ChattingScreen(
         }
     }
 }
+
 @Composable
 fun ChatMsgArea(
     vm: AppVM,
@@ -58,6 +74,7 @@ fun ChatMsgArea(
         Conversation(vm, vm.allMessages)
     }
 }
+
 @Composable
 fun Conversation(
     vm: AppVM,
@@ -65,10 +82,11 @@ fun Conversation(
 ) {
     LazyColumn {
         items(msgs) {
-            ChatMsgCard(vm,it)
+            ChatMsgCard(vm, it)
         }
     }
 }
+
 @Composable
 fun ChatMsgCard(
     vm: AppVM,
@@ -88,6 +106,7 @@ fun ChatMsgCard(
             ChatMsgCardText(msg, youUser)
     }
 }
+
 @Composable
 fun ChatMsgCardText(msg: ChatMsg, you: User) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -109,11 +128,12 @@ fun ChatMsgCardText(msg: ChatMsg, you: User) {
                 fontSize = Vars.textSize,
                 modifier = Modifier.padding(all = 4.dp),
                 style = MaterialTheme.typography.body2,
-                maxLines = if (isExpanded) Int.MAX_VALUE else 1
+                maxLines = if (isExpanded) Int.MAX_VALUE else 3
             )
         }
     }
 }
+
 @Composable
 fun InputArea(
     vm: AppVM,

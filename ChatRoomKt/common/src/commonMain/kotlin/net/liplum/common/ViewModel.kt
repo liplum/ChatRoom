@@ -8,6 +8,7 @@ class AppVM {
     var allMessages = mutableStateListOf<ChatMsg>()
     var curChatRoom = mutableStateOf(ChatRoom())
     var allChatRooms = mutableStateListOf<ChatRoom>()
+    var isLightMode = mutableStateOf(true)
     fun sendMsg(text: String) {
         allMessages.add(
             ChatMsg(

@@ -22,6 +22,7 @@ kotlin {
                 api(compose.runtime)
                 api(compose.foundation)
                 api(compose.material)
+                implementation("androidx.compose.material:material-icons-extended:1.1.1")
             }
         }
         val commonTest by getting {

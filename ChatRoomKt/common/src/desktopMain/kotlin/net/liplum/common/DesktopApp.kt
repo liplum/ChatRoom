@@ -7,5 +7,6 @@ import androidx.compose.runtime.Composable
 @Preview
 @Composable
 fun AppPreview() {
-    App()
+    val vm = AppVM()
+    App(vm)
 }
