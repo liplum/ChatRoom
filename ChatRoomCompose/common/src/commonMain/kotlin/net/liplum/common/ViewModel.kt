@@ -6,7 +6,11 @@ class AppVM {
     var yourself = mutableStateOf(User("Liplum"))
     var allMessages = mutableStateListOf<ChatMsg>()
     var curChatRoom = mutableStateOf(ChatRoom())
-    var allChatRooms = mutableStateListOf<ChatRoom>()
+    var allChatRooms = mutableStateListOf<ChatRoom>().apply {
+        add(ChatRoom(1))
+        add(ChatRoom(100))
+        add(ChatRoom(150))
+    }
     var isLightMode = mutableStateOf(true)
     fun sendMsg(text: String) {
         allMessages.add(
@@ -15,5 +19,17 @@ class AppVM {
                 text = text,
             )
         )
+    }
+
+    fun switchChatRoom(roomID:Int){
+
+    }
+
+    fun createChatRoom(){
+
+    }
+
+    fun login(info:LoginInfo){
+
     }
 }

@@ -9,20 +9,17 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-@Composable
-fun App(vm: AppVM) {
-    ChattingScreen(vm)
-}
 
 @Composable
-fun ChattingScreen(
+fun ChattingScene(
     vm: AppVM,
+    onToSelectRoom: () -> Unit
 ) {
     var text by remember { mutableStateOf("") }
     Scaffold(
@@ -30,14 +27,13 @@ fun ChattingScreen(
         topBar = {
             TopAppBar {
                 Row(
-                    horizontalArrangement = Arrangement.End,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    var isLightMode by remember { vm.isLightMode }
-                    IconButton(onClick = { isLightMode = !isLightMode }) {
-                        Icon(Icons.Default.Face, contentDescription = "Theme")
+                    IconButton(onClick = onToSelectRoom) {
+                        Icon(Icons.Default.List, contentDescription = "Select a chat room")
                     }
                 }
+                SwitchDarkTheme(vm)
             }
         },
         bottomBar = {
@@ -61,11 +57,6 @@ fun ChattingScreen(
             }
         }
     }
-}
-
-@Composable
-fun ChatRoomList(){
-
 }
 
 @Composable

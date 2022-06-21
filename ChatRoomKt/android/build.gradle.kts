@@ -14,6 +14,11 @@ dependencies {
     implementation(project(":common"))
     implementation("androidx.activity:activity-compose:1.4.0")
 }
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions.freeCompilerArgs += listOf(
+        "-opt-in=kotlin.RequiresOptIn"
+    )
+}
 
 android {
     compileSdkVersion(31)

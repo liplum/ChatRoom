@@ -4,6 +4,7 @@ plugins {
     kotlin("multiplatform")
     id("org.jetbrains.compose")
     id("com.android.library")
+    id("kotlin-parcelize")
 }
 
 group = "net.liplum"
@@ -22,7 +23,6 @@ kotlin {
                 api(compose.runtime)
                 api(compose.foundation)
                 api(compose.material)
-                implementation("androidx.compose.material:material-icons-extended:1.1.1")
             }
         }
         val commonTest by getting {
@@ -49,7 +49,14 @@ kotlin {
         val desktopTest by getting
     }
 }
-
+dependencies {
+    implementation("androidx.compose.material:material-icons-extended:1.1.1")
+}
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions.freeCompilerArgs += listOf(
+        "-opt-in=kotlin.RequiresOptIn"
+    )
+}
 android {
     compileSdkVersion(31)
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
