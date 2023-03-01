@@ -1,7 +1,11 @@
-﻿using ChattingRoom.Core.Networks;
-using ChattingRoom.Server.Interfaces;
+﻿using System.Diagnostics.CodeAnalysis;
+using ChatRoom.Core.Interface;
+using ChatRoom.Core.Message;
+using ChatRoom.Core.Models;
+using ChatRoom.Core.Network;
+using ChatRoom.Server.Interfaces;
 
-namespace ChattingRoom.Server.Messages;
+namespace ChatRoom.Server.Message;
 public class AddFriendReqMsgHandler : IMessageHandler<AddFriendReqMsg> {
     public void Handle([NotNull] AddFriendReqMsg msg, MessageContext context) {
         var server = context.Server;

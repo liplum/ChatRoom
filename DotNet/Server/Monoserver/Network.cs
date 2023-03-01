@@ -1,12 +1,16 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
-using ChattingRoom.Core.Networks;
+using ChatRoom.Core.Interface;
+using ChatRoom.Core.Network;
+using ChatRoom.Core.Ternimal;
+using ChatRoom.Core.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using static ChattingRoom.Core.Networks.INetwork;
+using static ChatRoom.Core.Network.INetwork;
 
-namespace ChattingRoom.Server;
+namespace ChatRoom.Server.Monoserver;
 public partial class Monoserver : IServer {
     private class Network : INetwork {
         private static readonly string EmptyJObjectStr = new JObject().ToString();
@@ -97,7 +101,7 @@ public partial class Monoserver : IServer {
 
 
         public void Initialize(IServiceProvider serviceProvider) {
-            Logger = serviceProvider.Resolve<ILogger>();
+            Logger = ServiceProviderHelper.Resolve<ILogger>(serviceProvider);
         }
 
         public void RecevieDatapack([NotNull] IDatapack datapack, [AllowNull] NetworkToken token = null) {

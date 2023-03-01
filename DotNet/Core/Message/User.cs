@@ -1,4 +1,6 @@
-﻿namespace ChattingRoom.Core.Messages;
+﻿using ChatRoom.Core.Network;
+
+namespace ChatRoom.Core.Message;
 [Msg("UserInfo", Direction.ClientToServer, Direction.ServerToClient)]
 public class UserInfoMsg : IMessage {
 

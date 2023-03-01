@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace ChattingRoom.Core.DB.Models;
+namespace ChatRoom.Core.Models;
 #nullable disable
 public class Friendship {
     public string UserAAccount {

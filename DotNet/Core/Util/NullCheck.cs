@@ -1,4 +1,4 @@
-﻿namespace ChattingRoom.Core.Utils;
+﻿namespace ChatRoom.Core.Util;
 public static class NullCheck {
     public static bool NotNull(this object? obj) {
         return obj != null;

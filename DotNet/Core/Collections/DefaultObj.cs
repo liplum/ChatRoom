@@ -1,7 +1,8 @@
 ﻿using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 
-namespace Liplum.Collections;
+namespace ChatRoom.Core.Collections;
 public class DefaultObj<TV> : DynamicObject, IDictionary<string, TV> {
     private readonly Func<string, TV>? _defaultGener;
     private readonly IDictionary<string, TV> _inner;

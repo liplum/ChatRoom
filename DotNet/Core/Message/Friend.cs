@@ -1,7 +1,8 @@
-﻿using ChattingRoom.Core.DB.Models;
+﻿using ChatRoom.Core.Models;
+using ChatRoom.Core.Network;
 using Newtonsoft.Json.Linq;
 
-namespace ChattingRoom.Core.Messages;
+namespace ChatRoom.Core.Message;
 [Msg("AddFriendReq", Direction.ClientToServer)]
 public class AddFriendReqMsg : IMessage {
 

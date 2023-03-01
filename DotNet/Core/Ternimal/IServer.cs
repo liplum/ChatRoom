@@ -1,4 +1,8 @@
-﻿namespace ChattingRoom.Core;
+﻿using System.Diagnostics.CodeAnalysis;
+using ChatRoom.Core.Interface;
+using IServiceProvider = ChatRoom.Core.Interface.IServiceProvider;
+
+namespace ChatRoom.Core.Ternimal;
 public interface IServer {
 
     public delegate void OnRegisterServiceHandler([NotNull] IServiceRegistry registry);

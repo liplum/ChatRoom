@@ -1,3 +1,3 @@
-﻿namespace ChattingRoom.Core.Chatting;
+﻿namespace ChatRoom.Core.Chatting;
 public class Record {
 }

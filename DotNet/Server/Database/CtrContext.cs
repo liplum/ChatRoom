@@ -1,7 +1,9 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using ChatRoom.Core.Models;
+using ChatRoom.Core.Util;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
-namespace ChattingRoom.Server.DB;
+namespace ChatRoom.Server.Database;
 #nullable disable
 public class CtrContext : DbContext {
     public CtrContext() {
@@ -11,7 +13,7 @@ public class CtrContext : DbContext {
         get;
         set;
     }
-    public DbSet<ChatRoom> ChatRooms {
+    public DbSet<Core.Models.ChatRoom> ChatRooms {
         get;
         set;
     }

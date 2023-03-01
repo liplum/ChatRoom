@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace ChattingRoom.Core.DB.Models;
+namespace ChatRoom.Core.Models;
 #nullable disable
 public enum JoinRoomRequestResult {
     None = 0, Accept = 1, Refuse = 2, Dismiss = 3,

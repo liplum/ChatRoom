@@ -1,9 +1,12 @@
-﻿using ChattingRoom.Core.Networks;
-using ChattingRoom.Core.Users.Securities;
-using ChattingRoom.Server.Interfaces;
-using static ChattingRoom.Core.Messages.RegisterResultMsg;
+﻿using System.Diagnostics.CodeAnalysis;
+using ChatRoom.Core.Interface;
+using ChatRoom.Core.Message;
+using ChatRoom.Core.Network;
+using ChatRoom.Core.User;
+using ChatRoom.Server.Interfaces;
+using static ChatRoom.Core.Message.RegisterResultMsg;
 
-namespace ChattingRoom.Server.Messages;
+namespace ChatRoom.Server.Message;
 public class RegisterRequestMsgHandler : IMessageHandler<RegisterRequestMsg> {
     public void Handle([NotNull] RegisterRequestMsg msg, MessageContext context) {
         var token = context.ClientToken;

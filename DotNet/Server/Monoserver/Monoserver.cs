@@ -1,21 +1,18 @@
-﻿global using System.Diagnostics.CodeAnalysis;
-global using ChattingRoom.Core;
-global using ChattingRoom.Core.DB.Models;
-global using ChattingRoom.Core.Messages;
-global using ChattingRoom.Core.Users;
-global using ChattingRoom.Core.Utils;
-global using IServiceProvider = ChattingRoom.Core.IServiceProvider;
+﻿global using IServiceProvider = ChatRoom.Core.Interface.IServiceProvider;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
-using ChattingRoom.Core.Networks;
-using ChattingRoom.Core.Services;
-using ChattingRoom.Server.DB;
-using ChattingRoom.Server.Interfaces;
-using ChattingRoom.Server.Messages;
-using ChattingRoom.Server.Services;
-using static ChattingRoom.Core.IServer;
+using ChatRoom.Core.Interface;
+using ChatRoom.Core.Message;
+using ChatRoom.Core.Network;
+using ChatRoom.Core.Service;
+using ChatRoom.Core.Ternimal;
+using ChatRoom.Server.Interfaces;
+using ChatRoom.Server.Message;
+using ChatRoom.Server.Services;
+using static ChatRoom.Core.Ternimal.IServer;
 
-namespace ChattingRoom.Server;
+namespace ChatRoom.Server.Monoserver;
 public partial class Monoserver : IServer {
 
     private BlockingCollection<Task> ScheduledTask {
@@ -29,7 +26,7 @@ public partial class Monoserver : IServer {
         _container.RegisterSingleton<IResourceManager, ResourceManager>();
         _container.RegisterSingleton<IUserService, UserService>();
         _container.RegisterSingleton<IChatRoomService, ChatRoomService>();
-        _container.RegisterSingleton<IDatabase, Database>();
+        _container.RegisterSingleton<IDatabase, Database.Database>();
 
         _container.RegisterInstance<INetwork, Network>(_network);
         _container.RegisterInstance<IServer, Monoserver>(this);
@@ -94,11 +91,11 @@ public partial class Monoserver : IServer {
         Chatting.RegisterMessage<ChattingMsg, ChattingMsgHandler>();
     }
 
-    public ChatRoom? GetChattingRoomBy(int chattingRoomId) {
+    public Core.Models.ChatRoom? GetChattingRoomBy(int chattingRoomId) {
         return _chatingRoom.ChatRoomId == chattingRoomId ? _chatingRoom : null;
     }
 #nullable disable
-    private readonly ChatRoom _chatingRoom = new() { ChatRoomId = 12345 };
+    private readonly Core.Models.ChatRoom _chatingRoom = new() { ChatRoomId = 12345 };
     private readonly ServiceContainer _container = new() {
         HotReload = false
     };

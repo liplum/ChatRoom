@@ -1,4 +1,4 @@
-﻿namespace ChattingRoom.Core.Networks;
+﻿namespace ChatRoom.Core.Network;
 public interface IMessage {
     public void Serialize(dynamic json);
 

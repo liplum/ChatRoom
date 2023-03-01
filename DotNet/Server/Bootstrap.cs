@@ -1,10 +1,10 @@
-﻿namespace ChattingRoom.Server;
+﻿namespace ChatRoom.Server;
 public static class Bootstrap {
     public static void Main(string[] args) {
         AppDomain.CurrentDomain.ProcessExit += OnQuit;
         Assets.InitConfigs();
         Assets.LoadConfigs();
-        var server = new Monoserver();
+        var server = new Monoserver.Monoserver();
         server.Initialize();
         server.Start();
     }

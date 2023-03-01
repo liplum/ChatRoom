@@ -1,4 +1,6 @@
-﻿namespace ChattingRoom.Core.Messages;
+﻿using ChatRoom.Core.Network;
+
+namespace ChatRoom.Core.Message;
 [Msg("RegisterRequest", Direction.ClientToServer)]
 public class RegisterRequestMsg : IMessage {
 #nullable disable

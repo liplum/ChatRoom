@@ -1,11 +1,11 @@
-﻿using ChattingRoom.Core.DB.Models;
+﻿using ChatRoom.Core.Network;
 
-namespace ChattingRoom.Core.Users;
+namespace ChatRoom.Core.User;
 #nullable disable
 public interface IUserEntity {
     public string Account => Info.Account;
 
-    public User Info {
+    public Models.User Info {
         get;
     }
 

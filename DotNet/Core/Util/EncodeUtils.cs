@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace ChattingRoom.Core.Utils;
+namespace ChatRoom.Core.Util;
 public static class EncodeUtils {
     public static string ConvertToStringUnicode(byte[] b) {
         return Encoding.Unicode.GetString(b);

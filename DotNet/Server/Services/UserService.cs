@@ -1,8 +1,12 @@
 ﻿using System.Collections.Concurrent;
-using ChattingRoom.Core.Networks;
-using ChattingRoom.Core.Users.Securities;
+using System.Diagnostics.CodeAnalysis;
+using ChatRoom.Core.Interface;
+using ChatRoom.Core.Models;
+using ChatRoom.Core.Network;
+using ChatRoom.Core.User;
+using ChatRoom.Server.Interfaces;
 
-namespace ChattingRoom.Server.Interfaces;
+namespace ChatRoom.Server.Services;
 public class UserService : IUserService {
     private ConcurrentDictionary<string, UserEntity> OnlineUsers {
         get;

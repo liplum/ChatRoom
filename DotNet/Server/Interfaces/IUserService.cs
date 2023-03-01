@@ -1,6 +1,10 @@
-﻿using ChattingRoom.Core.Networks;
+﻿using System.Diagnostics.CodeAnalysis;
+using ChatRoom.Core;
+using ChatRoom.Core.Models;
+using ChatRoom.Core.Network;
+using ChatRoom.Core.User;
 
-namespace ChattingRoom.Server.Interfaces;
+namespace ChatRoom.Server.Interfaces;
 public interface IUserService : IInjectable {
     public void RegisterUser(string account, string clearPassword, DateTime registerTime);
 

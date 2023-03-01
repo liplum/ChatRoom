@@ -1,6 +1,7 @@
-﻿using ChattingRoom.Server.Interfaces;
+﻿using ChatRoom.Core.Util;
+using ChatRoom.Server.Interfaces;
 
-namespace ChattingRoom.Server.Services;
+namespace ChatRoom.Server.Services;
 public class ResourceManager : IResourceManager {
     public string LogsFolder => new("Logs".InRootDir());
 

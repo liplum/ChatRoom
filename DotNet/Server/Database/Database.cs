@@ -1,7 +1,8 @@
-﻿using ChattingRoom.Server.Interfaces;
+﻿using ChatRoom.Core.Models;
+using ChatRoom.Server.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace ChattingRoom.Server.DB;
+namespace ChatRoom.Server.Database;
 public class Database : IDatabase {
     private readonly object _dbLock = new();
 #nullable disable
@@ -14,7 +15,7 @@ public class Database : IDatabase {
         }
     }
 
-    public DbSet<ChatRoom> ChatRoomTable {
+    public DbSet<Core.Models.ChatRoom> ChatRoomTable {
         get {
             lock (_dbLock)
                 return _db.ChatRooms;

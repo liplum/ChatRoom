@@ -1,12 +1,15 @@
-﻿using ChattingRoom.Server.Interfaces;
+﻿using System.Diagnostics.CodeAnalysis;
+using ChatRoom.Core.Interface;
+using ChatRoom.Core.Models;
+using ChatRoom.Server.Interfaces;
 
-namespace ChattingRoom.Server.Services;
+namespace ChatRoom.Server.Services;
 public class FriendService : IFriendService {
 #nullable disable
     private IDatabase DB { get; set; }
 #nullable enable
     public void Initialize(IServiceProvider serviceProvider) {
-        DB = serviceProvider.Resolve<IDatabase>();
+        DB = ServiceProviderHelper.Resolve<IDatabase>(serviceProvider);
     }
     public bool HasFriendRequest(User @from, User to, [NotNullWhen(true)] out FriendRequest? request) {
         request = (from r in DB.FriendRequestTable where r.From == @from && r.To == to select r).FirstOrDefault();

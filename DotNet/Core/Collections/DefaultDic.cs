@@ -1,6 +1,7 @@
 ﻿using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 
-namespace Liplum.Collections;
+namespace ChatRoom.Core.Collections;
 public class DefaultDic<TK, TV> : IDictionary<TK, TV> where TK : notnull {
     private readonly Func<TK, TV>? _defaultGener;
     private readonly IDictionary<TK, TV> _inner;

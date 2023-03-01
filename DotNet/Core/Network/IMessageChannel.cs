@@ -1,6 +1,7 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Serialization;
 
-namespace ChattingRoom.Core.Networks;
+namespace ChatRoom.Core.Network;
 public interface IMessageChannel {
 
     public delegate void OnMessageHandledHandler([AllowNull] NetworkToken token, [NotNull] IMessage message, [NotNull] dynamic hanlder);

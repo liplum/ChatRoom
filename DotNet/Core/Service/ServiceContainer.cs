@@ -1,7 +1,9 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Serialization;
+using ChatRoom.Core.Interface;
 
-namespace ChattingRoom.Core.Services;
-public class ServiceContainer : IServiceProvider, IServiceRegistry {
+namespace ChatRoom.Core.Service;
+public class ServiceContainer : Interface.IServiceProvider, IServiceRegistry {
     private readonly Dictionary<Type, ServiceEntry> _allServices = new();
     public bool HotReload {
         get;

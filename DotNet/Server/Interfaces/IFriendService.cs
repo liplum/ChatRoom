@@ -1,4 +1,8 @@
-﻿namespace ChattingRoom.Server.Interfaces; 
+﻿using System.Diagnostics.CodeAnalysis;
+using ChatRoom.Core;
+using ChatRoom.Core.Models;
+
+namespace ChatRoom.Server.Interfaces; 
 public interface IFriendService :IInjectable {
     public bool HasFriendRequest(User from,User to,[NotNullWhen(true)] out FriendRequest? request);
     public bool AddFriendRequest(User @from, User to, DateTime createdTime, out FriendRequest friendRequest);

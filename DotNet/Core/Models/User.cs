@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace ChattingRoom.Core.DB.Models;
+namespace ChatRoom.Core.Models;
 #nullable disable
 public class User {
     [Key, MaxLength(16)]

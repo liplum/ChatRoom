@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using MD5Gener = System.Security.Cryptography.MD5;
 
-namespace ChattingRoom.Core.Users.Securities;
+namespace ChatRoom.Core.User;
 public static class Md5 {
     private static readonly MD5Gener Generator;
     static Md5() {

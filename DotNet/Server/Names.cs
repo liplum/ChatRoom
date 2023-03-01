@@ -1,4 +1,4 @@
-﻿namespace ChattingRoom.Server; 
+﻿namespace ChatRoom.Server; 
 public static class Names {
     public static class Channel {
         public const string Friend = "Friend";

@@ -1,9 +1,10 @@
-﻿using System.Net.Sockets;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Net.Sockets;
 using System.Reflection;
-using ChattingRoom.Core.Networks;
-using static ChattingRoom.Core.Networks.IMessageChannel;
+using ChatRoom.Core.Network;
+using static ChatRoom.Core.Network.IMessageChannel;
 
-namespace ChattingRoom.Server;
+namespace ChatRoom.Server.Monoserver;
 public partial class Monoserver {
     private class MessageChannel : IMessageChannel {
         private readonly object _msgLock = new();

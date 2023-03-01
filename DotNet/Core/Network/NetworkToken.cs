@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace ChattingRoom.Core.Networks;
+namespace ChatRoom.Core.Network;
 public class NetworkToken {
     public NetworkToken(IPAddress ipAddress) {
         IpAddress = ipAddress;

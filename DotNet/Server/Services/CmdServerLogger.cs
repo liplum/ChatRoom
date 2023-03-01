@@ -1,7 +1,8 @@
 ﻿using System.Collections.Concurrent;
-using ChattingRoom.Server.Interfaces;
+using ChatRoom.Core.Interface;
+using ChatRoom.Server.Interfaces;
 
-namespace ChattingRoom.Server.Services;
+namespace ChatRoom.Server.Services;
 public class CmdServerLogger : ILogger {
     private readonly object _lock = new();
 #nullable disable
@@ -71,6 +72,6 @@ public class CmdServerLogger : ILogger {
     }
 
     public void Initialize(IServiceProvider serviceProvider) {
-        ResourceManager = serviceProvider.Resolve<IResourceManager>();
+        ResourceManager = ServiceProviderHelper.Resolve<IResourceManager>(serviceProvider);
     }
 }

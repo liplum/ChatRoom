@@ -1,7 +1,11 @@
-﻿using ChattingRoom.Core.Networks;
-using ChattingRoom.Server.Interfaces;
+﻿using System.Diagnostics.CodeAnalysis;
+using ChatRoom.Core.Interface;
+using ChatRoom.Core.Message;
+using ChatRoom.Core.Models;
+using ChatRoom.Core.Network;
+using ChatRoom.Server.Interfaces;
 
-namespace ChattingRoom.Server.Messages;
+namespace ChatRoom.Server.Message;
 public class JoinRoomRequestMsgHandler : IMessageHandler<JoinRoomRequestMsg> {
     public void Handle([NotNull] JoinRoomRequestMsg msg, MessageContext context) {
         var target = context.ClientToken;

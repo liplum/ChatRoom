@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using ChatRoom.Core;
+using ChatRoom.Core.Models;
+using Microsoft.EntityFrameworkCore;
 
-namespace ChattingRoom.Server.Interfaces;
+namespace ChatRoom.Server.Interfaces;
 public interface IDatabase : IInjectable {
 
     public DbContext Context {
@@ -10,7 +12,7 @@ public interface IDatabase : IInjectable {
     public DbSet<User> UserTable {
         get;
     }
-    public DbSet<ChatRoom> ChatRoomTable {
+    public DbSet<Core.Models.ChatRoom> ChatRoomTable {
         get;
     }
     public DbSet<Membership> MembershipTable {

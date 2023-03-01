@@ -1,6 +1,7 @@
-﻿using ChattingRoom.Core.Utils;
+﻿using ChatRoom.Core.Network;
+using ChatRoom.Core.Util;
 
-namespace ChattingRoom.Core.Messages;
+namespace ChatRoom.Core.Message;
 [Msg("Whisper", Direction.ClientToServer, Direction.ServerToClient)]
 public class WhisperMsg : IMessage {
 #nullable disable

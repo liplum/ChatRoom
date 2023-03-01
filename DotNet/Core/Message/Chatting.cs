@@ -1,7 +1,7 @@
-﻿global using ChattingRoom.Core.Networks;
-using ChattingRoom.Core.Utils;
+﻿using ChatRoom.Core.Network;
+using ChatRoom.Core.Util;
 
-namespace ChattingRoom.Core.Messages;
+namespace ChatRoom.Core.Message;
 [Msg("Chatting", Direction.ClientToServer, Direction.ServerToClient)]
 public class ChattingMsg : IMessage {
 #nullable disable

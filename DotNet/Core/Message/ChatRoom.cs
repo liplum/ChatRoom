@@ -1,6 +1,7 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using ChatRoom.Core.Network;
+using Newtonsoft.Json.Linq;
 
-namespace ChattingRoom.Core.Messages;
+namespace ChatRoom.Core.Message;
 [Msg("JoinRoomReq", Direction.ClientToServer)]
 public class JoinRoomRequestMsg : IMessage {
 

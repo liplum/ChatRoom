@@ -1,13 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <AssemblyName>ChattingRoom.Core</AssemblyName>
-        <RootNamespace>ChattingRoom.Core</RootNamespace>
+        <AssemblyName>ChatRoom.Core</AssemblyName>
+        <RootNamespace>ChatRoom.Core</RootNamespace>
         <AppendTargetFrameworkToOutputPath>Flase</AppendTargetFrameworkToOutputPath>
         <Configurations>Debug;Release;Co</Configurations>
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>

@@ -1,9 +1,9 @@
 ﻿using System.Dynamic;
-using ChattingRoom.Server.Configs;
+using ChatRoom.Core.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace ChattingRoom.Server;
+namespace ChatRoom.Server;
 public static class Assets {
     private static readonly object ConfigLock = new();
 

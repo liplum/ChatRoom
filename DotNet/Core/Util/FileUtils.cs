@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace ChattingRoom.Core.Utils;
+namespace ChatRoom.Core.Util;
 public static class FileUtils {
     public static readonly char Spt = Path.DirectorySeparatorChar;
     public static readonly string RootDirectory;

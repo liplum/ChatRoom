@@ -1,7 +1,10 @@
-﻿using ChattingRoom.Core.Networks;
-using ChattingRoom.Server.Interfaces;
+﻿using System.Diagnostics.CodeAnalysis;
+using ChatRoom.Core.Interface;
+using ChatRoom.Core.Message;
+using ChatRoom.Core.Network;
+using ChatRoom.Server.Interfaces;
 
-namespace ChattingRoom.Server.Messages;
+namespace ChatRoom.Server.Message;
 public class AuthenticationMsgHandler : IMessageHandler<AuthenticationReqMsg> {
     public void Handle([NotNull] AuthenticationReqMsg msg, MessageContext context) {
         var loginTime = DateTime.UtcNow;

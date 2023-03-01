@@ -1,7 +1,10 @@
-﻿using ChattingRoom.Core.Networks;
-using ChattingRoom.Server.Interfaces;
+﻿using ChatRoom.Core.Interface;
+using ChatRoom.Core.Message;
+using ChatRoom.Core.Network;
+using ChatRoom.Core.User;
+using ChatRoom.Server.Interfaces;
 
-namespace ChattingRoom.Server.Messages;
+namespace ChatRoom.Server.Message;
 public static class Shared {
     public static void SendAllJoinedRoomList(IMessageChannel channel, IChatRoomService chatRoom, IUserEntity entity) {
         var joined = (
@@ -17,7 +20,7 @@ public static class Shared {
         });
     }
     public static void SendUnhandledRequests(IServiceProvider sp, IMessageChannel friend, IUserEntity entity) {
-        var fs = sp.Resolve<IFriendService>();
+        var fs = ServiceProviderHelper.Resolve<IFriendService>(sp);
         var token = entity.Token;
         var u = entity.Info;
         var account = u.Account;

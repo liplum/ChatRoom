@@ -1,6 +1,7 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Serialization;
 
-namespace ChattingRoom.Core.Networks;
+namespace ChatRoom.Core.Network;
 public class WriteableDatapack : IDatapack {
 
     private const string WhenDatapackClosed = "This datapack has been already closed.";

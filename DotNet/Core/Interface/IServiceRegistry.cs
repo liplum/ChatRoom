@@ -1,4 +1,6 @@
-﻿namespace ChattingRoom.Core;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace ChatRoom.Core.Interface;
 public interface IServiceRegistry {
     /// <summary>
     ///     Registers a new singleton service.<br />

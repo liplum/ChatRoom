@@ -1,4 +1,6 @@
-﻿namespace ChattingRoom.Core.Networks;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace ChatRoom.Core.Network;
 public interface IDatapack {
 
     public bool CanWrite { get; }

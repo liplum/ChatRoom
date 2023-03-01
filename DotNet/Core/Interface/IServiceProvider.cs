@@ -1,4 +1,4 @@
-﻿namespace ChattingRoom.Core;
+﻿namespace ChatRoom.Core.Interface;
 public interface IServiceProvider {
     public object Resolve(Type inType);
 }

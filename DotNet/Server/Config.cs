@@ -1,7 +1,8 @@
-﻿using System.Dynamic;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Dynamic;
 using Convrt = System.Convert;
 
-namespace ChattingRoom.Server.Configs;
+namespace ChatRoom.Server;
 public sealed class DataType {
     public DataType([NotNull] Type type) {
         Type = type;

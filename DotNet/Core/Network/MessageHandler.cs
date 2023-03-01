@@ -1,4 +1,7 @@
-﻿namespace ChattingRoom.Core.Networks;
+﻿using System.Diagnostics.CodeAnalysis;
+using ChatRoom.Core.Ternimal;
+
+namespace ChatRoom.Core.Network;
 public interface IMessageHandler<in T> where T : IMessage {
     public void Handle([NotNull] T msg, MessageContext context);
 }

@@ -1,8 +1,8 @@
 ﻿using System.Net;
 using System.Net.Sockets;
-using ChattingRoom.Core.Utils;
+using ChatRoom.Core.Util;
 
-namespace ChattingRoom.CmdClient;
+namespace ChatRoom.CmdClient;
 public static class Bootstrap {
     public static void Main(string[] vs) {
         Thread.Sleep(2000);

@@ -1,15 +1,19 @@
-﻿using System.Collections.Concurrent;
-using ChattingRoom.Core.Networks;
-using ChattingRoom.Server.Interfaces;
+﻿using System.Diagnostics.CodeAnalysis;
+using ChatRoom.Core.Interface;
+using ChatRoom.Core.Message;
+using ChatRoom.Core.Models;
+using ChatRoom.Core.Network;
+using ChatRoom.Core.User;
+using ChatRoom.Server.Interfaces;
 
-namespace ChattingRoom.Server.Services;
+namespace ChatRoom.Server.Services;
 public class ChatRoomService : IChatRoomService {
-    public bool TryGetById(int chatRoomId, [NotNullWhen(true)] out ChatRoom? chatRoom) {
+    public bool TryGetById(int chatRoomId, [NotNullWhen(true)] out Core.Models.ChatRoom? chatRoom) {
         chatRoom = (from cr in Db.ChatRoomTable where cr.ChatRoomId == chatRoomId && cr.IsActive select cr).FirstOrDefault();
         return chatRoom is not null;
     }
 
-    public MemberType GetRelationship(ChatRoom room, User user, out Membership? membership) {
+    public MemberType GetRelationship(Core.Models.ChatRoom room, User user, out Membership? membership) {
         if (room.IsActive) {
             Db.Context.Entry(room)
                 .Collection(r => r.Members)
@@ -21,7 +25,7 @@ public class ChatRoomService : IChatRoomService {
         return MemberType.None;
     }
 
-    public void ReceiveNewText(ChatRoom room, IUserEntity sender, string text, DateTime sendTimeClient) {
+    public void ReceiveNewText(Core.Models.ChatRoom room, IUserEntity sender, string text, DateTime sendTimeClient) {
         if (!room.IsActive) return;
         Db.Context.Entry(room).Collection(r => r.Members).Load();
         Logger.SendTip("[Chatting]Received a text.");
@@ -42,7 +46,7 @@ public class ChatRoomService : IChatRoomService {
 
     public bool CreateNewChatRoom(User user, string? roomName, DateTime createdTime, [NotNullWhen(true)] out int? chatRoomId) {
         roomName ??= user.NickName;
-        var room = new ChatRoom {
+        var room = new Core.Models.ChatRoom {
             Name = roomName,
             IsActive = true,
             CreatedTime = createdTime,
@@ -66,7 +70,7 @@ public class ChatRoomService : IChatRoomService {
         return true;
     }
 
-    public bool JoinChatRoom(User user, ChatRoom room, DateTime joinTime, Membership? membership = null) {
+    public bool JoinChatRoom(User user, Core.Models.ChatRoom room, DateTime joinTime, Membership? membership = null) {
         if (membership is not null) {
             membership.IsActive = true;
             membership.Type = MemberType.Member;
@@ -90,16 +94,16 @@ public class ChatRoomService : IChatRoomService {
         return true;
     }
 
-    public bool IsExisted(int chatRoomId, [NotNullWhen(true)] out ChatRoom? chatRoom) {
+    public bool IsExisted(int chatRoomId, [NotNullWhen(true)] out Core.Models.ChatRoom? chatRoom) {
         return TryGetById(chatRoomId, out chatRoom);
     }
 
-    public ChatRoom[] AllJoinedRoom(User user) {
+    public Core.Models.ChatRoom[] AllJoinedRoom(User user) {
         Membership Load(Membership membership) {
             Db.Context.Entry(membership).Reference(m => m.ChatRoom).Load();
             return membership;
         }
-        if (!user.IsActive) return Array.Empty<ChatRoom>();
+        if (!user.IsActive) return Array.Empty<Core.Models.ChatRoom>();
         Db.Context.Entry(user).Collection(r => r.Joined).Load();
         return (from m in user.Joined
                 where m.IsActive && m.Type is not MemberType.None
@@ -108,7 +112,7 @@ public class ChatRoomService : IChatRoomService {
                 select room).ToArray();
     }
 
-    public bool IsJoined(User user, ChatRoom room, [NotNullWhen(true)] out Membership? membership) {
+    public bool IsJoined(User user, Core.Models.ChatRoom room, [NotNullWhen(true)] out Membership? membership) {
         if (!user.IsActive) {
             membership = null;
             return false;

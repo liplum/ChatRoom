@@ -1,4 +1,6 @@
-﻿namespace ChattingRoom.Core.Networks;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace ChatRoom.Core.Network;
 public interface INetwork : IInjectable, IMessageChannelContainer {
 
     public delegate void OnClientConnectedHandler([NotNull] NetworkToken token);

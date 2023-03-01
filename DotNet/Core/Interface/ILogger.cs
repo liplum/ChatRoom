@@ -1,6 +1,4 @@
-﻿global using System.Diagnostics.CodeAnalysis;
-
-namespace ChattingRoom.Core;
+﻿namespace ChatRoom.Core.Interface;
 public interface ILogger : IInjectable {
     public void Log(WarnningLevel level, string message);
 
