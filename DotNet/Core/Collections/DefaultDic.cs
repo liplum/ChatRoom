@@ -7,20 +7,20 @@ public class DefaultDic<TK, TV> : IDictionary<TK, TV> where TK : notnull {
     private readonly IDictionary<TK, TV> _inner;
     private readonly IDictionary<TK, TV>? _metadic;
 
-    public DefaultDic([NotNull] IDictionary<TK, TV> metadic, [AllowNull] Dictionary<TK, TV>? init = null) {
+    public DefaultDic(IDictionary<TK, TV> metadic, Dictionary<TK, TV>? init = null) {
         _inner = init ?? new Dictionary<TK, TV>();
 
         _metadic = metadic;
     }
 
-    public DefaultDic([NotNull] Func<TK, TV> defaultGener, [AllowNull] Dictionary<TK, TV>? init = null) {
+    public DefaultDic(Func<TK, TV> defaultGener, Dictionary<TK, TV>? init = null) {
         _inner = init ?? new Dictionary<TK, TV>();
 
         _defaultGener = defaultGener;
     }
 
-    public DefaultDic([NotNull] IDictionary<TK, TV> metadic, [NotNull] Func<TK, TV> defaultGener,
-        [AllowNull] Dictionary<TK, TV>? init = null) {
+    public DefaultDic(IDictionary<TK, TV> metadic, Func<TK, TV> defaultGener,
+        Dictionary<TK, TV>? init = null) {
         if (init is null) _inner = new Dictionary<TK, TV>();
         else _inner = init;
 
@@ -143,22 +143,22 @@ public class DefaultDic<TK, TV, TFrom> : IDictionary<TK, TV> where TK : notnull 
     private readonly IDictionary<TK, TV> _inner;
     private readonly IDictionary<TK, TFrom>? _metadic;
 
-    public DefaultDic([NotNull] IDictionary<TK, TFrom> metadic, [NotNull] Func<TFrom, TV> convert,
-        [AllowNull] Dictionary<TK, TV>? init = null) {
+    public DefaultDic(IDictionary<TK, TFrom> metadic, Func<TFrom, TV> convert,
+        Dictionary<TK, TV>? init = null) {
         _inner = init ?? new Dictionary<TK, TV>();
 
         _metadic = metadic;
         _convert = convert;
     }
 
-    public DefaultDic([NotNull] Func<TK, TV> defaultGener, [AllowNull] Dictionary<TK, TV>? init = null) {
+    public DefaultDic(Func<TK, TV> defaultGener, Dictionary<TK, TV>? init = null) {
         _inner = init ?? new Dictionary<TK, TV>();
 
         _defaultGener = defaultGener;
     }
 
-    public DefaultDic([NotNull] IDictionary<TK, TFrom> metadic, [NotNull] Func<TFrom, TV> convert,
-        [NotNull] Func<TK, TV> defaultGener, [AllowNull] Dictionary<TK, TV>? init = null) {
+    public DefaultDic(IDictionary<TK, TFrom> metadic, Func<TFrom, TV> convert,
+        Func<TK, TV> defaultGener, Dictionary<TK, TV>? init = null) {
         _inner = init ?? new Dictionary<TK, TV>();
 
         _metadic = metadic;

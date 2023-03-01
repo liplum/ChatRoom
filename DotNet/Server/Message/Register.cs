@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using ChatRoom.Core.Interface;
+﻿using ChatRoom.Core.Interface;
 using ChatRoom.Core.Message;
 using ChatRoom.Core.Network;
 using ChatRoom.Core.User;
@@ -8,7 +7,7 @@ using static ChatRoom.Core.Message.RegisterResultMessage;
 
 namespace ChatRoom.Server.Message;
 public class RegisterRequestMessageHandler : IMessageHandler<RegisterRequestMessage> {
-    public void Handle([NotNull] RegisterRequestMessage message, MessageContext context) {
+    public void Handle(RegisterRequestMessage message, MessageContext context) {
         var token = context.ClientToken;
         if (token is null) return;
         var server = context.Server;

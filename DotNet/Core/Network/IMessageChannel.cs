@@ -1,12 +1,11 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 
 namespace ChatRoom.Core.Network;
 public interface IMessageChannel {
 
-    public delegate void OnMessageHandledHandler([AllowNull] NetworkToken token, [NotNull] IMessage message, [NotNull] dynamic hanlder);
+    public delegate void OnMessageHandledHandler(NetworkToken? token, IMessage message, dynamic handler);
 
-    public delegate void OnMessageReceivedHandler([AllowNull] NetworkToken token, [NotNull] IMessage message, [AllowNull] dynamic? hanlder);
+    public delegate void OnMessageReceivedHandler(NetworkToken? token, IMessage message, dynamic? handler);
 
     public string ChannelName {
         get;
@@ -16,14 +15,14 @@ public interface IMessageChannel {
     /// <param name="target"></param>
     /// <param name="msg"></param>
     /// <exception cref="MessageDirectionException"></exception>
-    public void SendMessage([NotNull] NetworkToken target, [NotNull] IMessage msg);
+    public void SendMessage(NetworkToken target, IMessage msg);
 
     /// <summary>
     /// </summary>
     /// <param name="targets"></param>
     /// <param name="msg"></param>
     /// <exception cref="MessageDirectionException"></exception>
-    public void SendMessage([NotNull] IEnumerable<NetworkToken> targets, [NotNull] IMessage msg) {
+    public void SendMessage(IEnumerable<NetworkToken> targets, IMessage msg) {
         foreach (var target in targets) SendMessage(target, msg);
     }
 
@@ -31,12 +30,12 @@ public interface IMessageChannel {
     /// </summary>
     /// <param name="msg"></param>
     /// <exception cref="MessageDirectionException"></exception>
-    public void SendMessageToAll([NotNull] IMessage msg);
+    public void SendMessageToAll(IMessage msg);
 
     public bool CanPass(string msgId, params Direction[] directions);
 
 
-    public void ReceiveMessage(string messageId, dynamic jsonContent, [AllowNull] NetworkToken token = null);
+    public void ReceiveMessage(string messageId, dynamic jsonContent, NetworkToken? token = null);
 
     public void RegisterMessage(Type msgType, Func<IMessage> msgGetter, Func<object>? handlerGetter = null, string? msgId = null);
 

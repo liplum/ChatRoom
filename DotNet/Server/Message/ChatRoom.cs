@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using ChatRoom.Core.Interface;
+﻿using ChatRoom.Core.Interface;
 using ChatRoom.Core.Message;
 using ChatRoom.Core.Models;
 using ChatRoom.Core.Network;
@@ -7,7 +6,7 @@ using ChatRoom.Server.Interfaces;
 
 namespace ChatRoom.Server.Message;
 public class JoinRoomRequestMessageHandler : IMessageHandler<JoinRoomRequestMessage> {
-    public void Handle([NotNull] JoinRoomRequestMessage message, MessageContext context) {
+    public void Handle(JoinRoomRequestMessage message, MessageContext context) {
         var target = context.ClientToken;
         if (target is null) return;
         var server = context.Server;
@@ -52,7 +51,7 @@ public class JoinRoomRequestMessageHandler : IMessageHandler<JoinRoomRequestMess
 }
 
 public class CreateRoomReqMessageHandler : IMessageHandler<CreateRoomReqMsg> {
-    public void Handle([NotNull] CreateRoomReqMsg msg, MessageContext context) {
+    public void Handle(CreateRoomReqMsg msg, MessageContext context) {
         var target = context.ClientToken;
         if (target is null) return;
         var server = context.Server;
@@ -85,7 +84,7 @@ public class CreateRoomReqMessageHandler : IMessageHandler<CreateRoomReqMsg> {
 }
 
 public class ChatRoomInfoReqMessageHandler : IMessageHandler<ChatRoomInfoReqMsg> {
-    public void Handle([NotNull] ChatRoomInfoReqMsg msg, MessageContext context) {
+    public void Handle(ChatRoomInfoReqMsg msg, MessageContext context) {
         var target = context.ClientToken;
         if (target is null) return;
         var server = context.Server;

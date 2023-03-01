@@ -28,7 +28,7 @@ public interface IServiceRegistry {
     /// <param name="inType"></param>
     /// <param name="outType">the type</param>
     /// <param name="obj"></param>
-    public void RegisterInstance(Type inType, Type outType, [NotNull] object obj);
+    public void RegisterInstance(Type inType, Type outType, object obj);
 }
 
 public static class ServiceRegistryHelper {

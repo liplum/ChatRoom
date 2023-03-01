@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-
-namespace ChatRoom.Core.Network;
+﻿namespace ChatRoom.Core.Network;
 public interface IDatapack {
 
     public bool CanWrite { get; }
@@ -14,7 +12,7 @@ public interface IDatapack {
 
     public void Write(byte b);
 
-    public void WriteInto([NotNull] Stream stream);
+    public void WriteInto(Stream stream);
 }
 
 public static class Datapack {
@@ -22,7 +20,7 @@ public static class Datapack {
         get;
     } = new EmptyDatapack();
 
-    public static IDatapack ReadOne([NotNull] Stream stream, int bufferSize = 1024) {
+    public static IDatapack ReadOne(Stream stream, int bufferSize = 1024) {
         if (!stream.CanRead) return Empty;
         const int intSize = sizeof(int);
         var dataLengthBytes = new byte[intSize];
@@ -59,23 +57,23 @@ public static class Datapack {
         }
     }
 
-    public static IDatapack Write([NotNull] this IDatapack datapack, int data) {
+    public static IDatapack Write(this IDatapack datapack, int data) {
         datapack.Write(BitConverter.GetBytes(data));
         return datapack;
     }
-    public static IDatapack Write([NotNull] this IDatapack datapack, short data) {
+    public static IDatapack Write(this IDatapack datapack, short data) {
         datapack.Write(BitConverter.GetBytes(data));
         return datapack;
     }
-    public static IDatapack Write([NotNull] this IDatapack datapack, long data) {
+    public static IDatapack Write(this IDatapack datapack, long data) {
         datapack.Write(BitConverter.GetBytes(data));
         return datapack;
     }
-    public static IDatapack Write([NotNull] this IDatapack datapack, float data) {
+    public static IDatapack Write(this IDatapack datapack, float data) {
         datapack.Write(BitConverter.GetBytes(data));
         return datapack;
     }
-    public static IDatapack Write([NotNull] this IDatapack datapack, double data) {
+    public static IDatapack Write(this IDatapack datapack, double data) {
         datapack.Write(BitConverter.GetBytes(data));
         return datapack;
     }
@@ -103,7 +101,7 @@ public static class Datapack {
 
         }
 
-        public void WriteInto([NotNull] Stream stream) {
+        public void WriteInto(Stream stream) {
 
         }
     }

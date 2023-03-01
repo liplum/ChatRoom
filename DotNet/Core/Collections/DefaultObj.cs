@@ -8,20 +8,20 @@ public class DefaultObj<TV> : DynamicObject, IDictionary<string, TV> {
     private readonly IDictionary<string, TV> _inner;
     private readonly IDictionary<string, TV>? _metadic;
 
-    public DefaultObj([NotNull] IDictionary<string, TV> metadic, [AllowNull] Dictionary<string, TV>? init = null) {
+    public DefaultObj(IDictionary<string, TV> metadic, Dictionary<string, TV>? init = null) {
         _inner = init ?? new Dictionary<string, TV>();
 
         _metadic = metadic;
     }
 
-    public DefaultObj([NotNull] Func<string, TV> defaultGener, [AllowNull] Dictionary<string, TV>? init = null) {
+    public DefaultObj(Func<string, TV> defaultGener, Dictionary<string, TV>? init = null) {
         _inner = init ?? new Dictionary<string, TV>();
 
         _defaultGener = defaultGener;
     }
 
-    public DefaultObj([NotNull] IDictionary<string, TV> metadic, [NotNull] Func<string, TV> defaultGener,
-        [AllowNull] Dictionary<string, TV>? init = null) {
+    public DefaultObj(IDictionary<string, TV> metadic, Func<string, TV> defaultGener,
+        Dictionary<string, TV>? init = null) {
         _inner = init ?? new Dictionary<string, TV>();
 
         _metadic = metadic;
@@ -176,8 +176,8 @@ public class DefaultObj<TV, TFrom> : DynamicObject, IDictionary<string, TV> {
     private readonly IDictionary<string, TV> _inner;
     private readonly IDictionary<string, TFrom>? _metadic;
 
-    public DefaultObj([NotNull] IDictionary<string, TFrom> metadic, [NotNull] Func<TFrom, TV> convert,
-        [AllowNull] Dictionary<string, TV>? init = null) {
+    public DefaultObj(IDictionary<string, TFrom> metadic, Func<TFrom, TV> convert,
+        Dictionary<string, TV>? init = null) {
         if (init is null) _inner = new Dictionary<string, TV>();
         else _inner = init;
 
@@ -185,15 +185,15 @@ public class DefaultObj<TV, TFrom> : DynamicObject, IDictionary<string, TV> {
         _convert = convert;
     }
 
-    public DefaultObj([NotNull] Func<string, TV> defaultGener, [AllowNull] Dictionary<string, TV>? init = null) {
+    public DefaultObj(Func<string, TV> defaultGener, Dictionary<string, TV>? init = null) {
         if (init is null) _inner = new Dictionary<string, TV>();
         else _inner = init;
 
         _defaultGener = defaultGener;
     }
 
-    public DefaultObj([NotNull] IDictionary<string, TFrom> metadic, [NotNull] Func<TFrom, TV> convert,
-        [NotNull] Func<string, TV> defaultGener, [AllowNull] Dictionary<string, TV>? init = null) {
+    public DefaultObj(IDictionary<string, TFrom> metadic, Func<TFrom, TV> convert,
+        Func<string, TV> defaultGener, Dictionary<string, TV>? init = null) {
         if (init is null) _inner = new Dictionary<string, TV>();
         else _inner = init;
 

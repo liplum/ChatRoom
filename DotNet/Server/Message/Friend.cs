@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using ChatRoom.Core.Interface;
+﻿using ChatRoom.Core.Interface;
 using ChatRoom.Core.Message;
 using ChatRoom.Core.Models;
 using ChatRoom.Core.Network;
@@ -7,7 +6,7 @@ using ChatRoom.Server.Interfaces;
 
 namespace ChatRoom.Server.Message;
 public class AddFriendReqMessageHandler : IMessageHandler<AddFriendRequestMessage> {
-    public void Handle([NotNull] AddFriendRequestMessage message, MessageContext context) {
+    public void Handle(AddFriendRequestMessage message, MessageContext context) {
         var server = context.Server;
         var now = DateTime.UtcNow;
         var userService = server.ServiceProvider.Resolve<IUserService>();
@@ -24,7 +23,7 @@ public class AddFriendReqMessageHandler : IMessageHandler<AddFriendRequestMessag
 }
 
 public class AddFriendReplyMessageHandler : IMessageHandler<AddFriendReplyMessage> {
-    public void Handle([NotNull] AddFriendReplyMessage message, MessageContext context) {
+    public void Handle(AddFriendReplyMessage message, MessageContext context) {
         if (message.Result is FriendRequestResult.None) return;
         var server = context.Server;
         var now = DateTime.UtcNow;

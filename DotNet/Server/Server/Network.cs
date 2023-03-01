@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 using ChatRoom.Core.Interface;
@@ -82,7 +81,7 @@ public partial class ChatRoomServer : IServer {
             }
         }
 
-        public void SendDatapackTo([NotNull] IDatapack datapack, [NotNull] NetworkToken token) {
+        public void SendDatapackTo(IDatapack datapack, NetworkToken token) {
             (IConnection connection, Thread listning) info;
             lock (_clientLock) {
                 _allConnections.TryGetValue(token, out info);
@@ -104,7 +103,7 @@ public partial class ChatRoomServer : IServer {
             Logger = serviceProvider.Resolve<ILogger>();
         }
 
-        public void RecevieDatapack([NotNull] IDatapack datapack, [AllowNull] NetworkToken token = null) {
+        public void RecevieDatapack(IDatapack datapack, NetworkToken? token = null) {
             AddAnaylzeTask(() => {
                 try {
                     var jsonString = _unicoder.ConvertToString(datapack.ToBytes());
@@ -180,7 +179,7 @@ public partial class ChatRoomServer : IServer {
             Logger!.SendMessage("Network component stoped.");
         }
 
-        public bool IsConnected([NotNull] NetworkToken token) {
+        public bool IsConnected(NetworkToken token) {
             if (_allConnections.TryGetValue(token, out var info)) return info.connection.IsConnected;
             return false;
         }
@@ -191,14 +190,14 @@ public partial class ChatRoomServer : IServer {
         }
 
 
-        public void AddSendTask([NotNull] Action task) {
+        public void AddSendTask(Action task) {
             SendTasks.Add(new(task));
         }
-        public void AddAnaylzeTask([NotNull] Action task) {
+        public void AddAnaylzeTask(Action task) {
             AnalyzeMsgTasks.Add(new(task));
         }
 
-        public void SendMessage([NotNull] MessageChannel channel, [NotNull] NetworkToken target, [NotNull] IMessage msg, string msgId) {
+        public void SendMessage(MessageChannel channel, NetworkToken target, IMessage msg, string msgId) {
             AddSendTask(() => {
                 if (!_allConnections.TryGetValue(target, out var info) || !info.connection.IsConnected) {
                     Logger!.SendError($"Cannot send message<{msgId}> to {target.IpAddress} who has been already disconnected.");
@@ -232,11 +231,11 @@ public partial class ChatRoomServer : IServer {
             });
         }
 
-        public void SendMessageToAll([NotNull] MessageChannel channel, [NotNull] IMessage msg, string msgId) {
+        public void SendMessageToAll(MessageChannel channel, IMessage msg, string msgId) {
             foreach (var token in _allConnections.Keys) SendMessage(channel, token, msg, msgId);
         }
 
-        private void AddNewClient([NotNull] NetworkToken token, [NotNull] TcpClient client) {
+        private void AddNewClient(NetworkToken token, TcpClient client) {
             var connection = new SocketConnection(this, token, client);
             connection.Connect();
             var listeningThread = new Thread(() => {
@@ -264,7 +263,7 @@ public partial class ChatRoomServer : IServer {
             OnClientConnected?.Invoke(token);
         }
 
-        private void RemoveClient([NotNull] NetworkToken token, Action? afterRemoved = null) {
+        private void RemoveClient(NetworkToken token, Action? afterRemoved = null) {
             lock (_clientLock) {
                 _allConnections.Remove(token);
             }

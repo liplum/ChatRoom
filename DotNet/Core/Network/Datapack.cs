@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 
 namespace ChatRoom.Core.Network;
 public class WriteableDatapack : IDatapack {
@@ -40,7 +39,7 @@ public class WriteableDatapack : IDatapack {
 
     public bool CanWrite { get; private set; } = true;
 
-    public void WriteInto([NotNull] Stream stream) {
+    public void WriteInto(Stream stream) {
         if (stream.CanWrite) stream.Write(ToBytes());
     }
 
@@ -109,7 +108,7 @@ public class ReadOnlyDatapack : IDatapack {
         throw new DatapackCantBeWrittenInException(WhenBeWrittenInExceptionMessage);
     }
 
-    public void WriteInto([NotNull] Stream stream) {
+    public void WriteInto(Stream stream) {
         if (!stream.CanWrite) return;
         stream.Write(BitConverter.GetBytes(Bytes.Length));
         stream.Write(Bytes);

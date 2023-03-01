@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using System.Reflection;
 using ChatRoom.Core.Network;
 using static ChatRoom.Core.Network.IMessageChannel;
@@ -9,7 +8,7 @@ public partial class ChatRoomServer {
     private class MessageChannel : IMessageChannel {
         private readonly object _msgLock = new();
 
-        public MessageChannel([NotNull] Network network, [NotNull] string channelName) {
+        public MessageChannel(Network network, string channelName) {
             Network = network;
             ChannelName = channelName;
         }
@@ -26,11 +25,11 @@ public partial class ChatRoomServer {
             get;
         }
 
-        public void SendMessage([NotNull] NetworkToken target, [NotNull] IMessage msg) {
+        public void SendMessage(NetworkToken target, IMessage msg) {
             Network.SendMessage(this, target, msg, Msg2Id[msg.GetType()]);
         }
 
-        public void SendMessageToAll([NotNull] IMessage msg) {
+        public void SendMessageToAll(IMessage msg) {
             Network.SendMessageToAll(this, msg, Msg2Id[msg.GetType()]);
         }
 
@@ -156,7 +155,7 @@ public partial class ChatRoomServer {
             return true;
         }
 
-        public void Send([NotNull] IDatapack datapack) {
+        public void Send(IDatapack datapack) {
             if (!IsConnected) throw new ConnectionClosedException();
 
             if (Stream.CanWrite) datapack.WriteInto(Stream);

@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 using ChatRoom.Core.Interface;
 using IServiceProvider = ChatRoom.Core.Interface.IServiceProvider;
 
@@ -16,7 +15,7 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry {
         private set;
     }
 
-    private ServiceEntry this[[NotNull] Type type] {
+    private ServiceEntry this[Type type] {
         get {
             if (!_allServices.TryGetValue(type, out var entry)) {
                 entry = new(type);
@@ -85,7 +84,7 @@ public class ServiceContainer : IServiceProvider, IServiceRegistry {
         entry.Injected = false;
     }
 
-    public void RegisterInstance(Type inType, Type outType, [NotNull] object obj) {
+    public void RegisterInstance(Type inType, Type outType, object obj) {
         if (!HotReload && Closed) throw new RegistryClosedException();
 
         if (obj is null) throw new ArgumentNullException(nameof(obj));

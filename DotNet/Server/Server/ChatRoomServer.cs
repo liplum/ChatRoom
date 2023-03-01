@@ -1,6 +1,5 @@
 ﻿global using IServiceProvider = ChatRoom.Core.Interface.IServiceProvider;
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using ChatRoom.Core.Interface;
 using ChatRoom.Core.Message;
@@ -51,7 +50,7 @@ public partial class ChatRoomServer : IServer {
     }
 
 
-    public void AddScheduledTask([NotNull] Action task) {
+    public void AddScheduledTask(Action task) {
         ScheduledTask.Add(new(task));
     }
 

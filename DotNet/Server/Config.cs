@@ -1,10 +1,9 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Dynamic;
+﻿using System.Dynamic;
 using Convrt = System.Convert;
 
 namespace ChatRoom.Server;
 public sealed class DataType {
-    public DataType([NotNull] Type type) {
+    public DataType(Type type) {
         Type = type;
     }
 
@@ -18,13 +17,13 @@ public sealed class DataType {
 public class ConfigItemT {
 
 
-    public ConfigItemT([NotNull] string name, [NotNull] object defaultValue) {
+    public ConfigItemT(string name, object defaultValue) {
         Name = name;
         DefaultValue = defaultValue;
         DataType = new(defaultValue.GetType());
     }
 
-    public ConfigItemT([NotNull] string name, [AllowNull] object? defaultValue, [NotNull] Type dataType) {
+    public ConfigItemT(string name, object? defaultValue, Type dataType) {
         Name = name;
         DefaultValue = defaultValue;
         DataType = new(dataType);
@@ -35,7 +34,7 @@ public class ConfigItemT {
 }
 
 public class ConfigItemI {
-    public ConfigItemI([NotNull] ConfigItemT template, [NotNull] object value) {
+    public ConfigItemI(ConfigItemT template, object value) {
         Template = template;
         Value = value;
     }
@@ -49,7 +48,7 @@ public class Configurations : DynamicObject {
     private readonly object _lock = new();
     private readonly IDictionary<string, ConfigItemT> _metadic;
 
-    public Configurations([NotNull] IDictionary<string, object> jobj, IDictionary<string, ConfigItemT> metadic) {
+    public Configurations(IDictionary<string, object> jobj, IDictionary<string, ConfigItemT> metadic) {
         _jobj = jobj;
         _metadic = metadic;
     }

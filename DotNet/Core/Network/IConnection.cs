@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 
 namespace ChatRoom.Core.Network;
 public interface IConnection//: IInjectable
@@ -10,7 +9,7 @@ public interface IConnection//: IInjectable
     /// </summary>
     /// <param name="datapack"></param>
     /// <exception cref="ConnectionClosedException">Raised if the connection had been already closed.</exception>
-    public void Send([NotNull] IDatapack datapack);
+    public void Send(IDatapack datapack);
 
     public bool Connect();
 
