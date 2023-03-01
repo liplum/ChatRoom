@@ -33,7 +33,7 @@ public class ChatRoomService : IChatRoomService {
             var ue = Users.FindOnline(member.Account);
             if (ue is null || !ue.IsOnline || !ue.Info.IsActive) continue;
             Chatting.SendMessage(ue.Token,
-                new ChattingMsg {
+                new ChatMessage {
                     Account = sender.Account,
                     SendTime = DateTime.UtcNow,
                     Text = text,

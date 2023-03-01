@@ -3,7 +3,7 @@ using ChatRoom.Core.Util;
 
 namespace ChatRoom.Core.Message;
 [Msg("Chatting", Direction.ClientToServer, Direction.ServerToClient)]
-public class ChattingMsg : IMessage {
+public class ChatMessage : IMessage {
 #nullable disable
     public string Account {
         get;

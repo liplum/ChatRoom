@@ -2,7 +2,7 @@
 
 namespace ChatRoom.Core.Message;
 [Msg("UserInfo", Direction.ClientToServer, Direction.ServerToClient)]
-public class UserInfoMsg : IMessage {
+public class UserInfoMessage : IMessage {
 
     public void Deserialize(dynamic json) {
         Account = json.Account;

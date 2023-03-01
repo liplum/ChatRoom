@@ -13,8 +13,8 @@ using ChatRoom.Server.Message;
 using ChatRoom.Server.Services;
 using static ChatRoom.Core.Ternimal.IServer;
 
-namespace ChatRoom.Server.Monoserver;
-public partial class Monoserver : IServer {
+namespace ChatRoom.Server;
+public partial class ChatRoomServer : IServer {
 
     private BlockingCollection<Task> ScheduledTask {
         get;
@@ -30,7 +30,7 @@ public partial class Monoserver : IServer {
         _container.RegisterSingleton<IDatabase, Database.Database>();
 
         _container.RegisterInstance<INetwork, Network>(_network);
-        _container.RegisterInstance<IServer, Monoserver>(this);
+        _container.RegisterInstance<IServer, ChatRoomServer>(this);
 
         OnRegisterService?.Invoke(_container);
 
@@ -72,24 +72,24 @@ public partial class Monoserver : IServer {
 
     private void InitUserChannel() {
         User = NetworkService.New(Names.Channel.User);
-        User.RegisterMessage<AuthenticationReqMsg, AuthenticationMessageHandler>();
+        User.RegisterMessage<AuthenticationReqMessage, AuthenticationMessageHandler>();
         User.RegisterMessage<AuthenticationResultMsg>();
-        User.RegisterMessage<RegisterRequestMsg, RegisterRequestMessageHandler>();
-        User.RegisterMessage<RegisterResultMsg>();
-        User.RegisterMessage<JoinRoomRequestMsg, JoinRoomRequestMsgHandler>();
+        User.RegisterMessage<RegisterRequestMessage, RegisterRequestMessageHandler>();
+        User.RegisterMessage<RegisterResultMessage>();
+        User.RegisterMessage<JoinRoomRequestMessage, JoinRoomRequestMessageHandler>();
         User.RegisterMessage<JoinRoomResultMsg>();
-        User.RegisterMessage<CreateRoomReqMsg, CreateRoomReqMsgHandler>();
+        User.RegisterMessage<CreateRoomReqMsg, CreateRoomReqMessageHandler>();
         User.RegisterMessage<CreateRoomResultMsg>();
         User.RegisterMessage<JoinedRoomsInfoMsg>();
 
         Friend = NetworkService.New(Names.Channel.Friend);
-        Friend.RegisterMessage<AddFriendReqMsg, AddFriendReqMessageHandler>();
-        Friend.RegisterMessage<AddFriendReplyMsg, AddFriendReplyMsgHandler>();
-        Friend.RegisterMessage<ReceivedFriendRequestsInfoMsg>();
-        Friend.RegisterMessage<SentFriendRequestsResultsMsg>();
+        Friend.RegisterMessage<AddFriendRequestMessage, AddFriendReqMessageHandler>();
+        Friend.RegisterMessage<AddFriendReplyMessage, AddFriendReplyMessageHandler>();
+        Friend.RegisterMessage<ReceivedFriendRequestsInfoMessage>();
+        Friend.RegisterMessage<SentFriendRequestsResultsMessage>();
 
         Chatting = NetworkService.New(Names.Channel.Chatting);
-        Chatting.RegisterMessage<ChattingMsg, ChatMessageHandler>();
+        Chatting.RegisterMessage<ChatMessage, ChatMessageHandler>();
     }
 
     public Room? GetChattingRoomBy(int chattingRoomId) {

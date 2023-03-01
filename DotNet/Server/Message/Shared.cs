@@ -33,7 +33,7 @@ public static class Shared {
                     RequestID = fq.FriendRequestId,
                     From = fq.From.Account,
                 }).ToArray();
-            friend.SendMessage(token, new ReceivedFriendRequestsInfoMsg {
+            friend.SendMessage(token, new ReceivedFriendRequestsInfoMessage {
                 Account = account,
                 VerificationCode = vcode,
                 FriendRequests = xrfqs,
@@ -48,7 +48,7 @@ public static class Shared {
                     To = fq.To.Account,
                     Result = (int)fq.Result
                 }).ToArray();
-            friend.SendMessage(token,new SentFriendRequestsResultsMsg {
+            friend.SendMessage(token,new SentFriendRequestsResultsMessage {
                 Account = account,
                 VerificationCode = vcode,
                 Results = xsfqs

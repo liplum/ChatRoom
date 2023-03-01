@@ -2,7 +2,7 @@
 
 namespace ChatRoom.Core.Message;
 [Msg("RegisterRequest", Direction.ClientToServer)]
-public class RegisterRequestMsg : IMessage {
+public class RegisterRequestMessage : IMessage {
 #nullable disable
     public string Account {
         get;
@@ -25,7 +25,7 @@ public class RegisterRequestMsg : IMessage {
 }
 
 [Msg("RegisterResult", Direction.ServerToClient)]
-public class RegisterResultMsg : IMessage {
+public class RegisterResultMessage : IMessage {
 
     public enum FailureCause {
         AccountOccupied = 0,

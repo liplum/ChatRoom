@@ -10,8 +10,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static ChatRoom.Core.Network.INetwork;
 
-namespace ChatRoom.Server.Monoserver;
-public partial class Monoserver : IServer {
+namespace ChatRoom.Server;
+public partial class ChatRoomServer : IServer {
     private class Network : INetwork {
         private static readonly string EmptyJObjectStr = new JObject().ToString();
         private readonly Dictionary<string, IMessageChannel> _allChannels = new();
@@ -24,7 +24,7 @@ public partial class Monoserver : IServer {
         private int _buffSize = 1024;
         private TcpListener? _serverSocket;
 
-        public Network(Monoserver server) {
+        public Network(ChatRoomServer server) {
             Server = server;
             MsgSendingThread = new(() => {
                 foreach (var task in SendTasks.GetConsumingEnumerable()) task?.Start();
@@ -60,7 +60,7 @@ public partial class Monoserver : IServer {
             get;
         } = new();
 
-        public Monoserver Server {
+        public ChatRoomServer Server {
             get;
         }
         public int BufferSize {

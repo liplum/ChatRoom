@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 
 namespace ChatRoom.Core.Message;
 [Msg("AddFriendReq", Direction.ClientToServer)]
-public class AddFriendReqMsg : IMessage {
+public class AddFriendRequestMessage : IMessage {
 
 #nullable disable
     public string FromAccount {
@@ -34,7 +34,7 @@ public class AddFriendReqMsg : IMessage {
 }
 
 [Msg("AddFriendReply", Direction.ClientToServer)]
-public class AddFriendReplyMsg : IMessage {
+public class AddFriendReplyMessage : IMessage {
 
 #nullable disable
     public string Account {
@@ -72,7 +72,7 @@ public class AddFriendReplyMsg : IMessage {
 
 
 [Msg("ReceivedFriendRequestsInfo", Direction.ServerToClient)]
-public class ReceivedFriendRequestsInfoMsg : IMessage {
+public class ReceivedFriendRequestsInfoMessage : IMessage {
 
 #nullable disable
     public string Account {
@@ -102,7 +102,7 @@ public class ReceivedFriendRequestsInfoMsg : IMessage {
 
 
 [Msg("SentFriendRequestsResults", Direction.ServerToClient)]
-public class SentFriendRequestsResultsMsg : IMessage {
+public class SentFriendRequestsResultsMessage : IMessage {
 
 #nullable disable
     public string Account {

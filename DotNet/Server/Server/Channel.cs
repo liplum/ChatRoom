@@ -4,8 +4,8 @@ using System.Reflection;
 using ChatRoom.Core.Network;
 using static ChatRoom.Core.Network.IMessageChannel;
 
-namespace ChatRoom.Server.Monoserver;
-public partial class Monoserver {
+namespace ChatRoom.Server;
+public partial class ChatRoomServer {
     private class MessageChannel : IMessageChannel {
         private readonly object _msgLock = new();
 

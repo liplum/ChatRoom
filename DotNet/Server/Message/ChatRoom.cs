@@ -6,18 +6,18 @@ using ChatRoom.Core.Network;
 using ChatRoom.Server.Interfaces;
 
 namespace ChatRoom.Server.Message;
-public class JoinRoomRequestMsgHandler : IMessageHandler<JoinRoomRequestMsg> {
-    public void Handle([NotNull] JoinRoomRequestMsg msg, MessageContext context) {
+public class JoinRoomRequestMessageHandler : IMessageHandler<JoinRoomRequestMessage> {
+    public void Handle([NotNull] JoinRoomRequestMessage message, MessageContext context) {
         var target = context.ClientToken;
         if (target is null) return;
         var server = context.Server;
-        var account = msg.Account;
-        var vcode = msg.VerificationCode;
+        var account = message.Account;
+        var vcode = message.VerificationCode;
         var user = server.ServiceProvider.Resolve<IUserService>();
         var uentity = user.FindOnline(account);
         if (uentity is null || !uentity.Info.IsActive || uentity.VerificationCode != vcode) return;
         var u = uentity.Info;
-        var roomid = msg.ChatRoomId;
+        var roomid = message.ChatRoomId;
         JoinRoomResultMsg reply = new() {
             Account = account,
             ChatRoomId = roomid,
@@ -51,7 +51,7 @@ public class JoinRoomRequestMsgHandler : IMessageHandler<JoinRoomRequestMsg> {
     }
 }
 
-public class CreateRoomReqMsgHandler : IMessageHandler<CreateRoomReqMsg> {
+public class CreateRoomReqMessageHandler : IMessageHandler<CreateRoomReqMsg> {
     public void Handle([NotNull] CreateRoomReqMsg msg, MessageContext context) {
         var target = context.ClientToken;
         if (target is null) return;
@@ -84,7 +84,7 @@ public class CreateRoomReqMsgHandler : IMessageHandler<CreateRoomReqMsg> {
     }
 }
 
-public class ChatRoomInfoReqMsgHandler : IMessageHandler<ChatRoomInfoReqMsg> {
+public class ChatRoomInfoReqMessageHandler : IMessageHandler<ChatRoomInfoReqMsg> {
     public void Handle([NotNull] ChatRoomInfoReqMsg msg, MessageContext context) {
         var target = context.ClientToken;
         if (target is null) return;

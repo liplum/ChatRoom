@@ -4,7 +4,7 @@ public static class Bootstrap {
         AppDomain.CurrentDomain.ProcessExit += OnQuit;
         Assets.InitConfigs();
         Assets.LoadConfigs();
-        var server = new Monoserver.Monoserver();
+        var server = new ChatRoomServer();
         server.Initialize();
         server.Start();
     }

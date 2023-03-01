@@ -2,7 +2,7 @@
 
 namespace ChatRoom.Core.Message;
 [Msg("AuthenticationReq", Direction.ClientToServer)]
-public class AuthenticationReqMsg : IMessage {
+public class AuthenticationReqMessage : IMessage {
 
     public void Deserialize(dynamic json) {
         Account = json.Account;

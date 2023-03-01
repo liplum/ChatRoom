@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 
 namespace ChatRoom.Core.Message;
 [Msg("JoinRoomReq", Direction.ClientToServer)]
-public class JoinRoomRequestMsg : IMessage {
+public class JoinRoomRequestMessage : IMessage {
 
     public void Deserialize(dynamic json) {
         Account = json.Account;

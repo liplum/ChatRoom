@@ -5,15 +5,15 @@ using ChatRoom.Core.Network;
 using ChatRoom.Server.Interfaces;
 
 namespace ChatRoom.Server.Message;
-public class AuthenticationMessageHandler : IMessageHandler<AuthenticationReqMsg> {
-    public void Handle([NotNull] AuthenticationReqMsg msg, MessageContext context) {
+public class AuthenticationMessageHandler : IMessageHandler<AuthenticationReqMessage> {
+    public void Handle([NotNull] AuthenticationReqMessage message, MessageContext context) {
         var loginTime = DateTime.UtcNow;
         var target = context.ClientToken;
         if (target is null) return;
 
         var server = context.Server;
-        var account = msg.Account;
-        var password = msg.Password;
+        var account = message.Account;
+        var password = message.Password;
         var sp = server.ServiceProvider;
         var userService = sp.Resolve<IUserService>();
         var channel = context.Channel;

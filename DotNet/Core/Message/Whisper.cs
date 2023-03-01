@@ -3,7 +3,7 @@ using ChatRoom.Core.Util;
 
 namespace ChatRoom.Core.Message;
 [Msg("Whisper", Direction.ClientToServer, Direction.ServerToClient)]
-public class WhisperMsg : IMessage {
+public class WhisperMessage : IMessage {
 #nullable disable
     public string Sender {
         get;
