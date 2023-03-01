@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using ChatRoom.Core.Interface;
 using ChatRoom.Core.Message;
+using ChatRoom.Core.Models;
 using ChatRoom.Core.Network;
 using ChatRoom.Core.Service;
 using ChatRoom.Core.Ternimal;
@@ -71,9 +72,9 @@ public partial class Monoserver : IServer {
 
     private void InitUserChannel() {
         User = NetworkService.New(Names.Channel.User);
-        User.RegisterMessage<AuthenticationReqMsg, AuthenticationMsgHandler>();
+        User.RegisterMessage<AuthenticationReqMsg, AuthenticationMessageHandler>();
         User.RegisterMessage<AuthenticationResultMsg>();
-        User.RegisterMessage<RegisterRequestMsg, RegisterRequestMsgHandler>();
+        User.RegisterMessage<RegisterRequestMsg, RegisterRequestMessageHandler>();
         User.RegisterMessage<RegisterResultMsg>();
         User.RegisterMessage<JoinRoomRequestMsg, JoinRoomRequestMsgHandler>();
         User.RegisterMessage<JoinRoomResultMsg>();
@@ -82,20 +83,20 @@ public partial class Monoserver : IServer {
         User.RegisterMessage<JoinedRoomsInfoMsg>();
 
         Friend = NetworkService.New(Names.Channel.Friend);
-        Friend.RegisterMessage<AddFriendReqMsg, AddFriendReqMsgHandler>();
+        Friend.RegisterMessage<AddFriendReqMsg, AddFriendReqMessageHandler>();
         Friend.RegisterMessage<AddFriendReplyMsg, AddFriendReplyMsgHandler>();
         Friend.RegisterMessage<ReceivedFriendRequestsInfoMsg>();
         Friend.RegisterMessage<SentFriendRequestsResultsMsg>();
 
         Chatting = NetworkService.New(Names.Channel.Chatting);
-        Chatting.RegisterMessage<ChattingMsg, ChattingMsgHandler>();
+        Chatting.RegisterMessage<ChattingMsg, ChatMessageHandler>();
     }
 
-    public Core.Models.ChatRoom? GetChattingRoomBy(int chattingRoomId) {
+    public Room? GetChattingRoomBy(int chattingRoomId) {
         return _chatingRoom.ChatRoomId == chattingRoomId ? _chatingRoom : null;
     }
 #nullable disable
-    private readonly Core.Models.ChatRoom _chatingRoom = new() { ChatRoomId = 12345 };
+    private readonly Room _chatingRoom = new() { ChatRoomId = 12345 };
     private readonly ServiceContainer _container = new() {
         HotReload = false
     };

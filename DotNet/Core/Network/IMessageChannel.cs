@@ -23,7 +23,7 @@ public interface IMessageChannel {
     /// <param name="targets"></param>
     /// <param name="msg"></param>
     /// <exception cref="MessageDirectionException"></exception>
-    public virtual void SendMessage([NotNull] IEnumerable<NetworkToken> targets, [NotNull] IMessage msg) {
+    public void SendMessage([NotNull] IEnumerable<NetworkToken> targets, [NotNull] IMessage msg) {
         foreach (var target in targets) SendMessage(target, msg);
     }
 
@@ -40,17 +40,17 @@ public interface IMessageChannel {
 
     public void RegisterMessage(Type msgType, Func<IMessage> msgGetter, Func<object>? handlerGetter = null, string? msgId = null);
 
-    public virtual void RegisterMessage<TMsg, THandler>(Func<TMsg> msgGetter, Func<THandler> handlerGetter, string? msgId = null)
+    public void RegisterMessage<TMsg, THandler>(Func<TMsg> msgGetter, Func<THandler> handlerGetter, string? msgId = null)
         where TMsg : class, IMessage where THandler : class, IMessageHandler<TMsg> {
         RegisterMessage(typeof(TMsg), msgGetter, handlerGetter, msgId);
     }
-    public virtual void RegisterMessage<TMsg>(Func<TMsg> msgGetter, string? msgId = null) where TMsg : class, IMessage {
+    public void RegisterMessage<TMsg>(Func<TMsg> msgGetter, string? msgId = null) where TMsg : class, IMessage {
         RegisterMessage(typeof(TMsg), msgGetter, null, msgId);
     }
-    public virtual void RegisterMessage<TMsg, THandler>(string? msgId = null) where TMsg : class, IMessage, new() where THandler : class, IMessageHandler<TMsg>, new() {
+    public void RegisterMessage<TMsg, THandler>(string? msgId = null) where TMsg : class, IMessage, new() where THandler : class, IMessageHandler<TMsg>, new() {
         RegisterMessage(typeof(TMsg), () => new TMsg(), () => new THandler(), msgId);
     }
-    public virtual void RegisterMessage<TMsg>(string? msgId = null) where TMsg : class, IMessage, new() {
+    public void RegisterMessage<TMsg>(string? msgId = null) where TMsg : class, IMessage, new() {
         RegisterMessage(typeof(TMsg), () => new TMsg(), null, msgId);
     }
 

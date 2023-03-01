@@ -15,7 +15,7 @@ public class Database : IDatabase {
         }
     }
 
-    public DbSet<Core.Models.ChatRoom> ChatRoomTable {
+    public DbSet<Room> ChatRoomTable {
         get {
             lock (_dbLock)
                 return _db.ChatRooms;

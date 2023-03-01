@@ -8,12 +8,12 @@ using ChatRoom.Server.Interfaces;
 
 namespace ChatRoom.Server.Services;
 public class ChatRoomService : IChatRoomService {
-    public bool TryGetById(int chatRoomId, [NotNullWhen(true)] out Core.Models.ChatRoom? chatRoom) {
+    public bool TryGetById(int chatRoomId, [NotNullWhen(true)] out Room? chatRoom) {
         chatRoom = (from cr in Db.ChatRoomTable where cr.ChatRoomId == chatRoomId && cr.IsActive select cr).FirstOrDefault();
         return chatRoom is not null;
     }
 
-    public MemberType GetRelationship(Core.Models.ChatRoom room, User user, out Membership? membership) {
+    public MemberType GetRelationship(Room room, User user, out Membership? membership) {
         if (room.IsActive) {
             Db.Context.Entry(room)
                 .Collection(r => r.Members)
@@ -25,7 +25,7 @@ public class ChatRoomService : IChatRoomService {
         return MemberType.None;
     }
 
-    public void ReceiveNewText(Core.Models.ChatRoom room, IUserEntity sender, string text, DateTime sendTimeClient) {
+    public void ReceiveNewText(Room room, IUserEntity sender, string text, DateTime sendTimeClient) {
         if (!room.IsActive) return;
         Db.Context.Entry(room).Collection(r => r.Members).Load();
         Logger.SendTip("[Chatting]Received a text.");
@@ -46,7 +46,7 @@ public class ChatRoomService : IChatRoomService {
 
     public bool CreateNewChatRoom(User user, string? roomName, DateTime createdTime, [NotNullWhen(true)] out int? chatRoomId) {
         roomName ??= user.NickName;
-        var room = new Core.Models.ChatRoom {
+        var room = new Room {
             Name = roomName,
             IsActive = true,
             CreatedTime = createdTime,
@@ -57,7 +57,7 @@ public class ChatRoomService : IChatRoomService {
         var membership = new Membership {
             IsActive = true,
             User = user,
-            ChatRoom = room,
+            Room = room,
             Type = MemberType.Owner,
             CreatedTime = createdTime
         };
@@ -70,7 +70,7 @@ public class ChatRoomService : IChatRoomService {
         return true;
     }
 
-    public bool JoinChatRoom(User user, Core.Models.ChatRoom room, DateTime joinTime, Membership? membership = null) {
+    public bool JoinChatRoom(User user, Room room, DateTime joinTime, Membership? membership = null) {
         if (membership is not null) {
             membership.IsActive = true;
             membership.Type = MemberType.Member;
@@ -80,7 +80,7 @@ public class ChatRoomService : IChatRoomService {
             membership = new() {
                 IsActive = true,
                 User = user,
-                ChatRoom = room,
+                Room = room,
                 Type = MemberType.Member,
                 CreatedTime = joinTime
             };
@@ -94,25 +94,25 @@ public class ChatRoomService : IChatRoomService {
         return true;
     }
 
-    public bool IsExisted(int chatRoomId, [NotNullWhen(true)] out Core.Models.ChatRoom? chatRoom) {
+    public bool IsExisted(int chatRoomId, [NotNullWhen(true)] out Room? chatRoom) {
         return TryGetById(chatRoomId, out chatRoom);
     }
 
-    public Core.Models.ChatRoom[] AllJoinedRoom(User user) {
+    public IEnumerable<Room> AllJoinedRoom(User user) {
         Membership Load(Membership membership) {
-            Db.Context.Entry(membership).Reference(m => m.ChatRoom).Load();
+            Db.Context.Entry(membership).Reference(m => m.Room).Load();
             return membership;
         }
-        if (!user.IsActive) return Array.Empty<Core.Models.ChatRoom>();
+        if (!user.IsActive) return Array.Empty<Room>();
         Db.Context.Entry(user).Collection(r => r.Joined).Load();
         return (from m in user.Joined
                 where m.IsActive && m.Type is not MemberType.None
-                let room = Load(m).ChatRoom
+                let room = Load(m).Room
                 where m.IsActive
                 select room).ToArray();
     }
 
-    public bool IsJoined(User user, Core.Models.ChatRoom room, [NotNullWhen(true)] out Membership? membership) {
+    public bool IsJoined(User user, Room room, [NotNullWhen(true)] out Membership? membership) {
         if (!user.IsActive) {
             membership = null;
             return false;

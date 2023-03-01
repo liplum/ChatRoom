@@ -20,7 +20,7 @@ public static class Shared {
         });
     }
     public static void SendUnhandledRequests(IServiceProvider sp, IMessageChannel friend, IUserEntity entity) {
-        var fs = ServiceProviderHelper.Resolve<IFriendService>(sp);
+        var fs = sp.Resolve<IFriendService>();
         var token = entity.Token;
         var u = entity.Info;
         var account = u.Account;

@@ -20,7 +20,7 @@ public class Membership {
     [Required, DefaultValue(MemberType.None)]
     public MemberType Type { get; set; }
 
-    public ChatRoom ChatRoom { get; set; }
+    public Room Room { get; set; }
 
     [Required, DefaultValue(true)]
     public bool IsActive { get; set; }

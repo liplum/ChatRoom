@@ -5,7 +5,7 @@ using ChatRoom.Core.Network;
 using ChatRoom.Server.Interfaces;
 
 namespace ChatRoom.Server.Message;
-public class ChattingMsgHandler : IMessageHandler<ChattingMsg> {
+public class ChatMessageHandler : IMessageHandler<ChattingMsg> {
     public void Handle([NotNull] ChattingMsg msg, MessageContext context) {
         var server = context.Server;
         var userService = server.ServiceProvider.Resolve<IUserService>();

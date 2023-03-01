@@ -6,7 +6,7 @@ using ChatRoom.Core.Network;
 using ChatRoom.Server.Interfaces;
 
 namespace ChatRoom.Server.Message;
-public class AddFriendReqMsgHandler : IMessageHandler<AddFriendReqMsg> {
+public class AddFriendReqMessageHandler : IMessageHandler<AddFriendReqMsg> {
     public void Handle([NotNull] AddFriendReqMsg msg, MessageContext context) {
         var server = context.Server;
         var now = DateTime.UtcNow;

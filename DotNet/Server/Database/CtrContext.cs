@@ -13,7 +13,7 @@ public class CtrContext : DbContext {
         get;
         set;
     }
-    public DbSet<Core.Models.ChatRoom> ChatRooms {
+    public DbSet<Room> ChatRooms {
         get;
         set;
     }
@@ -54,7 +54,7 @@ public class CtrContext : DbContext {
             .WithMany(user => user.Joined)
             .HasForeignKey(m => m.UserAccount);
         b.Entity<Membership>()
-            .HasOne(m => m.ChatRoom)
+            .HasOne(m => m.Room)
             .WithMany(room => room.Members)
             .HasForeignKey(m => m.ChatRoomId);
         

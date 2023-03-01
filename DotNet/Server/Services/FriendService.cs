@@ -9,16 +9,16 @@ public class FriendService : IFriendService {
     private IDatabase DB { get; set; }
 #nullable enable
     public void Initialize(IServiceProvider serviceProvider) {
-        DB = ServiceProviderHelper.Resolve<IDatabase>(serviceProvider);
+        DB = serviceProvider.Resolve<IDatabase>();
     }
-    public bool HasFriendRequest(User @from, User to, [NotNullWhen(true)] out FriendRequest? request) {
+    public bool HasFriendRequest(User from, User to, [NotNullWhen(true)] out FriendRequest? request) {
         request = (from r in DB.FriendRequestTable where r.From == @from && r.To == to select r).FirstOrDefault();
         return request is not null;
     }
-    public bool AddFriendRequest(User @from, User to, DateTime createdTime, out FriendRequest friendRequest) {
+    public bool AddFriendRequest(User from, User to, DateTime createdTime, out FriendRequest friendRequest) {
         friendRequest = new() {
-            From = @from,
-            To = @to,
+            From = from,
+            To = to,
             Result = FriendRequestResult.None,
             CreatedTime = createdTime
         };
@@ -26,7 +26,7 @@ public class FriendService : IFriendService {
         DB.SaveChange();
         return true;
     }
-    public FriendRequest[] GetAllFriendRequestsFrom(User @from) {
+    public FriendRequest[] GetAllFriendRequestsFrom(User from) {
         return (from r in DB.FriendRequestTable where r.From == @from select r).ToArray();
 
     }

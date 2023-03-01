@@ -5,7 +5,7 @@ using ChatRoom.Core.Network;
 using ChatRoom.Server.Interfaces;
 
 namespace ChatRoom.Server.Message;
-public class AuthenticationMsgHandler : IMessageHandler<AuthenticationReqMsg> {
+public class AuthenticationMessageHandler : IMessageHandler<AuthenticationReqMsg> {
     public void Handle([NotNull] AuthenticationReqMsg msg, MessageContext context) {
         var loginTime = DateTime.UtcNow;
         var target = context.ClientToken;

@@ -13,7 +13,7 @@ public class JoinRoomRequest {
     [Required]
     public User Applicant { get; set; }
     [Required]
-    public ChatRoom ChatRoom { get; set; }
+    public Room Room { get; set; }
     [Required]
     public DateTime CreatedTime { get; set; }
     [Required, DefaultValue(JoinRoomRequestResult.None)]

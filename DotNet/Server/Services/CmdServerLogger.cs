@@ -72,6 +72,6 @@ public class CmdServerLogger : ILogger {
     }
 
     public void Initialize(IServiceProvider serviceProvider) {
-        ResourceManager = ServiceProviderHelper.Resolve<IResourceManager>(serviceProvider);
+        ResourceManager = serviceProvider.Resolve<IResourceManager>();
     }
 }

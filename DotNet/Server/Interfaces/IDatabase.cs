@@ -12,7 +12,7 @@ public interface IDatabase : IInjectable {
     public DbSet<User> UserTable {
         get;
     }
-    public DbSet<Core.Models.ChatRoom> ChatRoomTable {
+    public DbSet<Room> ChatRoomTable {
         get;
     }
     public DbSet<Membership> MembershipTable {

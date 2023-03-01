@@ -7,7 +7,7 @@ using ChatRoom.Server.Interfaces;
 using static ChatRoom.Core.Message.RegisterResultMsg;
 
 namespace ChatRoom.Server.Message;
-public class RegisterRequestMsgHandler : IMessageHandler<RegisterRequestMsg> {
+public class RegisterRequestMessageHandler : IMessageHandler<RegisterRequestMsg> {
     public void Handle([NotNull] RegisterRequestMsg msg, MessageContext context) {
         var token = context.ClientToken;
         if (token is null) return;

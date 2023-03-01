@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ChatRoom.Core.Models;
 #nullable disable
-public class ChatRoom {
+public class Room {
     [Key]
     public int ChatRoomId { get; set; }
     [Required, MaxLength(16)]

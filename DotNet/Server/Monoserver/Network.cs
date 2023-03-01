@@ -101,7 +101,7 @@ public partial class Monoserver : IServer {
 
 
         public void Initialize(IServiceProvider serviceProvider) {
-            Logger = ServiceProviderHelper.Resolve<ILogger>(serviceProvider);
+            Logger = serviceProvider.Resolve<ILogger>();
         }
 
         public void RecevieDatapack([NotNull] IDatapack datapack, [AllowNull] NetworkToken token = null) {
