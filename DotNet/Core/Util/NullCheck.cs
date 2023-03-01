@@ -1,105 +1,138 @@
 ﻿namespace ChatRoom.Core.Util;
-public static class NullCheck {
-    public static bool NotNull(this object? obj) {
+
+public static class NullCheck
+{
+    public static bool NotNull(this object? obj)
+    {
         return obj != null;
     }
-    public static bool NotNull(this (object? a, object? b) o) {
+
+    public static bool NotNull(this (object? a, object? b) o)
+    {
         return o.a != null
-            && o.b != null;
+               && o.b != null;
     }
-    public static bool NotNull(this (object? a, object? b, object? c) o) {
+
+    public static bool NotNull(this (object? a, object? b, object? c) o)
+    {
         return o.a != null
-            && o.b != null
-            && o.c != null;
+               && o.b != null
+               && o.c != null;
     }
-    public static bool NotNull(this (object? a, object? b, object? c, object? d) o) {
+
+    public static bool NotNull(this (object? a, object? b, object? c, object? d) o)
+    {
         return o.a != null
-            && o.b != null
-            && o.c != null
-            && o.d != null;
+               && o.b != null
+               && o.c != null
+               && o.d != null;
     }
-    public static bool NotNull(this (object? a, object? b, object? c, object? d, object? e) o) {
+
+    public static bool NotNull(this (object? a, object? b, object? c, object? d, object? e) o)
+    {
         return o.a != null
-            && o.b != null
-            && o.c != null
-            && o.d != null
-            && o.e != null;
+               && o.b != null
+               && o.c != null
+               && o.d != null
+               && o.e != null;
     }
-    public static bool NotNull(this (object? a, object? b, object? c, object? d, object? e, object? f) o) {
+
+    public static bool NotNull(this (object? a, object? b, object? c, object? d, object? e, object? f) o)
+    {
         return o.a != null
-            && o.b != null
-            && o.c != null
-            && o.d != null
-            && o.e != null
-            && o.f != null;
+               && o.b != null
+               && o.c != null
+               && o.d != null
+               && o.e != null
+               && o.f != null;
     }
-    public static bool NotNull(this (object? a, object? b, object? c, object? d, object? e, object? f, object? g) o) {
+
+    public static bool NotNull(this (object? a, object? b, object? c, object? d, object? e, object? f, object? g) o)
+    {
         return o.a != null
-            && o.b != null
-            && o.c != null
-            && o.d != null
-            && o.e != null
-            && o.f != null
-            && o.g != null;
+               && o.b != null
+               && o.c != null
+               && o.d != null
+               && o.e != null
+               && o.f != null
+               && o.g != null;
     }
-    public static bool NotNull(this (object? a, object? b, object? c, object? d, object? e, object? f, object? g, object? h) o) {
+
+    public static bool NotNull(
+        this (object? a, object? b, object? c, object? d, object? e, object? f, object? g, object? h) o)
+    {
         return o.a != null
-            && o.b != null
-            && o.c != null
-            && o.d != null
-            && o.e != null
-            && o.f != null
-            && o.g != null
-            && o.h != null;
+               && o.b != null
+               && o.c != null
+               && o.d != null
+               && o.e != null
+               && o.f != null
+               && o.g != null
+               && o.h != null;
     }
-    public static bool NotNull(this (object? a, object? b, object? c, object? d, object? e, object? f, object? g, object? h, object? i) o) {
+
+    public static bool NotNull(
+        this (object? a, object? b, object? c, object? d, object? e, object? f, object? g, object? h, object? i) o)
+    {
         return o.a != null
-            && o.b != null
-            && o.c != null
-            && o.d != null
-            && o.e != null
-            && o.f != null
-            && o.g != null
-            && o.h != null
-            && o.i != null;
+               && o.b != null
+               && o.c != null
+               && o.d != null
+               && o.e != null
+               && o.f != null
+               && o.g != null
+               && o.h != null
+               && o.i != null;
     }
-    public static bool NotNull(this (object? a, object? b, object? c, object? d, object? e, object? f, object? g, object? h, object? i, object? j) o) {
+
+    public static bool NotNull(
+        this (object? a, object? b, object? c, object? d, object? e, object? f, object? g, object? h, object? i, object?
+            j) o)
+    {
         return o.a != null
-            && o.b != null
-            && o.c != null
-            && o.d != null
-            && o.e != null
-            && o.f != null
-            && o.g != null
-            && o.h != null
-            && o.i != null
-            && o.j != null;
+               && o.b != null
+               && o.c != null
+               && o.d != null
+               && o.e != null
+               && o.f != null
+               && o.g != null
+               && o.h != null
+               && o.i != null
+               && o.j != null;
     }
-    public static bool NotNull(this (object? a, object? b, object? c, object? d, object? e, object? f, object? g, object? h, object? i, object? j, object? k) o) {
+
+    public static bool NotNull(
+        this (object? a, object? b, object? c, object? d, object? e, object? f, object? g, object? h, object? i, object?
+            j, object? k) o)
+    {
         return o.a != null
-            && o.b != null
-            && o.c != null
-            && o.d != null
-            && o.e != null
-            && o.f != null
-            && o.g != null
-            && o.h != null
-            && o.i != null
-            && o.j != null
-            && o.k != null;
+               && o.b != null
+               && o.c != null
+               && o.d != null
+               && o.e != null
+               && o.f != null
+               && o.g != null
+               && o.h != null
+               && o.i != null
+               && o.j != null
+               && o.k != null;
     }
-    public static bool NotNull(this (object? a, object? b, object? c, object? d, object? e, object? f, object? g, object? h, object? i, object? j, object? k, object? l) o) {
+
+    public static bool NotNull(
+        this (object? a, object? b, object? c, object? d, object? e, object? f, object? g, object? h, object? i, object?
+            j, object? k, object? l) o)
+    {
         return o.a != null
-            && o.b != null
-            && o.c != null
-            && o.d != null
-            && o.e != null
-            && o.f != null
-            && o.g != null
-            && o.h != null
-            && o.i != null
-            && o.j != null
-            && o.k != null
-            && o.l != null;
+               && o.b != null
+               && o.c != null
+               && o.d != null
+               && o.e != null
+               && o.f != null
+               && o.g != null
+               && o.h != null
+               && o.i != null
+               && o.j != null
+               && o.k != null
+               && o.l != null;
     }
 }

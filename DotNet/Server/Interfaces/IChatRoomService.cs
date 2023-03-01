@@ -4,14 +4,17 @@ using ChatRoom.Core.Models;
 using ChatRoom.Core.User;
 
 namespace ChatRoom.Server.Interfaces;
-public interface IChatRoomService : IInjectable {
+
+public interface IChatRoomService : IInjectable
+{
     public bool TryGetById(int chatRoomId, [NotNullWhen(true)] out Room? chatRoom);
 
     public void ReceiveNewText(Room room, IUserEntity sender, string text, DateTime sendTimeClient);
 
     public MemberType GetRelationship(Room room, User user, out Membership? membership);
 
-    public bool CreateNewChatRoom(User user, string? roomName, DateTime createdTime, [NotNullWhen(true)] out int? chatRoomId);
+    public bool CreateNewChatRoom(User user, string? roomName, DateTime createdTime,
+        [NotNullWhen(true)] out int? chatRoomId);
 
     public bool IsExisted(int chatRoomId, [NotNullWhen(true)] out Room? chatRoom);
 

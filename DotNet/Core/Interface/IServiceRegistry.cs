@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
 namespace ChatRoom.Core.Interface;
-public interface IServiceRegistry {
+
+public interface IServiceRegistry
+{
     /// <summary>
     ///     Registers a new singleton service.<br />
     ///     A singleton service can be constructed and initialized only once.<br />
@@ -31,7 +33,8 @@ public interface IServiceRegistry {
     public void RegisterInstance(Type inType, Type outType, object obj);
 }
 
-public static class ServiceRegistryHelper {
+public static class ServiceRegistryHelper
+{
     /// <summary>
     ///     Registers a new singleton service.<br />
     ///     A singleton service can be constructed and initialized only once.<br />
@@ -39,7 +42,9 @@ public static class ServiceRegistryHelper {
     /// </summary>
     /// <typeparam name="TIn">the interface type which stands for key</typeparam>
     /// <typeparam name="TOut">the class which implements the interface</typeparam>
-    public static void RegisterSingleton<TIn, TOut>(this IServiceRegistry registry) where TIn : IInjectable where TOut : TIn, new() {
+    public static void RegisterSingleton<TIn, TOut>(this IServiceRegistry registry)
+        where TIn : IInjectable where TOut : TIn, new()
+    {
         registry.RegisterSingleton(typeof(TIn), typeof(TOut));
     }
 
@@ -50,7 +55,9 @@ public static class ServiceRegistryHelper {
     /// </summary>
     /// <typeparam name="TIn">the interface type which stands for key</typeparam>
     /// <typeparam name="TOut">the class which implements the interface</typeparam>
-    public static void RegisterTransient<TIn, TOut>(this IServiceRegistry registry) where TIn : IInjectable where TOut : TIn, new() {
+    public static void RegisterTransient<TIn, TOut>(this IServiceRegistry registry)
+        where TIn : IInjectable where TOut : TIn, new()
+    {
         registry.RegisterTransient(typeof(TIn), typeof(TOut));
     }
 
@@ -61,7 +68,9 @@ public static class ServiceRegistryHelper {
     /// </summary>
     /// <typeparam name="TOut">the type</typeparam>
     /// <typeparam name="TIn"></typeparam>
-    public static void RegisterInstance<TIn, TOut>(this IServiceRegistry registry, [NotNull] TOut obj) where TOut : notnull, TIn {
+    public static void RegisterInstance<TIn, TOut>(this IServiceRegistry registry, [NotNull] TOut obj)
+        where TOut : notnull, TIn
+    {
         registry.RegisterInstance(typeof(TIn), typeof(TOut), obj);
     }
 }

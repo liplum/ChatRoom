@@ -7,31 +7,37 @@ using ChatRoom.Core.User;
 using ChatRoom.Server.Interfaces;
 
 namespace ChatRoom.Server.Services;
-public class UserService : IUserService {
-    private ConcurrentDictionary<string, UserEntity> OnlineUsers {
-        get;
-    } = new();
-    private ConcurrentDictionary<NetworkToken, UserEntity> OnlineUsersToken2Entity {
-        get;
-    } = new();
 
-    public bool TryGetByAccount(string account, [NotNullWhen(true)] out User? user) {
+public class UserService : IUserService
+{
+    private ConcurrentDictionary<string, UserEntity> OnlineUsers { get; } = new();
+    private ConcurrentDictionary<NetworkToken, UserEntity> OnlineUsersToken2Entity { get; } = new();
+
+    public bool TryGetByAccount(string account, [NotNullWhen(true)] out User? user)
+    {
         var uentity = FindOnline(account);
-        if (uentity is not null) {
+        if (uentity is not null)
+        {
             user = uentity.Info;
             return true;
         }
+
         var target = (from u in Db.UserTable where u.Account == account select u).FirstOrDefault();
-        if (target is null || !target.IsActive) {
+        if (target is null || !target.IsActive)
+        {
             user = null;
             return false;
         }
+
         user = target;
         return true;
     }
-    public void RegisterUser(string account, string clearPassword, DateTime registerTime) {
+
+    public void RegisterUser(string account, string clearPassword, DateTime registerTime)
+    {
         var encryptedPwd = clearPassword.Encrypted();
-        Db.UserTable.Add(new() {
+        Db.UserTable.Add(new()
+        {
             Account = account,
             RegisterTime = registerTime,
             Password = encryptedPwd,
@@ -40,7 +46,9 @@ public class UserService : IUserService {
         });
         Db.SaveChange();
     }
-    public bool DeleteUser(string account) {
+
+    public bool DeleteUser(string account)
+    {
         var target = (from u in Db.UserTable where u.Account == account select u).FirstOrDefault();
         if (target is null || !target.IsActive) return false;
         target.IsActive = false;
@@ -48,7 +56,8 @@ public class UserService : IUserService {
         return true;
     }
 
-    public bool RecoverUser(string account) {
+    public bool RecoverUser(string account)
+    {
         var target = (from u in Db.UserTable where u.Account == account select u).FirstOrDefault();
         if (target is null || target.IsActive) return false;
         target.IsActive = true;
@@ -56,39 +65,47 @@ public class UserService : IUserService {
         return true;
     }
 
-    public bool NameNotOccupied(string account) {
+    public bool NameNotOccupied(string account)
+    {
         var shouldBeNull = Db.UserTable.Find(account);
         return shouldBeNull is null;
     }
 
-    public bool IsOnline(string account) {
+    public bool IsOnline(string account)
+    {
         return true;
     }
 
-    public bool Verify(string account, string clearPassword) {
+    public bool Verify(string account, string clearPassword)
+    {
         var target = (from u in Db.UserTable where u.Account == account select u).FirstOrDefault();
         if (target is not null && target.IsActive) return Md5.Verify(clearPassword, target.Password);
         return false;
     }
 
-    public bool VerifyAndOnline(NetworkToken clientToken, DateTime loginTime, string account, string clearPassword, [MaybeNullWhen(false)] out IUserEntity entity) {
+    public bool VerifyAndOnline(NetworkToken clientToken, DateTime loginTime, string account, string clearPassword,
+        [MaybeNullWhen(false)] out IUserEntity entity)
+    {
         UserEntity? res = null;
 
         var target = (from u in Db.UserTable where u.Account == account select u).FirstOrDefault();
         if (target is not null && target.IsActive)
-            res = new() {
+            res = new()
+            {
                 Info = target,
                 UserService = this,
                 Token = clientToken,
                 VerificationCode = Random.Shared.Next()
             };
 
-        if (res is null) {
+        if (res is null)
+        {
             entity = null;
             return false;
         }
 
-        if (Md5.Verify(clearPassword, res.Info.Password)) {
+        if (Md5.Verify(clearPassword, res.Info.Password))
+        {
             entity = res;
             OnlineUsers[account] = res;
             OnlineUsersToken2Entity[clientToken] = res;
@@ -96,20 +113,25 @@ public class UserService : IUserService {
             Db.SaveChange();
             return true;
         }
+
         entity = null;
         return false;
     }
 
-    public IUserEntity? FindOnline(string account) {
+    public IUserEntity? FindOnline(string account)
+    {
         if (OnlineUsers.TryGetValue(account, out var user) && user.Info.IsActive) return user;
         return null;
     }
 
-    public bool Online(string account, DateTime loginTime, NetworkToken clientToken) {
+    public bool Online(string account, DateTime loginTime, NetworkToken clientToken)
+    {
         if (OnlineUsers.ContainsKey(account)) return false;
         var target = (from u in Db.UserTable where u.Account == account select u).FirstOrDefault();
-        if (target is not null && target.IsActive) {
-            var entity = new UserEntity {
+        if (target is not null && target.IsActive)
+        {
+            var entity = new UserEntity
+            {
                 Info = target,
                 UserService = this,
                 Token = clientToken,
@@ -120,75 +142,68 @@ public class UserService : IUserService {
             target.LastLoginTime = loginTime;
             return true;
         }
+
         return false;
     }
 
-    public bool Offline(string account) {
-        if (OnlineUsers.TryGetValue(account, out var entity)) {
+    public bool Offline(string account)
+    {
+        if (OnlineUsers.TryGetValue(account, out var entity))
+        {
             OnlineUsersToken2Entity.TryRemove(entity.Token, out _);
             OnlineUsers.TryRemove(account, out _);
             return true;
         }
+
         return false;
     }
-    public bool Offline(NetworkToken token) {
-        if (OnlineUsersToken2Entity.TryGetValue(token, out var entity)) {
+
+    public bool Offline(NetworkToken token)
+    {
+        if (OnlineUsersToken2Entity.TryGetValue(token, out var entity))
+        {
             OnlineUsers.TryRemove(entity.Account, out _);
             OnlineUsersToken2Entity.TryRemove(entity.Token, out _);
             return true;
         }
+
         return false;
     }
 
-    public IUserEntity? FindOnline(NetworkToken token) {
+    public IUserEntity? FindOnline(NetworkToken token)
+    {
         if (OnlineUsersToken2Entity.TryGetValue(token, out var user) && user.Info.IsActive) return user;
         return null;
     }
 
-    public void Initialize(IServiceProvider serviceProvider) {
+    public void Initialize(IServiceProvider serviceProvider)
+    {
         Db = serviceProvider.Resolve<IDatabase>();
         Network = serviceProvider.Resolve<INetwork>();
         Network.OnClientDisconnected += (token => Offline(token))!;
     }
 
-    private class UserEntity : IUserEntity {
+    private class UserEntity : IUserEntity
+    {
         public bool IsOnline => UserService.OnlineUsersToken2Entity.ContainsKey(Token);
 
-        public int VerificationCode {
-            get;
-            set;
-        }
+        public int VerificationCode { get; set; }
 
-        public void SaveChange() {
+        public void SaveChange()
+        {
             UserService.Db.SaveChange();
         }
 #nullable disable
-        public UserService UserService {
-            get;
-            set;
-        }
+        public UserService UserService { get; set; }
 
-        public User Info {
-            get;
-            set;
-
-        }
-        public NetworkToken Token {
-            get;
-            set;
-        }
+        public User Info { get; set; }
+        public NetworkToken Token { get; set; }
         public string Account => Info.Account;
 
 #nullable enable
     }
 #nullable disable
-    private IDatabase Db {
-        get;
-        set;
-    }
-    private INetwork Network {
-        get;
-        set;
-    }
+    private IDatabase Db { get; set; }
+    private INetwork Network { get; set; }
 #nullable enable
 }

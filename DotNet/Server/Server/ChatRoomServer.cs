@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Runtime.Serialization;
 using ChatRoom.Core.Interface;
 using ChatRoom.Core.Message;
-using ChatRoom.Core.Models;
 using ChatRoom.Core.Network;
 using ChatRoom.Core.Service;
 using ChatRoom.Core.Ternimal;
@@ -13,14 +12,14 @@ using ChatRoom.Server.Services;
 using static ChatRoom.Core.Ternimal.IServer;
 
 namespace ChatRoom.Server;
-public partial class ChatRoomServer : IServer {
 
-    private BlockingCollection<Task> ScheduledTask {
-        get;
-    } = new();
+public partial class ChatRoomServer : IServer
+{
+    private BlockingCollection<Task> ScheduledTask { get; } = new();
     public IServiceProvider ServiceProvider => _container;
 
-    public void Initialize() {
+    public void Initialize()
+    {
         _network = new(this);
         _container.RegisterSingleton<ILogger, CmdServerLogger>();
         _container.RegisterSingleton<IResourceManager, ResourceManager>();
@@ -33,7 +32,7 @@ public partial class ChatRoomServer : IServer {
 
         OnRegisterService?.Invoke(_container);
 
-        _container.Close();
+        _container.Freeze();
 
         NetworkService = _container.Resolve<INetwork>();
         Logger = _container.Resolve<ILogger>();
@@ -41,109 +40,117 @@ public partial class ChatRoomServer : IServer {
         Database = _container.Resolve<IDatabase>();
         Database.Connect();
     }
-    public void Start() {
+
+    public void Start()
+    {
         if (NetworkService is null) throw new NetworkServiceException();
         NetworkService.StartService();
         InitChannels();
         InitUserService();
-        StartMainThread();
+        StartScheduler();
     }
 
+    public void Stop()
+    {
+        if (NetworkService is null) throw new NetworkServiceException();
+        SchedulerThread?.Interrupt();
+        NetworkService.StopService();
+    }
 
-    public void AddScheduledTask(Action task) {
+    public void AddScheduledTask(Action task)
+    {
         ScheduledTask.Add(new(task));
     }
 
-    private void StartMainThread() {
-        MainThread = new(() => {
-            foreach (var task in ScheduledTask.GetConsumingEnumerable()) task?.Start();
+    private void StartScheduler()
+    {
+        SchedulerThread = new(() =>
+        {
+            foreach (var task in ScheduledTask.GetConsumingEnumerable())
+                task.Start();
         });
-        MainThread.Start();
+        SchedulerThread.Start();
     }
 
-    private void InitChannels() {
+    private void InitChannels()
+    {
         InitUserChannel();
     }
 
-    private void InitUserService() {
+    private void InitUserService()
+    {
         if (NetworkService is null) throw new NetworkServiceException();
     }
 
-    private void InitUserChannel() {
+    private void InitUserChannel()
+    {
         User = NetworkService.New(Names.Channel.User);
-        User.RegisterMessage<AuthenticationReqMessage, AuthenticationMessageHandler>();
-        User.RegisterMessage<AuthenticationResultMsg>();
-        User.RegisterMessage<RegisterRequestMessage, RegisterRequestMessageHandler>();
-        User.RegisterMessage<RegisterResultMessage>();
-        User.RegisterMessage<JoinRoomRequestMessage, JoinRoomRequestMessageHandler>();
-        User.RegisterMessage<JoinRoomResultMsg>();
-        User.RegisterMessage<CreateRoomReqMsg, CreateRoomReqMessageHandler>();
-        User.RegisterMessage<CreateRoomResultMsg>();
-        User.RegisterMessage<JoinedRoomsInfoMsg>();
+        User.Register<AuthenticationReqMessage, AuthenticationMessageHandler>();
+        User.Register<AuthenticationResultMsg>();
+        User.Register<RegisterRequestMessage, RegisterRequestMessageHandler>();
+        User.Register<RegisterResultMessage>();
+        User.Register<JoinRoomRequestMessage, JoinRoomRequestMessageHandler>();
+        User.Register<JoinRoomResultMsg>();
+        User.Register<CreateRoomReqMsg, CreateRoomReqMessageHandler>();
+        User.Register<CreateRoomResultMsg>();
+        User.Register<JoinedRoomsInfoMsg>();
 
         Friend = NetworkService.New(Names.Channel.Friend);
-        Friend.RegisterMessage<AddFriendRequestMessage, AddFriendReqMessageHandler>();
-        Friend.RegisterMessage<AddFriendReplyMessage, AddFriendReplyMessageHandler>();
-        Friend.RegisterMessage<ReceivedFriendRequestsInfoMessage>();
-        Friend.RegisterMessage<SentFriendRequestsResultsMessage>();
+        Friend.Register<AddFriendRequestMessage, AddFriendReqMessageHandler>();
+        Friend.Register<AddFriendReplyMessage, AddFriendReplyMessageHandler>();
+        Friend.Register<ReceivedFriendRequestsInfoMessage>();
+        Friend.Register<SentFriendRequestsResultsMessage>();
 
         Chatting = NetworkService.New(Names.Channel.Chatting);
-        Chatting.RegisterMessage<ChatMessage, ChatMessageHandler>();
+        Chatting.Register<ChatMessage, ChatMessageHandler>();
     }
 
-    public Room? GetChattingRoomBy(int chattingRoomId) {
-        return _chatingRoom.ChatRoomId == chattingRoomId ? _chatingRoom : null;
-    }
+    private Thread? SchedulerThread { get; set; }
+
 #nullable disable
-    private readonly Room _chatingRoom = new() { ChatRoomId = 12345 };
-    private readonly ServiceContainer _container = new() {
+    private readonly ServiceContainer _container = new()
+    {
         HotReload = false
     };
-    private Network _network;
-    private Thread MainThread {
-        get;
-        set;
-    }
 
-    public IDatabase Database {
-        get;
-        set;
-    }
+    private Network _network;
+
+    public IDatabase Database { get; set; }
 
     public event OnRegisterServiceHandler OnRegisterService;
 
-    public INetwork NetworkService {
+    public INetwork NetworkService
+    {
         get => _network;
         private set => _network = (Network)value;
     }
-    public IMessageChannel User {
-        get;
-        private set;
-    }
-    public IMessageChannel Chatting {
-        get;
-        private set;
-    }
-    public IMessageChannel Friend {
-        get;
-        private set;
-    }
 
-    public ILogger Logger {
-        get;
-        private set;
-    }
+    public IMessageChannel User { get; private set; }
+    public IMessageChannel Chatting { get; private set; }
+    public IMessageChannel Friend { get; private set; }
+
+    public ILogger Logger { get; private set; }
 #nullable enable
 }
 
 [Serializable]
-public class NetworkServiceException : Exception {
-    public NetworkServiceException() {
+public class NetworkServiceException : Exception
+{
+    public NetworkServiceException()
+    {
     }
-    public NetworkServiceException(string message) : base(message) { }
-    public NetworkServiceException(string message, Exception inner) : base(message, inner) { }
+
+    public NetworkServiceException(string message) : base(message)
+    {
+    }
+
+    public NetworkServiceException(string message, Exception inner) : base(message, inner)
+    {
+    }
+
     protected NetworkServiceException(
         SerializationInfo info,
-        StreamingContext context) : base(info, context) {
+        StreamingContext context) : base(info, context)
+    {
     }
 }

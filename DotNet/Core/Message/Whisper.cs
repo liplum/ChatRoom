@@ -2,31 +2,20 @@
 using ChatRoom.Core.Util;
 
 namespace ChatRoom.Core.Message;
+
 [Msg("Whisper", Direction.ClientToServer, Direction.ServerToClient)]
-public class WhisperMessage : IMessage {
+public class WhisperMessage : IMessage
+{
 #nullable disable
-    public string Sender {
-        get;
-        set;
-    }
-    public string Receiver {
-        get;
-        set;
-    }
-    public string Text {
-        get;
-        set;
-    }
+    public string Sender { get; set; }
+    public string Receiver { get; set; }
+    public string Text { get; set; }
 #nullable enable
-    public int VerificationCode {
-        get;
-        set;
-    }
-    public DateTime SendTime {
-        get;
-        set;
-    }
-    public void Deserialize(dynamic json) {
+    public int VerificationCode { get; set; }
+    public DateTime SendTime { get; set; }
+
+    public void Deserialize(dynamic json)
+    {
         Text = json.Text;
         Sender = json.Sender;
         Receiver = json.Receiver;
@@ -34,7 +23,9 @@ public class WhisperMessage : IMessage {
         SendTime = timestamp.ToUnixDatetime();
         VerificationCode = json.VCode;
     }
-    public void Serialize(dynamic json) {
+
+    public void Serialize(dynamic json)
+    {
         json.Sender = Sender;
         json.Receiver = Receiver;
         json.Text = Text;
@@ -44,20 +35,17 @@ public class WhisperMessage : IMessage {
 }
 
 [Msg("WhisperResult", Direction.ClientToServer, Direction.ServerToClient)]
-public class WhisperResultMsg : IMessage {
+public class WhisperResultMsg : IMessage
+{
 #nullable disable
-    public string Sender {
-        get;
-        set;
-    }
-    public string Target {
-        get;
-        set;
-    }
+    public string Sender { get; set; }
+    public string Target { get; set; }
 #nullable enable
-    public void Deserialize(dynamic json) {
-        
+    public void Deserialize(dynamic json)
+    {
     }
-    public void Serialize(dynamic json) {
+
+    public void Serialize(dynamic json)
+    {
     }
 }

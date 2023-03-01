@@ -1,3 +1,5 @@
 ﻿namespace ChatRoom.Core.Chatting;
-public class Record {
+
+public class Record
+{
 }

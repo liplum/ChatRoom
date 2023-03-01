@@ -1,15 +1,14 @@
 ﻿namespace ChatRoom.Core.Network;
-public interface INetwork : IInjectable, IMessageChannelContainer {
 
+public interface INetwork : IInjectable, IMessageChannelContainer
+{
     public delegate void OnClientConnectedHandler(NetworkToken token);
 
     public delegate void OnClientDisconnectedHandler(NetworkToken token);
 
     public delegate void OnMessagePreAnalyzeHandler(NetworkToken? token, string sourceText, dynamic json);
 
-    public IEnumerable<NetworkToken> AllConnectedClient {
-        get;
-    }
+    public IEnumerable<NetworkToken> AllConnectedClient { get; }
     public void SendDatapackTo(IDatapack datapack, NetworkToken token);
 
     public void RecevieDatapack(IDatapack datapack, NetworkToken? token = null);

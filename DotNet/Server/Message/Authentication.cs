@@ -4,8 +4,11 @@ using ChatRoom.Core.Network;
 using ChatRoom.Server.Interfaces;
 
 namespace ChatRoom.Server.Message;
-public class AuthenticationMessageHandler : IMessageHandler<AuthenticationReqMessage> {
-    public void Handle(AuthenticationReqMessage message, MessageContext context) {
+
+public class AuthenticationMessageHandler : IMessageHandler<AuthenticationReqMessage>
+{
+    public void Handle(AuthenticationReqMessage message, MessageContext context)
+    {
         var loginTime = DateTime.UtcNow;
         var target = context.ClientToken;
         if (target is null) return;
@@ -17,9 +20,11 @@ public class AuthenticationMessageHandler : IMessageHandler<AuthenticationReqMes
         var userService = sp.Resolve<IUserService>();
         var channel = context.Channel;
         AuthenticationResultMsg reply;
-        if (userService.VerifyAndOnline(target, loginTime, account, password, out var entity)) {
+        if (userService.VerifyAndOnline(target, loginTime, account, password, out var entity))
+        {
             var vcode = entity.VerificationCode;
-            reply = new() {
+            reply = new()
+            {
                 Ok = true,
                 Account = account,
                 VerificationCode = vcode
@@ -33,8 +38,10 @@ public class AuthenticationMessageHandler : IMessageHandler<AuthenticationReqMes
             var friend = context.Network.GetMessageChannelBy(Names.Channel.Friend)!;
             Shared.SendUnhandledRequests(sp, friend, entity);
         }
-        else {
-            reply = new() {
+        else
+        {
+            reply = new()
+            {
                 Ok = false,
                 Account = account
             };
@@ -43,5 +50,4 @@ public class AuthenticationMessageHandler : IMessageHandler<AuthenticationReqMes
             channel.SendMessage(target, reply);
         }
     }
-
 }

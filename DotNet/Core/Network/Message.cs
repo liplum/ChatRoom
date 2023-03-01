@@ -41,7 +41,7 @@ public class MsgAttribute : Attribute
 
 public interface IMessageHandler<in T> where T : IMessage
 {
-    public void Handle([NotNull] T msg, MessageContext context);
+    public void Handle(T msg, MessageContext context);
 }
 
 public class MessageContext
