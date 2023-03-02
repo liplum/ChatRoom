@@ -40,18 +40,16 @@ public class AddFriendReplyMessageHandler : IMessageHandler<AddFriendReplyMessag
         if (user is null || !user.Info.IsActive || user.VerificationCode != vcode) return;
         var u = user.Info;
         var fqService = server.ServiceProvider.Resolve<IFriendService>();
-        if (fqService.TryGetById(message.RequestId, out var fq) && fq.To == u)
+        if (!fqService.TryGetById(message.RequestId, out var fq) || fq.To != u) return;
+        switch (message.Result)
         {
-            switch (message.Result)
-            {
-                case FriendRequestResult.Accept:
-                case FriendRequestResult.Dismiss:
-                    fqService.RemoveFriendRequest(fq);
-                    break;
-                case FriendRequestResult.Refuse:
-                    fq.Result = FriendRequestResult.Refuse;
-                    break;
-            }
+            case FriendRequestResult.Accept:
+            case FriendRequestResult.Dismiss:
+                fqService.RemoveFriendRequest(fq);
+                break;
+            case FriendRequestResult.Refuse:
+                fq.Result = FriendRequestResult.Refuse;
+                break;
         }
     }
 }

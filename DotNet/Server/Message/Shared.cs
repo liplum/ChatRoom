@@ -51,22 +51,20 @@ public static class Shared
         }
 
         var sfqs = fs.GetAllFriendRequestsFrom(u); //Sent
-        if (sfqs.Length > 0)
-        {
-            var xsfqs = (
-                from fq in sfqs
-                select new
-                {
-                    RequestID = fq.FriendRequestId,
-                    To = fq.To.Account,
-                    Result = (int)fq.Result
-                }).ToArray();
-            friend.SendMessage(token, new SentFriendRequestsResultsMessage
+        if (sfqs.Length <= 0) return;
+        var xsfqs = (
+            from fq in sfqs
+            select new
             {
-                Account = account,
-                VerificationCode = vcode,
-                Results = xsfqs
-            });
-        }
+                RequestID = fq.FriendRequestId,
+                To = fq.To.Account,
+                Result = (int)fq.Result
+            }).ToArray();
+        friend.SendMessage(token, new SentFriendRequestsResultsMessage
+        {
+            Account = account,
+            VerificationCode = vcode,
+            Results = xsfqs
+        });
     }
 }

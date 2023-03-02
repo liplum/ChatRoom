@@ -12,4 +12,4 @@ public class ResourceManager : IResourceManager
     public void Initialize(IServiceProvider serviceProvider)
     {
     }
-}
+} 
