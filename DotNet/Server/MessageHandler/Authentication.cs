@@ -29,7 +29,7 @@ public class AuthenticationMessageHandler : IMessageHandler<AuthenticationReqMes
                 Account = account,
                 VerificationCode = vcode
             };
-            var logger = sp.Resolve<ILogger>();
+            var logger = sp.Resolve<ILoggerManager>();
             logger.SendTip($"[User][Authentication]User \"{account}\" authentication succeed.");
             channel.SendMessage(target, reply);
 
@@ -45,7 +45,7 @@ public class AuthenticationMessageHandler : IMessageHandler<AuthenticationReqMes
                 Ok = false,
                 Account = account
             };
-            var logger = sp.Resolve<ILogger>();
+            var logger = sp.Resolve<ILoggerManager>();
             logger.SendTip($"[User][Authentication]User \"{account}\" authentication failed.");
             channel.SendMessage(target, reply);
         }

@@ -1,11 +1,14 @@
 ﻿namespace ChatRoom.Core.Interface;
 
-public interface ILogger : IInjectable
+public interface ILoggerManager : ILogger, IInjectable
 {
-    public void Log(WarnningLevel level, string message);
-
     public void StartService();
     public void StopService();
+}
+
+public interface ILogger
+{
+    public void Log(WarnningLevel level, string message);
 
     public void SendMessage(string message)
     {
@@ -26,6 +29,8 @@ public interface ILogger : IInjectable
     {
         Log(WarnningLevel.Error, message);
     }
+
+    public ILogger OnSubChannel(string channelName);
 }
 
 public enum WarnningLevel

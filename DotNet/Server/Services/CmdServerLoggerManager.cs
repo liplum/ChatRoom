@@ -4,19 +4,23 @@ using ChatRoom.Server.Interfaces;
 
 namespace ChatRoom.Server.Services;
 
-public class CmdServerLogger : ILogger
+public class CmdServerLoggerManager : ILoggerManager
 {
-    private readonly object _lock = new();
 #nullable disable
     private IResourceManager ResourceManager { get; set; }
 #nullable enable
     private Thread? MainThread { get; set; }
     private StreamWriter? LogFile { get; set; }
-    private BlockingCollection<(WarnningLevel, string)> Logs { get; } = new();
+    private BlockingCollection<(DateTime, WarnningLevel, string)> Logs { get; } = new();
 
     public void Log(WarnningLevel level, string message)
     {
-        Logs.Add((level, message));
+        Logs.Add((DateTime.Now, level, message));
+    }
+
+    public ILogger OnSubChannel(string channelName)
+    {
+        return new SubChannelLogger(this, channelName);
     }
 
     public void StartService()
@@ -29,9 +33,9 @@ public class CmdServerLogger : ILogger
         };
         MainThread = new(() =>
         {
-            foreach (var (level, msg) in Logs.GetConsumingEnumerable())
+            foreach (var (time, level, msg) in Logs.GetConsumingEnumerable())
             {
-                var log = $"{DateTime.Now:yyyyMMdd-HH:mm:ss}[{level}]{msg}";
+                var log = $"{time:HH:mm:ss}[{level}]{msg}";
                 LogFile?.WriteLine(log);
                 ApplyColor(level);
                 Console.WriteLine(log);
@@ -49,23 +53,17 @@ public class CmdServerLogger : ILogger
         LogFile?.Close();
     }
 
+
     private static void ApplyColor(WarnningLevel level)
     {
-        switch (level)
+        Console.ForegroundColor = level switch
         {
-            case WarnningLevel.Message:
-                Console.ForegroundColor = ConsoleColor.White;
-                break;
-            case WarnningLevel.Tip:
-                Console.ForegroundColor = ConsoleColor.Blue;
-                break;
-            case WarnningLevel.Warn:
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                break;
-            case WarnningLevel.Error:
-                Console.ForegroundColor = ConsoleColor.Red;
-                break;
-        }
+            WarnningLevel.Message => ConsoleColor.White,
+            WarnningLevel.Tip => ConsoleColor.Blue,
+            WarnningLevel.Warn => ConsoleColor.Yellow,
+            WarnningLevel.Error => ConsoleColor.Red,
+            _ => Console.ForegroundColor
+        };
     }
 
     private static void ClearColor()
@@ -76,5 +74,30 @@ public class CmdServerLogger : ILogger
     public void Initialize(IServiceProvider serviceProvider)
     {
         ResourceManager = serviceProvider.Resolve<IResourceManager>();
+    }
+}
+
+internal class SubChannelLogger : ILogger
+{
+    private readonly ILogger? _parent;
+    private readonly string? _channelName;
+
+    public SubChannelLogger(ILogger parent, string channelName)
+    {
+        _parent = parent;
+        _channelName = channelName;
+    }
+
+    public void Log(WarnningLevel level, string message)
+    {
+        if (_parent is not null && _channelName is not null)
+        {
+            _parent.Log(level, $"[{_channelName}]{message}");
+        }
+    }
+
+    public ILogger OnSubChannel(string channelName)
+    {
+        return new SubChannelLogger(this, channelName);
     }
 }

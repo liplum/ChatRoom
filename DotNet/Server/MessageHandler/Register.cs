@@ -15,7 +15,7 @@ public class RegisterRequestMessageHandler : IMessageHandler<RegisterRequestMess
         if (token is null) return;
         var server = context.Server;
         var userService = server.ServiceProvider.Resolve<IUserService>();
-        var logger = server.ServiceProvider.Resolve<ILogger>();
+        var logger = server.ServiceProvider.Resolve<ILoggerManager>();
         var account = message.Account;
         var password = message.Password;
         RegisterResultMessage reply = new()

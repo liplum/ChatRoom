@@ -50,7 +50,7 @@ public partial class ChatRoomServer : IServer
         private Thread MsgSendingThread { get; }
         private Thread MsgAnalysisThread { get; }
 #nullable disable
-        public ILogger Logger { get; set; }
+        public ILoggerManager LoggerManager { get; set; }
 #nullable enable
         private Thread? Listen { get; set; }
         private BlockingCollection<Task> SendTasks { get; } = new();
@@ -100,7 +100,7 @@ public partial class ChatRoomServer : IServer
                     }
                     catch (Exception)
                     {
-                        Logger!.SendError($"Cannot write datapack to {token.IpAddress}.");
+                        LoggerManager!.SendError($"Cannot write datapack to {token.IpAddress}.");
                     }
             }
         }
@@ -108,7 +108,7 @@ public partial class ChatRoomServer : IServer
 
         public void Initialize(IServiceProvider serviceProvider)
         {
-            Logger = serviceProvider.Resolve<ILogger>();
+            LoggerManager = serviceProvider.Resolve<ILoggerManager>();
         }
 
         public void ReceiveDatapack(IDatapack datapack, NetworkToken? token = null)
@@ -126,7 +126,7 @@ public partial class ChatRoomServer : IServer
                     var content = json.Content ?? new JObject();
                     if (!(channelName, messageId).NotNull())
                     {
-                        Logger.SendError($"Cannot analyse datapack: \"{jsonString}\" because of no header.");
+                        LoggerManager.SendError($"Cannot analyse datapack: \"{jsonString}\" because of no header.");
                         return;
                     }
 
@@ -140,16 +140,16 @@ public partial class ChatRoomServer : IServer
                     {
                         if (channel.CanPass(messageId, Direction.ClientToServer))
                             channel.OnReceive(messageId, content, token);
-                        else Logger!.SendMessage($"Message<{messageId}> cannot pass the Channel<{channelName}>.");
+                        else LoggerManager!.SendMessage($"Message<{messageId}> cannot pass the Channel<{channelName}>.");
                     }
                     else
                     {
-                        Logger.SendError($"Cannot find channel called {channelName}");
+                        LoggerManager.SendError($"Cannot find channel called {channelName}");
                     }
                 }
                 catch (Exception e)
                 {
-                    Logger.SendError($"Cannot analyse datapack from {token?.IpAddress},because {e.Message}");
+                    LoggerManager.SendError($"Cannot analyse datapack from {token?.IpAddress},because {e.Message}");
                 }
             });
         }
@@ -169,13 +169,13 @@ public partial class ChatRoomServer : IServer
 
         public void StartService()
         {
-            Logger.SendMessage("Network component is preparing to start.");
+            LoggerManager.SendMessage("Network component is preparing to start.");
             var port = (int)Assets.Configs.Port;
             ws = new WebSocketServer(port);
 
             ws.AddWebSocketService("/", () => this);
             ws.Start();
-            Logger.SendMessage("Network component started.");
+            LoggerManager.SendMessage("Network component started.");
             Listen = new(() =>
             {
                 while (true)
@@ -185,7 +185,7 @@ public partial class ChatRoomServer : IServer
                     {
                         var ip = ipEndPoint.Address;
                         var token = new NetworkToken(ip);
-                        Logger.SendWarn($"{ip} connected.");
+                        LoggerManager.SendWarn($"{ip} connected.");
                         AddNewClient(token, client);
                     }
                 }
@@ -193,12 +193,12 @@ public partial class ChatRoomServer : IServer
             Listen.Start();
             MsgSendingThread.Start();
             MsgAnalysisThread.Start();
-            Logger.SendMessage("Server started listening connection of clients.");
+            LoggerManager.SendMessage("Server started listening connection of clients.");
         }
 
         public void StopService()
         {
-            Logger!.SendMessage("Network component is preparing to stop.");
+            LoggerManager!.SendMessage("Network component is preparing to stop.");
             ws?.Stop();
             Listen?.Interrupt();
             foreach (var (connection, _) in _allConnections.Values)
@@ -206,7 +206,7 @@ public partial class ChatRoomServer : IServer
                 connection.Terminal();
             }
 
-            Logger!.SendMessage("Network component stoped.");
+            LoggerManager!.SendMessage("Network component stoped.");
         }
 
         public bool IsConnected(NetworkToken token)
@@ -237,7 +237,7 @@ public partial class ChatRoomServer : IServer
             {
                 if (!_allConnections.TryGetValue(target, out var info) || !info.connection.IsConnected)
                 {
-                    Logger!.SendError(
+                    LoggerManager!.SendError(
                         $"Cannot send message<{msgId}> to {target.IpAddress} who has been already disconnected.");
                     return;
                 }
@@ -253,7 +253,7 @@ public partial class ChatRoomServer : IServer
                 }
                 catch (Exception e)
                 {
-                    Logger!.SendError($"Cannot serialize Message<{msgId}>\nBecause {e.Message}\n{e.StackTrace}");
+                    LoggerManager!.SendError($"Cannot serialize Message<{msgId}>\nBecause {e.Message}\n{e.StackTrace}");
                     return;
                 }
 
@@ -294,7 +294,7 @@ public partial class ChatRoomServer : IServer
                     {
                         if (connection.IsConnected) ReceiveDatapack(datapack, token);
                         else
-                            Logger!.SendWarn(
+                            LoggerManager!.SendWarn(
                                 $"A datapack from {token.IpAddress} was abandoned because of having been already disconnected.");
                     }
                 }
@@ -303,7 +303,7 @@ public partial class ChatRoomServer : IServer
                 RemoveClient(token, () =>
                 {
                     if (client.Connected) client.Client.Shutdown(SocketShutdown.Both);
-                    Logger!.SendWarn($"{token.IpAddress} disconnected.");
+                    LoggerManager!.SendWarn($"{token.IpAddress} disconnected.");
                 });
             });
 

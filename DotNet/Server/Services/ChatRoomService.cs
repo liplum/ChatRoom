@@ -36,7 +36,7 @@ public class ChatRoomService : IChatRoomService
     {
         if (!room.IsActive) return;
         Db.Context.Entry(room).Collection(r => r.Members).Load();
-        Logger.SendTip("[Chatting]Received a text.");
+        LoggerManager.SendTip("[Chatting]Received a text.");
         foreach (var member in from m in room.Members where m.IsActive && m.Type is not MemberType.None select m.User)
         {
             var ue = Users.FindOnline(member.Account);
@@ -50,7 +50,7 @@ public class ChatRoomService : IChatRoomService
                     ChatRoomId = room.ChatRoomId,
                     VerificationCode = ue.VerificationCode
                 });
-            Logger.SendTip($"[Chatting]A Text was sent to {ue.Account}.");
+            LoggerManager.SendTip($"[Chatting]A Text was sent to {ue.Account}.");
         }
     }
 
@@ -80,7 +80,7 @@ public class ChatRoomService : IChatRoomService
         user.CreatedRoomCount++;
         Db.SaveChange();
         chatRoomId = room.ChatRoomId;
-        Logger.SendTip($"Chat room {chatRoomId}-{roomName} was created by {user.Account}.");
+        LoggerManager.SendTip($"Chat room {chatRoomId}-{roomName} was created by {user.Account}.");
         return true;
     }
 
@@ -109,7 +109,7 @@ public class ChatRoomService : IChatRoomService
         room.MemberCount++;
         user.JoinedRoomCount++;
         Db.SaveChange();
-        Logger.SendTip($"User {user.Account} joined the chat room {room.ChatRoomId}-{room.Name}.");
+        LoggerManager.SendTip($"User {user.Account} joined the chat room {room.ChatRoomId}-{room.Name}.");
         return true;
     }
 
@@ -150,7 +150,7 @@ public class ChatRoomService : IChatRoomService
     {
         Db = serviceProvider.Resolve<IDatabase>();
         Network = serviceProvider.Resolve<INetwork>();
-        Logger = serviceProvider.Resolve<ILogger>();
+        LoggerManager = serviceProvider.Resolve<ILoggerManager>();
         Users = serviceProvider.Resolve<IUserService>();
         User = Network.GetMessageChannelBy("User");
         Chatting = Network.GetMessageChannelBy("Chatting");
@@ -161,6 +161,6 @@ public class ChatRoomService : IChatRoomService
     private IUserService Users { get; set; }
     private IMessageChannel User { get; set; }
     private IMessageChannel Chatting { get; set; }
-    private ILogger Logger { get; set; }
+    private ILoggerManager LoggerManager { get; set; }
 #nullable enable
 }

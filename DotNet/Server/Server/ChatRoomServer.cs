@@ -21,7 +21,7 @@ public partial class ChatRoomServer : IServer
     public void Initialize()
     {
         _network = new(this);
-        _container.RegisterSingleton<ILogger, CmdServerLogger>();
+        _container.RegisterSingleton<ILoggerManager, CmdServerLoggerManager>();
         _container.RegisterSingleton<IResourceManager, ResourceManager>();
         _container.RegisterSingleton<IUserService, UserService>();
         _container.RegisterSingleton<IChatRoomService, ChatRoomService>();
@@ -35,8 +35,8 @@ public partial class ChatRoomServer : IServer
         _container.Freeze();
 
         NetworkService = _container.Resolve<INetwork>();
-        Logger = _container.Resolve<ILogger>();
-        Logger.StartService();
+        LoggerManager = _container.Resolve<ILoggerManager>();
+        LoggerManager.StartService();
         Database = _container.Resolve<IDatabase>();
         Database.Connect();
     }
@@ -129,7 +129,7 @@ public partial class ChatRoomServer : IServer
     public IMessageChannel Chatting { get; private set; }
     public IMessageChannel Friend { get; private set; }
 
-    public ILogger Logger { get; private set; }
+    public ILoggerManager LoggerManager { get; private set; }
 #nullable enable
 }
 

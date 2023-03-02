@@ -57,7 +57,7 @@ public partial class ChatRoomServer
                 }
                 catch
                 {
-                    Network.Logger!.SendError($"Cannot create Message<{messageId}> object");
+                    Network.LoggerManager!.SendError($"Cannot create Message<{messageId}> object");
                     return;
                 }
 
@@ -67,7 +67,7 @@ public partial class ChatRoomServer
                 }
                 catch (Exception e)
                 {
-                    Network.Logger!.SendError(
+                    Network.LoggerManager!.SendError(
                         $"Cannot deserialize Message<{messageId}> from \"{jsonContent}\"\nBecause {e.Message}\n{e.StackTrace}");
                     return;
                 }
@@ -86,13 +86,13 @@ public partial class ChatRoomServer
                 }
                 catch (Exception e)
                 {
-                    Network.Logger!.SendError(
+                    Network.LoggerManager!.SendError(
                         $"Cannot handle Message<{messageId}> from \"{jsonContent}\"\nBecause {e.Message}\n{e.StackTrace}");
                 }
             }
             else
             {
-                Network.Logger!.SendError($"Cannot find message type called {messageId}");
+                Network.LoggerManager!.SendError($"Cannot find message type called {messageId}");
             }
         }
 
