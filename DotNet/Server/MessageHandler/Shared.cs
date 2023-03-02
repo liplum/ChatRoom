@@ -4,7 +4,7 @@ using ChatRoom.Core.Network;
 using ChatRoom.Core.User;
 using ChatRoom.Server.Interfaces;
 
-namespace ChatRoom.Server.Message;
+namespace ChatRoom.Server.MessageHandler;
 
 public static class Shared
 {

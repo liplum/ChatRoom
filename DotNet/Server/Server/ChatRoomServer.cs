@@ -7,7 +7,7 @@ using ChatRoom.Core.Network;
 using ChatRoom.Core.Service;
 using ChatRoom.Core.Ternimal;
 using ChatRoom.Server.Interfaces;
-using ChatRoom.Server.Message;
+using ChatRoom.Server.MessageHandler;
 using ChatRoom.Server.Services;
 using static ChatRoom.Core.Ternimal.IServer;
 

@@ -3,7 +3,7 @@ using ChatRoom.Core.Message;
 using ChatRoom.Core.Network;
 using ChatRoom.Server.Interfaces;
 
-namespace ChatRoom.Server.Message;
+namespace ChatRoom.Server.MessageHandler;
 
 public class AuthenticationMessageHandler : IMessageHandler<AuthenticationReqMessage>
 {

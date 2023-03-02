@@ -7,13 +7,14 @@ using ChatRoom.Core.Ternimal;
 using ChatRoom.Core.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using WebSocketSharp.Server;
 using static ChatRoom.Core.Network.INetwork;
 
 namespace ChatRoom.Server;
 
 public partial class ChatRoomServer : IServer
 {
-    private class Network : INetwork
+    private class Network : WebSocketBehavior, INetwork
     {
         private static readonly string EmptyJObjectStr = new JObject().ToString();
         private readonly Dictionary<string, IMessageChannel> _allChannels = new();
@@ -24,21 +25,22 @@ public partial class ChatRoomServer : IServer
         private readonly UnicodeBytesConverter _unicoder = new();
 
         private int _buffSize = 1024;
-        private TcpListener? _serverSocket;
 
         public Network(ChatRoomServer server)
         {
             Server = server;
             MsgSendingThread = new(() =>
             {
-                foreach (var task in SendTasks.GetConsumingEnumerable()) task?.Start();
+                foreach (var task in SendTasks.GetConsumingEnumerable())
+                    task.Start();
             })
             {
                 IsBackground = true
             };
             MsgAnalysisThread = new(() =>
             {
-                foreach (var task in AnalyzeMsgTasks.GetConsumingEnumerable()) task?.Start();
+                foreach (var task in AnalyzeMsgTasks.GetConsumingEnumerable())
+                    task.Start();
             })
             {
                 IsBackground = true
@@ -109,7 +111,7 @@ public partial class ChatRoomServer : IServer
             Logger = serviceProvider.Resolve<ILogger>();
         }
 
-        public void RecevieDatapack(IDatapack datapack, NetworkToken? token = null)
+        public void ReceiveDatapack(IDatapack datapack, NetworkToken? token = null)
         {
             AddAnaylzeTask(() =>
             {
@@ -163,13 +165,16 @@ public partial class ChatRoomServer : IServer
             return channel;
         }
 
+        public  WebSocketServer? ws { get; set; }
 
         public void StartService()
         {
             Logger.SendMessage("Network component is preparing to start.");
             var port = (int)Assets.Configs.Port;
-            _serverSocket = new(IPAddress.Any, port);
-            _serverSocket.Start();
+            ws = new WebSocketServer(port);
+
+            ws.AddWebSocketService("/", () => this);
+            ws.Start();
             Logger.SendMessage("Network component started.");
             Listen = new(() =>
             {
@@ -194,7 +199,7 @@ public partial class ChatRoomServer : IServer
         public void StopService()
         {
             Logger!.SendMessage("Network component is preparing to stop.");
-            _serverSocket?.Stop();
+            ws?.Stop();
             Listen?.Interrupt();
             foreach (var (connection, _) in _allConnections.Values)
             {
@@ -287,7 +292,7 @@ public partial class ChatRoomServer : IServer
                     var datapack = Datapack.ReadOne(stream, BufferSize);
                     if (!datapack.IsEmpty)
                     {
-                        if (connection.IsConnected) RecevieDatapack(datapack, token);
+                        if (connection.IsConnected) ReceiveDatapack(datapack, token);
                         else
                             Logger!.SendWarn(
                                 $"A datapack from {token.IpAddress} was abandoned because of having been already disconnected.");

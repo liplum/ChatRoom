@@ -11,7 +11,7 @@ public interface INetwork : IInjectable, IMessageChannelContainer
     public IEnumerable<NetworkToken> AllConnectedClient { get; }
     public void SendDatapackTo(IDatapack datapack, NetworkToken token);
 
-    public void RecevieDatapack(IDatapack datapack, NetworkToken? token = null);
+    public void ReceiveDatapack(IDatapack datapack, NetworkToken? token = null);
 
     public void StartService();
 

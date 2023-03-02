@@ -5,7 +5,7 @@ using ChatRoom.Core.User;
 using ChatRoom.Server.Interfaces;
 using static ChatRoom.Core.Message.RegisterResultMessage;
 
-namespace ChatRoom.Server.Message;
+namespace ChatRoom.Server.MessageHandler;
 
 public class RegisterRequestMessageHandler : IMessageHandler<RegisterRequestMessage>
 {

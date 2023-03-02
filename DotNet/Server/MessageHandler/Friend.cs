@@ -4,7 +4,7 @@ using ChatRoom.Core.Models;
 using ChatRoom.Core.Network;
 using ChatRoom.Server.Interfaces;
 
-namespace ChatRoom.Server.Message;
+namespace ChatRoom.Server.MessageHandler;
 
 public class AddFriendReqMessageHandler : IMessageHandler<AddFriendRequestMessage>
 {
@@ -16,13 +16,11 @@ public class AddFriendReqMessageHandler : IMessageHandler<AddFriendRequestMessag
         var vcode = message.VerificationCode;
         var from = userService.FindOnline(message.FromAccount);
         if (from is null || !from.Info.IsActive || from.VerificationCode != vcode) return;
-        if (userService.TryGetByAccount(message.ToAccount, out var to))
+        if (!userService.TryGetByAccount(message.ToAccount, out var to)) return;
+        var fqService = server.ServiceProvider.Resolve<IFriendService>();
+        if (!fqService.HasFriendRequest(from.Info, to, out _))
         {
-            var fqService = server.ServiceProvider.Resolve<IFriendService>();
-            if (!fqService.HasFriendRequest(from.Info, to, out _))
-            {
-                fqService.AddFriendRequest(from.Info, to, now, out _);
-            }
+            fqService.AddFriendRequest(from.Info, to, now, out _);
         }
     }
 }
